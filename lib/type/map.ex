@@ -1,0 +1,22 @@
+defmodule Type.Map do
+  defstruct [kv: []]
+
+  @type kv :: {Type.t, Type.t}
+  @type kv_spec :: {:required | :optional, kv}
+
+  # note that the left-to-right order of map specs is important
+  # and that the leftmost values take precedence when they overlap.
+
+  # TODO: test this
+
+  @type t :: %__MODULE__{
+    kv: [kv_spec]
+  }
+
+  defimpl Type.Typed do
+    import Type
+
+    def coercion(_, builtin(:any)), do: :type_ok
+    def coercion(_, _), do: :type_error
+  end
+end
