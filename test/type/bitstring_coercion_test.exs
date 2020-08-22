@@ -1,4 +1,4 @@
-defmodule Typerator.Type.BitstringCoercionTest do
+defmodule TypeTest.BitstringCoercionTest do
   use ExUnit.Case, async: true
 
   @moduletag :coercion

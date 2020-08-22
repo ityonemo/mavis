@@ -1,4 +1,4 @@
-defmodule TyperatorTest.TypeableTest do
+defmodule TypeableTest do
   use ExUnit.Case, async: true
 
   @moduletag :typeable

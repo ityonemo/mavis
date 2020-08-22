@@ -1,4 +1,4 @@
-defmodule Typerator.Type.FunctionCoercionTest do
+defmodule TypeTest.FunctionCoercionTest do
   use ExUnit.Case, async: true
 
   @moduletag :coercion

@@ -1,4 +1,4 @@
-defmodule Typerator.Type.BuiltinCoercionTest do
+defmodule TypeTest.BuiltinCoercionTest do
   use ExUnit.Case, async: true
 
   # TODO: Figure out AsBoolean rules.
