@@ -16,11 +16,29 @@ defmodule Type do
   | Type.Function.t
   | Type.Union.t
 
+  @type coerces :: :type_ok | :type_maybe | :type_error
+
+  @doc """
+  collect coercion results.  Currently, uses basic ternary logic.
+  """
+  def collect(results) do
+    Enum.max_by(results, fn
+      :type_ok    -> 0
+      :type_maybe -> 1
+      :type_error -> 2
+    end)
+  end
+
   defmacro builtin(type) do
     quote do %Type{module: nil, name: unquote(type)} end
   end
 
   defdelegate of(literal, context), to: Type.Typeable
+
+  @spec coercion({t, t}) :: coerces
+  def coercion({subject, target}), do: coercion(subject, target)
+
+  @spec coercion(t, t) :: coerces
   defdelegate coercion(subject, target), to: Type.Typed
 
   defimpl String.Chars do

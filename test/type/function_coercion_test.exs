@@ -82,17 +82,25 @@ defmodule Typerator.Type.FunctionCoercionTest do
       )
     end
 
+    test "any parameters might coerce" do
+      assert :type_maybe == Type.coercion(
+        %Function{params: :any, return: @any},
+        %Function{params: [@any], return: @any}
+      )
+    end
+
     test "parameters list determines coercion" do
       # empty list trivially is okay.
       assert :type_ok == Type.coercion(
-        %Function{params: [], return: @integer}
+        %Function{params: [], return: @integer},
         %Function{params: [], return: @any}
       )
 
+      # checking the "into" parameters list:
       # if all are coercible, then we get type_ok
       assert :type_ok == Type.coercion(
-        %Function{params: [0, @any], return: @any},
-        %Function{params: [@integer, @any], return: @any})
+        %Function{params: [@integer, @any], return: @any},
+        %Function{params: [0, @any], return: @any})
 
       # if even one is a maybe, then we get maybe
       assert :type_maybe == Type.coercion(
@@ -105,57 +113,4 @@ defmodule Typerator.Type.FunctionCoercionTest do
         %Function{params: [:foo, @any], return: @any})
     end
   end
-
-#  describe "for the basic bitstring type" do
-#    test "any type maybe coerces" do
-#      assert :type_maybe == Type.coercion(@any, @empty_bitstring)
-#    end
-#
-#    test "all other bitstrings coerce" do
-#      assert :type_ok = Type.coercion(bitstring(7, 2), @bitstring)
-#      assert :type_ok = Type.coercion(@binary, @bitstring)
-#    end
-#    test "empty bitstring coerces" do
-#      assert :type_ok = Type.coercion(@empty_bitstring, @bitstring)
-#    end
-#
-#    test "other types can not coerce" do
-#      target = @empty_bitstring
-#      assert :type_error == Type.coercion(42, target)
-#      assert :type_error == Type.coercion(0..42, target)
-#      assert :type_error == Type.coercion(:foo, target)
-#      assert :type_error == Type.coercion(%Tuple{elements: []}, target)
-#      assert :type_error == Type.coercion(%Map{kv: []}, target)
-#      assert :type_error == Type.coercion(%Function{params: [], return: :foo}, target)
-#    end
-#  end
-#
-#  describe "for the basic binary type" do
-#    test "bitstrings maybe coerce" do
-#      assert :type_maybe == Type.coercion(@bitstring, @binary)
-#    end
-#
-#    test "empty bitstrings coerce" do
-#      assert :type_ok = Type.coercion(@empty_bitstring, @bitstring)
-#    end
-#
-#    test "multiples of 8 for the unit will coerce" do
-#      assert :type_ok == Type.coercion(bitstring(0, 16), @binary)
-#      assert :type_ok == Type.coercion(bitstring(8, 32), @binary)
-#    end
-#
-#    test "nonmultiples of 8 for the unit might coerce" do
-#      assert :type_maybe == Type.coercion(bitstring(0, 4), @binary)
-#      assert :type_maybe == Type.coercion(bitstring(0, 3), @binary)
-#    end
-#  end
-#
-#  describe "for generic bitstring types" do
-#    test "going from small unit to big unit" do
-#      assert :type_maybe == Type.coercion(bitstring(0, 3), bitstring(0, 6))
-#      assert :type_maybe == Type.coercion(bitstring(5, 3), bitstring(5, 6))
-#      assert :type_error == Type.coercion(bitstring(2, 3), bitstring(0, 6))
-#    end
-#  end
-
 end
