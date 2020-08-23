@@ -1,9 +1,11 @@
 defmodule TypeTest.FunctionCoercionTest do
   use ExUnit.Case, async: true
 
-  @moduletag :coercion
+  @moduletag :function
 
   alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+
+  import Type, only: :macros
 
   @any %Type{name: :any}
   @integer %Type{name: :integer}
@@ -21,7 +23,7 @@ defmodule TypeTest.FunctionCoercionTest do
   describe "for the any/any function" do
     test "builtin types don't coerce into functions" do
       for type <- @builtin_types do
-        assert :type_error == Type.coercion(type, @basic_any)
+        assert :type_error == Type.coercion(builtin(type), @basic_any)
       end
     end
 

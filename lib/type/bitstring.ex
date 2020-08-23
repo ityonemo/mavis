@@ -8,7 +8,7 @@ defmodule Type.Bitstring do
   }
 
   defimpl Type.Typed do
-    import Type
+    import Type, only: :macros
 
     alias Type.Bitstring
 

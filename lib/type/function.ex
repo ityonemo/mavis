@@ -22,7 +22,7 @@ defmodule Type.Function do
   end
 
   defimpl Type.Typed do
-    import Type
+    import Type, only: :macros
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(%{params: :any, return: from_return},

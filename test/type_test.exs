@@ -11,14 +11,13 @@ defmodule TypeTest do
     end
 
     test "gives :type_maybe if all are ok except for maybes" do
-      assert :type_error == Type.collect([:type_ok, :type_ok, :type_maybe])
-      assert :type_error == Type.collect([:type_ok, :type_maybe, :type_maybe])
-      assert :type_error == Type.collect([:type_maybe])
-      assert :type_error == Type.collect([:type_maybe, :type_maybe])
+      assert :type_maybe == Type.collect([:type_ok, :type_ok, :type_maybe])
+      assert :type_maybe == Type.collect([:type_ok, :type_maybe, :type_maybe])
+      assert :type_maybe == Type.collect([:type_maybe])
+      assert :type_maybe == Type.collect([:type_maybe, :type_maybe])
     end
 
     test "gives :type_error if any type is in error" do
-      assert :type_error == Type.collect([:type_ok, :type_ok, :type_ok])
       assert :type_error == Type.collect([:type_ok, :type_maybe, :type_error])
       assert :type_error == Type.collect([:type_error, :type_ok, :type_ok])
       assert :type_error == Type.collect([:type_error, :type_error])

@@ -3,7 +3,7 @@ defprotocol Type.Typed do
 end
 
 defimpl Type.Typed, for: Integer do
-  import Type
+  import Type, only: :macros
 
   def coercion(_, builtin(:any)), do: :type_ok
 
@@ -19,7 +19,7 @@ defimpl Type.Typed, for: Integer do
 end
 
 defimpl Type.Typed, for: Range do
-  import Type
+  import Type, only: :macros
 
   def coercion(_, builtin(:any)), do: :type_ok
 
@@ -46,7 +46,7 @@ defimpl Type.Typed, for: Range do
 end
 
 defimpl Type.Typed, for: Atom do
-  import Type
+  import Type, only: :macros
 
   def coercion(_, builtin(:any)), do: :type_ok
 
@@ -76,7 +76,7 @@ end
 
 # remember, the empty list is its own type
 defimpl Type.Typed, for: List do
-  import Type
+  import Type, only: :macros
 
   def coercion([], builtin(:any)), do: :type_ok
   def coercion([], builtin(:iolist)), do: :type_ok

@@ -1,7 +1,7 @@
 defmodule TypeTest.LiteralCoercionTest do
   use ExUnit.Case, async: true
 
-  @moduletag :coercion
+  @moduletag :literal
 
   alias Type.{List, Bitstring, Tuple, Map, Function, Union}
 

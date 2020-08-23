@@ -3,7 +3,7 @@ defmodule TypeTest.BuiltinCoercionTest do
 
   # TODO: Figure out AsBoolean rules.
 
-  @moduletag :coercion
+  @moduletag :builtin
 
   alias Type.{List, Bitstring, Tuple, Map, Function, Union}
 
