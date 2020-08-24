@@ -5,7 +5,7 @@ defmodule TypeTest.BuiltinCoercionTest do
 
   @moduletag :builtin
 
-  alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+  alias Type.{Bitstring, Function, Map, List, Tuple}
 
   @any %Type{name: :any}
 

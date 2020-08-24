@@ -1,28 +1,26 @@
 defmodule Type.Union do
-  @enforce_keys [:of]
-  defstruct @enforce_keys
-
+  defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t]}
 
   def of(%Type.Union{of: of1}, %Type.Union{of: of2}) do
-    %Type.Union{of: collapse(of1 ++ of2)}
+    collapse(%Type.Union{of: of1 ++ of2})
   end
 
   def of(%Type.Union{of: of}, t) do
-    %Type.Union{of: collapse([t | of])}
+    collapse(%Type.Union{of: [t | of]})
   end
 
   def of(t, %Type.Union{of: of}) do
-    %Type.Union{of: collapse([t | of])}
+    collapse(%Type.Union{of: [t | of]})
   end
 
   def of(t1, t2) do
-    %Type.Union{of: collapse([t1, t2])}
+    collapse(%Type.Union{of: [t1, t2]})
   end
 
   # for now.  TODO: we need more sophisticated checking on this.
-  def collapse(lst) do
-    lst |> Enum.uniq |> Enum.sort
+  def collapse(%__MODULE__{of: lst}) do
+    %__MODULE__{of: lst |> Enum.uniq |> Enum.sort}
   end
 
   defimpl Type.Typed do
@@ -30,5 +28,22 @@ defmodule Type.Union do
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(_, _), do: :type_error
+  end
+
+  defimpl Collectable do
+    alias Type.Union
+
+    def into(original) do
+      collector_fun = fn
+        # starting with an empty union results in
+        %Union{of: lst}, {:cont, elem} -> %Union{of: [elem | lst]}
+        %Union{of: []}, :done -> %Type{name: :none}
+        %Union{of: [one]}, :done -> one
+        union = %Union{}, :done -> Union.collapse(union)
+        _set, :halt -> :ok
+      end
+
+      {original, collector_fun}
+    end
   end
 end

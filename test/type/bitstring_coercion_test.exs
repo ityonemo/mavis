@@ -3,7 +3,7 @@ defmodule TypeTest.BitstringCoercionTest do
 
   @moduletag :bitstring
 
-  alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+  alias Type.{Bitstring, Tuple, Map, Function}
 
   @any %Type{name: :any}
 

@@ -95,7 +95,7 @@ defimpl Type.Typeable, for: Tuple do
   def of({:type, _, :nonempty_list, [type]}, env) do
     %Type.List{nonempty: true, type: Type.of(type, env)}
   end
-  def of({:type, _, :maybe_improper_list, []}, env) do
+  def of({:type, _, :maybe_improper_list, []}, _env) do
     %Type.List{
       nonempty: false,
       type: %Type{name: :any},
@@ -113,7 +113,7 @@ defimpl Type.Typeable, for: Tuple do
       type: Type.of(main, env),
       final: Type.of(final, env)}
   end
-  def of({:type, _, :nonempty_maybe_improper_list, []}, env) do
+  def of({:type, _, :nonempty_maybe_improper_list, []}, _env) do
     %Type.List{
       nonempty: true,
       type: %Type{name: :any},
@@ -141,10 +141,10 @@ defimpl Type.Typeable, for: Tuple do
       params: Enum.map(params, &Type.of(&1, env))
     }
   end
-  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, env) do
+  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _env) do
     %Type.List{type: @char_range}
   end
-  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, env) do
+  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _env) do
     %Type.List{nonempty: true, type: @char_range}
   end
   def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, params]}, env) do
@@ -157,7 +157,7 @@ defimpl Type.Typeable, for: Tuple do
   def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :as_boolean}, [type]]}, env) do
     %Type.AsBoolean{for: Type.of(type, env)}
   end
-  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :struct}, params]}, env) do
+  def of({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :struct}, params]}, _env) do
     %Type.Map{kv: [
       required: {:__struct__, %Type{name: :atom}},
       optional: {%Type{name: :atom}, %Type{name: :any}}]}
@@ -166,10 +166,10 @@ defimpl Type.Typeable, for: Tuple do
     %Type{module: mod, name: type, params: Enum.map(params, &Type.of(&1, env))}
   end
   # some literals are 3-tples
-  def of({:integer, _, integer}, env = %{context: :fetch}) when is_integer(integer) do
+  def of({:integer, _, integer}, %{context: :fetch}) when is_integer(integer) do
     integer
   end
-  def of({:atom, _, atom}, env = %{context: :fetch}) when is_atom(atom) do
+  def of({:atom, _, atom}, %{context: :fetch}) when is_atom(atom) do
     atom
   end
   def of(type, env = %{context: :fetch}) do

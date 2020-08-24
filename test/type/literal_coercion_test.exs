@@ -3,7 +3,7 @@ defmodule TypeTest.LiteralCoercionTest do
 
   @moduletag :literal
 
-  alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+  alias Type.{List, Bitstring, Tuple, Map, Function}
 
   @any %Type{name: :any}
 

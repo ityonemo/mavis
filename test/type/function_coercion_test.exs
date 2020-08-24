@@ -3,7 +3,7 @@ defmodule TypeTest.FunctionCoercionTest do
 
   @moduletag :function
 
-  alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+  alias Type.{Bitstring, Function}
 
   import Type, only: :macros
 

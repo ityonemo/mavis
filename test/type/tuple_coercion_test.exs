@@ -3,7 +3,7 @@ defmodule TypeTest.TupleCoercionTest do
 
   @moduletag :tuple
 
-  alias Type.{List, Bitstring, Tuple, Map, Function, Union}
+  alias Type.Tuple
 
   @any %Type{name: :any}
 
