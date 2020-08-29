@@ -84,8 +84,7 @@ defmodule TypeTest.BuiltinCoercionTest do
         assert :type_ok == Type.coercion(type, type)
       end
     end
-
-    @tag :one
+    
     test "all coerce into integer" do
       for type <- @integer_subtypes do
         assert :type_ok == Type.coercion(type, builtin(:integer))

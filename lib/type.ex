@@ -18,6 +18,10 @@ defmodule Type do
 
   @type coerces :: :type_ok | :type_maybe | :type_error
 
+  defmacro builtin(type) do
+    quote do %Type{module: nil, name: unquote(type)} end
+  end
+
   @doc """
   collect coercion results.  Currently, uses basic ternary logic.
   """
@@ -29,9 +33,72 @@ defmodule Type do
     end)
   end
 
-  defmacro builtin(type) do
-    quote do %Type{module: nil, name: unquote(type)} end
+  defguard is_neg_integer(n) when is_integer(n) and n < 0
+  defguard is_pos_integer(n) when is_integer(n) and n > 0
+
+  alias Type.Tuple
+
+  @doc """
+  types have an order that facilitates calculation of collapsing values.
+
+  The order is as follows:
+  - any
+  - integer
+  - neg_integer
+  - [negative integer iteral]
+  - non_neg_integer
+  - 0
+  - pos_integer
+  - [positive integer literal]
+  - atom
+  - [atom literal]
+  - any tuple
+  - defined tuple
+  ranges come before the lowest integer in the range.
+  """
+  def order(a, a),                                       do: true
+  def order(builtin(:any), _any),                        do: false
+  def order(_any, builtin(:any)),                        do: true
+  def order(builtin(:integer), _any),                    do: false
+  def order(_any, builtin(:integer)),                    do: true
+  def order(builtin(:neg_integer), _any),                do: false
+  def order(_any, builtin(:neg_integer)),                do: true
+  def order(m, n) when is_neg_integer(m) and is_neg_integer(n), do: m >= n
+  def order(m.._, n) when is_neg_integer(m) and is_integer(n), do: m >= n
+  def order(m.._, n.._),                                 do: m >= n
+  def order(n, _any) when is_neg_integer(n),             do: false
+  def order(_any, n) when is_neg_integer(n),             do: true
+  def order(m.._, _any) when is_neg_integer(m),          do: false
+  def order(_any, m.._) when is_neg_integer(m),          do: true
+  def order(builtin(:non_neg_integer), _any),            do: false
+  def order(_any, builtin(:non_neg_integer)),            do: true
+  def order(0.._, _any),                                 do: false
+  def order(_any, 0.._),                                 do: true
+  def order(0, _any),                                    do: false
+  def order(_any, 0),                                    do: true
+  def order(builtin(:pos_integer), _any),                do: false
+  def order(_any, builtin(:pos_integer)),                do: true
+  def order(m, n) when is_integer(m) and is_integer(n),  do: m >= n
+  def order(integer, _any) when is_pos_integer(integer), do: false
+  def order(_any, integer) when is_pos_integer(integer), do: true
+  def order(_.._, _any),                                 do: false
+  def order(_any, _.._),                                 do: true
+  def order(builtin(:atom), _any),                       do: false
+  def order(_any, builtin(:atom)),                       do: true
+  def order(atom, _any) when is_atom(atom),              do: false
+  def order(_any, atom) when is_atom(atom),              do: true
+  def order(%Tuple{elements: :any}, _any),               do: false
+  def order(_any, %Tuple{elements: :any}),               do: true
+  def order(%Tuple{elements: e1}, %Tuple{elements: e2})
+      when length(e1) == length(e2)                      do
+    e1
+    |> Enum.zip(e2)
+    |> Enum.all?(fn {el1, el2} -> order(el1, el2) end)
   end
+  def order(%Tuple{elements: e1}, %Tuple{elements: e2}), do: length(e1) > length(e2)
+  def order(%Tuple{}, _any),                             do: false
+  def order(_any, %Tuple{}),                             do: true
+  def order(a, b),                                       do: a >= b
 
   defdelegate of(literal, context), to: Type.Typeable
 
