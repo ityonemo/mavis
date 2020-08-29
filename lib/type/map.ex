@@ -8,7 +8,6 @@ defmodule Type.Map do
   # and that the leftmost values take precedence when they overlap.
 
   # TODO: test this
-
   @type t :: %__MODULE__{
     kv: [kv_spec]
   }

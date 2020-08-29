@@ -146,6 +146,10 @@ defmodule TypeTest.UnionTest do
     assert builtin(:atom) = Enum.into([builtin(:atom), :bar], %Union{})
   end
 
+  test "different atoms don't merge" do
+    assert %Union{of: [:bar, :foo]} = Enum.into([:foo, :bar], %Union{})
+  end
+
   alias Type.Tuple
 
   @anytuple %Tuple{elements: :any}
@@ -172,5 +176,24 @@ defmodule TypeTest.UnionTest do
         %Tuple{elements: [@any, :bar]}]} =
         Enum.into([tuple([@any, :bar]), tuple([:foo, @any]), tuple([:foo, :bar])], %Union{})
     end
+  end
+
+  alias Type.List
+
+  @anylist %List{type: @any}
+  describe "for the list type" do
+    test "lists with the same end type get merged" do
+      assert %List{type: %Union{of: [:foo, :bar]}} =
+        Enum.into([%List{type: :foo}, %List{type: :bar}], %Union{})
+      assert %List{type: @any} =
+        Enum.into([%List{type: @any}, %List{type: :bar}], %Union{})
+
+      assert %List{type: %Union{of: [:foo, :bar]}, final: :end} =
+        Enum.into([%List{type: :foo, final: :end}, %List{type: :bar, final: :end}], %Union{})
+      assert %List{type: @any, final: :end} =
+        Enum.into([%List{type: @any, final: :end}, %List{type: :bar, final: :end}], %Union{})
+    end
+
+    test "nonempty: true lists get merged into nonempty: false lists"
   end
 end

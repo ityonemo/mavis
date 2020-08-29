@@ -21,6 +21,7 @@ defmodule Type.Union do
   end
 
   require Type
+  alias Type.{Tuple, List}
 
   def subsume(builtin(:neg_integer), [a..b | rest])
       when a < 0 and b >= 0 do
@@ -59,6 +60,9 @@ defmodule Type.Union do
   def subsume(a..b, [builtin(:pos_integer) | rest]) when a < 0 and b >= 0 do
     [a..-1, builtin(:non_neg_integer) | rest]
   end
+  def subsume(%List{type: t1, final: f}, [%List{type: t2, final: f} | rest]) do
+    [%List{type: Enum.into([t1, t2], %__MODULE__{}), final: f} | rest]
+  end
   def subsume(prev, [next | rest]) do
     if subsumes(prev, next) do
       subsume(prev, rest)
@@ -67,8 +71,6 @@ defmodule Type.Union do
     end
   end
   def subsume(next, []), do: [next]
-
-  alias Type.Tuple
 
   # note, as a precondition, the two values must already be sorted.
   defp subsumes(any, any),                                             do: true
