@@ -125,4 +125,26 @@ defmodule TypeTest.LiteralCoercionTest do
     end
   end
 
+  describe "for an atom literal" do
+    test "an atm coerces itself" do
+      assert :type_ok == Type.coercion(:foo, :foo)
+    end
+
+    test "any and list types maybe coerce" do
+      assert :type_maybe == Type.coercion(@any, :foo)
+      assert :type_maybe == Type.coercion(builtin(:atom), :foo)
+    end
+
+
+    test "other types can not coerce" do
+      target = :foo
+      assert :type_error == Type.coercion(42, target)
+      assert :type_error == Type.coercion(0..42, target)
+      assert :type_error == Type.coercion([], target)
+      assert :type_error == Type.coercion(%Bitstring{size: 0, unit: 0}, target)
+      assert :type_error == Type.coercion(%Tuple{elements: []}, target)
+      assert :type_error == Type.coercion(%Map{kv: []}, target)
+      assert :type_error == Type.coercion(%Function{params: [], return: :foo}, target)
+    end
+  end
 end

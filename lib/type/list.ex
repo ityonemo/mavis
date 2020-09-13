@@ -24,6 +24,7 @@ defmodule Type.List do
 
   def compare(%{type: body_1, final: final_1, nonempty: ne1},
               %{type: body_2, final: final_2, nonempty: ne2}) do
+
     case {Type.coercion(body_1, body_2), Type.coercion(final_1, final_2)} do
       {:type_ok, :type_ok} -> :type_ok
       {:type_error, _} -> :type_error

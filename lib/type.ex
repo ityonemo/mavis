@@ -36,7 +36,7 @@ defmodule Type do
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
 
-  alias Type.Tuple
+  alias Type.{List, Tuple, Function}
 
   @doc """
   types have an order that facilitates calculation of collapsing values.
@@ -54,7 +54,12 @@ defmodule Type do
   - [atom literal]
   - any tuple
   - defined tuple
+  - nonempty: false lists
+  - nonempty: true lists
+  - params: :any functions (ordered by retval, then parameter in dictionary order)
+  - params: list functions (ordered by retval, then parameter in dictionary order)
   ranges come before the lowest integer in the range.
+  a union comes before the first represented item in its union.
   """
   def order(a, a),                                       do: true
   def order(builtin(:any), _any),                        do: false
@@ -93,12 +98,43 @@ defmodule Type do
       when length(e1) == length(e2)                      do
     e1
     |> Enum.zip(e2)
-    |> Enum.all?(fn {el1, el2} -> order(el1, el2) end)
+    |> Enum.all?(&order/1)
   end
   def order(%Tuple{elements: e1}, %Tuple{elements: e2}), do: length(e1) > length(e2)
   def order(%Tuple{}, _any),                             do: false
   def order(_any, %Tuple{}),                             do: true
+  def order(l1 = %List{}, l2 = %List{}),                 do: order_lists(l1, l2)
+  def order(%List{}, _any),                              do: false
+  def order(_any, %List{}),                              do: true
+  def order(f1 = %Function{}, f2 = %Function{}),         do: order_functions(f1, f2)
+  def order(%Function{}, _any),                          do: false
+  def order(_any, %Function{}),                          do: true
+
   def order(a, b),                                       do: a >= b
+
+  # private shim for ordering eveything else.
+  defp order({e1, e2}), do: order(e1, e2)
+
+  defp order_lists(%{nonempty: false}, %{nonempty: true}), do: false
+  defp order_lists(%{nonempty: true}, %{nonempty: false}), do: true
+  defp order_lists(l1, l2) do
+    if l1.type == l2.type do
+      order(l1.final, l2.final)
+    else
+      order(l1.type, l2.type)
+    end
+  end
+
+  defp order_functions(f1 = %{params: :any}, f2 = %{params: :any}) do
+    order(f1.return, f2.return)
+  end
+  defp order_functions(%{params: :any}, %{params: _list}), do: false
+  defp order_functions(%{params: _list}, %{params: :any}), do: true
+  defp order_functions(f1, f2) do
+    [f1.return | f1.params]
+    |> Enum.zip([f2.return | f2.params])
+    |> Enum.all?(&order/1)
+  end
 
   defdelegate of(literal, context), to: Type.Typeable
 
@@ -154,6 +190,7 @@ defimpl Type.Typed, for: Type do
 
   # atoms
   @atom_subtypes ~w(module node)a
+  def coercion(builtin(:atom), atom) when is_atom(atom), do: :type_maybe
   def coercion(builtin(:atom), builtin(atom_type))
     when atom_type in @atom_subtypes, do: :type_maybe
 

@@ -43,7 +43,7 @@ defmodule TypeTest.ListCoercionTest do
     end
   end
 
-  describe "for specific list types" do
+  describe "for basic maybe-empty lists" do
     test "list of any will go into itself and maybe into anything" do
       assert :type_ok == Type.coercion(%List{type: @any}, %List{type: @any})
       assert :type_maybe == Type.coercion(%List{type: @any}, %List{type: @integer})
@@ -54,11 +54,12 @@ defmodule TypeTest.ListCoercionTest do
       assert :type_maybe == Type.coercion(%List{type: @integer}, %List{type: 47})
       assert :type_error == Type.coercion(%List{type: 42}, %List{type: 47})
     end
+  end
 
+  describe "for lists that are nonempty" do
     test "a list that is obligate nonempty can coerce into a maybe empty, but not vice versa" do
       assert :type_ok    == Type.coercion(%List{type: @any, nonempty: true}, %List{type: @any, nonempty: false})
       assert :type_maybe == Type.coercion(%List{type: @any, nonempty: false}, %List{type: @any, nonempty: true})
     end
   end
-
 end

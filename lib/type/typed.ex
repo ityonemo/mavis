@@ -70,6 +70,7 @@ defimpl Type.Typed, for: Atom do
       _ -> :type_error
     end
   end
+  def coercion(any, any), do: :type_ok
 
   def coercion(_, _), do: :type_error
 end

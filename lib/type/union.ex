@@ -21,8 +21,12 @@ defmodule Type.Union do
   end
 
   require Type
-  alias Type.{Tuple, List}
+  alias Type.{Function, List}
 
+  # anything that is exactly the same must come back the same.
+  def subsume(any, [any | rest]) do
+    [any | rest]
+  end
   def subsume(builtin(:neg_integer), [a..b | rest])
       when a < 0 and b >= 0 do
     [builtin(:neg_integer), 0..b | rest]
@@ -60,11 +64,21 @@ defmodule Type.Union do
   def subsume(a..b, [builtin(:pos_integer) | rest]) when a < 0 and b >= 0 do
     [a..-1, builtin(:non_neg_integer) | rest]
   end
-  def subsume(%List{type: t1, final: f}, [%List{type: t2, final: f} | rest]) do
-    [%List{type: Enum.into([t1, t2], %__MODULE__{}), final: f} | rest]
+  def subsume(l1 = %List{final: f, nonempty: n}, [l2 = %List{final: f, nonempty: n} | rest]) do
+    merged_type = Enum.into([l1.type, l2.type], %__MODULE__{})
+    merged = %List{type: merged_type, final: f, nonempty: n}
+    [merged | rest]
+  end
+  def subsume(l1 = %List{type: t, nonempty: n}, [l2 = %List{type: t, nonempty: n} | rest]) do
+    merged_final = Enum.into([l1.final, l2.final], %__MODULE__{})
+    merged = %List{type: t, final: merged_final, nonempty: n}
+    [merged | rest]
+  end
+  def subsume(f1 = %Function{}, [f2 = %Function{} | rest]) do
+    subsume_function(f1, f2, rest)
   end
   def subsume(prev, [next | rest]) do
-    if subsumes(prev, next) do
+    if Type.coercion(next, prev) == :type_ok do
       subsume(prev, rest)
     else
       [prev, next | rest]
@@ -72,31 +86,46 @@ defmodule Type.Union do
   end
   def subsume(next, []), do: [next]
 
-  # note, as a precondition, the two values must already be sorted.
-  defp subsumes(any, any),                                             do: true
-  defp subsumes(builtin(:any), _any),                                  do: true
-  defp subsumes(builtin(:integer), builtin(:neg_integer)),             do: true
-  defp subsumes(builtin(:integer), n) when is_integer(n),              do: true
-  defp subsumes(builtin(:integer), builtin(:non_neg_integer)),         do: true
-  defp subsumes(builtin(:integer), builtin(:pos_integer)),             do: true
-  defp subsumes(builtin(:integer), %Range{}),                          do: true
-  defp subsumes(builtin(:neg_integer), n) when Type.is_neg_integer(n), do: true
-  defp subsumes(builtin(:neg_integer), a..b) when a < 0 and b < 0,     do: true
-  defp subsumes(builtin(:non_neg_integer), n) when is_integer(n),      do: true
-  defp subsumes(builtin(:non_neg_integer), _.._),                      do: true
-  defp subsumes(builtin(:non_neg_integer), builtin(:pos_integer)),     do: true
-  defp subsumes(builtin(:pos_integer), n) when is_integer(n),          do: true
-  defp subsumes(builtin(:pos_integer), _.._),                          do: true
-  defp subsumes(range = %Range{}, n) when is_integer(n),               do: n in range
-  defp subsumes(builtin(:atom), atom) when is_atom(atom),              do: true
-  defp subsumes(%Tuple{elements: :any}, %Tuple{}),                     do: true
-  defp subsumes(%Tuple{elements: e1}, %Tuple{elements: e2})
-    when length(e1) == length(e2) do
-    e1
-    |> Enum.zip(e2)
-    |> Enum.all?(fn {left, right} -> subsumes(left, right) end)
+  # note that subsuming a function isn't the same as coercion;
+  # with coercion, the function parameters are inverted, with subsumption
+  # they function parameters are merged into combined type.
+  # TODO: MOVE THIS INTO THE Type.Function module
+
+  # :any function rules
+  def subsume_function(
+    f1 = %{params: :any, return: r1},
+    f2 = %{params: :any, return: r2}, rest) do
+    if Type.coercion(r2, r1) == :type_ok do
+      [f1 | rest]
+    else
+      [f1, f2 | rest]
+    end
   end
-  defp subsumes(_, _),                                                 do: false
+  def subsume_function(f1 = %{params: :any}, f2 = %{params: _}, rest) do
+    if Type.coercion(f2.return, f1.return) == :type_ok do
+      [f1 | rest]
+    else
+      [f1, f2 | rest]
+    end
+  end
+  # rules for functions where the params are lists
+  def subsume_function(f1 = %{params: p1}, f2 = %{params: p2}, rest) when
+    length(p1) != length(p2) do
+    # if they don't have the same number of parameters, then the functions
+    # live in orthogonal type spaces.
+      [f1, f2 | rest]
+  end
+  def subsume_function(f1, f2, rest) do
+    subtype = [f1.return | f1.params]
+    |> Enum.zip([f2.return | f2.params])
+    |> Enum.all?(fn {t1, t2} -> Type.coercion(t2, t1) == :type_ok end)
+
+    if subtype do
+      [f1 | rest]
+    else
+      [f1, f2 | rest]
+    end
+  end
 
   defimpl Type.Typed do
     import Type, only: :macros
