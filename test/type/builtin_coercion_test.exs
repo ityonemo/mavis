@@ -9,7 +9,7 @@ defmodule TypeTest.BuiltinCoercionTest do
 
   @any %Type{name: :any}
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   describe "for the any type" do
     test "all types can coerce" do

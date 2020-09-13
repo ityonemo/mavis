@@ -5,7 +5,7 @@ defmodule TypeTest.UnionTest do
 
   alias Type.Union
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   @any builtin(:any)
 

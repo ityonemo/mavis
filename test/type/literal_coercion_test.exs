@@ -7,7 +7,7 @@ defmodule TypeTest.LiteralCoercionTest do
 
   @any %Type{name: :any}
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   describe "for the integer literal type" do
     test "any and integer types maybe coerce" do

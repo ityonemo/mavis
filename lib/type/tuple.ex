@@ -5,7 +5,11 @@ defmodule Type.Tuple do
   @type t :: %__MODULE__{elements: [Type.t] | :any}
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
+
+    use Type.Impl
+
+    def group_order(_, _), do: raise "amy"
 
     alias Type.Tuple
 

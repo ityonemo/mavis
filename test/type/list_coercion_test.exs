@@ -5,7 +5,7 @@ defmodule TypeTest.ListCoercionTest do
 
   alias Type.{List, Bitstring, Tuple, Map, Function}
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   @any %Type{name: :any}
   @integer %Type{name: :integer}

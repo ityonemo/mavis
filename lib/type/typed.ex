@@ -6,10 +6,26 @@ defprotocol Type.Typed do
 
   @spec subtype?(Type.t, Type.t) :: boolean
   def subtype?(subject, target)
+
+  @spec order(Type.t, Type.t) :: boolean
+  def order(a, b)
+
+  @spec typegroup(Type.t) :: Type.group
+  def typegroup(type)
 end
 
 defimpl Type.Typed, for: Integer do
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
+
+  use Type.Impl
+
+  @spec group_order(integer, Type.t) :: boolean
+  def group_order(_, builtin(:integer)),               do: true
+  def group_order(_, builtin(:neg_integer)),           do: true
+  def group_order(left, builtin(:non_neg_integer)),    do: left >= 0
+  def group_order(left, builtin(:pos_integer)),        do: left > 0
+  def group_order(left, start.._end),                  do: left > start
+  def group_order(left, right) when is_integer(right), do: left >= right
 
   def coercion(_, builtin(:any)), do: :type_ok
 
@@ -25,9 +41,18 @@ defimpl Type.Typed, for: Integer do
 end
 
 defimpl Type.Typed, for: Range do
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
-  def coercion(_, builtin(:any)), do: :type_ok
+  use Type.Impl
+
+  def group_order(_, builtin(:integer)),                 do: true
+  def group_order(_, builtin(:neg_integer)),             do: true
+  def group_order(start.._, builtin(:non_neg_integer)),  do: start >= 0
+  def group_order(start.._, builtin(:pos_integer)),      do: start > 0
+  def group_order(start.._, start.._end),                do: raise "foo"
+  def group_order(start.._, right),                      do: start >= right
+
+  def coercion(_, builtin(:any)), do: :typebar
 
   # integer rules
   def coercion(_, builtin(:integer)), do: :type_ok
@@ -52,7 +77,12 @@ defimpl Type.Typed, for: Range do
 end
 
 defimpl Type.Typed, for: Atom do
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
+
+  use Type.Impl
+
+  def group_order(_, builtin(:atom)), do: false
+  def group_order(left, right), do: left >= right
 
   def usable_as(_, builtin(:atom)), do: :ok
 
@@ -89,7 +119,11 @@ end
 
 # remember, the empty list is its own type
 defimpl Type.Typed, for: List do
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
+
+  use Type.Impl
+
+  def group_order(_, _), do: raise "a child"
 
   def coercion([], builtin(:any)), do: :type_ok
   def coercion([], builtin(:iolist)), do: :type_ok

@@ -2,7 +2,7 @@ defmodule Type.Union do
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t]}
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   def of(left, right) do
     Enum.into([left, right], %__MODULE__{})
@@ -132,7 +132,7 @@ defmodule Type.Union do
   end
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(_, _), do: :type_error

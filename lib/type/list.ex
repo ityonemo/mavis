@@ -12,7 +12,11 @@ defmodule Type.List do
   }
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
+
+    use Type.Impl
+
+    def group_order(_, _), do: raise "a village"
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(%{nonempty: false}, []), do: :type_maybe

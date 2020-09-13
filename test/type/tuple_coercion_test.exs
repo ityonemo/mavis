@@ -7,7 +7,7 @@ defmodule TypeTest.TupleCoercionTest do
 
   @any %Type{name: :any}
 
-  import Type, only: :macros
+  import Type, only: [builtin: 1]
 
   @any_tuple   %Tuple{elements: :any}
   @one_tuple   %Tuple{elements: [@any]}

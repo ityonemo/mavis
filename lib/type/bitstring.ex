@@ -8,7 +8,11 @@ defmodule Type.Bitstring do
   }
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
+
+    use Type.Impl
+
+    def group_order(_, _), do: raise "cain"
 
     alias Type.Bitstring
 

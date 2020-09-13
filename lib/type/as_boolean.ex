@@ -5,7 +5,7 @@ defmodule Type.AsBoolean do
   @type t :: %__MODULE__{for: Type.t}
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(_, _), do: :type_error
