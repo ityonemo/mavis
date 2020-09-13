@@ -4,6 +4,10 @@ defmodule Type.Union do
 
   import Type, only: :macros
 
+  def of(left, right) do
+    Enum.into([left, right], %__MODULE__{})
+  end
+
   # for now.  TODO: we need more sophisticated checking on this.
   def collapse(%__MODULE__{of: types}) do
     types

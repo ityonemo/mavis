@@ -1,5 +1,11 @@
 defprotocol Type.Typed do
   def coercion(subject, target)
+
+  @spec usable_as(Type.t, Type.t) :: Type.status
+  def usable_as(subject, target)
+
+  @spec subtype?(Type.t, Type.t) :: boolean
+  def subtype?(subject, target)
 end
 
 defimpl Type.Typed, for: Integer do
@@ -47,6 +53,12 @@ end
 
 defimpl Type.Typed, for: Atom do
   import Type, only: :macros
+
+  def usable_as(_, builtin(:atom)), do: :ok
+
+  def subtype?(_, builtin(:atom)), do: true
+  def subtype?(atom, atom),        do: true
+  def subtype?(_, _),              do: false
 
   def coercion(_, builtin(:any)), do: :type_ok
 

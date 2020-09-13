@@ -16,22 +16,16 @@ defmodule Type do
   | Type.Function.t
   | Type.Union.t
 
-  @type coerces :: :type_ok | :type_maybe | :type_error
+  @type warnings :: {:warn, [Type.Message.t]}
+  @type error  :: {:error, Type.Message.t}
+  @type status :: :ok | warnings | error
 
   defmacro builtin(type) do
     quote do %Type{module: nil, name: unquote(type)} end
   end
 
-  @doc """
-  collect coercion results.  Currently, uses basic ternary logic.
-  """
-  def collect(results) do
-    Enum.max_by(results, fn
-      :type_ok    -> 0
-      :type_maybe -> 1
-      :type_error -> 2
-    end)
-  end
+  defdelegate usable_as(type, target), to: Type.Typed
+  defdelegate subtype?(type, target), to: Type.Typed
 
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
@@ -138,10 +132,8 @@ defmodule Type do
 
   defdelegate of(literal, context), to: Type.Typeable
 
-  @spec coercion({t, t}) :: coerces
   def coercion({subject, target}), do: coercion(subject, target)
 
-  @spec coercion(t, t) :: coerces
   defdelegate coercion(subject, target), to: Type.Typed
 
   defimpl String.Chars do
@@ -197,4 +189,20 @@ defimpl Type.Typed, for: Type do
   def coercion(builtin(type), builtin(type)), do: :type_ok
   def coercion(builtin(:any), _), do: :type_maybe
   def coercion(_, _), do: :type_error
+end
+
+defmodule Type.Message do
+  @enforce_keys [:type, :target]
+  defstruct @enforce_keys ++ [meta: []]
+
+  @type t :: %__MODULE__{
+    type:   Type.t,
+    target: Type.t,
+    meta:   [
+      file: Path.t,
+      line: non_neg_integer,
+      warning: atom,
+      message: String.t
+    ]
+  }
 end
