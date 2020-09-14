@@ -15,7 +15,7 @@ defprotocol Type.Typed do
 end
 
 defimpl Type.Typed, for: Integer do
-  import Type, only: [builtin: 1]
+  import Type, only: [builtin: 1, is_pos_integer: 1, is_neg_integer: 1]
 
   use Type.Impl
 
@@ -26,6 +26,17 @@ defimpl Type.Typed, for: Integer do
   def group_order(_, builtin(:pos_integer)),           do: false
   def group_order(left, _..last),                      do: left > last
   def group_order(left, right) when is_integer(right), do: left >= right
+
+  def usable_as(i, i, _),                                     do: :ok
+  def usable_as(i, a..b, _) when a <= i and i <= b,           do: :ok
+  def usable_as(i, builtin(:pos_integer), _) when i > 0,      do: :ok
+  def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
+  def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
+  def usable_as(_, builtin(:integer), _),                     do: :ok
+  def usable_as(_, builtin(:any), _),                         do: :ok
+  def usable_as(type, target, meta) do
+    {:error, Type.Message.make(type, target, meta)}
+  end
 
   def coercion(_, builtin(:any)), do: :type_ok
 
