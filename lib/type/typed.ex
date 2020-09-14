@@ -21,10 +21,10 @@ defimpl Type.Typed, for: Integer do
 
   @spec group_order(integer, Type.t) :: boolean
   def group_order(_, builtin(:integer)),               do: true
-  def group_order(_, builtin(:neg_integer)),           do: true
-  def group_order(left, builtin(:non_neg_integer)),    do: left >= 0
-  def group_order(left, builtin(:pos_integer)),        do: left > 0
-  def group_order(left, start.._end),                  do: left > start
+  def group_order(left, builtin(:neg_integer)),        do: left >= 0
+  def group_order(_, builtin(:non_neg_integer)),       do: false
+  def group_order(_, builtin(:pos_integer)),           do: false
+  def group_order(left, _..last),                      do: left > last
   def group_order(left, right) when is_integer(right), do: left >= right
 
   def coercion(_, builtin(:any)), do: :type_ok
@@ -45,12 +45,13 @@ defimpl Type.Typed, for: Range do
 
   use Type.Impl
 
-  def group_order(_, builtin(:integer)),                 do: true
-  def group_order(_, builtin(:neg_integer)),             do: true
-  def group_order(start.._, builtin(:non_neg_integer)),  do: start >= 0
-  def group_order(start.._, builtin(:pos_integer)),      do: start > 0
-  def group_order(start.._, start.._end),                do: raise "foo"
-  def group_order(start.._, right),                      do: start >= right
+  def group_order(_, builtin(:integer)),           do: false
+  def group_order(_, builtin(:pos_integer)),       do: false
+  def group_order(_, builtin(:non_neg_integer)),   do: false
+  def group_order(_..last, builtin(:neg_integer)), do: last >= 0
+  def group_order(first1..last, first2..last),     do: first1 < first2
+  def group_order(_..last1, _..last2),             do: last1 > last2
+  def group_order(_..last, right),                 do: last >= right
 
   def coercion(_, builtin(:any)), do: :typebar
 
