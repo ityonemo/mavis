@@ -17,8 +17,16 @@ defmodule Type.List do
     use Type.Impl
 
     def group_order(%{nonempty: ne}, []), do: not ne
-    #def group_order(%{nonempty: true}, %{nonempty: false}), do: true
-    #def group_order(%{nonempty: false}, %{nonempty: true}), do: false
+    def group_order(%{nonempty: false}, %{nonempty: true}), do: true
+    def group_order(%{nonempty: true}, %{nonempty: false}), do: false
+    def group_order(a, b) do
+      case {Type.order(a.type, b.type), Type.order(b.type, a.type)} do
+        {true, false} -> true
+        {false, true} -> false
+        {true, true} ->
+          Type.order(a.final, b.final)
+      end
+    end
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(%{nonempty: false}, []), do: :type_maybe

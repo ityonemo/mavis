@@ -124,6 +124,9 @@ defmodule Type do
             true -> group_order(this, other)
           end
         end
+
+        # preload a group_order definition here.
+        def group_order(any, any), do: true
       end
     end
   end
@@ -165,6 +168,7 @@ defimpl Type.Typed, for: Type do
   import Type, only: [builtin: 1]
 
   # group order for the integer block.
+  def group_order(type, type),                   do: true
   def group_order(builtin(:integer), _),         do: true
   def group_order(_, builtin(:integer)),         do: false
   def group_order(builtin(:non_neg_integer), _), do: true
