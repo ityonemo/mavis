@@ -9,7 +9,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
 
   describe "a negative integer" do
     test "is bigger than some types" do
-      assert builtin(:any) < -47  # test top
+      assert builtin(:none) < -47  # test bottom
       assert builtin(:integer) < -47
       assert builtin(:neg_integer) < -47
     end
@@ -18,7 +18,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
       assert -47 < builtin(:non_neg_integer)
       assert -47 < builtin(:pos_integer)
       assert -47 < builtin(:atom)  # test one thing out of its typegroup
-      assert -47 < builtin(:none)  # test bottom
+      assert -47 < builtin(:any)   # test top
     end
 
     test "compares against ranges depending on the top value" do
@@ -36,7 +36,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
 
   describe "zero" do
     test "is bigger than some types" do
-      assert builtin(:any) < 0  # test top
+      assert builtin(:none) < 0  # test bottom
       assert builtin(:integer) < 0
       assert builtin(:neg_integer) < 0
       assert builtin(:non_neg_integer) < 0
@@ -45,7 +45,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
     test "is smaller than most types" do
       assert 0 < builtin(:pos_integer)
       assert 0 < builtin(:atom)  # test one thing out of its typegroup
-      assert 0 < builtin(:none)  # test bottom
+      assert 0 < builtin(:any)   # test top
     end
 
     test "compares against ranges depending on the top value" do
@@ -62,7 +62,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
 
   describe "a positive integer" do
     test "is bigger than some types" do
-      assert builtin(:any) < 47  # test top
+      assert builtin(:none) < 47  # test bottom
       assert builtin(:integer) < 47
       assert builtin(:neg_integer) < 47
       assert builtin(:non_neg_integer) < 47
@@ -71,7 +71,7 @@ defmodule TypeTest.IntegerLiteral.OrderTest do
 
     test "is smaller than most types" do
       assert 47 < builtin(:atom)  # test one thing out of its typegroup
-      assert 47 < builtin(:none)  # test bottom
+      assert 47 < builtin(:any)   # test top
     end
 
     test "compares against ranges depending on the top value" do

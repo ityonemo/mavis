@@ -37,44 +37,46 @@ defmodule Type do
 
   For literals this follows the order in the erlang type system.  For type
   classes and special literals (like ranges) the type should be placed in
-  order just in front of its lowest element.
+  order just after of its highest element.
 
   Types are organized into groups, which exist as a fastlane for comparing
   order between two different types (see `typegroup/1`)
 
   The order is as follows:
-  - group 0: any
+  - group 0: none
   - group 1
-    - integer
-    - neg_integer
     - [negative integer literal]
-    - non_neg_integer
-    - 0
+    - neg_integer
+    - [nonnegative integer literal]
     - pos_integer
-    - [positive integer literal]
+    - non_neg_integer
+    - integer
   - group 2: float
   - group 3
-    - atom
     - [atom literal]
+    - atom
   - group 4: reference
   - group 5
-    - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
     - `params: list` functions (ordered by `retval`, then `params` in dictionary order)
+    - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
   - group 6: port
   - group 7: pid
   - group 8
-    - any tuple
     - defined arity tuple
+    - any tuple
   - group 9: maps
   - group 10:
+    - `nonempty: true` list
+    - empty list literal
     - `nonempty: false` lists
-    - iodata
-    - `nonempty: true` lists
   - group 11: bitstrings
-  - group 12: none
+  - group 12: any
 
-  ranges (group 1) come before the lowest integer in the range.
-  a union comes before the first represented item in its union.
+  ranges (group 1) come after the highest integer in the range, bigger
+  ranges come after smaller ranges
+
+  iolist (group 10) come in the appropriate place in the range,
+  a union comes after the highest represented item in its union,
   """
   defdelegate order(a, b), to: Type.Typed
 
@@ -86,85 +88,6 @@ defmodule Type do
   """
   @spec typegroup(t) :: group
   defdelegate typegroup(type), to: Type.Typed
-
-  #def order(a, a),                                       do: true
-  #def order(builtin(:any), _any),                        do: false
-  #def order(_any, builtin(:any)),                        do: true
-  #def order(builtin(:integer), _any),                    do: false
-  #def order(_any, builtin(:integer)),                    do: true,
-  #def order(builtin(:neg_integer), _any),                do: false
-  #def order(_any, builtin(:neg_integer)),                do: true
-  #def order(m, n) when is_neg_integer(m) and is_neg_integer(n), do: m >= n
-  #def order(m.._, n) when is_neg_integer(m) and is_integer(n), do: m >= n
-  #def order(m.._, n.._),                                 do: m >= n
-  #def order(n, _any) when is_neg_integer(n),             do: false
-  #def order(_any, n) when is_neg_integer(n),             do: true
-  #def order(m.._, _any) when is_neg_integer(m),          do: false
-  #def order(_any, m.._) when is_neg_integer(m),          do: true
-  #def order(builtin(:non_neg_integer), _any),            do: false
-  #def order(_any, builtin(:non_neg_integer)),            do: true
-  #def order(0.._, _any),                                 do: false
-  #def order(_any, 0.._),                                 do: true
-  #def order(0, _any),                                    do: false
-  #def order(_any, 0),                                    do: true
-  #def order(builtin(:pos_integer), _any),                do: false
-  #def order(_any, builtin(:pos_integer)),                do: true
-  #def order(m, n) when is_integer(m) and is_integer(n),  do: m >= n
-  #def order(integer, _any) when is_pos_integer(integer), do: false
-  #def order(_any, integer) when is_pos_integer(integer), do: true
-  #def order(_.._, _any),                                 do: false
-  #def order(_any, _.._),                                 do: true
-  #def order(builtin(:atom), _any),                       do: false
-  #def order(_any, builtin(:atom)),                       do: true
-  #def order(atom, _any) when is_atom(atom),              do: false
-  #def order(_any, atom) when is_atom(atom),              do: true
-  #def order(%Tuple{elements: :any}, _any),               do: false
-  #def order(_any, %Tuple{elements: :any}),               do: true
-  #def order(%Tuple{elements: e1}, %Tuple{elements: e2})
-  #    when length(e1) == length(e2)                      do
-  #  e1
-  #  |> Enum.zip(e2)
-  #  |> Enum.all?(&order/1)
-  #end
-  #def order(%Tuple{elements: e1}, %Tuple{elements: e2}), do: length(e1) > length(e2)
-  #def order(%Tuple{}, _any),                             do: false
-  #def order(_any, %Tuple{}),                             do: true
-  #def order(l1 = %List{}, l2 = %List{}),                 do: order_lists(l1, l2)
-  #def order(%List{}, _any),                              do: false
-  #def order(_any, %List{}),                              do: true
-  #def order(f1 = %Function{}, f2 = %Function{}),         do: order_functions(f1, f2)
-  #def order(%Function{}, _any),                          do: false
-  #def order(_any, %Function{}),                          do: true
-#
-  #def order(a, b),                                       do: a >= b
-#
-  ## private shim for ordering eveything else.
-  #defp order({e1, e2}), do: order(e1, e2)
-#
-  #defp order_lists(%{nonempty: false}, %{nonempty: true}), do: false
-  #defp order_lists(%{nonempty: true}, %{nonempty: false}), do: true
-  #defp order_lists(l1, l2) do
-  #  if l1.type == l2.type do
-  #    order(l1.final, l2.final)
-  #  else
-  #    order(l1.type, l2.type)
-  #  end
-  #end
-#
-  #defp order_functions(f1 = %{params: :any}, f2 = %{params: :any}) do
-  #  order(f1.return, f2.return)
-  #end
-  #defp order_functions(%{params: :any}, %{params: _list}), do: false
-  #defp order_functions(%{params: _list}, %{params: :any}), do: true
-  #defp order_functions(f1, f2) do
-  #  [f1.return | f1.params]
-  #  |> Enum.zip([f2.return | f2.params])
-  #  |> Enum.all?(&order/1)
-  #end
-#
-  #defdelegate of(literal, context), to: Type.Typeable
-#
-  #def coercion({subject, target}), do: coercion(subject, target)
 
   defmodule Impl do
     # exists to prevent mistakes when generating functions
@@ -222,28 +145,37 @@ end
 defimpl Type.Typed, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
-    any: 0, integer: 1, neg_integer: 1, non_neg_integer: 1,
-    pos_integer: 1, float: 2, atom: 3, reference: 4, group: 5,
-    port: 6, pid: 7, none: 12}
+    none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
+    float: 2, atom: 3, reference: 4, group: 5, port: 6, pid: 7, any: 12}
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]
   end
 
   def order(this, other) do
+    this_group = Type.typegroup(this)
     other_group = Type.typegroup(other)
     cond do
-      other_group < @group -> true
-      other_group > @group -> false
+      this_group > other_group -> true
+      this_group < other_group -> false
       true -> group_order(this, other)
     end
   end
 
   import Type, only: [builtin: 1]
 
-  def group_order(builtin(:non_neg_integer), integer) when is_integer(integer) do
-    0 >= integer
-  end
+  # group order for the integer block.
+  def group_order(builtin(:integer), _),         do: true
+  def group_order(_, builtin(:integer)),         do: false
+  def group_order(builtin(:non_neg_integer), _), do: true
+  def group_order(_, builtin(:non_neg_integer)), do: false
+  def group_order(builtin(:pos_integer), _),     do: true
+  def group_order(_, builtin(:pos_integer)),     do: false
+  def group_order(builtin(:neg_integer), _),     do: true
+  def group_order(_, builtin(:neg_integer)),     do: false
+
+  def group_order(builtin(:atom), _), do: true
+  def group_order(_, builtin(:atom)), do: false
 
   #def coercion(_, builtin(:any)),  do: :type_ok
   #def coercion(_, builtin(:none)), do: :type_error
