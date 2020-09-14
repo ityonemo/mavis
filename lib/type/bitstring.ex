@@ -9,12 +9,15 @@ defmodule Type.Bitstring do
 
   defimpl Type.Typed do
     import Type, only: [builtin: 1]
+    alias Type.Bitstring
 
     use Type.Impl
 
-    def group_order(_, _), do: raise "cain"
+    def group_order(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: true
+    def group_order(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: false
+    def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: true
+    def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: false
 
-    alias Type.Bitstring
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(any, any), do: :type_ok
