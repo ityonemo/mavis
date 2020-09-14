@@ -9,7 +9,16 @@ defmodule Type.Tuple do
 
     use Type.Impl
 
-    def group_order(_, _), do: raise "amy"
+    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: true
+    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: false
+    def group_order(tuple1, tuple2) do
+      tuple1.elements
+      |> Enum.zip(tuple2.elements)
+      |> Enum.any?(fn {t1, t2} ->
+        # they can't be equal
+        Type.order(t1, t2) and not Type.order(t2, t1)
+      end)
+    end
 
     alias Type.Tuple
 
