@@ -1,4 +1,8 @@
 defmodule Type.AsBoolean do
+
+  # honestly I don't know wtf to do about this
+  # typeclass.
+
   @enforce_keys [:for]
   defstruct [:for]
 
@@ -6,8 +10,5 @@ defmodule Type.AsBoolean do
 
   defimpl Type.Typed do
     import Type, only: [builtin: 1]
-
-    def coercion(_, builtin(:any)), do: :type_ok
-    def coercion(_, _), do: :type_error
   end
 end

@@ -11,7 +11,7 @@ defmodule Type.Operators do
   @doc """
   shortcut for `Type.Typed.usable_as/2`
   """
-  defdelegate a ~> b, to: Type.Typed, as: :usable_as
+  def a ~> b, do: Type.usable_as(a, b)
 
   @doc """
   shortcut for `Type.Union.of/2`

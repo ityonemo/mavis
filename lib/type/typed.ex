@@ -1,8 +1,8 @@
 defprotocol Type.Typed do
   def coercion(subject, target)
 
-  @spec usable_as(Type.t, Type.t) :: Type.status
-  def usable_as(subject, target)
+  @spec usable_as(Type.t, Type.t, keyword) :: Type.status
+  def usable_as(subject, target, meta)
 
   @spec subtype?(Type.t, Type.t) :: boolean
   def subtype?(subject, target)
@@ -85,7 +85,12 @@ defimpl Type.Typed, for: Atom do
   def group_order(_, builtin(:atom)), do: false
   def group_order(left, right), do: left >= right
 
-  def usable_as(_, builtin(:atom)), do: :ok
+  def usable_as(atom, atom,        _), do: :ok
+  def usable_as(_, builtin(:atom), _), do: :ok
+  def usable_as(_, builtin(:any),  _), do: :ok
+  def usable_as(atom, type, meta) do
+    {:error, Type.Message.make(atom, type, meta)}
+  end
 
   def subtype?(_, builtin(:atom)), do: true
   def subtype?(atom, atom),        do: true
@@ -126,9 +131,17 @@ defimpl Type.Typed, for: List do
 
   def group_order([], %Type.List{nonempty: ne}), do: ne
 
-  def coercion([], builtin(:any)), do: :type_ok
-  def coercion([], builtin(:iolist)), do: :type_ok
-  def coercion([], []), do: :type_ok
-  def coercion([], %Type.List{nonempty: false}), do: :type_ok
-  def coercion([], _), do: :type_error
+  def usable_as([], [], _), do: :ok
+  def usable_as([], builtin(:any), _), do: :ok
+  def usable_as([], t = %Type.List{nonempty: false, final: f}, meta) do
+    if subtype?([], f) do
+      :ok
+    else
+      {:error, Type.Message.make([], t, meta)}
+    end
+  end
+  def usable_as([], t, meta), do: {:error, Type.Message.make([], t, meta)}
+
+  def subtype?([], []), do: true
+  def subtype?([], _), do: false
 end

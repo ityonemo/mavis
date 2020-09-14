@@ -24,7 +24,7 @@ defmodule Type do
     quote do %Type{module: nil, name: unquote(type)} end
   end
 
-  defdelegate usable_as(type, target), to: Type.Typed
+  defdelegate usable_as(type, target, meta \\ []), to: Type.Typed
   defdelegate subtype?(type, target), to: Type.Typed
 
   defguard is_neg_integer(n) when is_integer(n) and n < 0
@@ -32,7 +32,7 @@ defmodule Type do
 
   @spec order({t, t}) :: boolean
   def order({t1, t2}), do: order(t1, t2)
-  
+
   @spec order(t, t) :: boolean
   @doc """
   Types have an order that facilitates calculation of collapsing values into
@@ -237,4 +237,8 @@ defmodule Type.Message do
       message: String.t
     ]
   }
+
+  def make(type, target, meta) do
+    %__MODULE__{type: type, target: target, meta: meta}
+  end
 end
