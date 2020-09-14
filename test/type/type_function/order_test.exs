@@ -23,8 +23,32 @@ defmodule TypeTest.TypeFunction.OrderTest do
       assert param_fn([], builtin(:any)) > param_fn([], builtin(:integer))
     end
 
+    test "is bigger than a function with more parameters" do
+      assert param_fn([], builtin(:any)) > param_fn([:foo], builtin(:any))
+      assert param_fn([:foo], builtin(:any)) > param_fn([:bar, :baz], builtin(:any))
+    end
+
+    test "is bigger than a function with a less general parameter" do
+      assert param_fn([builtin(:any)], builtin(:any)) >
+        param_fn([builtin(:integer)], builtin(:any))
+      assert param_fn([:foo, builtin(:any)], builtin(:any)) >
+        param_fn([:foo, builtin(:integer)], builtin(:any))
+    end
+
     test "is smaller than a function with a more general return" do
       assert param_fn([], builtin(:integer)) < param_fn([], builtin(:any))
+    end
+
+    test "is smaller than a function with fewer parameters" do
+      assert param_fn([:foo], builtin(:any)) < param_fn([], builtin(:any))
+      assert param_fn([:bar, :baz], builtin(:any)) < param_fn([:foo], builtin(:any))
+    end
+
+    test "is smaller than a function with a more general parameter" do
+      assert param_fn([builtin(:integer)], builtin(:any)) <
+        param_fn([builtin(:any)], builtin(:any))
+      assert param_fn([:foo, builtin(:integer)], builtin(:any)) <
+        param_fn([:foo, builtin(:any)], builtin(:any))
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do

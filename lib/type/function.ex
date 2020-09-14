@@ -31,10 +31,17 @@ defmodule Type.Function do
     end
     def group_order(%{params: :any}, _), do: true
     def group_order(_, %{params: :any}), do: false
+    def group_order(%{params: p1}, %{params: p2})
+        when length(p1) < length(p2), do: true
+    def group_order(%{params: p1}, %{params: p2})
+        when length(p1) > length(p2), do: false
     def group_order(f1, f2) do
       [f1.return | f1.params]
       |> Enum.zip([f2.return | f2.params])
-      |> Enum.any?(&Type.order/1)
+      |> Enum.any?(fn {t1, t2} ->
+        # they can't be equal
+        Type.order(t1, t2) and not Type.order(t2, t1)
+      end)
     end
 
     def coercion(_, builtin(:any)), do: :type_ok
