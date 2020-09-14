@@ -26,7 +26,16 @@ defmodule Type.Function do
 
     use Type.Impl
 
-    def group_order(_, _), do: raise "hell"
+    def group_order(%{params: :any, return: r1}, %{params: :any, return: r2}) do
+      Type.order(r1, r2)
+    end
+    def group_order(%{params: :any}, _), do: true
+    def group_order(_, %{params: :any}), do: false
+    def group_order(f1, f2) do
+      [f1.return | f1.params]
+      |> Enum.zip([f2.return | f2.params])
+      |> Enum.any?(&Type.order/1)
+    end
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(%{params: :any, return: from_return},

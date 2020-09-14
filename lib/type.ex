@@ -30,6 +30,9 @@ defmodule Type do
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
 
+  @spec order({t, t}) :: boolean
+  def order({t1, t2}), do: order(t1, t2)
+  
   @spec order(t, t) :: boolean
   @doc """
   Types have an order that facilitates calculation of collapsing values into
