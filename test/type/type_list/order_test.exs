@@ -39,7 +39,7 @@ defmodule TypeTest.TypeList.OrderTest do
     test "is smaller than maybe-empty lists, bitstrings or top" do
       assert nonempty(type: builtin(:any)) < %List{type: builtin(:integer)}
       assert nonempty(type: builtin(:any)) < %Type.Bitstring{size: 0, unit: 0}
-      assert nonempty(type: builtin(:any)) < builtin(:top)
+      assert nonempty(type: builtin(:any)) < builtin(:any)
     end
   end
 
@@ -69,7 +69,7 @@ defmodule TypeTest.TypeList.OrderTest do
 
     test "is smaller than maybe-empty lists, bitstrings or top" do
       assert %List{type: builtin(:any)} < %Type.Bitstring{size: 0, unit: 0}
-      assert %List{type: builtin(:any)} < builtin(:top)
+      assert %List{type: builtin(:any)} < builtin(:any)
     end
   end
 
