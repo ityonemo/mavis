@@ -16,7 +16,9 @@ defmodule Type.List do
 
     use Type.Impl
 
-    def group_order(_, _), do: raise "a village"
+    def group_order(%{nonempty: ne}, []), do: not ne
+    #def group_order(%{nonempty: true}, %{nonempty: false}), do: true
+    #def group_order(%{nonempty: false}, %{nonempty: true}), do: false
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(%{nonempty: false}, []), do: :type_maybe

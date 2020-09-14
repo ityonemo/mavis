@@ -1,4 +1,4 @@
-defmodule TypeTest.RangeLiteral.OrderTest do
+defmodule TypeTest.LiteralRange.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :order

@@ -124,7 +124,7 @@ defimpl Type.Typed, for: List do
 
   use Type.Impl
 
-  def group_order(_, _), do: raise "a child"
+  def group_order([], %Type.List{nonempty: ne}), do: ne
 
   def coercion([], builtin(:any)), do: :type_ok
   def coercion([], builtin(:iolist)), do: :type_ok
