@@ -1,6 +1,4 @@
-# Coercion in Mavis
-
-What does Mavis mean by coercion?
+# The Mavis Typesystem
 
 ## General coercion
 
