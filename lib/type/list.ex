@@ -16,9 +16,11 @@ defmodule Type.List do
 
     use Type.Impl
 
+    alias Type.{List, Message}
+
     def group_order(%{nonempty: ne}, []), do: not ne
-    def group_order(%{nonempty: false}, %{nonempty: true}), do: true
-    def group_order(%{nonempty: true}, %{nonempty: false}), do: false
+    def group_order(%{nonempty: false}, %List{nonempty: true}), do: true
+    def group_order(%{nonempty: true}, %List{nonempty: false}), do: false
     def group_order(a, b) do
       case {Type.order(a.type, b.type), Type.order(b.type, a.type)} do
         {true, false} -> true
@@ -28,28 +30,30 @@ defmodule Type.List do
       end
     end
 
-    def coercion(_, builtin(:any)), do: :type_ok
-    def coercion(%{nonempty: false}, []), do: :type_maybe
-    def coercion(lst_src = %Type.List{}, lst_dst = %Type.List{}) do
-      Type.List.compare(lst_src, lst_dst)
+    def usable_as(type, type, _meta), do: :ok
+    def usable_as(_challenge, builtin(:any), _meta), do: :ok
+
+    def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
+      case usable_as(challenge, %{target | nonempty: false}, meta) do
+        :ok -> {:maybe, Message.make(challenge, target, meta)}
+        maybe_or_error -> maybe_or_error
+      end
     end
-    def coercion(_, _), do: :type_error
-  end
 
-  def compare(%{type: body_1, final: final_1, nonempty: ne1},
-              %{type: body_2, final: final_2, nonempty: ne2}) do
+    def usable_as(challenge, target = %List{}, meta) do
+      u1 = Type.usable_as(challenge.type, target.type)
+      u2 = Type.usable_as(challenge.final, target.final)
 
-    case {Type.coercion(body_1, body_2), Type.coercion(final_1, final_2)} do
-      {:type_ok, :type_ok} -> :type_ok
-      {:type_error, _} -> :type_error
-      {_, :type_error} -> :type_error
-      {:type_maybe, _} -> :type_maybe
-      {_, :type_maybe} -> :type_maybe
+      case Type.ternary_and(u1, u2) do
+        :ok -> :ok
+        # TODO: make this report the internal error as well.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      end
     end
-    |> ok_to_maybe(ne1, ne2)
+
+    def usable_as(challenge, target, meta) do
+      {:error, Message.make(challenge, target, meta)}
+    end
   end
-
-  defp ok_to_maybe(:type_ok, false, true), do: :type_maybe
-  defp ok_to_maybe(any, _, _), do: any
-
 end
