@@ -152,7 +152,7 @@ defimpl Type.Typed, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
-    float: 2, atom: 3, reference: 4, group: 5, port: 6, pid: 7, any: 12}
+    float: 2, atom: 3, reference: 4, port: 6, pid: 7, any: 12}
 
   import Type, only: [builtin: 1]
 
@@ -165,9 +165,11 @@ defimpl Type.Typed, for: Type do
     {:error, Message.make(builtin(:none), target, meta)}
   end
 
+  # trap anys as ok
+  def usable_as(_, builtin(:any), _meta), do: :ok
+
   # negative integer
-  def usable_as(builtin(:neg_integer), builtin(target), _meta)
-    when target in [:integer, :any], do: :ok
+  def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
 
   def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
     {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
@@ -177,8 +179,7 @@ defimpl Type.Typed, for: Type do
   end
 
   # non negative integer
-  def usable_as(builtin(:non_neg_integer), builtin(target), _meta)
-    when target in [:integer, :any], do: :ok
+  def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
 
   def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
     {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
@@ -190,6 +191,41 @@ defimpl Type.Typed, for: Type do
     {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
   end
 
+  # positive integer
+  def usable_as(builtin(:pos_integer), builtin(target), _meta)
+    when target in [:non_neg_integer, :integer], do: :ok
+
+  def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
+    {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
+  end
+  def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
+    {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
+  end
+
+  # integer
+  def usable_as(builtin(:integer), builtin(target), meta)
+    when target in [:neg_integer, :non_neg_integer, :pos_integer] do
+      {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
+  end
+
+  def usable_as(builtin(:integer), a, meta) when is_integer(a) do
+    {:maybe, [Message.make(builtin(:integer), a, meta)]}
+  end
+  def usable_as(builtin(:integer), a..b, meta) do
+    {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
+  end
+
+  # atom
+  def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
+    {:maybe, [Message.make(builtin(:atom), atom, meta)]}
+  end
+
+  # any
+  def usable_as(builtin(:any), any_other_type, meta) do
+    {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
+  end
+
+  # all else falls through as error.
   def usable_as(challenge, target, meta) do
     {:error, Message.make(challenge, target, meta)}
   end
