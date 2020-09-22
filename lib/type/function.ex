@@ -44,31 +44,36 @@ defmodule Type.Function do
       end)
     end
 
-    def coercion(_, builtin(:any)), do: :type_ok
-    def coercion(%{params: :any, return: from_return},
-      %Type.Function{params: into_params, return: into_return}) do
+    alias Type.{Function, Message}
 
-      return_coercion = Type.coercion(from_return, into_return)
+    def usable_as(type, type, _meta), do: :ok
 
-      case into_params do
-        :any -> return_coercion
-        _ -> Type.collect([:type_maybe, return_coercion])
+    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+        when cparam == :any or tparam == :any do
+      case Type.usable_as(challenge.return, target.return, meta) do
+        :ok -> :ok
+        # TODO: add meta-information here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
       end
     end
-    def coercion(%{return: from}, %Type.Function{params: :any, return: into}) do
-      Type.coercion(from, into)
-    end
-    def coercion(%{params: from_params, return: from_return},
-      %Type.Function{params: into_params, return: into_return})
-      when length(from_params) == length(into_params) do
 
-      # cross the returns and parameters.  (see `coercion.md`)
-      [from_return | into_params]
-      |> Enum.zip([into_return | from_params])
-      |> Enum.map(&Type.coercion/1)
-      |> Type.collect
+    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+        when length(cparam) == length(tparam) do
+      [challenge.return | tparam]           # note that the target parameters and the challenge
+      |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
+      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+      |> Enum.reduce(&Type.ternary_and/2)
+      |> case do
+        :ok -> :ok
+        # TODO: add meta-information here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      end
     end
 
-    def coercion(_, _), do: :type_error
+    def usable_as(challenge, target, meta) do
+      {:error, Message.make(challenge, target, meta)}
+    end
   end
 end

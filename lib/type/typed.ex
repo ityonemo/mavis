@@ -1,5 +1,5 @@
 defprotocol Type.Typed do
-  @spec usable_as(Type.t, Type.t, keyword) :: Type.status
+  @spec usable_as(Type.t, Type.t, keyword) :: Type.ternary
   def usable_as(subject, target, meta)
 
   @spec subtype?(Type.t, Type.t) :: boolean

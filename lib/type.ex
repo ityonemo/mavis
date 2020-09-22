@@ -16,9 +16,9 @@ defmodule Type do
   | Type.Function.t
   | Type.Union.t
 
-  @type warnings :: {:warn, [Type.Message.t]}
+  @type maybe :: {:maybe, [Type.Message.t]}
   @type error  :: {:error, Type.Message.t}
-  @type status :: :ok | warnings | error
+  @type ternary :: :ok | maybe | error
 
   defmacro builtin(type) do
     quote do %Type{module: nil, name: unquote(type)} end
@@ -92,6 +92,18 @@ defmodule Type do
   @spec typegroup(t) :: group
   defdelegate typegroup(type), to: Type.Typed
 
+  @spec ternary_and(ternary, ternary) :: ternary
+  @doc false
+  # ternary and which performs comparisons of ok, maybe, and error
+  # types and composes them into the appropriate ternary logic result.
+  def ternary_and(:ok, :ok),                        do: :ok
+  def ternary_and(:ok, other),                      do: other
+  def ternary_and(other, :ok),                      do: other
+  def ternary_and({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_and({:maybe, _}, error),              do: error
+  def ternary_and(error, {:maybe, _}),              do: error
+  def ternary_and(error, _),                        do: error
+
   defmodule Impl do
     # exists to prevent mistakes when generating functions
     @group_for %{
@@ -133,8 +145,6 @@ defmodule Type do
       end
     end
   end
-
-  defdelegate coercion(subject, target), to: Type.Typed
 
   defimpl String.Chars do
     def to_string(%{module: nil, name: atom, params: params}) do
