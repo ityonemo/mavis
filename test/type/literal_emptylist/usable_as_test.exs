@@ -34,13 +34,8 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "any other type" do
-      list_of_targets = [-47, builtin(:neg_integer), 0, 47,
-        builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer),
-        builtin(:float), :foo, builtin(:atom), builtin(:reference),
-        %Function{return: 0}, builtin(:port), builtin(:pid),
-        %Tuple{elements: []}, %Map{}, %Bitstring{size: 0, unit: 0}]
-
-      Enum.each(list_of_targets, fn target ->
+      targets = TypeTest.Targets.except([[], %Type.List{}])
+      Enum.each(targets, fn target ->
         assert {:error, %Message{type: [], target: ^target}} =
           ([] ~> target)
       end)

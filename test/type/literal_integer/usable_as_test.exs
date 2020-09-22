@@ -55,12 +55,8 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
 
     test "any other type" do
-      list_of_targets = [47, builtin(:float), :foo, builtin(:atom),
-        builtin(:reference), %Function{return: 0}, builtin(:port),
-        builtin(:pid), %Tuple{elements: []}, %Map{}, [], %List{},
-        %Bitstring{size: 0, unit: 0}]
-
-      Enum.each(list_of_targets, fn target ->
+      targets = TypeTest.Targets.except([builtin(:non_neg_integer), builtin(:pos_integer), builtin(:integer)])
+      Enum.each(targets, fn target ->
         assert {:error, %Message{type: 42, target: ^target}} =
           (42 ~> target)
       end)

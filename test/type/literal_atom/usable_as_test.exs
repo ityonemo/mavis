@@ -21,17 +21,13 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
     end
   end
 
-  alias Type.{Bitstring, Function, List, Map, Message, Tuple}
+  alias Type.Message
+  alias TypeTest.Targets
 
   describe "atoms not usable as" do
     test "any other type" do
-      list_of_targets = [-47, builtin(:neg_integer), 0, 47,
-        builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer),
-        builtin(:float), :foo, builtin(:reference), %Function{return: 0},
-        builtin(:port), builtin(:pid), %Tuple{elements: []}, %Map{}, [],
-        %List{}, %Bitstring{size: 0, unit: 0}]
-
-      Enum.each(list_of_targets, fn target ->
+      targets = Targets.except([builtin(:atom)])
+      Enum.each(targets, fn target ->
         assert {:error, %Message{type: :bar, target: ^target}} =
           (:bar ~> target)
       end)

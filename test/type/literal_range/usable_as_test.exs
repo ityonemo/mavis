@@ -81,14 +81,10 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
 
     test "any other type" do
-      list_of_targets = [builtin(:float), :foo, builtin(:atom),
-        builtin(:reference), %Function{return: 0}, builtin(:port),
-        builtin(:pid), %Tuple{elements: []}, %Map{}, [],
-        %List{}, %Bitstring{size: 0, unit: 0}]
-
-      Enum.each(list_of_targets, fn target ->
-        assert {:error, %Message{type: 0..47, target: ^target}} =
-          (0..47 ~> target)
+      targets = TypeTest.Targets.except([-47, builtin(:neg_integer), builtin(:integer)])
+      Enum.each(targets, fn target ->
+        assert {:error, %Message{type: -47..-12, target: ^target}} =
+          (-47..-12 ~> target)
       end)
     end
   end
