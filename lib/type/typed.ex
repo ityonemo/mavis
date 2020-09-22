@@ -1,6 +1,4 @@
 defprotocol Type.Typed do
-  def coercion(subject, target)
-
   @spec usable_as(Type.t, Type.t, keyword) :: Type.status
   def usable_as(subject, target, meta)
 
@@ -37,18 +35,6 @@ defimpl Type.Typed, for: Integer do
   def usable_as(type, target, meta) do
     {:error, Type.Message.make(type, target, meta)}
   end
-
-  def coercion(_, builtin(:any)), do: :type_ok
-
-  # integer rules
-  def coercion(_, builtin(:integer)), do: :type_ok
-  def coercion(i, builtin(:neg_integer)) when i < 0, do: :type_ok
-  def coercion(i, builtin(:non_neg_integer)) when i >= 0, do: :type_ok
-  def coercion(i, builtin(:pos_integer)) when i > 0, do: :type_ok
-  def coercion(i, a..b) when a <= i and i <= b, do: :type_ok
-
-  def coercion(i, i), do: :type_ok
-  def coercion(_, _), do: :type_error
 end
 
 defimpl Type.Typed, for: Range do

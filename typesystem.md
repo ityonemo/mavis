@@ -1,85 +1,72 @@
 # The Mavis Typesystem
 
-## General coercion
+The Mavis typesystem features two distinct and unique
+concepts which were conceived of as tool specialized for
+the BEAM virtual machine's type system, and can be
+considered a refinement built on top of the type specs
+that are used by `dialyzer`, the legacy erlang
+type-checking system.
 
-`coerces(a, b)` means:
+- `subtype` roughly corresponds to what you might expect, `A subtype B`
+  means that the all elements of type A are subtypes of element B
+- `usable_as` emits a ternary logic value in the set {`ok`, `maybe`, `error`}.
+  this corresponds to the question:  Will the VM raise on `:badarg` or
+  `:function_clause` if you pass the value A into something that expects B.
 
-if you attempt to use any value of type `a` in a place where type `b` is
-expected, then the following are the responses:
+`usable_as` could be used as compiler guidelines - for example, a `maybe` result
+could emit a warning and an `error` result could halt compilation.
 
-- `:type_ok` all things in type `a` satisfy type `b`
-- `:type_maybe` there is at least one thing in type `a` which satisfies type `b`;
-  there is also at least one thing in type `a` which does not satisfy type `b`.
-- `:type_error` nothing in type `a` satisfies type `b`
+In the Mavis Library,
 
-### Examples
-
-  `neg_integer` into `integer` -> `:type_ok`
-  `integer` into `pos_integer` -> `:type_maybe`
-  `neg_integer` into `pos_integer` -> `:type_error`
-
-## With functions
-
-### Parameters
-
-given a function of type
-
-```text
-neg_integer -> any
+```elixir
+  use Type.Operators
 ```
 
-in a situation where we expect
+overloads `~>` as `usable_as` and `in` as `subtype_of`
 
-```text
-integer -> any
-```
+**Be exremely careful!** you should only use `Type.Operators` if you really
+know what you're doing.  In the case of Mavis, this is used exclusively to
+make tests easier to read.
 
-then we're in trouble because if we take an `f` that satisfies the first
-parameter and we use it in the second parameter, we could get a type error
-when we pass `10` into `f`.
+## usable_as examples:
 
-conversely if we consider
+### obvious strict subtypes
 
-```text
-integer -> any
-```
+- `1 ~> 1` -> `ok`
+- `1 ~> 0..6` -> `ok`
+- `0..6 ~> integer` -> `ok`
+- `pos_integer ~> integer` -> `ok`
+- `integer ~> any` -> `ok`
 
-and pass into a situation where we expect
+### strict supertypes
 
-```text
-neg_integer -> any
-```
+- `0..6 ~> 1` -> `maybe`
+- `pos_integer ~> 0..6` -> `maybe`
+- `any ~> 1` -> `maybe`
 
-then this will always work.
+### disjoint sets
 
-### Return values
+- `integer ~> atom` -> `error`
+- `1 ~> atom` -> `error`
+- `any ~> none` -> `error`
 
-given a function of type
+### maps
 
-```text
-any -> integer
-```
+- `%{foo: binary} ~> %{foo: binary, optional(:bar) => 0..6}` -> `ok`:
+  Note that it is possible for maps to pass usable_as checking even
+  if there isn't an obvious subtyping relationship between the challenge
+  type and the target type.
 
-in a situation where we expect
+### functions
 
-```text
-any -> pos_integer
-```
+- `(0..6 -> atom) ~> (0..1 -> atom)` -> `ok`:
+  note that you can *use* a function with a more general domain with a
+  spec that demands a specific domain.
 
-then we're in trouble because if we take an `f` that satisfies the first
-parameter and we use it in the second parameter, we could get a type error
-if `-1` is returned.
+- `(pos_integer -> pos_integer) ~> (integer -> pos_integer)` -> `maybe`:
+  the reverse is not true, there are cases when a more demanding, specific
+  function domain can cause a crash when passed as a lambda to something
+  expecting a general function.
 
-conversely if we consider
-
-```text
-any -> pos_integer
-```
-
-and pass into a situation where we expect
-
-```text
-any -> integer
-```
-
-then this will always satisfy the requirements.
+- `(pos_integer -> pos_integer) ~> (pos_integer -> integer)` -> `ok`:
+  ranges have the expected relationship with respect to subtypes.
