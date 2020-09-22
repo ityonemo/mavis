@@ -51,7 +51,14 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
         (0..47 ~> 10..42)
     end
 
-    test "a partially overlapping integer subtype"
+    test "a partially overlapping integer subtype" do
+      assert {:maybe, [%Message{type: -10..10, target: builtin(:pos_integer)}]} =
+        (-10..10 ~> builtin(:pos_integer))
+      assert {:maybe, [%Message{type: -10..10, target: builtin(:neg_integer)}]} =
+        (-10..10 ~> builtin(:neg_integer))
+      assert {:maybe, [%Message{type: -10..10, target: builtin(:non_neg_integer)}]} =
+        (-10..10 ~> builtin(:non_neg_integer))
+    end
   end
 
   describe "ranges not usable as" do
@@ -64,7 +71,14 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
         (0..47 ~> -47..-42)
     end
 
-    test "an incompatible integer subtype"
+    test "an incompatible integer subtype" do
+      assert {:error, %Message{type: -10..0, target: builtin(:pos_integer)}} =
+        (-10..0 ~> builtin(:pos_integer))
+      assert {:error, %Message{type: 2..10, target: builtin(:neg_integer)}} =
+        (2..10 ~> builtin(:neg_integer))
+      assert {:error, %Message{type: -10..-1, target: builtin(:non_neg_integer)}} =
+        (-10..-1 ~> builtin(:non_neg_integer))
+    end
 
     test "any other type" do
       list_of_targets = [builtin(:float), :foo, builtin(:atom),

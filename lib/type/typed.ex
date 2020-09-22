@@ -70,15 +70,26 @@ defimpl Type.Typed, for: Range do
   def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
   def usable_as(a.._, builtin(:non_neg_integer), _) when a >= 0, do: :ok
   def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
+
+  def usable_as(a..b, builtin(:pos_integer), meta) when b > 0 do
+    {:maybe, [Type.Message.make(a..b, builtin(:pos_integer), meta)]}
+  end
+  def usable_as(a..b, builtin(:neg_integer), meta) when a < 0 do
+    {:maybe, [Type.Message.make(a..b, builtin(:neg_integer), meta)]}
+  end
+  def usable_as(a..b, builtin(:non_neg_integer), meta) when b >= 0 do
+    {:maybe, [Type.Message.make(a..b, builtin(:non_neg_integer), meta)]}
+  end
   def usable_as(a..b, target, meta)
-      when is_integer(target) and a < target and target < b do
+      when is_integer(target) and a <= target and target <= b do
     {:maybe, [Type.Message.make(a..b, target, meta)]}
   end
   def usable_as(a..b, c..d, meta) do
-    case {a < c, a <= d, b < c, b <= d} do
-      {_, false, _, _} -> {:error, Type.Message.make(a..b, c..d, meta)}
-      {_, _,  true, _} -> {:error, Type.Message.make(a..b, c..d, meta)}
-      {false, _, _, true} -> :ok
+    cond do
+      a >= c and b <= d -> :ok
+      a > d or b < c-> {:error, Type.Message.make(a..b, c..d, meta)}
+      true ->
+        {:maybe, [Type.Message.make(a..b, c..d, meta)]}
     end
   end
   def usable_as(type, target, meta) do
