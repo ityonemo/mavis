@@ -64,28 +64,26 @@ defimpl Type.Typed, for: Range do
   def group_order(_..last1, _..last2),             do: last1 > last2
   def group_order(_..last, right),                 do: last >= right
 
-  def coercion(_, builtin(:any)), do: :typebar
-
-  # integer rules
-  def coercion(_, builtin(:integer)), do: :type_ok
-  def coercion(_..last,  builtin(:neg_integer))     when last < 0,   do: :type_ok
-  def coercion(first.._, builtin(:neg_integer))     when first < 0,  do: :type_maybe
-  def coercion(first.._, builtin(:non_neg_integer)) when first >= 0, do: :type_ok
-  def coercion(_..last,  builtin(:non_neg_integer)) when last >= 0,  do: :type_maybe
-  def coercion(first.._, builtin(:pos_integer))     when first > 0,  do: :type_ok
-  def coercion(_..last,  builtin(:pos_integer))     when last > 0,   do: :type_maybe
-
-  def coercion(first..last, integer) when integer >= first and integer <= last, do: :type_maybe
-  def coercion(src_a..src_b, tgt_a..tgt_b) do
-    case {src_b < tgt_a, src_b <= tgt_b, src_a >= tgt_a, src_a > tgt_b} do
-      {true, _,    _,    _   } -> :type_error
-      {_,    _,    _,    true} -> :type_error
-      {_,    true, true, _   } -> :type_ok
-      _ -> :type_maybe
+  def usable_as(range, range, _),                                do: :ok
+  def usable_as(_, builtin(:any), _),                            do: :ok
+  def usable_as(_, builtin(:integer), _),                        do: :ok
+  def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
+  def usable_as(a.._, builtin(:non_neg_integer), _) when a >= 0, do: :ok
+  def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
+  def usable_as(a..b, target, meta)
+      when is_integer(target) and a < target and target < b do
+    {:maybe, [Type.Message.make(a..b, target, meta)]}
+  end
+  def usable_as(a..b, c..d, meta) do
+    case {a < c, a <= d, b < c, b <= d} do
+      {_, false, _, _} -> {:error, Type.Message.make(a..b, c..d, meta)}
+      {_, _,  true, _} -> {:error, Type.Message.make(a..b, c..d, meta)}
+      {false, _, _, true} -> :ok
     end
   end
-
-  def coercion(_, _), do: :type_error
+  def usable_as(type, target, meta) do
+    {:error, Type.Message.make(type, target, meta)}
+  end
 end
 
 defimpl Type.Typed, for: Atom do

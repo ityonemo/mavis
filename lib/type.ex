@@ -183,44 +183,6 @@ defimpl Type.Typed, for: Type do
 
   def group_order(builtin(:atom), _), do: true
   def group_order(_, builtin(:atom)), do: false
-
-  #def coercion(_, builtin(:any)),  do: :type_ok
-  #def coercion(_, builtin(:none)), do: :type_error
-#
-  #@integer_subtypes ~w(neg_integer non_neg_integer pos_integer)a
-  ## integer rules
-  #def coercion(builtin(:integer), builtin(int_type))
-  #  when int_type in @integer_subtypes, do: :type_maybe
-  #def coercion(builtin(:integer), integer) when is_integer(integer), do: :type_maybe
-  #def coercion(builtin(:integer), _.._), do: :type_maybe
-#
-  #def coercion(builtin(int_type), builtin(:integer))
-  #  when int_type in @integer_subtypes, do: :type_ok
-#
-  #def coercion(builtin(:neg_integer), builtin(:non_neg_integer)), do: :type_error
-  #def coercion(builtin(:neg_integer), builtin(:pos_integer)), do: :type_error
-  #def coercion(builtin(:neg_integer), integer) when is_integer(integer) and integer < 0, do: :type_ok
-  #def coercion(builtin(:neg_integer), a.._) when a < 0, do: :type_maybe
-#
-  #def coercion(builtin(:non_neg_integer), builtin(:neg_integer)), do: :type_error
-  #def coercion(builtin(:non_neg_integer), builtin(:pos_integer)), do: :type_maybe
-  #def coercion(builtin(:non_neg_integer), integer) when is_integer(integer) and integer >= 0, do: :type_ok
-  #def coercion(builtin(:non_neg_integer), _..a) when a >= 0, do: :type_maybe
-#
-  #def coercion(builtin(:pos_integer), builtin(:non_neg_integer)), do: :type_ok
-  #def coercion(builtin(:pos_integer), builtin(:neg_integer)), do: :type_error
-  #def coercion(builtin(:pos_integer), integer) when is_integer(integer) and integer > 0, do: :type_ok
-  #def coercion(builtin(:pos_integer), _..a) when a > 0, do: :type_maybe
-#
-  ## atoms
-  #@atom_subtypes ~w(module node)a
-  #def coercion(builtin(:atom), atom) when is_atom(atom), do: :type_maybe
-  #def coercion(builtin(:atom), builtin(atom_type))
-  #  when atom_type in @atom_subtypes, do: :type_maybe
-#
-  #def coercion(builtin(type), builtin(type)), do: :type_ok
-  #def coercion(builtin(:any), _), do: :type_maybe
-  #def coercion(_, _), do: :type_error
 end
 
 defmodule Type.Message do
