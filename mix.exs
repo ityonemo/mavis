@@ -9,11 +9,15 @@ defmodule Mavis.MixProject do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps()
     ]
   end
 
   def application, do: []
+
+  defp elixirc_paths(:test), do: ["lib", "test/_support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps, do: [
     {:credo, "~> 1.2", only: [:test, :dev], runtime: false},

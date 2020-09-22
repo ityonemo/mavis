@@ -1,4 +1,4 @@
-defmodule TyperatorTest.Example do
+defmodule TypeTest.Example do
   defmodule Basics do
     @spec any_spec(any) :: any
     def any_spec(x), do: x

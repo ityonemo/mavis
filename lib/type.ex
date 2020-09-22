@@ -154,6 +154,46 @@ defimpl Type.Typed, for: Type do
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
     float: 2, atom: 3, reference: 4, group: 5, port: 6, pid: 7, any: 12}
 
+  import Type, only: [builtin: 1]
+
+  alias Type.Message
+
+  def usable_as(type, type, _meta), do: :ok
+
+  # none type
+  def usable_as(builtin(:none), target, meta) do
+    {:error, Message.make(builtin(:none), target, meta)}
+  end
+
+  # negative integer
+  def usable_as(builtin(:neg_integer), builtin(target), _meta)
+    when target in [:integer, :any], do: :ok
+
+  def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
+    {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
+  end
+  def usable_as(builtin(:neg_integer), a..b, meta) when a < 0 do
+    {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
+  end
+
+  # non negative integer
+  def usable_as(builtin(:non_neg_integer), builtin(target), _meta)
+    when target in [:integer, :any], do: :ok
+
+  def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
+    {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
+  end
+  def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
+    {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
+  end
+  def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
+    {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
+  end
+
+  def usable_as(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]
   end
@@ -167,8 +207,6 @@ defimpl Type.Typed, for: Type do
       true -> group_order(this, other)
     end
   end
-
-  import Type, only: [builtin: 1]
 
   # group order for the integer block.
   def group_order(type, type),                   do: true
