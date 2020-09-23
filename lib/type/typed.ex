@@ -139,5 +139,8 @@ defimpl Type.Typed, for: List do
   def usable_as([], t, meta), do: {:error, Type.Message.make([], t, meta)}
 
   def subtype?([], []), do: true
+  def subtype?([], builtin(:any)), do: true
+  # both nonempty and final must be true.
+  def subtype?([], %Type.List{nonempty: false, final: []}), do: true
   def subtype?([], _), do: false
 end
