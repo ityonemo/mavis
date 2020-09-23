@@ -114,6 +114,7 @@ defimpl Type.Typed, for: Atom do
   end
 
   def subtype?(_, builtin(:atom)), do: true
+  def subtype?(_, builtin(:any)),  do: true
   def subtype?(atom, atom),        do: true
   def subtype?(_, _),              do: false
 end
