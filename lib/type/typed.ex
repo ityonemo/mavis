@@ -98,6 +98,8 @@ defimpl Type.Typed, for: Range do
   def usable_as(type, target, meta) do
     {:error, Type.Message.make(type, target, meta)}
   end
+
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
 defimpl Type.Typed, for: Atom do
