@@ -101,32 +101,6 @@ defimpl Type.Typed, for: Atom do
   def subtype?(_, builtin(:atom)), do: true
   def subtype?(atom, atom),        do: true
   def subtype?(_, _),              do: false
-
-  def coercion(_, builtin(:any)), do: :type_ok
-
-  def coercion(_, builtin(:atom)), do: :type_ok
-
-  def coercion(maybe_module, builtin(:module)) do
-    # this is probably buggy.
-    if function_exported?(maybe_module, :module_info, 0) do
-      :type_ok
-    else
-      :type_maybe
-    end
-  end
-
-  def coercion(maybe_node, builtin(:node)) do
-    maybe_node
-    |> Atom.to_string
-    |> String.split("@")
-    |> case do
-      [_, _] -> :type_ok
-      _ -> :type_error
-    end
-  end
-  def coercion(any, any), do: :type_ok
-
-  def coercion(_, _), do: :type_error
 end
 
 # remember, the empty list is its own type

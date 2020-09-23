@@ -134,8 +134,6 @@ defmodule Type.Union do
   defimpl Type.Typed do
     import Type, only: [builtin: 1]
 
-    def coercion(_, builtin(:any)), do: :type_ok
-    def coercion(_, _), do: :type_error
   end
 
   defimpl Collectable do

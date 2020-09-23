@@ -20,25 +20,36 @@ defmodule Type.Tuple do
       end)
     end
 
-    alias Type.Tuple
+    alias Type.{Message, Tuple}
 
-    def coercion(_, builtin(:any)),                 do: :type_ok
+    def usable_as(type, type, _meta), do: :ok
+    def usable_as(_type, builtin(:any), _meta), do: :ok
 
-    # tuples always coerce into "any tuples"
-    def coercion(_, %Tuple{elements: :any}),        do: :type_ok
-    # "any tuples" maybe coerce into other tuples
-    def coercion(%Tuple{elements: :any}, %Tuple{}), do: :type_maybe
+    # any tuple can be used as an any tuple
+    def usable_as(_, %Tuple{elements: :any}, _meta), do: :ok
 
-    # generic tuple lengths must match
-    def coercion(%Tuple{elements: from}, %Tuple{elements: into})
-        when length(from) == length(into) do
-
-      from
-      |> Enum.zip(into)
-      |> Enum.map(&Type.coercion/1)
-      |> Type.collect
+    # the any tuple maybe can be used as any tuple
+    def usable_as(challenge = %{elements: :any}, target = %Tuple{}, meta) do
+      {:maybe, [Message.make(challenge, target, meta)]}
     end
 
-    def coercion(_, _), do: :type_error
+    def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
+        when length(ce) == length(te) do
+      ce
+      |> Enum.zip(te)
+      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+      |> Enum.reduce(&Type.ternary_and/2)
+      |> case do
+        :ok -> :ok
+        # TODO: make our type checking nested, should be possible here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      end
+    end
+
+    def usable_as(challenge, target, meta) do
+      {:error, Message.make(challenge, target, meta)}
+    end
+
   end
 end
