@@ -90,11 +90,6 @@ defmodule Type.Union do
   end
   def subsume(next, []), do: [next]
 
-  # note that subsuming a function isn't the same as coercion;
-  # with coercion, the function parameters are inverted, with subsumption
-  # they function parameters are merged into combined type.
-  # TODO: MOVE THIS INTO THE Type.Function module
-
   # :any function rules
   def subsume_function(
     f1 = %{params: :any, return: r1},
@@ -136,8 +131,8 @@ defmodule Type.Union do
 
     def order(_union, builtin(:none)), do: true
     def order(union, type) do
-      union.of 
-      |> Elixir.List.last 
+      union.of
+      |> Elixir.List.last
       |> Type.order(type)
     end
 
