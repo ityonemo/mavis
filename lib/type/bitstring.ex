@@ -82,5 +82,7 @@ defmodule Type.Bitstring do
     def usable_as(type, target, meta) do
       {:error, Message.make(type, target, meta)}
     end
+
+    def subtype?(a, b), do: usable_as(a, b, []) == :ok
   end
 end
