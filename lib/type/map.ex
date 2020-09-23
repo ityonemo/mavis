@@ -8,13 +8,16 @@ defmodule Type.Map do
   # and that the leftmost values take precedence when they overlap.
 
   # TODO: test this
-
   @type t :: %__MODULE__{
     kv: [kv_spec]
   }
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
+
+    use Type.Impl
+
+    def group_order(_, _), do: raise "the dead"
 
     def coercion(_, builtin(:any)), do: :type_ok
     def coercion(_, _), do: :type_error

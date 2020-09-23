@@ -22,33 +22,58 @@ defmodule Type.Function do
   end
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
 
-    def coercion(_, builtin(:any)), do: :type_ok
-    def coercion(%{params: :any, return: from_return},
-      %Type.Function{params: into_params, return: into_return}) do
+    use Type.Impl
 
-      return_coercion = Type.coercion(from_return, into_return)
+    def group_order(%{params: :any, return: r1}, %{params: :any, return: r2}) do
+      Type.order(r1, r2)
+    end
+    def group_order(%{params: :any}, _), do: true
+    def group_order(_, %{params: :any}), do: false
+    def group_order(%{params: p1}, %{params: p2})
+        when length(p1) < length(p2), do: true
+    def group_order(%{params: p1}, %{params: p2})
+        when length(p1) > length(p2), do: false
+    def group_order(f1, f2) do
+      [f1.return | f1.params]
+      |> Enum.zip([f2.return | f2.params])
+      |> Enum.any?(fn {t1, t2} ->
+        # they can't be equal
+        Type.order(t1, t2) and not Type.order(t2, t1)
+      end)
+    end
 
-      case into_params do
-        :any -> return_coercion
-        _ -> Type.collect([:type_maybe, return_coercion])
+    alias Type.{Function, Message}
+
+    def usable_as(type, type, _meta), do: :ok
+
+    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+        when cparam == :any or tparam == :any do
+      case Type.usable_as(challenge.return, target.return, meta) do
+        :ok -> :ok
+        # TODO: add meta-information here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
       end
     end
-    def coercion(%{return: from}, %Type.Function{params: :any, return: into}) do
-      Type.coercion(from, into)
-    end
-    def coercion(%{params: from_params, return: from_return},
-      %Type.Function{params: into_params, return: into_return})
-      when length(from_params) == length(into_params) do
 
-      # cross the returns and parameters.  (see `coercion.md`)
-      [from_return | into_params]
-      |> Enum.zip([into_return | from_params])
-      |> Enum.map(&Type.coercion/1)
-      |> Type.collect
+    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+        when length(cparam) == length(tparam) do
+      [challenge.return | tparam]           # note that the target parameters and the challenge
+      |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
+      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+      |> Enum.reduce(&Type.ternary_and/2)
+      |> case do
+        :ok -> :ok
+        # TODO: add meta-information here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      end
     end
 
-    def coercion(_, _), do: :type_error
+    def usable_as(challenge, target, meta) do
+      {:error, Message.make(challenge, target, meta)}
+    end
   end
 end

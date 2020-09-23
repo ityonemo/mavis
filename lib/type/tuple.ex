@@ -5,27 +5,51 @@ defmodule Type.Tuple do
   @type t :: %__MODULE__{elements: [Type.t] | :any}
 
   defimpl Type.Typed do
-    import Type, only: :macros
+    import Type, only: [builtin: 1]
 
-    alias Type.Tuple
+    use Type.Impl
 
-    def coercion(_, builtin(:any)),                 do: :type_ok
-
-    # tuples always coerce into "any tuples"
-    def coercion(_, %Tuple{elements: :any}),        do: :type_ok
-    # "any tuples" maybe coerce into other tuples
-    def coercion(%Tuple{elements: :any}, %Tuple{}), do: :type_maybe
-
-    # generic tuple lengths must match
-    def coercion(%Tuple{elements: from}, %Tuple{elements: into})
-        when length(from) == length(into) do
-
-      from
-      |> Enum.zip(into)
-      |> Enum.map(&Type.coercion/1)
-      |> Type.collect
+    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: true
+    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: false
+    def group_order(tuple1, tuple2) do
+      tuple1.elements
+      |> Enum.zip(tuple2.elements)
+      |> Enum.any?(fn {t1, t2} ->
+        # they can't be equal
+        Type.order(t1, t2) and not Type.order(t2, t1)
+      end)
     end
 
-    def coercion(_, _), do: :type_error
+    alias Type.{Message, Tuple}
+
+    def usable_as(type, type, _meta), do: :ok
+    def usable_as(_type, builtin(:any), _meta), do: :ok
+
+    # any tuple can be used as an any tuple
+    def usable_as(_, %Tuple{elements: :any}, _meta), do: :ok
+
+    # the any tuple maybe can be used as any tuple
+    def usable_as(challenge = %{elements: :any}, target = %Tuple{}, meta) do
+      {:maybe, [Message.make(challenge, target, meta)]}
+    end
+
+    def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
+        when length(ce) == length(te) do
+      ce
+      |> Enum.zip(te)
+      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+      |> Enum.reduce(&Type.ternary_and/2)
+      |> case do
+        :ok -> :ok
+        # TODO: make our type checking nested, should be possible here.
+        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      end
+    end
+
+    def usable_as(challenge, target, meta) do
+      {:error, Message.make(challenge, target, meta)}
+    end
+
   end
 end
