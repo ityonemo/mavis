@@ -24,6 +24,9 @@ defimpl Type.Typed, for: Integer do
   def group_order(_, builtin(:pos_integer)),           do: false
   def group_order(left, _..last),                      do: left > last
   def group_order(left, right) when is_integer(right), do: left >= right
+  def group_order(left, %Type.Union{of: ints}) do
+    group_order(left, List.last(ints))
+  end
 
   def usable_as(i, i, _),                                     do: :ok
   def usable_as(i, a..b, _) when a <= i and i <= b,           do: :ok
@@ -42,13 +45,25 @@ defimpl Type.Typed, for: Range do
 
   use Type.Impl
 
-  def group_order(_, builtin(:integer)),           do: false
-  def group_order(_, builtin(:pos_integer)),       do: false
-  def group_order(_, builtin(:non_neg_integer)),   do: false
-  def group_order(_..last, builtin(:neg_integer)), do: last >= 0
-  def group_order(first1..last, first2..last),     do: first1 < first2
-  def group_order(_..last1, _..last2),             do: last1 > last2
-  def group_order(_..last, right),                 do: last >= right
+  def group_order(_, builtin(:integer)),                  do: false
+  def group_order(_, builtin(:pos_integer)),              do: false
+  def group_order(_, builtin(:non_neg_integer)),          do: false
+  def group_order(_..last, builtin(:neg_integer)),        do: last >= 0
+  def group_order(first1..last, first2..last),            do: first1 < first2
+  def group_order(_..last1, _..last2),                    do: last1 > last2
+  def group_order(_..last, right) when is_integer(right), do: last >= right
+  def group_order(first..last, %Type.Union{of: [init | types]}) do
+    case List.last(types) do
+      _..b when b < last -> true
+      _..b ->
+        # the range is bigger if it's bigger than the biggest union
+        Type.order(init, first) && (last >= b)
+      i when i < last -> true
+      i when is_integer(i) ->
+        Type.order(init, first) && (last >= i)
+      _ -> false
+    end
+  end
 
   def usable_as(range, range, _),                                do: :ok
   def usable_as(_, builtin(:any), _),                            do: :ok

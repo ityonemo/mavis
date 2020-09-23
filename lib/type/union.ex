@@ -134,6 +134,18 @@ defmodule Type.Union do
   defimpl Type.Typed do
     import Type, only: [builtin: 1]
 
+    def order(_union, builtin(:none)), do: true
+    def order(union, type) do
+      union.of 
+      |> Elixir.List.last 
+      |> Type.order(type)
+    end
+
+    def typegroup(union) do
+      union.of
+      |> Elixir.List.last
+      |> Type.Typed.typegroup
+    end
   end
 
   defimpl Collectable do
