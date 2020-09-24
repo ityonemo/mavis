@@ -52,5 +52,4 @@ defmodule TypeTest.TypeBitstring.SubtypeTest do
       refute %Bitstring{size: 4, unit: 8} in @basic_binary
     end
   end
-
 end

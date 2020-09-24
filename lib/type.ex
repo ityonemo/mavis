@@ -267,6 +267,8 @@ defimpl Type.Typed, for: Type do
 
   def group_order(builtin(:atom), _), do: true
   def group_order(_, builtin(:atom)), do: false
+
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
 defmodule Type.Message do

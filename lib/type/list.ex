@@ -55,5 +55,18 @@ defmodule Type.List do
     def usable_as(challenge, target, meta) do
       {:error, Message.make(challenge, target, meta)}
     end
+
+    # can't simply forward to usable_as, because any of the encapsulated
+    # types might have a usable_as rule that isn't strictly subtype?
+    def subtype?(list_type, list_type), do: true
+    def subtype?(_list_type, builtin(:any)), do: true
+    # same nonempty is okay
+    def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
+      when ne_c == ne_t or ne_c do
+
+      Type.Typed.subtype?(challenge.type, target.type) and
+        Type.Typed.subtype?(challenge.final, target.final)
+    end
+    def subtype?(_, _), do: false
   end
 end
