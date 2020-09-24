@@ -1,8 +1,9 @@
 defmodule Type.Map do
   defstruct [kv: []]
 
-  @type kv :: {Type.t, Type.t}
-  @type kv_spec :: {:required | :optional, kv}
+  @type optional :: {Type.t, Type.t}
+  @type requirable :: {integer | atom, Type.t}
+  @type kv_spec :: {:required, requirable} | {:optional, optional}
 
   # note that the left-to-right order of map specs is important
   # and that the leftmost values take precedence when they overlap.
