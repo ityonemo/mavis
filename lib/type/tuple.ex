@@ -51,5 +51,20 @@ defmodule Type.Tuple do
       {:error, Message.make(challenge, target, meta)}
     end
 
+    # can't simply forward to usable_as, because any of the encapsulated
+    # types might have a usable_as rule that isn't strictly subtype?
+    def subtype?(tuple_type, tuple_type), do: true
+    def subtype?(_tuple_type, builtin(:any)), do: true
+    def subtype?(_tuple_type, %Tuple{elements: :any}), do: true
+    # same nonempty is okay
+    def subtype?(%{elements: el_c}, %Tuple{elements: el_t})
+      when length(el_c) == length(el_t) do
+
+      el_c
+      |> Enum.zip(el_t)
+      |> Enum.all?(fn {c, t} -> Type.subtype?(c, t) end)
+
+    end
+    def subtype?(_, _), do: false
   end
 end
