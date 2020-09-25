@@ -29,8 +29,8 @@ defmodule TypeTest.OperatorsTest do
   end
 
   test "ordering operators prefer term ordering over erlang ordering" do
-    refute Kernel.<(builtin(:atom), :foo)
-    assert builtin(:atom) < :foo
+    refute Kernel.<(builtin(:integer), :foo)
+    assert builtin(:integer) < :foo
   end
 
   test "in/2 is the subtyping operator" do
