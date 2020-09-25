@@ -21,7 +21,7 @@ defmodule Type.Function do
 #    }}
 #  end
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: :macros
 
     use Type.Impl

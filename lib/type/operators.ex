@@ -9,7 +9,7 @@ defmodule Type.Operators do
   import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
 
   @doc """
-  shortcut for `Type.Typed.usable_as/2`
+  shortcut for `Type.Properties.usable_as/2`
   """
   def a ~> b, do: Type.usable_as(a, b)
 
@@ -22,9 +22,9 @@ defmodule Type.Operators do
   shortcut for `Type.order/2`
   """
   defdelegate a >= b, to: Type, as: :order
-  def a <= b, do: (b >= a) 
+  def a <= b, do: (b >= a)
   def a > b, do: (a >= b) and (a != b)
-  def a < b, do: ((a <= b) and (a != b)) 
+  def a < b, do: ((a <= b) and (a != b))
 
   @doc """
   shortcut for `Type.subtype?/2`

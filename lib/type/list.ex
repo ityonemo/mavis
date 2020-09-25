@@ -11,7 +11,7 @@ defmodule Type.List do
     final: Type.t
   }
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: :macros
 
     use Type.Impl

@@ -127,7 +127,7 @@ defmodule Type.Union do
   #  end
   #end
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: [builtin: 1]
 
     def order(_union, builtin(:none)), do: true
@@ -140,7 +140,7 @@ defmodule Type.Union do
     def typegroup(union) do
       union.of
       |> Elixir.List.last
-      |> Type.Typed.typegroup
+      |> Type.Properties.typegroup
     end
 
     def usable_as(challenge, target, meta) do

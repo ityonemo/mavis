@@ -7,7 +7,7 @@ defmodule Type.Bitstring do
     unit: 0..256
   }
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: :macros
     alias Type.{Bitstring, Message}
 

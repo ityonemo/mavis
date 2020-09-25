@@ -1,4 +1,4 @@
-defprotocol Type.Typed do
+defprotocol Type.Properties do
   @spec usable_as(Type.t, Type.t, keyword) :: Type.ternary
   def usable_as(subject, target, meta)
 
@@ -12,7 +12,7 @@ defprotocol Type.Typed do
   def typegroup(type)
 end
 
-defimpl Type.Typed, for: Integer do
+defimpl Type.Properties, for: Integer do
   import Type, only: :macros
 
   use Type.Impl
@@ -39,7 +39,7 @@ defimpl Type.Typed, for: Integer do
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
-defimpl Type.Typed, for: Range do
+defimpl Type.Properties, for: Range do
   import Type, only: :macros
 
   use Type.Impl
@@ -117,7 +117,7 @@ defimpl Type.Typed, for: Range do
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
-defimpl Type.Typed, for: Atom do
+defimpl Type.Properties, for: Atom do
   import Type, only: :macros
 
   use Type.Impl
@@ -133,7 +133,7 @@ defimpl Type.Typed, for: Atom do
 end
 
 # remember, the empty list is its own type
-defimpl Type.Typed, for: List do
+defimpl Type.Properties, for: List do
   import Type, only: :macros
 
   use Type.Impl

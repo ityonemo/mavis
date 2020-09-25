@@ -13,7 +13,7 @@ defmodule Type.Map do
     kv: [kv_spec]
   }
 
-  #defimpl Type.Typed do
+  #defimpl Type.Properties do
   #  import Type, only: [builtin: 1]
 #
   #  use Type.Impl

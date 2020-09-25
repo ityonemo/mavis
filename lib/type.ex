@@ -24,8 +24,8 @@ defmodule Type do
     quote do %Type{module: nil, name: unquote(type)} end
   end
 
-  defdelegate usable_as(type, target, meta \\ []), to: Type.Typed
-  defdelegate subtype?(type, target), to: Type.Typed
+  defdelegate usable_as(type, target, meta \\ []), to: Type.Properties
+  defdelegate subtype?(type, target), to: Type.Properties
 
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
@@ -81,7 +81,7 @@ defmodule Type do
   iolist (group 10) come in the appropriate place in the range,
   a union comes after the highest represented item in its union,
   """
-  defdelegate order(a, b), to: Type.Typed
+  defdelegate order(a, b), to: Type.Properties
 
   @type group :: 0..12
 
@@ -90,7 +90,7 @@ defmodule Type do
   NB: group assignments may change.
   """
   @spec typegroup(t) :: group
-  defdelegate typegroup(type), to: Type.Typed
+  defdelegate typegroup(type), to: Type.Properties
 
   @spec ternary_and(ternary, ternary) :: ternary
   @doc false
@@ -222,7 +222,7 @@ defmodule Type do
   end
 end
 
-defimpl Type.Typed, for: Type do
+defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,

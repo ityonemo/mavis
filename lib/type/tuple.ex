@@ -4,7 +4,7 @@ defmodule Type.Tuple do
 
   @type t :: %__MODULE__{elements: [Type.t] | :any}
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: :macros
 
     use Type.Impl
