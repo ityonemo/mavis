@@ -20,6 +20,16 @@ defmodule TypeTest.LiteralAtom.SubtypeTest do
       assert :foo in builtin(:any)
     end
 
+    test "is a subtype of a union with itself or atom" do
+      assert :foo in (:foo | :bar)
+      assert :foo in (:foo | builtin(:integer))
+      assert :foo in (builtin(:atom) | builtin(:integer))
+    end
+
+    test "is not a subtype of a union with orthogonal types" do
+      refute :foo in (builtin(:integer) | :infinity)
+    end
+
     test "is not a subtype of other atoms" do
       refute :foo in :bar
     end
