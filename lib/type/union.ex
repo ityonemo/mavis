@@ -164,6 +164,10 @@ defmodule Type.Union do
         {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
       end
     end
+
+    def subtype?(%{of: types}, target) do
+      Enum.all?(types, &Type.subtype?(&1, target))
+    end
   end
 
   defimpl Collectable do
