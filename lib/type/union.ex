@@ -146,7 +146,23 @@ defmodule Type.Union do
     def usable_as(challenge, target, meta) do
       challenge.of
       |> Enum.map(&Type.usable_as(&1, target, meta))
-      |> Enum.reduce(&Type.ternary_or/2)
+      |> Enum.reduce(fn
+        # TO BE REPLACED WITH SOMETHING MORE SOPHISTICATED.
+        :ok, :ok                 -> :ok
+        :ok, {:maybe, _}         -> {:maybe, nil}
+        :ok, {:error, _}         -> {:maybe, nil}
+        {:maybe, _}, :ok         -> {:maybe, nil}
+        {:error, _}, :ok         -> {:maybe, nil}
+        {:maybe, _}, {:maybe, _} -> {:maybe, nil}
+        {:maybe, _}, {:error, _} -> {:maybe, nil}
+        {:error, _}, {:maybe, _} -> {:maybe, nil}
+        {:error, _}, {:error, _} -> {:error, nil}
+      end)
+      |> case do
+        :ok -> :ok
+        {:maybe, _} -> {:maybe, [Type.Message.make(challenge, target, meta)]}
+        {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
+      end
     end
   end
 

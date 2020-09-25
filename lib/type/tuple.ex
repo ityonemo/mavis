@@ -5,7 +5,7 @@ defmodule Type.Tuple do
   @type t :: %__MODULE__{elements: [Type.t] | :any}
 
   defimpl Type.Typed do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
 
     use Type.Impl
 
@@ -22,33 +22,28 @@ defmodule Type.Tuple do
 
     alias Type.{Message, Tuple}
 
-    def usable_as(type, type, _meta), do: :ok
-    def usable_as(_type, builtin(:any), _meta), do: :ok
+    usable_as do
+      # any tuple can be used as an any tuple
+      def usable_as(_, %Tuple{elements: :any}, _meta), do: :ok
 
-    # any tuple can be used as an any tuple
-    def usable_as(_, %Tuple{elements: :any}, _meta), do: :ok
-
-    # the any tuple maybe can be used as any tuple
-    def usable_as(challenge = %{elements: :any}, target = %Tuple{}, meta) do
-      {:maybe, [Message.make(challenge, target, meta)]}
-    end
-
-    def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
-        when length(ce) == length(te) do
-      ce
-      |> Enum.zip(te)
-      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-      |> Enum.reduce(&Type.ternary_and/2)
-      |> case do
-        :ok -> :ok
-        # TODO: make our type checking nested, should be possible here.
-        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      # the any tuple maybe can be used as any tuple
+      def usable_as(challenge = %{elements: :any}, target = %Tuple{}, meta) do
+        {:maybe, [Message.make(challenge, target, meta)]}
       end
-    end
 
-    def usable_as(challenge, target, meta) do
-      {:error, Message.make(challenge, target, meta)}
+      def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
+          when length(ce) == length(te) do
+        ce
+        |> Enum.zip(te)
+        |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+        |> Enum.reduce(&Type.ternary_and/2)
+        |> case do
+          :ok -> :ok
+          # TODO: make our type checking nested, should be possible here.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
+      end
     end
 
     # can't simply forward to usable_as, because any of the encapsulated
