@@ -212,7 +212,7 @@ defimpl Type.Typed, for: Type do
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
     float: 2, atom: 3, reference: 4, port: 6, pid: 7, any: 12}
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.{Message, Union}
 
@@ -225,11 +225,6 @@ defimpl Type.Typed, for: Type do
 
   # trap anys as ok
   def usable_as(_, builtin(:any), _meta), do: :ok
-  def usable_as(challenge, %Union{of: targets}, meta) do
-    targets
-    |> Enum.map(&Type.usable_as(challenge, &1, meta))
-    |> Enum.reduce(&Type.ternary_or/2)
-  end
 
   # negative integer
   def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
@@ -288,10 +283,7 @@ defimpl Type.Typed, for: Type do
     {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
   end
 
-  # all else falls through as error.
-  def usable_as(challenge, target, meta) do
-    {:error, Message.make(challenge, target, meta)}
-  end
+  usable_as_coda()
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]
