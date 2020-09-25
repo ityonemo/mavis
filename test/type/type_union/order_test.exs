@@ -19,7 +19,7 @@ defmodule TypeTest.TypeUnion.OrderTest do
       assert (1 | 3) > 3
       assert (1 | 3) < 4
       assert (1 | 3..4) > 3..4
-      assert (1..2| 4) < 3..5
+      assert (1..2 | 4) < 3..5
       assert (1 | 3..4) < 3..5
     end
 
