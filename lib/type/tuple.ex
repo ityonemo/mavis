@@ -20,7 +20,7 @@ defmodule Type.Tuple do
       end)
     end
 
-    alias Type.{Message, Tuple}
+    alias Type.{Message, Tuple, Union}
 
     usable_as do
       # any tuple can be used as an any tuple
@@ -59,6 +59,9 @@ defmodule Type.Tuple do
       |> Enum.zip(el_t)
       |> Enum.all?(fn {c, t} -> Type.subtype?(c, t) end)
 
+    end
+    def subtype?(tuple, %Union{of: types}) do
+      Enum.any?(types, &Type.subtype?(tuple, &1))
     end
     def subtype?(_, _), do: false
   end

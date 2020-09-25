@@ -13,7 +13,15 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
 
   describe "any tuples" do
     test "are subtypes of themselves and any" do
-      assert @any_tuple ~> builtin(:any)
+      assert @any_tuple in builtin(:any)
+    end
+
+    test "are subtypes of tuples containing any tuples" do
+      assert @any_tuple in (builtin(:atom) | @any_tuple)
+    end
+
+    test "are not subtypes of orthogonal unions" do
+      refute @any_tuple in (builtin(:atom) | builtin(:integer))
     end
 
     test "are not subtypes of other types" do
@@ -41,9 +49,19 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
       assert %Tuple{elements: [builtin(:atom), builtin(:integer)]} in %Tuple{elements: [builtin(:atom), builtin(:integer)]}
     end
 
+    test "are subtypes of unions with themselves, supertuples, or any tuple" do
+      assert %Tuple{elements: [builtin(:integer)]} in (%Tuple{elements: [builtin(:integer)]} | builtin(:integer))
+      assert %Tuple{elements: [builtin(:integer)]} in (%Tuple{elements: [builtin(:any)]} | builtin(:integer))
+      assert %Tuple{elements: [builtin(:integer)]} in (@any_tuple| builtin(:integer))
+    end
+
     test "are subtypes when their elements are subtypes" do
       assert %Tuple{elements: [47]} in %Tuple{elements: [builtin(:integer)]}
       assert %Tuple{elements: [47, :foo]} in %Tuple{elements: [builtin(:integer), builtin(:atom)]}
+    end
+
+    test "are not subtypes of orthogonal unions" do
+      refute %Tuple{elements: [builtin(:integer)]} in (%Tuple{elements: [builtin(:integer), builtin(:integer)]} | builtin(:integer))
     end
 
     test "is not a subtype on partial match" do

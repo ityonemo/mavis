@@ -16,7 +16,7 @@ defmodule Type.List do
 
     use Type.Impl
 
-    alias Type.{List, Message}
+    alias Type.{List, Message, Union}
 
     def group_order(%{nonempty: ne}, []), do: not ne
     def group_order(%{nonempty: false}, %List{nonempty: true}), do: true
@@ -61,6 +61,9 @@ defmodule Type.List do
 
       Type.subtype?(challenge.type, target.type) and
         Type.subtype?(challenge.final, target.final)
+    end
+    def subtype?(challenge, target = %Union{of: types}) do
+      Enum.any?(types, &Type.subtype?(challenge, &1))
     end
     def subtype?(_, _), do: false
   end
