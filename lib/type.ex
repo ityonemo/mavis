@@ -83,7 +83,7 @@ defmodule Type do
   """
   defdelegate order(a, b), to: Type.Typed
 
-  @type group :: 0..13
+  @type group :: 0..12
 
   @doc """
   the typegroup of the type;
