@@ -14,6 +14,14 @@ defmodule TypeTest.TypeList.UsableAsTest do
       assert :ok = %List{} ~> builtin(:any)
     end
 
+    test "is usable as a union with the list type" do
+      assert :ok = %List{} ~> (%List{} | builtin(:atom))
+    end
+
+    test "is not usable as a union with orthogonal type" do
+      assert {:error, _} = %List{} ~> (builtin(:integer) | builtin(:atom))
+    end
+
     test "is not usable as any of the other types" do
       targets = TypeTest.Targets.except([%List{}])
       Enum.each(targets, fn target ->

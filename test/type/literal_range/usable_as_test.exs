@@ -91,7 +91,7 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
 
     test "a union with a disjoint categories" do
-      assert {:maybe, _} = 1..47 ~> (builtin(:atom) | builtin(:pid))
+      assert {:error, _} = 1..47 ~> (builtin(:atom) | builtin(:pid))
     end
 
     test "any other type" do

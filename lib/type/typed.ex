@@ -28,17 +28,14 @@ defimpl Type.Typed, for: Integer do
     group_order(left, List.last(ints))
   end
 
-
-  usable_as_start()
-
-  def usable_as(i, a..b, _) when a <= i and i <= b,           do: :ok
-  def usable_as(i, builtin(:pos_integer), _) when i > 0,      do: :ok
-  def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
-  def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
-  def usable_as(_, builtin(:integer), _),                     do: :ok
-  def usable_as(_, builtin(:any), _),                         do: :ok
-
-  usable_as_coda()
+  usable_as do
+    def usable_as(i, a..b, _) when a <= i and i <= b,           do: :ok
+    def usable_as(i, builtin(:pos_integer), _) when i > 0,      do: :ok
+    def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
+    def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
+    def usable_as(_, builtin(:integer), _),                     do: :ok
+    def usable_as(_, builtin(:any), _),                         do: :ok
+  end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
@@ -68,36 +65,34 @@ defimpl Type.Typed, for: Range do
     end
   end
 
-  usable_as_start()
+  usable_as do
+    def usable_as(_, builtin(:integer), _),                        do: :ok
+    def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
+    def usable_as(a.._, builtin(:non_neg_integer), _) when a >= 0, do: :ok
+    def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
 
-  def usable_as(_, builtin(:integer), _),                        do: :ok
-  def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
-  def usable_as(a.._, builtin(:non_neg_integer), _) when a >= 0, do: :ok
-  def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
-
-  def usable_as(a..b, builtin(:pos_integer), meta) when b > 0 do
-    {:maybe, [Type.Message.make(a..b, builtin(:pos_integer), meta)]}
-  end
-  def usable_as(a..b, builtin(:neg_integer), meta) when a < 0 do
-    {:maybe, [Type.Message.make(a..b, builtin(:neg_integer), meta)]}
-  end
-  def usable_as(a..b, builtin(:non_neg_integer), meta) when b >= 0 do
-    {:maybe, [Type.Message.make(a..b, builtin(:non_neg_integer), meta)]}
-  end
-  def usable_as(a..b, target, meta)
-      when is_integer(target) and a <= target and target <= b do
-    {:maybe, [Type.Message.make(a..b, target, meta)]}
-  end
-  def usable_as(a..b, c..d, meta) do
-    cond do
-      a >= c and b <= d -> :ok
-      a > d or b < c-> {:error, Type.Message.make(a..b, c..d, meta)}
-      true ->
-        {:maybe, [Type.Message.make(a..b, c..d, meta)]}
+    def usable_as(a..b, builtin(:pos_integer), meta) when b > 0 do
+      {:maybe, [Type.Message.make(a..b, builtin(:pos_integer), meta)]}
+    end
+    def usable_as(a..b, builtin(:neg_integer), meta) when a < 0 do
+      {:maybe, [Type.Message.make(a..b, builtin(:neg_integer), meta)]}
+    end
+    def usable_as(a..b, builtin(:non_neg_integer), meta) when b >= 0 do
+      {:maybe, [Type.Message.make(a..b, builtin(:non_neg_integer), meta)]}
+    end
+    def usable_as(a..b, target, meta)
+        when is_integer(target) and a <= target and target <= b do
+      {:maybe, [Type.Message.make(a..b, target, meta)]}
+    end
+    def usable_as(a..b, c..d, meta) do
+      cond do
+        a >= c and b <= d -> :ok
+        a > d or b < c-> {:error, Type.Message.make(a..b, c..d, meta)}
+        true ->
+          {:maybe, [Type.Message.make(a..b, c..d, meta)]}
+      end
     end
   end
-
-  usable_as_coda()
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
@@ -110,11 +105,9 @@ defimpl Type.Typed, for: Atom do
   def group_order(_, builtin(:atom)), do: false
   def group_order(left, right), do: left >= right
 
-  usable_as_start()
-
-  def usable_as(_, builtin(:atom), _), do: :ok
-
-  usable_as_coda()
+  usable_as do
+    def usable_as(_, builtin(:atom), _), do: :ok
+  end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
@@ -127,11 +120,9 @@ defimpl Type.Typed, for: List do
 
   def group_order([], %Type.List{nonempty: ne}), do: ne
 
-  usable_as_start()
-
-  def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
-
-  usable_as_coda()
+  usable_as do
+    def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
+  end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end

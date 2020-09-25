@@ -12,7 +12,7 @@ defmodule Type.List do
   }
 
   defimpl Type.Typed do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
 
     use Type.Impl
 
@@ -30,30 +30,25 @@ defmodule Type.List do
       end
     end
 
-    def usable_as(type, type, _meta), do: :ok
-    def usable_as(_challenge, builtin(:any), _meta), do: :ok
-
-    def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
-      case usable_as(challenge, %{target | nonempty: false}, meta) do
-        :ok -> {:maybe, Message.make(challenge, target, meta)}
-        maybe_or_error -> maybe_or_error
+    usable_as do
+      def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
+        case usable_as(challenge, %{target | nonempty: false}, meta) do
+          :ok -> {:maybe, Message.make(challenge, target, meta)}
+          maybe_or_error -> maybe_or_error
+        end
       end
-    end
 
-    def usable_as(challenge, target = %List{}, meta) do
-      u1 = Type.usable_as(challenge.type, target.type)
-      u2 = Type.usable_as(challenge.final, target.final)
+      def usable_as(challenge, target = %List{}, meta) do
+        u1 = Type.usable_as(challenge.type, target.type)
+        u2 = Type.usable_as(challenge.final, target.final)
 
-      case Type.ternary_and(u1, u2) do
-        :ok -> :ok
-        # TODO: make this report the internal error as well.
-        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        case Type.ternary_and(u1, u2) do
+          :ok -> :ok
+          # TODO: make this report the internal error as well.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
       end
-    end
-
-    def usable_as(challenge, target, meta) do
-      {:error, Message.make(challenge, target, meta)}
     end
 
     # can't simply forward to usable_as, because any of the encapsulated

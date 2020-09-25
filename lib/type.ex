@@ -116,21 +116,6 @@ defmodule Type do
   def ternary_or(error, _),                        do: error
 
   @doc """
-  start for "usable_as" function guard lists.  Performs the following two things:
-
-  - matches equal types and makes them output :ok
-  - matches usable_as with `builtin(:any)` and makes them output :ok
-
-  """
-  defmacro usable_as_start do
-    quote do
-      def usable_as(type, type, meta), do: :ok
-      def usable_as(type, Type.builtin(:any), meta), do: :ok
-    end
-  end
-
-
-  @doc """
   coda for "usable_as" function guard lists.  Performs the following two things:
 
   - catches usable_as against unions; and performs the appropriate attempt to
@@ -149,6 +134,29 @@ defmodule Type do
       def usable_as(challenge, union, meta) do
         {:error, Type.Message.make(challenge, union, meta)}
       end
+    end
+  end
+
+  @doc """
+  Wraps the "usable_as" function headers in common "top" and "fallback" headers.
+  This prevents errors from being made in code that must be common to all types.
+
+  Top function matches:
+  - matches equal types and makes them output :ok
+  - matches usable_as with `builtin(:any)` and makes them output :ok
+
+  Fallback function matches:
+  - see `usable_as_coda/0`
+
+  """
+  defmacro usable_as(do: block) do
+    quote do
+      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, Type.builtin(:any), meta), do: :ok
+
+      unquote(block)
+
+      Type.usable_as_coda
     end
   end
 
