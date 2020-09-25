@@ -70,7 +70,6 @@ defimpl Type.Typed, for: Range do
     def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
     def usable_as(a.._, builtin(:non_neg_integer), _) when a >= 0, do: :ok
     def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
-
     def usable_as(a..b, builtin(:pos_integer), meta) when b > 0 do
       {:maybe, [Type.Message.make(a..b, builtin(:pos_integer), meta)]}
     end
@@ -92,6 +91,28 @@ defimpl Type.Typed, for: Range do
           {:maybe, [Type.Message.make(a..b, c..d, meta)]}
       end
     end
+    # strange stitched ranges
+    def usable_as(a..b, union = %Type.Union{}, meta) when a <= -1 and b >= 0 do
+      pos_leftovers = if b == 0,  do: 0,  else: 0..b
+      neg_leftovers = if a == -1, do: -1, else: a..-1
+
+      if leftover_check(union, :neg_integer, pos_leftovers) or
+         leftover_check(union, :non_neg_integer, neg_leftovers) do
+        :ok
+      else
+        usable_as_union_fallback(a..b, union, meta)
+      end
+    end
+  end
+
+  defp leftover_check(union = %{of: types}, int_class, leftover) do
+    (builtin(int_class) in types) and Type.subtype?(leftover, union)
+  end
+
+  defp usable_as_union_fallback(challenge, target, meta) do
+    target.of
+    |> Enum.map(&Type.usable_as(challenge, &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok

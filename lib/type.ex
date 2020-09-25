@@ -115,6 +115,14 @@ defmodule Type do
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
 
+
+  defmacro usable_as_start do
+    quote do
+      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, Type.builtin(:any), meta), do: :ok
+    end
+  end
+
   @doc """
   coda for "usable_as" function guard lists.  Performs the following two things:
 
@@ -151,12 +159,11 @@ defmodule Type do
   """
   defmacro usable_as(do: block) do
     quote do
-      def usable_as(type, type, meta), do: :ok
-      def usable_as(type, Type.builtin(:any), meta), do: :ok
+      Type.usable_as_start()
 
       unquote(block)
 
-      Type.usable_as_coda
+      Type.usable_as_coda()
     end
   end
 

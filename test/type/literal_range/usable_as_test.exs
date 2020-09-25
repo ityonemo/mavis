@@ -25,6 +25,13 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
       assert (1..47 ~> 0..50) == :ok
     end
 
+    test "stitched ranges" do
+      assert (-10..10 ~> (-10..-1 | builtin(:non_neg_integer))) == :ok
+      assert (-10..10 ~> (builtin(:neg_integer) | 0..10)) == :ok
+      assert (-10..0 ~> (builtin(:neg_integer) | 0)) == :ok
+      assert (-1..10 ~> (-1 | builtin(:non_neg_integer))) == :ok
+    end
+
     test "a union with the appropriate category" do
       assert 1..47 ~> (builtin(:pos_integer) | :infinity) == :ok
       assert 1..47 ~> (builtin(:non_neg_integer) | :infinity) == :ok
