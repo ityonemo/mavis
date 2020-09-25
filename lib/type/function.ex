@@ -22,7 +22,7 @@ defmodule Type.Function do
   end
 
   defimpl Type.Typed do
-    import Type, only: [builtin: 1]
+    import Type, only: [builtin: 1, usable_as_start: 0, usable_as_coda: 0]
 
     use Type.Impl
 
@@ -46,7 +46,7 @@ defmodule Type.Function do
 
     alias Type.{Function, Message}
 
-    def usable_as(type, type, _meta), do: :ok
+    usable_as_start()
 
     def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
         when cparam == :any or tparam == :any do

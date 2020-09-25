@@ -104,6 +104,54 @@ defmodule Type do
   def ternary_and(error, {:maybe, _}),              do: error
   def ternary_and(error, _),                        do: error
 
+  @spec ternary_or(ternary, ternary) :: ternary
+  @doc false
+  # ternary or which performs comparisons of ok, maybe, and error
+  # types and composes them into the appropriate ternary logic result.
+  def ternary_or(:ok, _),                          do: :ok
+  def ternary_or(_, :ok),                          do: :ok
+  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_or({:maybe, left}, _),               do: {:maybe, left}
+  def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
+  def ternary_or(error, _),                        do: error
+
+  @doc """
+  start for "usable_as" function guard lists.  Performs the following two things:
+
+  - matches equal types and makes them output :ok
+  - matches usable_as with `builtin(:any)` and makes them output :ok
+
+  """
+  defmacro usable_as_start do
+    quote do
+      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, Type.builtin(:any), meta), do: :ok
+    end
+  end
+
+
+  @doc """
+  coda for "usable_as" function guard lists.  Performs the following two things:
+
+  - catches usable_as against unions; and performs the appropriate attempt to
+    match into each of the union's subtypes.
+  - catches all other attempts to run usable_as, and returns `:error, metadata}`
+
+  """
+  defmacro usable_as_coda do
+    quote do
+      def usable_as(challenge, %Type.Union{of: types}, meta) do
+        types
+        |> Enum.map(&Type.usable_as(challenge, &1, meta))
+        |> Enum.reduce(&Type.ternary_or/2)
+      end
+
+      def usable_as(challenge, union, meta) do
+        {:error, Type.Message.make(challenge, union, meta)}
+      end
+    end
+  end
+
   defmodule Impl do
     # exists to prevent mistakes when generating functions
     @group_for %{
@@ -166,7 +214,7 @@ defimpl Type.Typed, for: Type do
 
   import Type, only: [builtin: 1]
 
-  alias Type.Message
+  alias Type.{Message, Union}
 
   def usable_as(type, type, _meta), do: :ok
 
@@ -177,6 +225,11 @@ defimpl Type.Typed, for: Type do
 
   # trap anys as ok
   def usable_as(_, builtin(:any), _meta), do: :ok
+  def usable_as(challenge, %Union{of: targets}, meta) do
+    targets
+    |> Enum.map(&Type.usable_as(challenge, &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
+  end
 
   # negative integer
   def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok

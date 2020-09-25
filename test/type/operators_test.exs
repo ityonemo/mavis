@@ -10,7 +10,6 @@ defmodule TypeTest.OperatorsTest do
     assert (:foo ~> builtin(:atom)) == :ok
   end
 
-  @tag :one
   test "|/2 is the type union operator" do
     assert :foo | :bar == %Type.Union{of: [:bar, :foo]}
   end

@@ -142,6 +142,12 @@ defmodule Type.Union do
       |> Elixir.List.last
       |> Type.Typed.typegroup
     end
+
+    def usable_as(challenge, target, meta) do
+      challenge.of
+      |> Enum.map(&Type.usable_as(&1, target, meta))
+      |> Enum.reduce(&Type.ternary_or/2)
+    end
   end
 
   defimpl Collectable do

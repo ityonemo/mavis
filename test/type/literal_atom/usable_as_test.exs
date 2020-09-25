@@ -16,6 +16,11 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
       assert (:foo ~> builtin(:atom)) == :ok
     end
 
+    test "a union with atoms" do
+      assert (:foo ~> (:foo | 1..47)) == :ok
+      assert (:foo ~> (builtin(:atom) | 47)) == :ok
+    end
+
     test "any" do
       assert (:foo ~> builtin(:any)) == :ok
     end
@@ -25,6 +30,10 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
   alias TypeTest.Targets
 
   describe "atoms not usable as" do
+    test "a union without atoms" do
+      assert {:error, _} = (:foo ~> (builtin(:integer) | builtin(:float)))
+    end
+
     test "any other type" do
       targets = Targets.except([builtin(:atom)])
       Enum.each(targets, fn target ->

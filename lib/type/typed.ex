@@ -35,6 +35,11 @@ defimpl Type.Typed, for: Integer do
   def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
   def usable_as(_, builtin(:integer), _),                     do: :ok
   def usable_as(_, builtin(:any), _),                         do: :ok
+  def usable_as(i, %Type.Union{of: types}, meta) do
+    types
+    |> Enum.map(&Type.usable_as(i, &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
+  end
   def usable_as(type, target, meta) do
     {:error, Type.Message.make(type, target, meta)}
   end
@@ -95,8 +100,13 @@ defimpl Type.Typed, for: Range do
         {:maybe, [Type.Message.make(a..b, c..d, meta)]}
     end
   end
-  def usable_as(type, target, meta) do
-    {:error, Type.Message.make(type, target, meta)}
+  def usable_as(challenge, %Type.Union{of: types}, meta) do
+    types
+    |> Enum.map(&Type.usable_as(challenge, &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
+  end
+  def usable_as(challenge, target, meta) do
+    {:error, Type.Message.make(challenge, target, meta)}
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
@@ -113,6 +123,11 @@ defimpl Type.Typed, for: Atom do
   def usable_as(atom, atom,        _), do: :ok
   def usable_as(_, builtin(:atom), _), do: :ok
   def usable_as(_, builtin(:any),  _), do: :ok
+  def usable_as(atom, %Type.Union{of: types}, meta) do
+    types
+    |> Enum.map(&Type.usable_as(atom, &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
+  end
   def usable_as(atom, type, meta) do
     {:error, Type.Message.make(atom, type, meta)}
   end
@@ -130,6 +145,11 @@ defimpl Type.Typed, for: List do
 
   def usable_as([], [], _), do: :ok
   def usable_as([], builtin(:any), _), do: :ok
+  def usable_as([], %Type.Union{of: types}, meta) do
+    types
+    |> Enum.map(&Type.usable_as([], &1, meta))
+    |> Enum.reduce(&Type.ternary_or/2)
+  end
   def usable_as([], t = %Type.List{nonempty: false, final: f}, meta) do
     if subtype?([], f) do
       :ok

@@ -25,6 +25,12 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
       assert (1..47 ~> 0..50) == :ok
     end
 
+    test "a union with the appropriate category" do
+      assert 1..47 ~> (builtin(:pos_integer) | :infinity) == :ok
+      assert 1..47 ~> (builtin(:non_neg_integer) | :infinity) == :ok
+      assert 1..47 ~> (builtin(:integer) | :infinity) == :ok
+    end
+
     test "any" do
       assert (1..47 ~> builtin(:any)) == :ok
     end
@@ -59,6 +65,10 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
       assert {:maybe, [%Message{type: -10..10, target: builtin(:non_neg_integer)}]} =
         (-10..10 ~> builtin(:non_neg_integer))
     end
+
+    test "a union with a partially overlapping category" do
+      assert {:maybe, _} = 1..47 ~> (1..10 | :infinity)
+    end
   end
 
   describe "ranges not usable as" do
@@ -78,6 +88,10 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
         (2..10 ~> builtin(:neg_integer))
       assert {:error, %Message{type: -10..-1, target: builtin(:non_neg_integer)}} =
         (-10..-1 ~> builtin(:non_neg_integer))
+    end
+
+    test "a union with a disjoint categories" do
+      assert {:maybe, _} = 1..47 ~> (builtin(:atom) | builtin(:pid))
     end
 
     test "any other type" do

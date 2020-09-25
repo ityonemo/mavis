@@ -8,7 +8,7 @@ defmodule Type.Bitstring do
   }
 
   defimpl Type.Typed do
-    import Type, only: [builtin: 1]
+    import Type, only: [usable_as_start: 0, usable_as_coda: 0]
     alias Type.{Bitstring, Message}
 
     use Type.Impl
@@ -18,8 +18,8 @@ defmodule Type.Bitstring do
     def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: true
     def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: false
 
-    def usable_as(bitstring, bitstring, _meta), do: :ok
-    def usable_as(_, builtin(:any), _meta), do: :ok
+
+    usable_as_start()
 
     # empty strings
     def usable_as(%{size: 0, unit: 0}, %Bitstring{size: 0}, _meta), do: :ok
@@ -79,9 +79,7 @@ defmodule Type.Bitstring do
       end
     end
 
-    def usable_as(type, target, meta) do
-      {:error, Message.make(type, target, meta)}
-    end
+    usable_as_coda()
 
     def subtype?(a, b), do: usable_as(a, b, []) == :ok
   end
