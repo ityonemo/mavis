@@ -230,7 +230,7 @@ defimpl Type.Typed, for: Type do
 
   import Type, only: :macros
 
-  alias Type.{Message, Union}
+  alias Type.Message
 
   def usable_as(type, type, _meta), do: :ok
 

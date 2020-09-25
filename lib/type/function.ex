@@ -13,13 +13,13 @@ defmodule Type.Function do
     return: Type.t
   }
 
-  def from_spec({:"::", _, [header, return]}, context) do
-    {name, _, params} = header
-    {name, %__MODULE__{
-      params: Enum.map(params, &Type.of(&1, context)),
-      return: Type.of(return, context)
-    }}
-  end
+#  def from_spec({:"::", _, [header, return]}, context) do
+#    {name, _, params} = header
+#    {name, %__MODULE__{
+#      params: Enum.map(params, &Type.of(&1, context)),
+#      return: Type.of(return, context)
+#    }}
+#  end
 
   defimpl Type.Typed do
     import Type, only: :macros

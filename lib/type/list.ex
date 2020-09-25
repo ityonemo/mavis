@@ -62,7 +62,7 @@ defmodule Type.List do
       Type.subtype?(challenge.type, target.type) and
         Type.subtype?(challenge.final, target.final)
     end
-    def subtype?(challenge, target = %Union{of: types}) do
+    def subtype?(challenge, %Union{of: types}) do
       Enum.any?(types, &Type.subtype?(challenge, &1))
     end
     def subtype?(_, _), do: false

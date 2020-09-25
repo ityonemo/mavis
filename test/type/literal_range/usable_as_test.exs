@@ -43,7 +43,7 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
   end
 
-  alias Type.{Bitstring, Function, List, Map, Message, Tuple}
+  alias Type.Message
 
   describe "ranges maybe usable as" do
     test "an in-range integer" do

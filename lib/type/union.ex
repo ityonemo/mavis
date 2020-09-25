@@ -78,7 +78,7 @@ defmodule Type.Union do
     merged = %List{type: t, final: merged_final, nonempty: n}
     [merged | rest]
   end
-  def maybe_merge(f1 = %Function{}, [f2 = %Function{} | rest]) do
+  def maybe_merge(_f1 = %Function{}, [_f2 = %Function{} | _rest]) do
     raise "hell"
     #maybe_merge_function(f1, f2, rest)
   end

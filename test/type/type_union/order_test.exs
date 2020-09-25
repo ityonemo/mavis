@@ -7,8 +7,6 @@ defmodule TypeTest.TypeUnion.OrderTest do
 
   use Type.Operators
 
-  alias Type.Union
-
   describe "a union" do
     test "is bigger than bottom and pid" do
       assert (1 | :foo) > builtin(:none)

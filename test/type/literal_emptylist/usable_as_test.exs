@@ -7,7 +7,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, Function, List, Map, Message, Tuple}
+  alias Type.{Bitstring, List, Message}
 
   describe "empty list are usable as" do
     test "themselves" do

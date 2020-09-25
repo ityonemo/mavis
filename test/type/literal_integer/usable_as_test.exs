@@ -37,7 +37,7 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
   end
 
-  alias Type.{Bitstring, Function, List, Map, Message, Tuple}
+  alias Type.Message
 
   describe "integers not usable as" do
     test "wrong integer category" do

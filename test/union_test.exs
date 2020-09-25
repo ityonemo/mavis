@@ -152,6 +152,7 @@ defmodule TypeTest.UnionTest do
 
   alias Type.Tuple
 
+  @any builtin(:any)
   @anytuple %Tuple{elements: :any}
 
   def tuple(list), do: %Tuple{elements: list}
@@ -180,7 +181,6 @@ defmodule TypeTest.UnionTest do
 
   alias Type.List
 
-  @anylist %List{type: @any}
   describe "for the list type" do
     test "lists with the same end type get merged" do
       assert %List{type: %Union{of: [:foo, :bar]}} =

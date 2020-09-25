@@ -34,7 +34,6 @@ defimpl Type.Typed, for: Integer do
     def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
     def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
     def usable_as(_, builtin(:integer), _),                     do: :ok
-    def usable_as(_, builtin(:any), _),                         do: :ok
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
