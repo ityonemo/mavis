@@ -75,5 +75,16 @@ defmodule Type.Function do
     def usable_as(challenge, target, meta) do
       {:error, Message.make(challenge, target, meta)}
     end
+
+    def subtype?(fn_type, fn_type), do: true
+    def subtype?(_fn_type, builtin(:any)), do: true
+    def subtype?(challenge, target = %Function{params: :any}) do
+      Type.subtype?(challenge.return, target.return)
+    end
+    def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
+        when p_c == p_t do
+      Type.subtype?(challenge.return, target.return)
+    end
+    def subtype?(_, _), do: false
   end
 end

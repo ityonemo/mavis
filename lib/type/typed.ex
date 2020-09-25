@@ -38,6 +38,8 @@ defimpl Type.Typed, for: Integer do
   def usable_as(type, target, meta) do
     {:error, Type.Message.make(type, target, meta)}
   end
+
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
 defimpl Type.Typed, for: Range do
@@ -96,6 +98,8 @@ defimpl Type.Typed, for: Range do
   def usable_as(type, target, meta) do
     {:error, Type.Message.make(type, target, meta)}
   end
+
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
 defimpl Type.Typed, for: Atom do
@@ -113,9 +117,7 @@ defimpl Type.Typed, for: Atom do
     {:error, Type.Message.make(atom, type, meta)}
   end
 
-  def subtype?(_, builtin(:atom)), do: true
-  def subtype?(atom, atom),        do: true
-  def subtype?(_, _),              do: false
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
 # remember, the empty list is its own type
@@ -137,6 +139,5 @@ defimpl Type.Typed, for: List do
   end
   def usable_as([], t, meta), do: {:error, Type.Message.make([], t, meta)}
 
-  def subtype?([], []), do: true
-  def subtype?([], _), do: false
+  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
