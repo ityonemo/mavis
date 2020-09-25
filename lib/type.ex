@@ -161,7 +161,8 @@ defmodule Type do
   end
 
   defmodule Impl do
-    # exists to prevent mistakes when generating functions
+    # exists to prevent mistakes when generating functions.
+    # TODO: move to parent module.
     @group_for %{
       "Integer" => 1,
       "Range" => 1,
@@ -321,7 +322,10 @@ defimpl Type.Typed, for: Type do
   def group_order(builtin(:atom), _), do: true
   def group_order(_, builtin(:atom)), do: false
 
-  def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  def subtype?(a, %Type.Union{of: types}) do
+    Enum.any?(types, &Type.subtype?(a, &1))
+  end
+  def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 
 defmodule Type.Message do
