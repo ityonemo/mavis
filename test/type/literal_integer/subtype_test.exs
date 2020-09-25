@@ -37,6 +37,16 @@ defmodule TypeTest.LiteralInteger.SubtypeTest do
       refute -47 in builtin(:non_neg_integer)
     end
 
+    test "is a subtype of a union with itself or integer types" do
+      assert -47 in (-47 | builtin(:atom))
+      assert -47 in (builtin(:neg_integer) | builtin(:atom))
+      assert -47 in (builtin(:integer) | builtin(:atom))
+    end
+
+    test "is not a subtype of a union with orthogonal types" do
+      refute -47 in (builtin(:pos_integer) | :infinity)
+    end
+
     test "is not a subtype of other types" do
       TypeTest.Targets.except([-47, builtin(:integer), builtin(:neg_integer)])
       |> Enum.each(fn target ->
@@ -50,6 +60,16 @@ defmodule TypeTest.LiteralInteger.SubtypeTest do
       assert 0 in builtin(:non_neg_integer)
     end
 
+    test "is a subtype of a union with itself or integer types" do
+      assert 0 in (0 | builtin(:atom))
+      assert 0 in (builtin(:non_neg_integer) | builtin(:atom))
+      assert 0 in (builtin(:integer) | builtin(:atom))
+    end
+
+    test "is not a subtype of a union with orthogonal types" do
+      refute 0 in (builtin(:pos_integer) | :infinity)
+    end
+
     test "is not a subtype of wrong integer classes" do
       refute 0 in builtin(:neg_integer)
       refute 0 in builtin(:pos_integer)
@@ -60,6 +80,17 @@ defmodule TypeTest.LiteralInteger.SubtypeTest do
     test "is a subtype of pos_integer and non_neg_integer" do
       assert 47 in builtin(:pos_integer)
       assert 47 in builtin(:non_neg_integer)
+    end
+
+    test "is a subtype of a union with itself or integer types" do
+      assert 47 in (47 | builtin(:atom))
+      assert 47 in (builtin(:non_neg_integer) | builtin(:atom))
+      assert 47 in (builtin(:pos_integer) | builtin(:atom))
+      assert 47 in (builtin(:integer) | builtin(:atom))
+    end
+
+    test "is not a subtype of a union with orthogonal types" do
+      refute 47 in (builtin(:neg_integer) | :infinity)
     end
 
     test "is not a subtype of wrong integer classes" do

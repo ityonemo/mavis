@@ -22,7 +22,7 @@ defmodule Type.Function do
   end
 
   defimpl Type.Typed do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
 
     use Type.Impl
 
@@ -46,34 +46,30 @@ defmodule Type.Function do
 
     alias Type.{Function, Message}
 
-    def usable_as(type, type, _meta), do: :ok
-
-    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-        when cparam == :any or tparam == :any do
-      case Type.usable_as(challenge.return, target.return, meta) do
-        :ok -> :ok
-        # TODO: add meta-information here.
-        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+    usable_as do
+      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+          when cparam == :any or tparam == :any do
+        case Type.usable_as(challenge.return, target.return, meta) do
+          :ok -> :ok
+          # TODO: add meta-information here.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
       end
-    end
 
-    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-        when length(cparam) == length(tparam) do
-      [challenge.return | tparam]           # note that the target parameters and the challenge
-      |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
-      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-      |> Enum.reduce(&Type.ternary_and/2)
-      |> case do
-        :ok -> :ok
-        # TODO: add meta-information here.
-        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+          when length(cparam) == length(tparam) do
+        [challenge.return | tparam]           # note that the target parameters and the challenge
+        |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
+        |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+        |> Enum.reduce(&Type.ternary_and/2)
+        |> case do
+          :ok -> :ok
+          # TODO: add meta-information here.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
       end
-    end
-
-    def usable_as(challenge, target, meta) do
-      {:error, Message.make(challenge, target, meta)}
     end
 
     def subtype?(fn_type, fn_type), do: true

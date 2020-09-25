@@ -26,6 +26,12 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
       assert (47 ~> builtin(:integer)) == :ok
     end
 
+    test "a union with the appropriate category" do
+      assert 47 ~> (builtin(:pos_integer) | :infinity) == :ok
+      assert 47 ~> (builtin(:non_neg_integer) | :infinity) == :ok
+      assert 47 ~> (builtin(:integer) | :infinity) == :ok
+    end
+
     test "any" do
       assert (47 ~> builtin(:any)) == :ok
     end
@@ -52,6 +58,10 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     test "outside their range" do
       assert {:error, %Message{type: 42, target: 47..50}}
         = (42 ~> 47..50)
+    end
+
+    test "a union with the noninclusive categories" do
+      assert {:error, _} = -47 ~> (builtin(:pos_integer) | :infinity)
     end
 
     test "any other type" do

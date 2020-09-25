@@ -10,7 +10,7 @@ defmodule TypeTest.TypeUnion.UsableAsTest do
 
   describe "for union types" do
     test "you can use it for itself and the builtin any" do
-      assert :ok = (1 | :foo) ~> @any_tuple
+      assert :ok = (1 | :foo) ~> (1 | :foo)
       assert :ok = (1 | :foo) ~> builtin(:any)
     end
 

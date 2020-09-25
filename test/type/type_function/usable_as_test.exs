@@ -21,8 +21,9 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
   end
 
   describe "the any/any function" do
-    test "is usable as itself" do
+    test "is usable as itself and any" do
       assert :ok = @any_fn ~> @any_fn
+      assert :ok = @any_fn ~> @any
     end
 
     test "is maybe usable with an any param'd function" do

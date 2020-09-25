@@ -104,8 +104,72 @@ defmodule Type do
   def ternary_and(error, {:maybe, _}),              do: error
   def ternary_and(error, _),                        do: error
 
+  @spec ternary_or(ternary, ternary) :: ternary
+  @doc false
+  # ternary or which performs comparisons of ok, maybe, and error
+  # types and composes them into the appropriate ternary logic result.
+  def ternary_or(:ok, _),                          do: :ok
+  def ternary_or(_, :ok),                          do: :ok
+  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_or({:maybe, left}, _),               do: {:maybe, left}
+  def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
+  def ternary_or(error, _),                        do: error
+
+
+  defmacro usable_as_start do
+    quote do
+      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, Type.builtin(:any), meta), do: :ok
+    end
+  end
+
+  @doc """
+  coda for "usable_as" function guard lists.  Performs the following two things:
+
+  - catches usable_as against unions; and performs the appropriate attempt to
+    match into each of the union's subtypes.
+  - catches all other attempts to run usable_as, and returns `:error, metadata}`
+
+  """
+  defmacro usable_as_coda do
+    quote do
+      def usable_as(challenge, %Type.Union{of: types}, meta) do
+        types
+        |> Enum.map(&Type.usable_as(challenge, &1, meta))
+        |> Enum.reduce(&Type.ternary_or/2)
+      end
+
+      def usable_as(challenge, union, meta) do
+        {:error, Type.Message.make(challenge, union, meta)}
+      end
+    end
+  end
+
+  @doc """
+  Wraps the "usable_as" function headers in common "top" and "fallback" headers.
+  This prevents errors from being made in code that must be common to all types.
+
+  Top function matches:
+  - matches equal types and makes them output :ok
+  - matches usable_as with `builtin(:any)` and makes them output :ok
+
+  Fallback function matches:
+  - see `usable_as_coda/0`
+
+  """
+  defmacro usable_as(do: block) do
+    quote do
+      Type.usable_as_start()
+
+      unquote(block)
+
+      Type.usable_as_coda()
+    end
+  end
+
   defmodule Impl do
-    # exists to prevent mistakes when generating functions
+    # exists to prevent mistakes when generating functions.
+    # TODO: move to parent module.
     @group_for %{
       "Integer" => 1,
       "Range" => 1,
@@ -164,9 +228,9 @@ defimpl Type.Typed, for: Type do
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
     float: 2, atom: 3, reference: 4, port: 6, pid: 7, any: 12}
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
-  alias Type.Message
+  alias Type.{Message, Union}
 
   def usable_as(type, type, _meta), do: :ok
 
@@ -235,10 +299,7 @@ defimpl Type.Typed, for: Type do
     {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
   end
 
-  # all else falls through as error.
-  def usable_as(challenge, target, meta) do
-    {:error, Message.make(challenge, target, meta)}
-  end
+  usable_as_coda()
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]
@@ -268,7 +329,10 @@ defimpl Type.Typed, for: Type do
   def group_order(builtin(:atom), _), do: true
   def group_order(_, builtin(:atom)), do: false
 
-  def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  def subtype?(a, %Type.Union{of: types}) do
+    Enum.any?(types, &Type.subtype?(a, &1))
+  end
+  def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 
 defmodule Type.Message do
