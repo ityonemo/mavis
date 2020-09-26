@@ -1,7 +1,7 @@
 defmodule TypeTest.LiteralInteger.OrderTest do
   use ExUnit.Case, async: true
 
-  @moduletag :order
+  @moduletag :compare
 
   import Type, only: [builtin: 1]
 
@@ -18,10 +18,10 @@ defmodule TypeTest.LiteralInteger.OrderTest do
     end
 
     test "is smaller than that which it's a subtype" do
-      assert -47 < -50..-47
-      assert -47 < -50..-45
-      assert -47 < -47..0
-      assert -47 < builtin(:neg_integer)
+    #  assert -47 < -50..-47
+    #  assert -47 < -50..-45
+    #  assert -47 < -47..0
+    #  assert -47 < builtin(:neg_integer)
       assert -47 < builtin(:integer)
     end
 

@@ -9,15 +9,20 @@ defmodule Type.Tuple do
 
     use Type.Impl
 
-    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: true
-    def group_order(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: false
-    def group_order(tuple1, tuple2) do
+    def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
+    def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
+    def group_compare(tuple1, tuple2) do
       tuple1.elements
       |> Enum.zip(tuple2.elements)
-      |> Enum.any?(fn {t1, t2} ->
-        # they can't be equal
-        Type.order(t1, t2) and not Type.order(t2, t1)
+      |> Enum.each(fn {t1, t2} ->
+        compare = Type.compare(t1, t2)
+        unless compare == :eq do
+          throw compare
+        end
       end)
+      :eq
+    catch
+      compare when compare in [:gt, :lt] -> compare
     end
 
     alias Type.{Message, Tuple, Union}

@@ -30,10 +30,10 @@ defmodule Type do
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
 
-  @spec order({t, t}) :: boolean
-  def order({t1, t2}), do: order(t1, t2)
+  @spec compare({t, t}) :: boolean
+  def compare({t1, t2}), do: compare(t1, t2)
 
-  @spec order(t, t) :: boolean
+  @spec compare(t, t) :: :lt | :gt | :eq
   @doc """
   Types have an order that facilitates calculation of collapsing values into
   unions.
@@ -81,7 +81,7 @@ defmodule Type do
   iolist (group 10) come in the appropriate place in the range,
   a union comes after the highest represented item in its union,
   """
-  defdelegate order(a, b), to: Type.Properties
+  defdelegate compare(a, b), to: Type.Properties
 
   @type group :: 0..12
 
@@ -181,7 +181,7 @@ defmodule Type do
       "Bitstring" => 11
     }
 
-    @callback group_order(Type.t, Type.t) :: boolean
+    @callback group_compare(Type.t, Type.t) :: boolean
 
     defmacro __using__(_) do
       group = __CALLER__.module
@@ -195,17 +195,18 @@ defmodule Type do
         @group group
         def typegroup(_), do: @group
 
-        def order(this, other) do
+        def compare(this, other) do
           other_group = Type.typegroup(other)
           cond do
-            other_group < @group -> true
-            other_group > @group -> false
-            true -> group_order(this, other)
+            @group > other_group -> :gt
+            @group < other_group -> :lt
+            true ->
+              group_compare(this, other)
           end
         end
 
-        # preload a group_order definition here.
-        def group_order(any, any), do: true
+        # preload a group_compare definition here.
+        def group_compare(any, any), do: :eq
       end
     end
   end
@@ -305,29 +306,33 @@ defimpl Type.Properties, for: Type do
     @groups_for[name]
   end
 
-  def order(this, other) do
+  def compare(this, other) do
     this_group = Type.typegroup(this)
     other_group = Type.typegroup(other)
     cond do
-      this_group > other_group -> true
-      this_group < other_group -> false
-      true -> group_order(this, other)
+      this_group > other_group -> :gt
+      this_group < other_group -> :lt
+      true -> group_compare(this, other)
     end
   end
 
-  # group order for the integer block.
-  def group_order(type, type),                   do: true
-  def group_order(builtin(:integer), _),         do: true
-  def group_order(_, builtin(:integer)),         do: false
-  def group_order(builtin(:non_neg_integer), _), do: true
-  def group_order(_, builtin(:non_neg_integer)), do: false
-  def group_order(builtin(:pos_integer), _),     do: true
-  def group_order(_, builtin(:pos_integer)),     do: false
-  def group_order(builtin(:neg_integer), _),     do: true
-  def group_order(_, builtin(:neg_integer)),     do: false
+  def group_compare(type, type),                         do: :eq
 
-  def group_order(builtin(:atom), _), do: true
-  def group_order(_, builtin(:atom)), do: false
+  # group compare for the integer block.
+  def group_compare(builtin(:integer), _),               do: :gt
+  def group_compare(_, builtin(:integer)),               do: :lt
+  def group_compare(builtin(:non_neg_integer), _),       do: :gt
+  def group_compare(_, builtin(:non_neg_integer)),       do: :lt
+  def group_compare(builtin(:pos_integer), _),           do: :gt
+  def group_compare(_, builtin(:pos_integer)),           do: :lt
+  def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt
+  def group_compare(_, _..b) when b >= 0,                do: :lt
+
+  # group compare for the atom block
+  def group_compare(builtin(:atom), _),                  do: :gt
+  def group_compare(_, builtin(:atom)),                  do: :lt
+
+  def group_compare(_, _),                               do: :gt
 
   def subtype?(a, %Type.Union{of: types}) do
     Enum.any?(types, &Type.subtype?(a, &1))

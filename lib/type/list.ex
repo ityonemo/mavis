@@ -18,15 +18,13 @@ defmodule Type.List do
 
     alias Type.{List, Message, Union}
 
-    def group_order(%{nonempty: ne}, []), do: not ne
-    def group_order(%{nonempty: false}, %List{nonempty: true}), do: true
-    def group_order(%{nonempty: true}, %List{nonempty: false}), do: false
-    def group_order(a, b) do
-      case {Type.order(a.type, b.type), Type.order(b.type, a.type)} do
-        {true, false} -> true
-        {false, true} -> false
-        {true, true} ->
-          Type.order(a.final, b.final)
+    def group_compare(%{nonempty: ne}, []), do: if ne, do: :lt, else: :gt
+    def group_compare(%{nonempty: false}, %List{nonempty: true}), do: :gt
+    def group_compare(%{nonempty: true}, %List{nonempty: false}), do: :lt
+    def group_compare(a, b) do
+      case Type.compare(a.type, b.type) do
+        :eq -> Type.compare(a.final, b.final)
+        ordered -> ordered
       end
     end
 

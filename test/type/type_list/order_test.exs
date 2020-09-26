@@ -1,7 +1,7 @@
 defmodule TypeTest.TypeList.OrderTest do
   use ExUnit.Case, async: true
 
-  @moduletag :order
+  @moduletag :compare
 
   import Type, only: [builtin: 1]
 

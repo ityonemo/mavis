@@ -19,12 +19,12 @@ defmodule Type.Operators do
   defdelegate a | b, to: Type.Union, as: :of
 
   @doc """
-  shortcut for `Type.order/2`
+  shortcut for `Type.compare/2`
   """
-  defdelegate a >= b, to: Type, as: :order
-  def a <= b, do: (b >= a)
-  def a > b, do: (a >= b) and (a != b)
-  def a < b, do: ((a <= b) and (a != b))
+  def a >= b, do: Type.compare(a, b) in [:gt, :eq]
+  def a <= b, do: Type.compare(a, b) in [:lt, :eq]
+  def a > b, do: Type.compare(a, b) == :gt
+  def a < b, do: Type.compare(a, b) == :lt
 
   @doc """
   shortcut for `Type.subtype?/2`
