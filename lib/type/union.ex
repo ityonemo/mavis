@@ -138,9 +138,12 @@ defmodule Type.Union do
   def type_merge(lhs = %Tuple{}, rhs = %Tuple{}) do
     merged_elements = lhs.elements
     |> Enum.zip(rhs.elements)
-    |> Enum.map(fn {lh, rh} ->
-      Type.subtype?(lh, rh) or throw :fail
-      Type.Union.of(lh, rh)
+    |> Enum.map(fn
+      {type, type} -> type
+      {lh, rh} ->
+        union = Type.Union.of(lh, rh)
+        match?(%Type.Union{}, union) and (union.of == [lh, rh]) and throw :fail
+        union
     end)
     {[], %Tuple{elements: merged_elements}}
   catch

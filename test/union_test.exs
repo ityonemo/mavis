@@ -154,17 +154,17 @@ defmodule TypeTest.UnionTest do
     test "tuples are merged if their elements can merge" do
       assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, :bar]})
 
-    #  assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} | %Tuple{elements: [:bar, :foo]})
-#
-    #  assert (%Tuple{elements: [:foo, @any]} | %Tuple{elements: [@any, :bar]}) ==
-    #    (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, @any]} | %Tuple{elements: [:foo, :bar]})
-#
-    #  assert %Tuple{elements: [1..2, 1..2]} == (
-    #    %Tuple{elements: [1, 2]} |
-    #    %Tuple{elements: [2, 1]} |
-    #    %Tuple{elements: [1, 1]} |
-    #    %Tuple{elements: [2, 2]}
-    #  )
+      assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} | %Tuple{elements: [:bar, :foo]})
+
+      assert (%Tuple{elements: [:foo, @any]} | %Tuple{elements: [@any, :bar]}) ==
+        (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, @any]} | %Tuple{elements: [:foo, :bar]})
+
+      assert %Tuple{elements: [1..2, 1..2]} == (
+        %Tuple{elements: [1, 2]} |
+        %Tuple{elements: [2, 1]} |
+        %Tuple{elements: [1, 1]} |
+        %Tuple{elements: [2, 2]}
+      )
     end
 
     test "complicated tuples can be merged" do
