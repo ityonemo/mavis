@@ -27,159 +27,158 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  describe "when collecting integer in unions" do
-    test "collects neg_integer" do
-      assert builtin(:integer) = (builtin(:integer) | builtin(:neg_integer))
-      assert builtin(:integer) = (builtin(:neg_integer) | builtin(:integer))
+  describe "when collecting integers in unions" do
+    test "adjacent integers are turned into ranges" do
+      assert 1..2 == (2 | 1)
     end
-    test "collects integers" do
-      assert builtin(:integer) = (builtin(:integer) | -1)
-    end
-    test "collects non_neg_integer" do
-      assert builtin(:integer) = (builtin(:integer) | builtin(:non_neg_integer))
-    end
-    test "collects pos_integer" do
-      assert builtin(:integer) = (builtin(:integer) | builtin(:pos_integer))
-    end
-    test "collects ranges" do
-      assert builtin(:integer) = (builtin(:integer) | -3..10)
+
+    test "a preceding range is merged in" do
+      assert 1..3 == (3 | 1..2)
     end
   end
 
-  #describe "when collecting neg_integer in unions" do
-  #  test "collects negative integers" do
-  #    assert builtin(:neg_integer) = Enum.into([builtin(:neg_integer), -2], %Union{})
-  #  end
-  #  test "collects negative ranges" do
-  #    assert builtin(:neg_integer) = Enum.into([builtin(:neg_integer), -10..-2], %Union{})
-  #  end
-  #  test "splits partially negative ranges" do
-  #    assert %Union{of: [builtin(:neg_integer), 0..2]} =
-  #      Enum.into([builtin(:neg_integer), -10..2], %Union{})
-  #  end
-  #  test "merges with non_neg_integer" do
-  #    assert builtin(:integer) = Enum.into([builtin(:neg_integer), builtin(:non_neg_integer)], %Union{})
-  #  end
-  #end
+  describe "when collecting ranges in unions" do
+    test "a preceding integer is merged in" do
+      assert 1..3 == (2..3 | 1)
+    end
+
+    test "overlapping ranges are merged" do
+      assert 1..4 == (2..4 | 1..3)
+      assert 1..3 == (2..3 | 1..2)
+    end
+  end
+
+  describe "when collecting neg_integer in unions" do
+    test "collects negative integers" do
+      assert builtin(:neg_integer) == (builtin(:neg_integer) | -2)
+    end
+    test "collects negative ranges" do
+      assert builtin(:neg_integer) == (builtin(:neg_integer) | -10..-2)
+    end
+    test "collects partially negative ranges" do
+      assert (builtin(:neg_integer) | 0) == (builtin(:neg_integer) | -10..0)
+      assert (builtin(:neg_integer) | 0..1) == (builtin(:neg_integer) | -10..1)
+    end
+  end
+
+  describe "when collecting pos_integer in unions" do
+    test "collects positive integers" do
+      assert builtin(:pos_integer) == (builtin(:pos_integer) | 2)
+    end
+    test "collects positive ranges" do
+      assert builtin(:pos_integer) == (builtin(:pos_integer) | 2..10)
+    end
+    test "collects zero" do
+      assert builtin(:non_neg_integer) == (builtin(:pos_integer) | 0)
+    end
+    test "collects ranges with zero" do
+      assert builtin(:non_neg_integer) == (builtin(:pos_integer) | 0..10)
+    end
+    test "collects ranges ending in zero" do
+      assert (-1 | builtin(:non_neg_integer)) == (builtin(:pos_integer) | -1..0)
+      assert (-3..-1 | builtin(:non_neg_integer)) == (builtin(:pos_integer) | -3..0)
+    end
+    test "collects ranges not ending in zero" do
+      assert (-1 | builtin(:non_neg_integer)) == (builtin(:pos_integer) | -1..10)
+      assert (-3..-1 | builtin(:non_neg_integer)) == (builtin(:pos_integer) | -3..10)
+    end
+  end
+
+  describe "when collecting non_neg_integer in unions" do
+    test "collects non negative integers" do
+      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) | 0)
+      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) | 2)
+    end
+    test "collects non negative ranges" do
+      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) | 0..10)
+      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) | 2..10)
+    end
+    test "collects ranges ending in zero" do
+      assert (-1 | builtin(:non_neg_integer)) == (builtin(:non_neg_integer) | -1..0)
+      assert (-3..-1 | builtin(:non_neg_integer)) == (builtin(:non_neg_integer) | -3..0)
+    end
+    test "collects ranges not ending in zero" do
+      assert (-1 | builtin(:non_neg_integer)) == (builtin(:non_neg_integer) | -1..10)
+      assert (-3..-1 | builtin(:non_neg_integer)) == (builtin(:non_neg_integer) | -3..10)
+    end
+    test "fuses with neg_integer" do
+      assert builtin(:integer) == (builtin(:neg_integer) | builtin(:non_neg_integer))
+    end
+  end
+
+  describe "when collecting integer in unions" do
+    test "collects neg_integer" do
+      assert builtin(:integer) == (builtin(:integer) | builtin(:neg_integer))
+    end
+    test "collects integers" do
+      assert builtin(:integer) == (builtin(:integer) | -1)
+    end
+    test "collects non_neg_integer" do
+      assert builtin(:integer) == (builtin(:integer) | builtin(:non_neg_integer))
+    end
+    test "collects pos_integer" do
+      assert builtin(:integer) == (builtin(:integer) | builtin(:pos_integer))
+    end
+    test "collects ranges" do
+      assert builtin(:integer) == (builtin(:integer) | -3..10)
+    end
+  end
+
+  test "full integer fusion" do
+    assert builtin(:integer) = (builtin(:neg_integer) | 0 | builtin(:pos_integer))
+    assert builtin(:integer) = (builtin(:neg_integer) | 0..3 | builtin(:pos_integer))
+    assert builtin(:integer) = (builtin(:neg_integer) | -1..3 | builtin(:pos_integer))
+  end
+
+  test "builtin atom collects atoms" do
+    assert :foo == (:foo | :foo)
+    assert builtin(:atom) = (builtin(:atom) | :foo)
+    assert builtin(:atom) = (builtin(:atom) | :bar)
+  end
+
+
+  alias Type.Tuple
+  @any builtin(:any)
+  @anytuple %Tuple{elements: :any}
+
+  def tuple(list), do: %Tuple{elements: list}
+
+  describe "for the tuple type" do
+    test "anytuple merges other all tuples" do
+      assert @anytuple == (@anytuple | %Tuple{elements: []})
+      assert @anytuple == (@anytuple | %Tuple{elements: [@any]})
+      assert @anytuple == (@anytuple | %Tuple{elements: [:foo]} | %Tuple{elements: [:bar]})
+    end
+
+    @tag :one
+    test "tuples are merged if their elements can merge" do
+      assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, :bar]})
+
+    #  assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} | %Tuple{elements: [:bar, :foo]})
 #
-  #describe "when collecting integers in unions" do
-  #  test "they get merged into ranges" do
-  #    assert -3..-2 = Enum.into([-3, -2], %Union{})
-  #    assert -3..-1 = Enum.into([-3, -2, -1], %Union{})
-  #  end
-  #  test "0 gets merged with pos_integer" do
-  #    assert builtin(:non_neg_integer) = Enum.into([0, builtin(:pos_integer)], %Union{})
-  #  end
-  #end
+    #  assert (%Tuple{elements: [:foo, @any]} | %Tuple{elements: [@any, :bar]}) ==
+    #    (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, @any]} | %Tuple{elements: [:foo, :bar]})
 #
-  #describe "when collecting ranges" do
-  #  test "they get merged into overlapping ranges" do
-  #    assert -3..6 = Enum.into([-3..3, -3..6], %Union{})
-  #    assert -3..3 = Enum.into([-3..3, -1..1], %Union{})
-  #    assert -3..6 = Enum.into([-3..3, 1..6], %Union{})
-  #    assert -3..6 = Enum.into([-3..3, 3..6], %Union{})
-  #    assert -3..6 = Enum.into([-3..3, 4..6], %Union{})
-  #    assert %Union{of: [-3..3, 5..6]} = Enum.into([-3..3, 5..6], %Union{})
-  #  end
-#
-  #  test "they merge into integers" do
-  #    assert -3..4 = Enum.into([-3..4, 4], %Union{})
-  #    assert -3..4 = Enum.into([-3..3, 4], %Union{})
-  #    assert %Union{of: [-3..3, 5]} = Enum.into([-3..3, 5], %Union{})
-  #  end
-#
-  #  test "they merge into non_neg_integer" do
-  #    assert %Union{of: [-3..-1, builtin(:non_neg_integer)]} =
-  #      Enum.into([-3..6, builtin(:non_neg_integer)], %Union{})
-  #  end
-#
-  #  test "they merge into pos_integer" do
-  #    assert %Union{of: [-3..-1, builtin(:non_neg_integer)]} =
-  #      Enum.into([-3..3, builtin(:pos_integer)], %Union{})
-  #    assert %Union{of: [-3..-1, builtin(:non_neg_integer)]} =
-  #      Enum.into([-3..0, builtin(:pos_integer)], %Union{})
-  #    assert builtin(:non_neg_integer) =
-  #      Enum.into([0..3, builtin(:pos_integer)], %Union{})
-  #  end
-  #end
-#
-  #describe "when collecting non_neg_integer" do
-  #  test "it merges zero, or any integer" do
-  #    assert builtin(:non_neg_integer) = Enum.into(
-  #      [builtin(:non_neg_integer), 0], %Union{})
-  #    assert builtin(:non_neg_integer) = Enum.into(
-  #      [builtin(:non_neg_integer), 1], %Union{})
-  #  end
-#
-  #  test "it merges non negative ranges, or any integer" do
-  #    assert builtin(:non_neg_integer) = Enum.into(
-  #      [builtin(:non_neg_integer), 0..10], %Union{})
-  #    assert builtin(:non_neg_integer) = Enum.into(
-  #      [builtin(:non_neg_integer), 1..10], %Union{})
-  #  end
-#
-  #  test "it merges pos_integer" do
-  #    assert builtin(:non_neg_integer) = Enum.into(
-  #      [builtin(:non_neg_integer), builtin(:pos_integer)], %Union{})
-  #  end
-  #end
-#
-  #describe "when collecting pos_integer" do
-  #  test "or any integer" do
-  #    assert builtin(:pos_integer) = Enum.into(
-  #      [builtin(:pos_integer), 1], %Union{})
-  #  end
-#
-  #  test "it merges positive ranges, or any integer" do
-  #    assert builtin(:pos_integer) = Enum.into(
-  #      [builtin(:pos_integer), 1..10], %Union{})
-  #  end
-  #end
-#
-  #test "integer fusion" do
-  #  assert builtin(:integer) = Enum.into([builtin(:neg_integer), 0, builtin(:pos_integer)], %Union{})
-  #  assert builtin(:integer) = Enum.into([builtin(:neg_integer), 0..3, builtin(:pos_integer)], %Union{})
-  #  assert builtin(:integer) = Enum.into([builtin(:neg_integer), -1..3, builtin(:pos_integer)], %Union{})
-  #end
-#
-  #test "builtin atom collects atoms" do
-  #  assert builtin(:atom) = Enum.into([builtin(:atom), :foo], %Union{})
-  #  assert builtin(:atom) = Enum.into([builtin(:atom), :bar], %Union{})
-  #end
-#
-  #test "different atoms don't merge" do
-  #  assert %Union{of: [:bar, :foo]} = Enum.into([:foo, :bar], %Union{})
-  #end
-#
-  #alias Type.Tuple
-#
-  #@any builtin(:any)
-  #@anytuple %Tuple{elements: :any}
-#
-  #def tuple(list), do: %Tuple{elements: list}
-#
-  #describe "for the tuple type" do
-  #  test "anytuple merges other all tuples" do
-  #    assert @anytuple =
-  #      Enum.into([@anytuple, tuple([])], %Union{})
-  #    assert @anytuple =
-  #      Enum.into([@anytuple, tuple([@any])], %Union{})
-  #    assert @anytuple =
-  #      Enum.into([@anytuple, tuple([:foo]), tuple([:bar])], %Union{})
-  #  end
-#
-  #  test "tuples are merged if their elements can merge" do
-  #    assert %Tuple{elements: [@any, :bar]} =
-  #      Enum.into([tuple([@any, :bar]), tuple([:foo, :bar])], %Union{})
-  #    assert %Tuple{elements: [:bar, @any]} =
-  #      Enum.into([tuple([:bar, @any]), tuple([:bar, :foo])], %Union{})
-  #    assert %Union{of: [
-  #      %Tuple{elements: [:foo, @any]},
-  #      %Tuple{elements: [@any, :bar]}]} =
-  #      Enum.into([tuple([@any, :bar]), tuple([:foo, @any]), tuple([:foo, :bar])], %Union{})
-  #  end
-  #end
-#
+    #  assert %Tuple{elements: [1..2, 1..2]} == (
+    #    %Tuple{elements: [1, 2]} |
+    #    %Tuple{elements: [2, 1]} |
+    #    %Tuple{elements: [1, 1]} |
+    #    %Tuple{elements: [2, 2]}
+    #  )
+    end
+
+    test "complicated tuples can be merged" do
+      # This should not be able to be solved without a more complicated SAT solver.
+      unless %Tuple{elements: [1..3, 1..3, 1..3]} == (
+        %Tuple{elements: [(1 | 2), (2 | 3), Union.of(1, 3)]} |
+        %Tuple{elements: [(2 | 3), (1 | 3), Union.of(1, 2)]} |
+        %Tuple{elements: [(1 | 3), (1 | 2), Union.of(2, 3)]}
+      ) do
+        IO.warn("this test can't be solved without a SAT solver")
+      end
+    end
+  end
+
   #alias Type.List
 #
   #describe "for the list type" do

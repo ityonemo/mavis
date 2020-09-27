@@ -9,6 +9,11 @@ defmodule Type.Tuple do
 
     use Type.Impl
 
+    alias Type.{Message, Tuple, Union}
+
+    # NB: any for both is already filtered by the predefined group_compare
+    def group_compare(%{elements: :any}, %Tuple{}), do: :gt
+    def group_compare(_, %Tuple{elements: :any}), do:   :lt
     def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
     def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
     def group_compare(tuple1, tuple2) do
@@ -24,8 +29,6 @@ defmodule Type.Tuple do
     catch
       compare when compare in [:gt, :lt] -> compare
     end
-
-    alias Type.{Message, Tuple, Union}
 
     usable_as do
       # any tuple can be used as an any tuple

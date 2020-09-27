@@ -41,4 +41,12 @@ defmodule TypeTest.TypeTuple.OrderTest do
     end
   end
 
+  describe "a tuple with 'any' elements" do
+    test "is bigger than a tuple with defined elements" do
+      assert %Tuple{elements: :any} > %Tuple{elements: []}
+      assert %Tuple{elements: :any} > %Tuple{elements: [builtin(:any)]}
+      assert %Tuple{elements: :any} > %Tuple{elements: [builtin(:any), builtin(:any)]}
+    end
+  end
+
 end
