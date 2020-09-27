@@ -1,5 +1,7 @@
 # Mavis
 
+![Elixir CI](https://github.com/ityonemo/mavis/workflows/Elixir%20CI/badge.svg)
+
 Advanced type system for Elixir
 
 ## Future Installation
