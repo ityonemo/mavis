@@ -6,8 +6,6 @@ defmodule TypeTest.TypeUnion.UsableAsTest do
   import Type, only: [builtin: 1]
   use Type.Operators
 
-  alias Type.{Message, Union}
-
   describe "for union types" do
     test "you can use it for itself and the builtin any" do
       assert :ok = (1 | :foo) ~> (1 | :foo)

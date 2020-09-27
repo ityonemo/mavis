@@ -4,19 +4,24 @@ defmodule Type.Union do
 
   import Type, only: [builtin: 1]
 
+  @doc """
+  special syntax for two-valued union (which is delegated to by the `|` operator)
+  """
   def of(left, right) do
     Enum.into([left, right], %__MODULE__{})
   end
 
   # for now.
-  def collapse(%__MODULE__{of: types}) do
+  @spec collapse([Type.t]) :: Type.t
+  def collapse(types) do
     types
     |> Enum.flat_map(fn
-      union = %__MODULE__{} -> collapse(union).of
+      union = %__MODULE__{} -> union.of
       other_type -> [other_type]
     end)
-    |> Enum.sort(&Type.order/2)
-    |> Enum.reduce([], &maybe_merge/2)
+    |> Enum.sort({:asc, Type})
+    |> Enum.uniq
+    |> Enum.reduce([], &type_list_merge/2)
     |> case do
       [] -> %Type{name: :none}
       [one] -> one
@@ -24,123 +29,169 @@ defmodule Type.Union do
     end
   end
 
-  require Type
-  alias Type.{Function, List}
+  def type_list_merge(incoming_type, []), do: [incoming_type]
+  def type_list_merge(incoming_type, [head | rest]) do
+    {result, next} = type_merge(head, incoming_type)
+    result ++ type_list_merge(next, rest)
+  end
 
-  # anything that is exactly the same must come back the same.
-  def maybe_merge(any, [any | rest]) do
-    [any | rest]
+  # integers and ranges
+  def type_merge(a, b) when b == a + 1 do
+    {[], a..b}
   end
-  def maybe_merge(builtin(:neg_integer), [a..b | rest])
-      when a < 0 and b >= 0 do
-    [builtin(:neg_integer), 0..b | rest]
+  def type_merge(a..b, c) when c == b + 1 do
+    {[], a..c}
   end
-  def maybe_merge(a, [b | rest]) when b == a + 1 do
-    [a..b | rest]
+  def type_merge(a, b..c) when b == a + 1 do
+    {[], a..c}
   end
-  def maybe_merge(a, [b..c | rest]) when b == a + 1 do
-    [a..c | rest]
+  def type_merge(a..b, c..d) when c <= b do
+    {[], a..d}
   end
-  def maybe_merge(a..b, [c | rest]) when c <= b + 1 do
-    [a..c | rest]
+  def type_merge(builtin(:neg_integer), _..0) do
+    {[builtin(:neg_integer)], 0}
   end
-  def maybe_merge(a..b, [c..d | rest]) when c <= b + 1 do
-    [a..max(b, d) | rest]
+  def type_merge(builtin(:neg_integer), a..b) when a <= 0 and b > 0 do
+    {[builtin(:neg_integer)], 0..b}
   end
-  def maybe_merge(a..b, [builtin(:non_neg_integer) | rest]) when b >= -1 do
-    [a..-1, builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(builtin(:neg_integer), [builtin(:non_neg_integer) | rest]) do
-    [builtin(:integer) | rest]
-  end
-  def maybe_merge(0, [builtin(:pos_integer) | rest]) do
-    [builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(0.._, [builtin(:pos_integer) | rest]) do
-    [builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(-1.._, [builtin(:pos_integer) | rest]) do
-    [-1, builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(a.._, [builtin(:pos_integer) | rest]) when a < -1 do
-    [a..-1, builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(a..b, [builtin(:pos_integer) | rest]) when a < 0 and b >= 0 do
-    [a..-1, builtin(:non_neg_integer) | rest]
-  end
-  def maybe_merge(l1 = %List{final: f, nonempty: n}, [l2 = %List{final: f, nonempty: n} | rest]) do
-    merged_type = Enum.into([l1.type, l2.type], %__MODULE__{})
-    merged = %List{type: merged_type, final: f, nonempty: n}
-    [merged | rest]
-  end
-  def maybe_merge(l1 = %List{type: t, nonempty: n}, [l2 = %List{type: t, nonempty: n} | rest]) do
-    merged_final = Enum.into([l1.final, l2.final], %__MODULE__{})
-    merged = %List{type: t, final: merged_final, nonempty: n}
-    [merged | rest]
-  end
-  def maybe_merge(f1 = %Function{}, [f2 = %Function{} | rest]) do
-    raise "hell"
-    #maybe_merge_function(f1, f2, rest)
-  end
-  def maybe_merge(prev, [next | rest]) do
-    if Type.subtype?(next, prev) do
-      maybe_merge(prev, rest)
-    else
-      [prev, next | rest]
-    end
-  end
-  def maybe_merge(next, []), do: [next]
 
-  ## :any function rules
-  #def maybe_merge_function(
-  #  f1 = %{params: :any, return: r1},
-  #  f2 = %{params: :any, return: r2}, rest) do
-  #  if Type.coercion(r2, r1) == :type_ok do
-  #    [f1 | rest]
-  #  else
-  #    [f1, f2 | rest]
-  #  end
-  #end
-  #def maybe_merge_function(f1 = %{params: :any}, f2 = %{params: _}, rest) do
-  #  if Type.coercion(f2.return, f1.return) == :type_ok do
-  #    [f1 | rest]
-  #  else
-  #    [f1, f2 | rest]
-  #  end
-  #end
-  ## rules for functions where the params are lists
-  #def maybe_merge_function(f1 = %{params: p1}, f2 = %{params: p2}, rest) when
-  #  length(p1) != length(p2) do
-  #  # if they don't have the same number of parameters, then the functions
-  #  # live in orthogonal type spaces.
-  #    [f1, f2 | rest]
-  #end
-  #def maybe_merge_function(f1, f2, rest) do
-  #  subtype = [f1.return | f1.params]
-  #  |> Enum.zip([f2.return | f2.params])
-  #  |> Enum.all?(fn {t1, t2} -> Type.coercion(t2, t1) == :type_ok end)
-#
-  #  if subtype do
-  #    [f1 | rest]
-  #  else
-  #    [f1, f2 | rest]
-  #  end
-  #end
+  # negative integers
+  def type_merge(integer, builtin(:neg_integer))
+      when is_integer(integer) and integer < 0 do
+    {[], builtin(:neg_integer)}
+  end
+  def type_merge(_..b, builtin(:neg_integer)) when b < 0 do
+    {[], builtin(:neg_integer)}
+  end
 
-  defimpl Type.Typed do
+  # positive integers
+  def type_merge(integer, builtin(:pos_integer))
+      when is_integer(integer) and integer > 0 do
+    {[], builtin(:pos_integer)}
+  end
+  def type_merge(a.._, builtin(:pos_integer)) when a > 0 do
+    {[], builtin(:pos_integer)}
+  end
+  def type_merge(0, builtin(:pos_integer)) do
+    {[], builtin(:non_neg_integer)}
+  end
+  def type_merge(0.._, builtin(:pos_integer)) do
+    {[], builtin(:non_neg_integer)}
+  end
+  def type_merge(-1..b, builtin(:pos_integer)) when b >= 0 do
+    {[-1], builtin(:non_neg_integer)}
+  end
+  def type_merge(a..b, builtin(:pos_integer)) when b >= 0 do
+    {[a..-1], builtin(:non_neg_integer)}
+  end
+
+  # non-negative integers
+  def type_merge(integer, builtin(:non_neg_integer))
+      when is_integer(integer) and integer >= 0 do
+    {[], builtin(:non_neg_integer)}
+  end
+  def type_merge(a.._, builtin(:non_neg_integer)) when a >= 0 do
+    {[], builtin(:non_neg_integer)}
+  end
+  def type_merge(-1..b, builtin(:non_neg_integer)) when b >= 0 do
+    {[-1], builtin(:non_neg_integer)}
+  end
+  def type_merge(a..b, builtin(:non_neg_integer)) when b >= 0 do
+    {[a..-1], builtin(:non_neg_integer)}
+  end
+  def type_merge(builtin(:neg_integer), builtin(:non_neg_integer)) do
+    {[], builtin(:integer)}
+  end
+
+  # integers
+  def type_merge(integer, builtin(:integer)) when is_integer(integer) do
+    {[], builtin(:integer)}
+  end
+  def type_merge(_.._, builtin(:integer)) do
+    {[], builtin(:integer)}
+  end
+  def type_merge(builtin(:neg_integer), builtin(:integer)) do
+    {[], builtin(:integer)}
+  end
+  def type_merge(builtin(:pos_integer), builtin(:integer)) do
+    {[], builtin(:integer)}
+  end
+  def type_merge(builtin(:non_neg_integer), builtin(:integer)) do
+    {[], builtin(:integer)}
+  end
+
+  # atoms
+  def type_merge(atom, builtin(:atom)) when is_atom(atom) do
+    {[], builtin(:atom)}
+  end
+
+  # any
+  def type_merge(_, builtin(:any)) do
+    {[], builtin(:any)}
+  end
+
+  # tuples
+  alias Type.Tuple
+  def type_merge(%Tuple{}, %Tuple{elements: :any}) do
+    {[], %Tuple{elements: :any}}
+  end
+  def type_merge(lhs = %Tuple{}, rhs = %Tuple{}) do
+    merged_elements = lhs.elements
+    |> Enum.zip(rhs.elements)
+    |> Enum.map(fn
+      {type, type} -> type
+      {lh, rh} ->
+        union = Type.Union.of(lh, rh)
+        match?(%Type.Union{}, union) and (union.of == [lh, rh]) and throw :fail
+        union
+    end)
+    {[], %Tuple{elements: merged_elements}}
+  catch
+    :fail ->
+      {[lhs], rhs}
+  end
+
+  # lists
+  alias Type.List
+  def type_merge(
+      %List{type: tl, nonempty: nl, final: fl},
+      %List{type: tr, nonempty: nr, final: fr}) do
+
+    {[], %List{type: Type.Union.of(tl, tr),
+               nonempty: nl and nr,
+               final: Type.Union.of(fl, fr)}}
+  end
+
+  # any
+  def type_merge(_, builtin(:any)) do
+    {[], builtin(:any)}
+  end
+
+  def type_merge(a, b) do
+    {[a], b}
+  end
+
+  defimpl Type.Properties do
     import Type, only: [builtin: 1]
 
-    def order(_union, builtin(:none)), do: true
-    def order(union, type) do
+    def compare(_union, builtin(:none)), do: :gt
+    def compare(_union, %Type.Union{}) do
+      raise "hell"
+    end
+    def compare(union, type) do
       union.of
       |> Elixir.List.last
-      |> Type.order(type)
+      |> Type.compare(type)
+      |> case do
+        :eq -> :gt
+        order -> order
+      end
     end
 
     def typegroup(union) do
       union.of
       |> Elixir.List.last
-      |> Type.Typed.typegroup
+      |> Type.Properties.typegroup
     end
 
     def usable_as(challenge, target, meta) do
@@ -177,7 +228,7 @@ defmodule Type.Union do
       collector_fun = fn
         # starting with an empty union results in
         list, {:cont, elem} -> [elem | list]
-        list, :done -> Union.collapse(%Union{of: list})
+        list, :done -> Union.collapse(list)
         _set, :halt -> :ok
       end
 

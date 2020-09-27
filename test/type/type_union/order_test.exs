@@ -1,13 +1,11 @@
 defmodule TypeTest.TypeUnion.OrderTest do
   use ExUnit.Case, async: true
 
-  @moduletag :order
+  @moduletag :compare
 
   import Type, only: [builtin: 1]
 
   use Type.Operators
-
-  alias Type.Union
 
   describe "a union" do
     test "is bigger than bottom and pid" do

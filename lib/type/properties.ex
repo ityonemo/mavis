@@ -1,31 +1,37 @@
-defprotocol Type.Typed do
+defprotocol Type.Properties do
   @spec usable_as(Type.t, Type.t, keyword) :: Type.ternary
   def usable_as(subject, target, meta)
 
   @spec subtype?(Type.t, Type.t) :: boolean
   def subtype?(subject, target)
 
-  @spec order(Type.t, Type.t) :: boolean
-  def order(a, b)
+  @spec compare(Type.t, Type.t) :: :gt | :eq | :lt
+  def compare(a, b)
 
   @spec typegroup(Type.t) :: Type.group
   def typegroup(type)
 end
 
-defimpl Type.Typed, for: Integer do
+defimpl Type.Properties, for: Integer do
   import Type, only: :macros
 
   use Type.Impl
 
-  @spec group_order(integer, Type.t) :: boolean
-  def group_order(_, builtin(:integer)),               do: true
-  def group_order(left, builtin(:neg_integer)),        do: left >= 0
-  def group_order(_, builtin(:non_neg_integer)),       do: false
-  def group_order(_, builtin(:pos_integer)),           do: false
-  def group_order(left, _..last),                      do: left > last
-  def group_order(left, right) when is_integer(right), do: left >= right
-  def group_order(left, %Type.Union{of: ints}) do
-    group_order(left, List.last(ints))
+  @spec group_compare(integer, Type.t) :: boolean
+  def group_compare(_, builtin(:integer)),              do: :lt
+  def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
+  def group_compare(_, builtin(:non_neg_integer)),      do: :lt
+  def group_compare(_, builtin(:pos_integer)),          do: :lt
+  def group_compare(left, _..last),                     do: (if left > last, do: :gt, else: :lt)
+  def group_compare(left, right) when is_integer(right) do
+    cond do
+      left > right -> :gt
+      left < right -> :lt
+      true -> :eq
+    end
+  end
+  def group_compare(left, %Type.Union{of: ints}) do
+    group_compare(left, List.last(ints))
   end
 
   usable_as do
@@ -34,34 +40,33 @@ defimpl Type.Typed, for: Integer do
     def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
     def usable_as(i, builtin(:non_neg_integer), _) when i >= 0, do: :ok
     def usable_as(_, builtin(:integer), _),                     do: :ok
-    def usable_as(_, builtin(:any), _),                         do: :ok
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
-defimpl Type.Typed, for: Range do
+defimpl Type.Properties, for: Range do
   import Type, only: :macros
 
   use Type.Impl
 
-  def group_order(_, builtin(:integer)),                  do: false
-  def group_order(_, builtin(:pos_integer)),              do: false
-  def group_order(_, builtin(:non_neg_integer)),          do: false
-  def group_order(_..last, builtin(:neg_integer)),        do: last >= 0
-  def group_order(first1..last, first2..last),            do: first1 < first2
-  def group_order(_..last1, _..last2),                    do: last1 > last2
-  def group_order(_..last, right) when is_integer(right), do: last >= right
-  def group_order(first..last, %Type.Union{of: [init | types]}) do
+  def group_compare(_, builtin(:integer)),                  do: :lt
+  def group_compare(_, builtin(:pos_integer)),              do: :lt
+  def group_compare(_, builtin(:non_neg_integer)),          do: :lt
+  def group_compare(_..last, builtin(:neg_integer)),        do: (if last >= 0, do: :gt, else: :lt)
+  def group_compare(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
+  def group_compare(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
+  def group_compare(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
+  def group_compare(first..last, %Type.Union{of: [init | types]}) do
     case List.last(types) do
-      _..b when b < last -> true
+      _..b when b < last -> :gt
       _..b ->
         # the range is bigger if it's bigger than the biggest union
-        Type.order(init, first) && (last >= b)
-      i when i < last -> true
+        Type.compare(init, first) && (last >= b)
+      i when i < last -> :gt
       i when is_integer(i) ->
-        Type.order(init, first) && (last >= i)
-      _ -> false
+        Type.compare(init, first) && (last >= i)
+      _ -> :lt
     end
   end
 
@@ -118,13 +123,13 @@ defimpl Type.Typed, for: Range do
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 
-defimpl Type.Typed, for: Atom do
+defimpl Type.Properties, for: Atom do
   import Type, only: :macros
 
   use Type.Impl
 
-  def group_order(_, builtin(:atom)), do: false
-  def group_order(left, right), do: left >= right
+  def group_compare(_, builtin(:atom)), do: :lt
+  def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
 
   usable_as do
     def usable_as(_, builtin(:atom), _), do: :ok
@@ -134,12 +139,12 @@ defimpl Type.Typed, for: Atom do
 end
 
 # remember, the empty list is its own type
-defimpl Type.Typed, for: List do
+defimpl Type.Properties, for: List do
   import Type, only: :macros
 
   use Type.Impl
 
-  def group_order([], %Type.List{nonempty: ne}), do: ne
+  def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok

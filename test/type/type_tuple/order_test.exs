@@ -1,7 +1,7 @@
 defmodule TypeTest.TypeTuple.OrderTest do
   use ExUnit.Case, async: true
 
-  @moduletag :order
+  @moduletag :compare
 
   import Type, only: [builtin: 1]
 
@@ -38,6 +38,14 @@ defmodule TypeTest.TypeTuple.OrderTest do
     test "is smaller than bitstrings or top" do
       assert %Tuple{elements: []} < %Type.Bitstring{size: 0, unit: 0}
       assert %Tuple{elements: []} < builtin(:any)
+    end
+  end
+
+  describe "a tuple with 'any' elements" do
+    test "is bigger than a tuple with defined elements" do
+      assert %Tuple{elements: :any} > %Tuple{elements: []}
+      assert %Tuple{elements: :any} > %Tuple{elements: [builtin(:any)]}
+      assert %Tuple{elements: :any} > %Tuple{elements: [builtin(:any), builtin(:any)]}
     end
   end
 

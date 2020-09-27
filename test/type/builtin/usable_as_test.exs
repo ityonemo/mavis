@@ -7,7 +7,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, Function, List, Map, Message, Tuple}
+  alias Type.Message
 
   describe "none" do
     test "is not usable as any type" do

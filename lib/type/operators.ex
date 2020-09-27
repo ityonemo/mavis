@@ -9,22 +9,25 @@ defmodule Type.Operators do
   import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
 
   @doc """
-  shortcut for `Type.Typed.usable_as/2`
+  shortcut for `Type.Properties.usable_as/2`
   """
   def a ~> b, do: Type.usable_as(a, b)
 
   @doc """
   shortcut for `Type.Union.of/2`
+
+  Note that `|` is a bit of a special form in the parser, and if you try to create a union'd type
+  at the end of a list, you might have a rude surprise.
   """
   defdelegate a | b, to: Type.Union, as: :of
 
   @doc """
-  shortcut for `Type.order/2`
+  shortcut for `Type.compare/2`
   """
-  defdelegate a >= b, to: Type, as: :order
-  def a <= b, do: (b >= a) 
-  def a > b, do: (a >= b) and (a != b)
-  def a < b, do: ((a <= b) and (a != b)) 
+  def a >= b, do: Type.compare(a, b) != :lt
+  def a <= b, do: Type.compare(a, b) != :gt
+  def a > b, do: Type.compare(a, b) == :gt
+  def a < b, do: Type.compare(a, b) == :lt
 
   @doc """
   shortcut for `Type.subtype?/2`

@@ -7,16 +7,16 @@ defmodule Type.Bitstring do
     unit: 0..256
   }
 
-  defimpl Type.Typed do
+  defimpl Type.Properties do
     import Type, only: :macros
     alias Type.{Bitstring, Message}
 
     use Type.Impl
 
-    def group_order(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: true
-    def group_order(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: false
-    def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: true
-    def group_order(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: false
+    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
+    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt
+    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: :gt
+    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: :lt
 
     usable_as do
       # empty strings

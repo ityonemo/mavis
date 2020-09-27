@@ -7,8 +7,6 @@ defmodule TypeTest.Builtin.SubtypeTest do
 
   use Type.Operators
 
-  alias Type.List
-
   describe "builtin none" do
     test "is a subtype of itself" do
       assert builtin(:none) in builtin(:none)
