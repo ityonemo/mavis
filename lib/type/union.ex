@@ -107,7 +107,7 @@ defmodule Type.Union do
   def type_merge(integer, builtin(:integer)) when is_integer(integer) do
     {[], builtin(:integer)}
   end
-  def type_merge(a..b, builtin(:integer)) do
+  def type_merge(_.._, builtin(:integer)) do
     {[], builtin(:integer)}
   end
   def type_merge(builtin(:neg_integer), builtin(:integer)) do
@@ -151,6 +151,17 @@ defmodule Type.Union do
       {[lhs], rhs}
   end
 
+  # lists
+  alias Type.List
+  def type_merge(
+      %List{type: tl, nonempty: nl, final: fl},
+      %List{type: tr, nonempty: nr, final: fr}) do
+
+    {[], %List{type: Type.Union.of(tl, tr),
+               nonempty: nl and nr,
+               final: Type.Union.of(fl, fr)}}
+  end
+
   # any
   def type_merge(_, builtin(:any)) do
     {[], builtin(:any)}
@@ -164,7 +175,7 @@ defmodule Type.Union do
     import Type, only: [builtin: 1]
 
     def compare(_union, builtin(:none)), do: :gt
-    def compare(union, %Type.Union{}) do
+    def compare(_union, %Type.Union{}) do
       raise "hell"
     end
     def compare(union, type) do

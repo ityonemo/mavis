@@ -179,35 +179,29 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  #alias Type.List
-#
-  #describe "for the list type" do
-  #  test "lists with the same end type get merged" do
-  #    assert %List{type: %Union{of: [:foo, :bar]}} =
-  #      Enum.into([%List{type: :foo}, %List{type: :bar}], %Union{})
-  #    assert %List{type: @any} =
-  #      Enum.into([%List{type: @any}, %List{type: :bar}], %Union{})
-#
-  #    assert %List{type: %Union{of: [:foo, :bar]}, final: :end} =
-  #      Enum.into([%List{type: :foo, final: :end}, %List{type: :bar, final: :end}], %Union{})
-  #    assert %List{type: @any, final: :end} =
-  #      Enum.into([%List{type: @any, final: :end}, %List{type: :bar, final: :end}], %Union{})
-  #  end
-#
-  #  test "nonempty: true lists get merged into nonempty: true lists" do
-  #    assert %List{type: :foo, nonempty: true} =
-  #      Enum.into([%List{type: :foo, nonempty: true}, %List{type: :foo, nonempty: true}], %Union{})
-  #    assert %List{type: @any, nonempty: true} =
-  #      Enum.into([%List{type: @any, nonempty: true}, %List{type: :foo, nonempty: true}], %Union{})
-  #  end
-#
-  #  test "nonempty: true lists get merged into nonempty: false lists" do
-  #    assert %List{type: :foo} =
-  #      Enum.into([%List{type: :foo}, %List{type: :foo, nonempty: true}], %Union{})
-  #    assert %List{type: @any} =
-  #      Enum.into([%List{type: @any}, %List{type: :foo, nonempty: true}], %Union{})
-  #  end
-  #end
+  alias Type.List
+
+  describe "for the list type" do
+    test "lists with the same end type get merged" do
+      assert %List{type: (:foo | :bar)} == (%List{type: :foo} | %List{type: :bar})
+      assert %List{type: @any} == (%List{type: @any} | %List{type: :bar})
+
+      assert %List{type: (:foo | :bar), final: :end} == (%List{type: :foo, final: :end} | %List{type: :bar, final: :end})
+      assert %List{type: @any, final: :end} == (%List{type: @any, final: :end} | %List{type: :bar, final: :end})
+    end
+
+    test "nonempty: true lists get merged into nonempty: true lists" do
+      assert %List{type: (:foo | :bar), nonempty: true} ==
+        (%List{type: :foo, nonempty: true} | %List{type: :bar, nonempty: true})
+      assert %List{type: @any, nonempty: true} ==
+        (%List{type: @any, nonempty: true} | %List{type: :bar, nonempty: true})
+    end
+
+    test "nonempty: true lists get merged into nonempty: false lists" do
+      assert %List{type: :foo} = (%List{type: :foo} | %List{type: :foo, nonempty: true})
+      assert %List{type: @any} = (%List{type: @any} | %List{type: :foo, nonempty: true})
+    end
+  end
 
 # TODO: redo tests on Function merging
 
