@@ -1,22 +1,3 @@
-defprotocol Type.Typeable do
-  def of(data, context)
-end
-
-defimpl Type.Typeable, for: BitString do
-  # NB literal bitstrings can only happen in the AST when they are
-  # elixir-style UTF-8 binaries.  Otherwise they are created using
-  # the <<>> notation.
-  def of(_binary, _), do: %Type{name: :t, module: String}
-end
-defimpl Type.Typeable, for: Atom do
-  def of(atom, _), do: %Type{name: atom, module: :atom}
-end
-defimpl Type.Typeable, for: Integer do
-  def of(integer, _), do: integer
-end
-defimpl Type.Typeable, for: Float do
-  def of(_float, _), do: %Type{name: :float}
-end
 
 #defimpl Type.Typeable, for: Tuple do
 #  @builtin_types ~w"""

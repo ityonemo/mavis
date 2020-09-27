@@ -6,20 +6,65 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: []]
+  defstruct @enforce_keys ++ [params: [], inferred: true]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any,
-    return: Type.t
+    return: Type.t,
+    inferred: true
   }
 
-#  def from_spec({:"::", _, [header, return]}, context) do
-#    {name, _, params} = header
-#    {name, %__MODULE__{
-#      params: Enum.map(params, &Type.of(&1, context)),
-#      return: Type.of(return, context)
-#    }}
-#  end
+  import Type, only: [builtin: 1]
+
+  # inference code.  Mavis can performs type inference on function code.  The generalized
+  # bits of that are going to live here.
+
+  @info_parts [:module, :name, :arity, :env]
+  def infer(fun) do
+    [module, name, arity, env] = fun
+    |> :erlang.fun_info
+    |> Keyword.take(@info_parts)
+    |> Keyword.values()
+
+    case :code.get_object_code(module) do
+      {^module, binary, filepath} ->
+        {:beam_file, ^module, _funs_list, _vsn, _meta, functions} = :beam_disasm.file(binary)
+        code = Enum.find_value(functions,
+          fn
+            {:function, ^name, ^arity, _, code} -> code
+            _ -> false
+          end)
+
+        code || raise "fatal error; can't find function `#{name}/#{arity}` in module #{inspect module}"
+
+        arities = starting_map(arity) |> IO.inspect(label: "40")
+        do_infer(code, arities, arities)
+      :error ->
+        %__MODULE__{params: any_for(arity), return: builtin(:any), inferred: false}
+    end
+  end
+
+  defp any_for(arity) do
+    fn -> builtin(:any) end
+    |> Stream.repeatedly
+    |> Enum.take(arity)
+  end
+
+  defp starting_map(0), do: %{}
+  defp starting_map(arity) do
+    0..(arity - 1)
+    |> Enum.map(&{&1, builtin(:any)})
+    |> Enum.into(%{})
+  end
+
+  defp do_infer([], starting, current) do
+    %__MODULE__{params: Map.values(starting), return: current[0]}
+  end
+  defp do_infer([_ | rest], starting, current) do
+    do_infer(rest, starting, current)
+  end
+
+
 
   defimpl Type.Properties do
     import Type, only: :macros

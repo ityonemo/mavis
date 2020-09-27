@@ -167,6 +167,80 @@ defmodule Type do
     end
   end
 
+  def of(value)
+  def of(integer) when is_integer(integer), do: integer
+  def of(float) when is_float(float), do: builtin(:float)
+  def of(atom) when is_atom(atom), do: atom
+  def of(reference) when is_reference(reference), do: builtin(:reference)
+  def of(port) when is_port(port), do: builtin(:port)
+  def of(pid) when is_pid(pid), do: builtin(:pid)
+  def of(tuple) when is_tuple(tuple) do
+    types = tuple
+    |> Tuple.to_list()
+    |> Enum.map(&Type.of/1)
+
+    %Type.Tuple{elements: types}
+  end
+  def of([]), do: []
+  def of([head | rest]) do
+    of_list(rest, Type.of(head))
+  end
+  def of(map) when is_map(map) do
+    map
+    |> Map.keys
+    |> Enum.map(&{&1, Type.of(&1)})
+    |> Enum.sort_by(&elem(&1, 1), {:asc, Type})
+    |> Enum.reduce(%Type.Map{}, fn
+      {key, _}, acc when is_integer(key) or is_atom(key) ->
+        val_type = map
+        |> Map.get(key)
+        |> Type.of
+
+        %{acc | required: acc.required ++ [{key, val_type}]}
+      {key, key_type}, acc ->
+        val_type = map
+        |> Map.get(key)
+        |> Type.of
+
+        %{acc | optional: acc.optional ++ [{key_type, val_type}]}
+    end)
+  end
+  def of(function) when is_function(function) do
+    Type.Function.infer(function)
+  end
+  def of(bitstring) when is_bitstring(bitstring) do
+    of_bitstring(bitstring, 0)
+  end
+
+  defp of_list([head | rest], so_far) do
+    of_list(rest, Type.Union.of(head, so_far))
+  end
+  defp of_list([], so_far) do
+    %Type.List{type: so_far, nonempty: true}
+  end
+  defp of_list(non_list, so_far) do
+    %Type.List{type: so_far, nonempty: true, final: Type.of(non_list)}
+  end
+
+  def of_bitstring(bitstring, bits_so_far \\ 0)
+  def of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
+  def of_bitstring(<<>>, _size), do: %Type{name: :t, module: String}
+  def of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
+    of_bitstring(rest, so_far + 8)
+  end
+  def of_bitstring(<<6::3, _::5, 2::2, _::6, rest :: binary>>, so_far) do
+    of_bitstring(rest, so_far + 16)
+  end
+  def of_bitstring(<<14::4, _::4, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
+    of_bitstring(rest, so_far + 24)
+  end
+  def of_bitstring(<<30::5, _::3, 2::2, _::6, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
+    of_bitstring(rest, so_far + 32)
+  end
+  def of_bitstring(bitstring, so_far) do
+    %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
+  end
+
   defmodule Impl do
     # exists to prevent mistakes when generating functions.
     # TODO: move to parent module.
