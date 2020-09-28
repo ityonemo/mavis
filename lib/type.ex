@@ -30,6 +30,9 @@ defmodule Type do
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
 
+  @spec intersection(t, t) :: t
+  defdelegate intersection(a, b), to: Type.Properties
+
   @spec compare({t, t}) :: boolean
   def compare({t1, t2}), do: compare(t1, t2)
 
@@ -245,7 +248,6 @@ defmodule Type do
 
   defmodule Impl do
     # exists to prevent mistakes when generating functions.
-    # TODO: move to parent module.
     @group_for %{
       "Integer" => 1,
       "Range" => 1,
@@ -377,6 +379,15 @@ defimpl Type.Properties, for: Type do
   end
 
   usable_as_coda()
+
+  def intersection(type, type), do: type
+  # negative integer
+  def intersection(builtin(:neg_integer), builtin(:any)), do: builtin(:neg_integer)
+  def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
+  def intersection(builtin(:neg_integer), a) when a < 0, do: a
+  def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
+  def intersection(builtin(:neg_integer), a..b) when a < 0, do: a..-1
+  def intersection(_, _), do: builtin(:none)
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]

@@ -10,6 +10,9 @@ defprotocol Type.Properties do
 
   @spec typegroup(Type.t) :: Type.group
   def typegroup(type)
+
+  @spec intersection(Type.t, Type.t) :: :gt | :eq | :lt
+  def intersection(type, type)
 end
 
 defimpl Type.Properties, for: Integer do
