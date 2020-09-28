@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
   import Type, only: [builtin: 1]
 
   describe "the intersection of a literal atom" do
-    test "with itself and any is itself" do
+    test "with itself, atoms, and any is itself" do
       assert :foo == Type.intersection(:foo, builtin(:any))
       assert :foo == Type.intersection(:foo, builtin(:atom))
       assert :foo == Type.intersection(:foo, :foo)

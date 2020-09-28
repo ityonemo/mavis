@@ -396,18 +396,21 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
     def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
     def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
+    def intersection(builtin(:neg_integer), -1.._), do: -1
     def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
     # positive integer
     def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
     def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
     def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
+    def intersection(builtin(:pos_integer), _..1), do: 1
     def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
     # non negative integer
     def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
     def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
     def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
+    def intersection(builtin(:non_neg_integer), _..0), do: 0
     def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
     # general integers
     def intersection(builtin(:integer), a) when is_integer(a), do: a

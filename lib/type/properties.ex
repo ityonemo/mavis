@@ -113,6 +113,31 @@ defimpl Type.Properties, for: Range do
     end
   end
 
+  intersection do
+    def intersection(a..b, i) when a <= i and i <= b, do: i
+    def intersection(a.._, _..a), do: a
+    def intersection(_..a, a.._), do: a
+    def intersection(a..b, c..d) do
+      case {a >= c, a > d, b < c, b <= d} do
+        {_,     x, y, _} when x or y -> builtin(:none)
+        {false, _, _, true}  -> c..b
+        {true,  _, _, true}  -> a..b
+        {true,  _, _, false} -> a..d
+        {false, _, _, false} -> c..d
+      end
+    end
+    def intersection(a..b,  builtin(:neg_integer)) when b < 0, do: a..b
+    def intersection(-1.._, builtin(:neg_integer)), do: -1
+    def intersection(a.._,  builtin(:neg_integer)) when a < 0, do: a..-1
+    def intersection(a..b,  builtin(:pos_integer)) when a > 0, do: a..b
+    def intersection(_..1,  builtin(:pos_integer)), do: 1
+    def intersection(_..a,  builtin(:pos_integer)) when a > 1, do: 1..a
+    def intersection(a..b,  builtin(:non_neg_integer)) when a >= 0, do: a..b
+    def intersection(_..0,  builtin(:non_neg_integer)), do: 0
+    def intersection(_..a,  builtin(:non_neg_integer)) when a > 0, do: 0..a
+    def intersection(a..b,  builtin(:integer)), do: a..b
+  end
+
   defp leftover_check(union = %{of: types}, int_class, leftover) do
     (builtin(int_class) in types) and Type.subtype?(leftover, union)
   end
@@ -155,6 +180,10 @@ defimpl Type.Properties, for: List do
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
+  end
+
+  intersection do
+    def intersection([], %Type.List{nonempty: false, final: []}), do: []
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok

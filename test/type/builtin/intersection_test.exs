@@ -27,8 +27,9 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with ranges trim as expected" do
-      assert -47..-1 == Type.intersection(builtin(:neg_integer), -47..-1)
-      assert -47..-1 == Type.intersection(builtin(:neg_integer), -47..47)
+      assert -47..-1        == Type.intersection(builtin(:neg_integer), -47..-1)
+      assert -47..-1        == Type.intersection(builtin(:neg_integer), -47..47)
+      assert -1             == Type.intersection(builtin(:neg_integer), -1..47)
       assert builtin(:none) == Type.intersection(builtin(:neg_integer), 1..47)
     end
 
@@ -54,8 +55,9 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with ranges trim as expected" do
-      assert 1..47 == Type.intersection(builtin(:pos_integer), 1..47)
-      assert 1..47 == Type.intersection(builtin(:pos_integer), -47..47)
+      assert 1..47          == Type.intersection(builtin(:pos_integer), 1..47)
+      assert 1..47          == Type.intersection(builtin(:pos_integer), -47..47)
+      assert 1              == Type.intersection(builtin(:pos_integer), -47..1)
       assert builtin(:none) == Type.intersection(builtin(:pos_integer), -47..-1)
     end
 
@@ -85,8 +87,9 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with ranges trim as expected" do
-      assert 0..47 == Type.intersection(builtin(:non_neg_integer), 0..47)
-      assert 0..47 == Type.intersection(builtin(:non_neg_integer), -47..47)
+      assert 0..47          == Type.intersection(builtin(:non_neg_integer), 0..47)
+      assert 0..47          == Type.intersection(builtin(:non_neg_integer), -47..47)
+      assert 0              == Type.intersection(builtin(:non_neg_integer), -47..0)
       assert builtin(:none) == Type.intersection(builtin(:non_neg_integer), -47..-1)
     end
 
