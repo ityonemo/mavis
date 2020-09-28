@@ -2,9 +2,8 @@ defmodule Type.Inference.Macros do
   defmacro opcode(op_ast, state_ast, do: block) do
     quote do
       def do_infer(unquote(state_ast) = %{code: [op = unquote(op_ast) | rest]}) do
-        unquote(state_ast) |> IO.inspect(label: "5")
+        unquote(state_ast)
         new_state = unquote(block)
-        |> IO.inspect(label: "7")
 
         if length(new_state.regs) != length(unquote(state_ast).regs) + 1 do
           raise "this opcode must append to the registers"
