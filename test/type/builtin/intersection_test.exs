@@ -5,7 +5,6 @@ defmodule TypeTest.Builtin.IntersectionTest do
 
   import Type, only: [builtin: 1]
 
-  # types in this document are tested in type compare.
   describe "the intersection of none" do
     test "with all other types is none" do
       TypeTest.Targets.except()
@@ -145,7 +144,7 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([builtin(:atom)])
+      TypeTest.Targets.except([:foo, builtin(:atom)])
       |> Enum.each(fn target ->
         assert builtin(:none) == Type.intersection(builtin(:atom), target)
       end)

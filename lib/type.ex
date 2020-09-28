@@ -170,6 +170,17 @@ defmodule Type do
     end
   end
 
+  defmacro intersection(do: block) do
+    quote do
+      def intersection(type, type), do: type
+      def intersection(type, builtin(:any)), do: type
+
+      unquote(block)
+
+      def intersection(_, _), do: builtin(:none)
+    end
+  end
+
   def of(value)
   def of(integer) when is_integer(integer), do: integer
   def of(float) when is_float(float), do: builtin(:float)
@@ -380,36 +391,33 @@ defimpl Type.Properties, for: Type do
 
   usable_as_coda()
 
-  # globally convenient things
-  def intersection(type, type), do: type
-  def intersection(type, builtin(:any)), do: type
-  # negative integer
-  def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
-  def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
-  def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
-  def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
-  # positive integer
-  def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
-  def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
-  def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
-  def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
-  def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
-  # non negative integer
-  def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
-  def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-  def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
-  def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
-  def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
-  # general integers
-  def intersection(builtin(:integer), a) when is_integer(a), do: a
-  def intersection(builtin(:integer), a..b), do: a..b
-  def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
-  def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-  def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
-  # atoms
-  def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
-  # fall through
-  def intersection(_, _), do: builtin(:none)
+  intersection do
+    # negative integer
+    def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
+    def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
+    def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
+    def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
+    # positive integer
+    def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
+    def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
+    def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
+    # non negative integer
+    def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
+    def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
+    def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
+    def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
+    # general integers
+    def intersection(builtin(:integer), a) when is_integer(a), do: a
+    def intersection(builtin(:integer), a..b), do: a..b
+    def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
+    def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
+    # atoms
+    def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
+  end
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]
