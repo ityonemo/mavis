@@ -113,9 +113,84 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([-47, 0, 47, builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer), -10..10])
+      TypeTest.Targets.except([-47, 0, 47, builtin(:neg_integer), builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer), -10..10])
       |> Enum.each(fn target ->
-        assert builtin(:none) == Type.intersection(builtin(:non_neg_integer), target)
+        assert builtin(:none) == Type.intersection(builtin(:integer), target)
+      end)
+    end
+  end
+
+  describe "the intersection of float" do
+    test "with any, float is itself" do
+      assert builtin(:float) == Type.intersection(builtin(:float), builtin(:any))
+      assert builtin(:float) == Type.intersection(builtin(:float), builtin(:float))
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([builtin(:float)])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == Type.intersection(builtin(:float), target)
+      end)
+    end
+  end
+
+  describe "the intersection of atom" do
+    test "with any, atom is itself" do
+      assert builtin(:atom) == Type.intersection(builtin(:atom), builtin(:any))
+      assert builtin(:atom) == Type.intersection(builtin(:atom), builtin(:atom))
+    end
+
+    test "with an actual atom is the atom" do
+      assert :foo == Type.intersection(builtin(:atom), :foo)
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([builtin(:atom)])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == Type.intersection(builtin(:atom), target)
+      end)
+    end
+  end
+
+
+  describe "the intersection of reference" do
+    test "with any, reference is itself" do
+      assert builtin(:reference) == Type.intersection(builtin(:reference), builtin(:any))
+      assert builtin(:reference) == Type.intersection(builtin(:reference), builtin(:reference))
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([builtin(:reference)])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == Type.intersection(builtin(:reference), target)
+      end)
+    end
+  end
+
+  describe "the intersection of port" do
+    test "with any, port is itself" do
+      assert builtin(:port) == Type.intersection(builtin(:port), builtin(:any))
+      assert builtin(:port) == Type.intersection(builtin(:port), builtin(:port))
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([builtin(:port)])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == Type.intersection(builtin(:port), target)
+      end)
+    end
+  end
+
+  describe "the intersection of pid" do
+    test "with any, pid is itself" do
+      assert builtin(:pid) == Type.intersection(builtin(:pid), builtin(:any))
+      assert builtin(:pid) == Type.intersection(builtin(:pid), builtin(:pid))
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([builtin(:pid)])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == Type.intersection(builtin(:pid), target)
       end)
     end
   end

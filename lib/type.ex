@@ -406,6 +406,8 @@ defimpl Type.Properties, for: Type do
   def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
   def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
   def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
+  # atoms
+  def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
   # fall through
   def intersection(_, _), do: builtin(:none)
 
