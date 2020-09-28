@@ -206,7 +206,9 @@ defmodule Type do
     end)
   end
   def of(function) when is_function(function) do
-    Type.Function.infer(function)
+    case Type.Function.infer(function) do
+      {:ok, type} -> type
+    end
   end
   def of(bitstring) when is_bitstring(bitstring) do
     of_bitstring(bitstring, 0)

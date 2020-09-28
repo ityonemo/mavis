@@ -27,7 +27,7 @@ defmodule Type.Function do
     |> Keyword.values()
 
     case :code.get_object_code(module) do
-      {^module, binary, filepath} ->
+      {^module, binary, _filepath} ->
         {:beam_file, ^module, _funs_list, _vsn, _meta, functions} = :beam_disasm.file(binary)
         code = Enum.find_value(functions,
           fn
@@ -37,10 +37,9 @@ defmodule Type.Function do
 
         code || raise "fatal error; can't find function `#{name}/#{arity}` in module #{inspect module}"
 
-        arities = starting_map(arity) |> IO.inspect(label: "40")
-        do_infer(code, arities, arities)
+        Type.Inference.run(code, starting_map(arity))
       :error ->
-        %__MODULE__{params: any_for(arity), return: builtin(:any), inferred: false}
+        {:ok, %__MODULE__{params: any_for(arity), return: builtin(:any), inferred: false}}
     end
   end
 
@@ -57,14 +56,52 @@ defmodule Type.Function do
     |> Enum.into(%{})
   end
 
-  defp do_infer([], starting, current) do
-    %__MODULE__{params: Map.values(starting), return: current[0]}
-  end
-  defp do_infer([_ | rest], starting, current) do
-    do_infer(rest, starting, current)
+  def asm(fun) do
+    [module, name, arity, env] = fun
+    |> :erlang.fun_info
+    |> Keyword.take(@info_parts)
+    |> Keyword.values()
+
+    case :code.get_object_code(module) do
+      {^module, binary, _filepath} ->
+        {:beam_file, ^module, _funs_list, _vsn, _meta, functions} = :beam_disasm.file(binary)
+        code = Enum.find_value(functions,
+          fn
+            {:function, ^name, ^arity, _, code} -> code
+            _ -> false
+          end)
+
+        code || raise "fatal error; can't find function `#{name}/#{arity}` in module #{inspect module}"
+      :error ->
+        raise "nope"
+    end
   end
 
+  def has_opcode?({m, f, a}, desired_opcode) do
+    with {^m, binary, _filepath} <- :code.get_object_code(m),
+         {:beam_file, ^m, _funs_list, _vsn, _meta, functions} <- :beam_disasm.file(binary) do
+      code = Enum.find_value(functions,
+        fn
+          {:function, ^f, ^a, _, code} -> code
+          _ -> false
+        end)
 
+      unless code do
+        raise "function #{inspect m}.#{f}/#{a} not found."
+      end
+
+      Enum.any?(code, fn
+        opcode when is_tuple(opcode) ->
+          opcode
+          |> Tuple.to_list
+          |> Enum.zip(desired_opcode)
+          |> Enum.all?(fn {a, b} -> a == b end)
+        _ -> false
+      end)
+    else
+      _ -> raise "function #{inspect m}.#{f}/#{a} not found."
+    end
+  end
 
   defimpl Type.Properties do
     import Type, only: :macros
