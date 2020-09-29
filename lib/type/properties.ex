@@ -45,6 +45,14 @@ defimpl Type.Properties, for: Integer do
     def usable_as(_, builtin(:integer), _),                     do: :ok
   end
 
+  intersection do
+    def intersection(i, a..b) when a <= i and i <= b, do: i
+    def intersection(i, builtin(:neg_integer)) when i < 0, do: i
+    def intersection(i, builtin(:pos_integer)) when i > 0, do: i
+    def intersection(i, builtin(:non_neg_integer)) when i >= 0, do: i
+    def intersection(i, builtin(:integer)), do: i
+  end
+
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
 

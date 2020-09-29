@@ -420,6 +420,8 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
+    # any
+    def intersection(builtin(:any), type), do: type
   end
 
   def typegroup(%{module: nil, name: name, params: []}) do
