@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeTuple.IntersectionTest do
+defmodule TypeTest.TypeUnion.IntersectionTest do
   use ExUnit.Case, async: true
 
   use Type.Operators

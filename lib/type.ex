@@ -175,6 +175,12 @@ defmodule Type do
       def intersection(type, type), do: type
       def intersection(type, builtin(:any)), do: type
 
+      unless __MODULE__ == Type.Properties.Type.Union do
+        def intersection(type, union = %Type.Union{}) do
+          Type.intersection(union, type)
+        end
+      end
+
       unquote(block)
 
       def intersection(_, _), do: builtin(:none)

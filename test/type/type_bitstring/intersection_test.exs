@@ -1,5 +1,6 @@
 defmodule TypeTest.TypeBitstring.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -60,6 +61,11 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
 
     test "different offsets" do
       assert %Bitstring{size: 15, unit: 8} == Type.intersection(%Bitstring{size: 7, unit: 8}, %Bitstring{size: 15, unit: 8})
+    end
+
+    test "with unions" do
+      assert @basic_binary == Type.intersection(@basic_binary, (@basic_bitstring | builtin(:atom)))
+      assert builtin(:none) == Type.intersection(@basic_binary, (builtin(:atom) | builtin(:port)))
     end
   end
 end

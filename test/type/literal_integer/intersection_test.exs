@@ -1,5 +1,6 @@
 defmodule TypeTest.LiteralInteger.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -31,6 +32,11 @@ defmodule TypeTest.LiteralInteger.IntersectionTest do
     test "with ranges is correct" do
       assert 47 == Type.intersection(47, 0..50)
       assert builtin(:none) == Type.intersection(42, 0..10)
+    end
+
+    test "with unions works as expected" do
+      assert 47 == Type.intersection(47, (builtin(:integer) | :infinity))
+      assert builtin(:none) == Type.intersection(47, (builtin(:atom) | builtin(:port)))
     end
 
     test "with all other types is none" do

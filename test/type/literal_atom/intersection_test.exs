@@ -1,5 +1,6 @@
 defmodule TypeTest.LiteralAtom.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -14,6 +15,11 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
 
     test "with other atoms is none" do
       assert builtin(:none) == Type.intersection(:foo, :bar)
+    end
+
+    test "with unions works as expected" do
+      assert :foo == Type.intersection(:foo, (builtin(:atom) | builtin(:integer)))
+      assert builtin(:none) == Type.intersection(:foo, (builtin(:integer) | builtin(:port)))
     end
 
     test "with all other types is none" do

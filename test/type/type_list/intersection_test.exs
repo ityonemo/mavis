@@ -1,5 +1,6 @@
 defmodule TypeTest.TypeList.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -20,6 +21,11 @@ defmodule TypeTest.TypeList.IntersectionTest do
     test "intersects with another list with the intersection of types" do
       assert %List{type: builtin(:integer)} == Type.intersection(%List{}, %List{type: builtin(:integer)})
       assert %List{type: 47} == Type.intersection(%List{type: 47}, %List{type: builtin(:integer)})
+    end
+
+    test "with unions works as expected" do
+      assert [] == Type.intersection(%List{}, ([] | builtin(:atom)))
+      assert builtin(:none) == Type.intersection(%List{}, (builtin(:atom) | builtin(:port)))
     end
 
     test "doesn't intersect with anything else" do

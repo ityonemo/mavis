@@ -1,5 +1,6 @@
 defmodule TypeTest.LiteralEmptyList.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -18,6 +19,11 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
     test "with nonempty, or odd-termination final lists is not ok" do
       assert builtin(:none) == Type.intersection([], %List{final: :foo})
       assert builtin(:none) == Type.intersection([], %List{nonempty: true})
+    end
+
+    test "with unions works as expected" do
+      assert [] == Type.intersection([], ([] | builtin(:integer)))
+      assert builtin(:none) == Type.intersection([], (builtin(:integer) | builtin(:port)))
     end
 
     test "with all other types is none" do

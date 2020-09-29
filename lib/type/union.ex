@@ -161,6 +161,12 @@ defmodule Type.Union do
                nonempty: nl and nr,
                final: Type.Union.of(fl, fr)}}
   end
+  def type_merge(%List{type: type, final: []}, []) do
+    {[], %List{type: type, nonempty: false}}
+  end
+  def type_merge([], %List{type: type, final: []}) do
+    {[], %List{type: type, nonempty: false}}
+  end
 
   # any
   def type_merge(_, builtin(:any)) do

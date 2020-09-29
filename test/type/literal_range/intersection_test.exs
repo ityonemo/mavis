@@ -1,5 +1,6 @@
 defmodule TypeTest.LiteralRange.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -68,6 +69,11 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert builtin(:none) == Type.intersection(1..10, -42)
       assert 47 == Type.intersection(0..255, 47)
       assert builtin(:none) == Type.intersection(1..10, 42)
+    end
+
+    test "with unions works as expected" do
+      assert (1 | 9..10) == Type.intersection(1..10, (0..1 | 9..15))
+      assert builtin(:none) == Type.intersection(1..10, (builtin(:atom) | builtin(:port)))
     end
 
     test "with all other types is none" do

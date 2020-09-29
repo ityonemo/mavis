@@ -1,5 +1,6 @@
 defmodule TypeTest.TypeTuple.IntersectionTest do
   use ExUnit.Case, async: true
+  use Type.Operators
 
   @moduletag :intersection
 
@@ -19,6 +20,11 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
       assert %Tuple{elements: []} == Type.intersection(@anytuple, %Tuple{elements: []})
       assert %Tuple{elements: [:foo]} == Type.intersection(@anytuple, %Tuple{elements: [:foo]})
       assert %Tuple{elements: [:foo, builtin(:integer)]} == Type.intersection(@anytuple, %Tuple{elements: [:foo, builtin(:integer)]})
+    end
+
+    test "with unions works as expected" do
+      assert %Tuple{elements: []} == Type.intersection(@anytuple, (%Tuple{elements: []} | 1..10))
+      assert builtin(:none) == Type.intersection(@anytuple, (builtin(:atom) | builtin(:port)))
     end
 
     test "doesn't intersect with anything else" do
