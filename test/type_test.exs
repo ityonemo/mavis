@@ -123,11 +123,11 @@ defmodule TypeTest do
       assert %Type.Function{params: [], return: %Type{module: String, name: :t}} == Type.of(&TypeTest.LambdaExamples.forty_seven_str/0)
     end
 
-    #test "a lambda with a backpropagating function" do
-    #  assert Type.Function.has_opcode?({TypeTest.LambdaExamples, :with_bitsize, 1}, [:gc_bif, :bit_size])
-    #  assert %Type.Function{params: [%Type.Bitstring{size: 0, unit: 1}], return: builtin(:non_neg_integer)} == Type.of(&TypeTest.LambdaExamples.with_bitsize/1)
-    #end
-#
+    test "a lambda with a backpropagating function" do
+      assert Type.Function.has_opcode?({TypeTest.LambdaExamples, :with_bitsize, 1}, [:gc_bif, :bit_size])
+      assert %Type.Function{params: [%Type.Bitstring{size: 0, unit: 1}], return: builtin(:non_neg_integer)} == Type.of(&TypeTest.LambdaExamples.with_bitsize/1)
+    end
+
     #test "a lambda with a real function" do
     #  assert Type.Function.has_opcode?({TypeTest.LambdaExamples, :with_add, 2}, [:gc_bif, :+])
     #  assert %Type.Function{params: [builtin(:any), builtin(:any)], return: builtin(:any)} == Type.of(&TypeTest.LambdaExamples.with_add/2)

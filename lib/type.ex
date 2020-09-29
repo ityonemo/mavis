@@ -30,6 +30,9 @@ defmodule Type do
   defguard is_neg_integer(n) when is_integer(n) and n < 0
   defguard is_pos_integer(n) when is_integer(n) and n > 0
 
+  @spec intersection(t, t) :: t
+  defdelegate intersection(a, b), to: Type.Properties
+
   @spec compare({t, t}) :: boolean
   def compare({t1, t2}), do: compare(t1, t2)
 
@@ -167,6 +170,23 @@ defmodule Type do
     end
   end
 
+  defmacro intersection(do: block) do
+    quote do
+      def intersection(type, type), do: type
+      def intersection(type, builtin(:any)), do: type
+
+      unless __MODULE__ == Type.Properties.Type.Union do
+        def intersection(type, union = %Type.Union{}) do
+          Type.intersection(union, type)
+        end
+      end
+
+      unquote(block)
+
+      def intersection(_, _), do: builtin(:none)
+    end
+  end
+
   def of(value)
   def of(integer) when is_integer(integer), do: integer
   def of(float) when is_float(float), do: builtin(:float)
@@ -245,7 +265,6 @@ defmodule Type do
 
   defmodule Impl do
     # exists to prevent mistakes when generating functions.
-    # TODO: move to parent module.
     @group_for %{
       "Integer" => 1,
       "Range" => 1,
@@ -377,6 +396,39 @@ defimpl Type.Properties, for: Type do
   end
 
   usable_as_coda()
+
+  intersection do
+    # negative integer
+    def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
+    def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
+    def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
+    def intersection(builtin(:neg_integer), -1.._), do: -1
+    def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
+    # positive integer
+    def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
+    def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
+    def intersection(builtin(:pos_integer), _..1), do: 1
+    def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
+    # non negative integer
+    def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
+    def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
+    def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
+    def intersection(builtin(:non_neg_integer), _..0), do: 0
+    def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
+    # general integers
+    def intersection(builtin(:integer), a) when is_integer(a), do: a
+    def intersection(builtin(:integer), a..b), do: a..b
+    def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
+    def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
+    def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
+    # atoms
+    def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
+    # any
+    def intersection(builtin(:any), type), do: type
+  end
 
   def typegroup(%{module: nil, name: name, params: []}) do
     @groups_for[name]

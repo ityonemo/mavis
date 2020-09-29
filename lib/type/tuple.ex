@@ -54,6 +54,26 @@ defmodule Type.Tuple do
       end
     end
 
+    intersection do
+      def intersection(%{elements: :any}, b = %Tuple{}), do: b
+      def intersection(a, %Tuple{elements: :any}), do: a
+      def intersection(%{elements: e1}, %Tuple{elements: e2}) when length(e1) == length(e2) do
+        elements = e1
+        |> Enum.zip(e2)
+        |> Enum.map(fn {t1, t2} ->
+          case Type.intersection(t1, t2) do
+            builtin(:none) -> throw :mismatch
+            any -> any
+          end
+        end)
+
+        %Tuple{elements: elements}
+      catch
+        :mismatch ->
+          builtin(:none)
+      end
+    end
+
     # can't simply forward to usable_as, because any of the encapsulated
     # types might have a usable_as rule that isn't strictly subtype?
     def subtype?(tuple_type, tuple_type), do: true

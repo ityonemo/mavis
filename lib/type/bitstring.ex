@@ -78,6 +78,31 @@ defmodule Type.Bitstring do
       end
     end
 
+    intersection do
+      def intersection(%{unit: 0}, %Bitstring{unit: 0}), do: builtin(:none)
+      def intersection(%{size: asz, unit: 0}, %Bitstring{size: bsz, unit: unit})
+          when asz >= bsz and rem(asz - bsz, unit) == 0 do
+        %Bitstring{size: asz, unit: 0}
+      end
+      def intersection(%{size: asz, unit: unit}, %Bitstring{size: bsz, unit: 0})
+          when bsz >= asz and rem(asz - bsz, unit) == 0 do
+        %Bitstring{size: bsz, unit: 0}
+      end
+      def intersection(%{unit: a}, %Bitstring{unit: b}) when a == 0 or b == 0 do
+        builtin(:none)
+      end
+      def intersection(a = %{size: asz}, b = %Bitstring{size: bsz}) do
+        unit = lcm(a.unit, b.unit)
+        if rem(asz - bsz, unit) == 0 do
+            %Bitstring{size: max(asz, bsz), unit: unit}
+        else
+            builtin(:none)
+        end
+      end
+    end
+
+    defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
+
     def subtype?(a, b), do: usable_as(a, b, []) == :ok
   end
 end

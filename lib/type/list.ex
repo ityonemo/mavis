@@ -49,6 +49,18 @@ defmodule Type.List do
       end
     end
 
+    intersection do
+      def intersection(%{nonempty: false}, []), do: []
+      def intersection(a, b = %List{}) do
+        case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
+          {builtin(:none), _} -> builtin(:none)
+          {_, builtin(:none)} -> builtin(:none)
+          {type, final} ->
+            %List{type: type, final: final, nonempty: a.nonempty or b.nonempty}
+        end
+      end
+    end
+
     # can't simply forward to usable_as, because any of the encapsulated
     # types might have a usable_as rule that isn't strictly subtype?
     def subtype?(list_type, list_type), do: true

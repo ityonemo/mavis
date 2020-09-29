@@ -197,82 +197,14 @@ defmodule TypeTest.UnionTest do
         (%List{type: @any, nonempty: true} | %List{type: :bar, nonempty: true})
     end
 
+    test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
+      assert %List{} = ([] | %List{nonempty: true})
+    end
+
     test "nonempty: true lists get merged into nonempty: false lists" do
       assert %List{type: :foo} = (%List{type: :foo} | %List{type: :foo, nonempty: true})
       assert %List{type: @any} = (%List{type: @any} | %List{type: :foo, nonempty: true})
     end
   end
 
-# TODO: redo tests on Function merging
-
-#  alias Type.Function
-#
-#  @anyfun %Function{params: :any, return: @any}
-#
-#  describe "for function type" do
-#    test "all functions merge into any function" do
-#      assert @anyfun =
-#        Enum.into([@anyfun, %Function{params: [], return: 3}], %Union{})
-#      assert @anyfun =
-#        Enum.into([@anyfun, %Function{params: :any, return: 3}], %Union{})
-#      assert @anyfun =
-#        Enum.into([@anyfun, %Function{params: [:foo, :bar], return: @any}], %Union{})
-#    end
-#
-#    test "any param eats up any type" do
-#      assert %Function{params: :any, return: 3} =
-#        Enum.into([%Function{params: :any, return: 3}, %Function{params: [], return: 3}], %Union{})
-#      assert %Function{params: :any, return: 3} =
-#        Enum.into([%Function{params: :any, return: 3}, %Function{params: [:foo, :bar], return: 3}], %Union{})
-#      assert %Function{params: :any, return: 1..3} =
-#        Enum.into([%Function{params: :any, return: 1..3}, %Function{params: [:foo, :bar], return: 3}], %Union{})
-#    end
-#
-#    # TODO: make this pass after we generalize "subsume"
-#    test "any params can merge" do
-#      assert %Function{params: :any, return: 0..3} =
-#        Enum.into([%Function{params: :any, return: 0},
-#                   %Function{params: :any, return: 1..3}], %Union{})
-#    end
-#
-#    test "any param stays orthogonal" do
-#      assert %Type.Union{of: [%Type.Function{params: :any, return: 0}, %Type.Function{params: [], return: 1..3}]} =
-#        Enum.into([%Function{params: :any, return: 0}, %Function{params: [], return: 1..3}], %Union{})
-#    end
-#
-#    test "return: any gets merged" do
-#      assert %Function{params: [], return: @any} =
-#        Enum.into([%Function{params: [], return: @any}, %Function{params: [], return: 3}], %Union{})
-#      assert %Function{params: [:foo, :bar], return: @any} =
-#        Enum.into([%Function{params: [:foo, :bar], return: @any}, %Function{params: [:foo, :bar], return: 3}], %Union{})
-#
-#      foofn = %Function{params: [:foo], return: @any}
-#      barfn = %Function{params: [:bar], return: 3}
-#
-#      assert %Union{of: [foofn, barfn]} = Enum.into([foofn, barfn], %Union{})
-#    end
-#
-#    # TODO: make this pass after we generalize "subsume"
-#    test "mergable returns get merged" do
-#      # if the params are identical, returns can be merged.
-#      assert %Function{params: [], return: 0..3} ==
-#        Enum.into([%Function{params: [], return: 0},
-#                   %Function{params: [], return: 1..3}], %Union{})
-#    end
-#
-#    test "subsumable returns get merged" do
-#      # if the params are not identical, (even if subset), returns cannot be merged.
-#      f1 = %Function{params: [:foo], return: 0}
-#      f2 = %Function{params: [builtin(:atom)], return: 1..3}
-#      assert %Union{of: [f1, f2]} = Enum.into([f1, f2], %Union{})
-#    end
-#
-#    test "mergable params get merged"
-#
-#    test "subsumable params get merged" do
-#      assert %Function{params: [builtin(:atom)], return: 47} =
-#        Enum.into([%Function{params: [:foo], return: 47},
-#                   %Function{params: [builtin(:atom)], return: 47}], %Union{})
-#    end
-#  end
 end

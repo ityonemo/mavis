@@ -23,7 +23,7 @@ defmodule Type.Union do
     |> Enum.uniq
     |> Enum.reduce([], &type_list_merge/2)
     |> case do
-      [] -> %Type{name: :none}
+      [] -> builtin(:none)
       [one] -> one
       list -> %__MODULE__{of: list}
     end
@@ -161,6 +161,12 @@ defmodule Type.Union do
                nonempty: nl and nr,
                final: Type.Union.of(fl, fr)}}
   end
+  def type_merge(%List{type: type, final: []}, []) do
+    {[], %List{type: type, nonempty: false}}
+  end
+  def type_merge([], %List{type: type, final: []}) do
+    {[], %List{type: type, nonempty: false}}
+  end
 
   # any
   def type_merge(_, builtin(:any)) do
@@ -172,7 +178,7 @@ defmodule Type.Union do
   end
 
   defimpl Type.Properties do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
 
     def compare(_union, builtin(:none)), do: :gt
     def compare(_union, %Type.Union{}) do
@@ -213,6 +219,21 @@ defmodule Type.Union do
         :ok -> :ok
         {:maybe, _} -> {:maybe, [Type.Message.make(challenge, target, meta)]}
         {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
+      end
+    end
+
+    intersection do
+      def intersection(lunion, runion = %Type.Union{}) do
+        lunion.of
+        |> Enum.map(&Type.intersection(runion, &1))
+        |> Enum.reject(&(&1 == builtin(:none)))
+        |> Enum.into(%Type.Union{})
+      end
+      def intersection(union, ritem) do
+        union.of
+        |> Enum.map(&Type.intersection(&1, ritem))
+        |> Enum.reject(&(&1 == builtin(:none)))
+        |> Enum.into(%Type.Union{})
       end
     end
 
