@@ -1,4 +1,4 @@
-defmodule MavisTest.Opcode.GcBifTest do
+defmodule TypeTest.Opcode.GcBifTest do
 
   # various ways that the move opcode can be a thing
 

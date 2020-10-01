@@ -1,4 +1,4 @@
-defmodule MavisTest.Opcode.MiscTest do
+defmodule TypeTest.Opcode.MiscTest do
 
   # miscellaneous opcodes that don't do as much
 
@@ -32,6 +32,16 @@ defmodule MavisTest.Opcode.MiscTest do
   describe "line opcode" do
     test "integration" do
       code = [line: 19]
+
+      assert {:ok, %Function{
+        params: [builtin(:any)], return: builtin(:any)
+      }} = Inference.run(code, %{0 => builtin(:any)})
+    end
+  end
+
+  describe "return upcode" do
+    test "integration" do
+      code = [:return]
 
       assert {:ok, %Function{
         params: [builtin(:any)], return: builtin(:any)
