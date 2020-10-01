@@ -101,7 +101,6 @@ defmodule Type.Inference do
   end
 
   opcode :func_info
-  opcode :test_heap
   opcode :return
 
   def do_infer(opcode, _, _) do
@@ -130,7 +129,6 @@ defmodule Type.Inference do
     # for now, just ignore the effects that functions have
     do_backprop(%{state | code: [stack_head | code], stack: stack_rest, regs: [head | rest]})
   end
-
 
   # helpers
   defp put_reg(state, reg, values = [_ | _]) do
