@@ -33,7 +33,24 @@ defmodule Type.Inference.Macros do
     end
   end
 
+  ###############################################################
+  ## TOOLS!
+
   def shift(state = %{code: [this | rest], stack: stack}) do
     %{state | code: rest, stack: [this | stack]}
+  end
+
+  def unshift(state = %{code: code, stack: [this | rest]}) do
+    %{state | code: [this | code], stack: rest}
+  end
+
+  def pop_reg(state = %{regs: [_ | rest]}), do: %{state | regs: rest}
+
+  def push_same_reg(state = %{regs: regs = [most_recent_regs | _]}) do
+    %{state | regs: [most_recent_regs | regs]}
+  end
+
+  def push_meta(state, key, value) do
+    %{state | meta: Map.put(state.meta, key, value)}
   end
 end
