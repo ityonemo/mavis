@@ -93,7 +93,7 @@ defmodule TypeTest.Opcode.MiscTest do
     test "integration" do
       assert {:ok, %Function{
         params: [builtin(:any)], return: builtin(:any)
-      }} = Inference.run(@line, %{0 => builtin(:any)})
+      }} = Inference.run([@line], %{0 => builtin(:any)})
     end
   end
 

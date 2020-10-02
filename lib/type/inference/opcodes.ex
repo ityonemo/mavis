@@ -79,35 +79,35 @@ defmodule Type.Inference.Opcodes do
     code: [{:move, {:x, from}, {:x, to}} | _],
     regs: old_registers = [[latest_registers] | _]
   }) do
-    raise "foo"
+    raise "unimplemented"
   end
 
   def backprop(state = %{
     code: [{:move, {:integer, literal}, {:x, to}} | _],
     regs: old_registers = [[latest_registers] | _]
   }) do
-    raise "foo"
+    raise "unimplemented"
   end
 
   def backprop(state = %{
     code: [{:move, {:atom, literal}, {:x, to}} | _],
     regs: old_registers = [[latest_registers] | _]
   }) do
-    raise "foo"
+    raise "unimplemented"
   end
 
   def backprop(state = %{
     code: [{:move, {:literal, literal}, {:x, to}} | _],
     regs: old_registers = [[latest_registers] | _]
   }) do
-    raise "foo"
+    raise "unimplemented"
   end
 
   def backprop(state = %{
     code: [{:gc_bif, :bit_size, {:f, to}, 1, _, _} | _],
     regs: old_registers = [[latest_registers] | _]
   }) do
-    raise "foo"
+    raise "unimplemented"
   end
 
   def backprop(state = %{stack: [{:func_info, _, _, _} | _]}) do
