@@ -24,7 +24,16 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
-    test "backward propagation"
+    test "backward propagation" do
+      assert %{regs: [[%{0 => builtin(:any), 1 => :foo}]]} =
+        Inference.Opcodes.backprop(%Inference{
+          code: [],
+          stack: [{:move, {:x, 1}, {:x, 0}}],
+          regs: [[%{0 => :foo}], [%{1 => builtin(:any)}]]
+        })
+    end
+
+    test "backward propagation mismatch"
 
     test "integration test" do
       code = [{:move, {:x, 1}, {:x, 0}}]
@@ -44,12 +53,18 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
-    test "backward propagation"
+    test "backward propagation" do
+      assert %{regs: [[%{0 => builtin(:any)}]]} =
+        Inference.Opcodes.backprop(%Inference{
+          code: [],
+          stack: [{:move, {:integer, 47}, {:x, 0}}],
+          regs: [[%{0 => 47}], [%{0 => :foo}]]
+        })
+    end
+
+    test "backward propagation mismatch"
 
     test "integration test" do
-      # TODO: write a reverse test on this that clobbers the
-      # type in the register.
-
       code = [{:move, {:integer, 47}, {:x, 0}}]
 
       assert {:ok, %Function{
@@ -67,12 +82,18 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
-    test "backward propagation"
+    test "backward propagation" do
+      assert %{regs: [[%{0 => builtin(:any)}]]} =
+        Inference.Opcodes.backprop(%Inference{
+          code: [],
+          stack: [{:move, {:integer, 47}, {:x, 0}}],
+          regs: [[%{0 => :foo}], [%{0 => :xxx}]]
+        })
+    end
+
+    test "backward propagation mismatch"
 
     test "integration test" do
-      # TODO: write a reverse test on this that clobbers the
-      # type in the register.
-
       code = [{:move, {:atom, :foo}, {:x, 0}}]
 
       assert {:ok, %Function{
@@ -90,12 +111,18 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
-    test "backward propagation"
+    test "backward propagation" do
+      assert %{regs: [[%{0 => builtin(:any)}]]} =
+        Inference.Opcodes.backprop(%Inference{
+          code: [],
+          stack: [{:move, {:literal, "foo"}, {:x, 0}}],
+          regs: [[%{0 => %Type{module: String, name: :t}}], [%{0 => :foo}]]
+        })
+    end
+
+    test "backward propagation mismatch"
 
     test "integration test" do
-      # TODO: write a reverse test on this that clobbers the
-      # type in the register.
-
       code = [{:move, {:literal, "foo"}, {:x, 0}}]
 
       assert {:ok, %Function{

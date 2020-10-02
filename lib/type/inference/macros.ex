@@ -44,7 +44,13 @@ defmodule Type.Inference.Macros do
     %{state | code: [this | code], stack: rest}
   end
 
-  def pop_reg(state = %{regs: [_ | rest]}), do: %{state | regs: rest}
+  def pop_reg(state = %{regs: [_ | rest]}) do
+    %{state | regs: rest}
+  end
+
+  def pop_reg_replace(state = %{regs: [_, _ | rest]}, replacement) do
+    %{state | regs: [replacement | rest]}
+  end
 
   def push_same_reg(state = %{regs: regs = [most_recent_regs | _]}) do
     %{state | regs: [most_recent_regs | regs]}
