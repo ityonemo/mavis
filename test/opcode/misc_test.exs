@@ -36,11 +36,11 @@ defmodule TypeTest.Opcode.MiscTest do
 
   describe "funcinfo opcode" do
     @func_info {:func_info, {:atom, :module}, {:atom, :func}, 2}
-    test "is forward-neutral" do
+    test "is idempotent on forward pass" do
       assert forward_idempotent?(@func_info)
     end
 
-    test "is backward-neutral" do
+    test "is idempotent on backprop pass" do
       assert backward_idempotent?(@func_info)
     end
 
@@ -54,11 +54,11 @@ defmodule TypeTest.Opcode.MiscTest do
   describe "label opcode" do
     @label {:label, 47}
 
-    test "is forward-neutral" do
+    test "is idempotent on forward pass" do
       assert forward_idempotent?(@label)
     end
 
-    test "is backward-neutral" do
+    test "is idempotent on backprop pass" do
       assert backward_idempotent?(@label)
     end
 
@@ -72,7 +72,7 @@ defmodule TypeTest.Opcode.MiscTest do
   describe "line opcode" do
     @line {:line, 47}
 
-    test "is forward-neutral" do
+    test "is idempotent on forward pass" do
       assert forward_idempotent?(@line)
     end
 
@@ -86,7 +86,7 @@ defmodule TypeTest.Opcode.MiscTest do
         })
     end
 
-    test "is backward-neutral" do
+    test "is idempotent on backprop pass" do
       assert backward_idempotent?(@line)
     end
 
@@ -98,11 +98,11 @@ defmodule TypeTest.Opcode.MiscTest do
   end
 
   describe "return opcode" do
-    test "is forward-neutral" do
+    test "is idempotent on forward pass" do
       assert forward_idempotent?(:return)
     end
 
-    test "is backward-neutral" do
+    test "is idempotent on backprop pass" do
       assert backward_idempotent?(:return)
     end
 
