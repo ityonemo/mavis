@@ -27,7 +27,7 @@ defmodule TypeTest.Opcode.MiscTest do
     |> Enum.into(%{})
 
     assert %{regs: [[reg_map] | _]} =
-      Inference.Opcodes.backprop(%Inference{
+      Inference.do_backprop(%Inference{
         code: [],
         stack: [instr],
         regs: [[reg_map], [reg_map]]

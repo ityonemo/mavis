@@ -75,84 +75,30 @@ defmodule Type.Inference.Opcodes do
 
   ##############################################################
 
-  def backprop(state = %{
-    stack: [{:move, {:x, from}, {:x, to}} | _],
-    regs: [[latest_registers], [registers_to_change] | _]
-  }) do
-    substituted_registers = Map.merge(registers_to_change,
-      %{from => latest_registers[to], to => builtin(:any)})
-
-    state
-    |> pop_reg_replace([substituted_registers])
-    |> unshift
+  def backprop({:move, {:x, from}, {:x, to}}, latest, prev) do
+    Map.merge(prev, %{from => latest[to], to => builtin(:any)})
   end
 
-  def backprop(state = %{
-    stack: [{:move, {:integer, _}, {:x, to}} | _],
-    regs: [_, [registers_to_change] | _]
-  }) do
-    substituted_registers = Map.put(registers_to_change, to, builtin(:any))
-
-    state
-    |> pop_reg_replace([substituted_registers])
-    |> unshift
+  def backprop({:move, {:integer, _}, {:x, to}}, _, prev) do
+    Map.put(prev, to, builtin(:any))
   end
 
-  def backprop(state = %{
-    stack: [{:move, {:atom, _}, {:x, to}} | _],
-    regs: [_, [registers_to_change] | _]
-  }) do
-    substituted_registers = Map.put(registers_to_change, to, builtin(:any))
-
-    state
-    |> pop_reg_replace([substituted_registers])
-    |> unshift
+  def backprop({:move, {:atom, _}, {:x, to}}, _, prev) do
+    Map.put(prev, to, builtin(:any))
   end
 
-  def backprop(state = %{
-    stack: [{:move, {:literal, _}, {:x, to}} | _],
-    regs: [_, [registers_to_change] | _]
-  }) do
-    substituted_registers = Map.put(registers_to_change, to, builtin(:any))
-
-    state
-    |> pop_reg_replace([substituted_registers])
-    |> unshift
+  def backprop({:move, {:literal, _}, {:x, to}}, _, prev) do
+    Map.put(prev, to, builtin(:any))
   end
 
-  def backprop(state = %{
-    stack: [{:gc_bif, :bit_size, _, 1, [x: from], _} | _],
-    regs: old_registers = [_, [registers_to_change] | _]
-  }) do
-    substituted_registers = Map.put(
-      registers_to_change, from, %Type.Bitstring{size: 0, unit: 1})
-
-    state
-    |> pop_reg_replace([substituted_registers])
+  def backprop({:gc_bif, :bit_size, _, 1, [x: from], _}, _latest, prev) do
+    # TODO: type checking on latest to reject incorrect forms.
+    Map.put(prev, from, %Type.Bitstring{size: 0, unit: 1})
   end
 
-  def backprop(state = %{stack: [{:func_info, _, _, _} | _]}) do
-    state
-    |> pop_reg
-    |> unshift
-  end
-
-  def backprop(state = %{stack: [{:line, _} | _]}) do
-    state
-    |> pop_reg
-    |> unshift
-  end
-
-  def backprop(state = %{stack: [{:label, _} | _]}) do
-    state
-    |> pop_reg
-    |> unshift
-  end
-
-  def backprop(state = %{stack: [:return | _]}) do
-    state
-    |> pop_reg
-    |> unshift
-  end
+  def backprop({:func_info, _, _, _}, last, _), do: last
+  def backprop({:line, _}, last, _), do: last
+  def backprop({:label, _}, last, _), do: last
+  def backprop(:return, last, _), do: last
 
 end

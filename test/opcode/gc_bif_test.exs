@@ -29,12 +29,14 @@ defmodule TypeTest.Opcode.GcBifTest do
     end
 
     test "backward propagation" do
-      assert %{regs: [[%{0 => %Bitstring{size: 0, unit: 1}}] | _]} =
-        Inference.Opcodes.backprop(%Inference{
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
           code: [],
           stack: [gc_bit_size(0, 0)],
           regs: [[%{0 => builtin(:non_neg_integer)}], [%{0 => builtin(:any)}]]
         })
+
+      assert [%{0 => %Bitstring{size: 0, unit: 1}}] = List.last(regs)
     end
 
     test "integration" do

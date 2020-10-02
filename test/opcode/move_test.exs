@@ -25,12 +25,14 @@ defmodule TypeTest.Opcode.MoveTest do
     end
 
     test "backward propagation" do
-      assert %{regs: [[%{0 => builtin(:any), 1 => :foo}]]} =
-        Inference.Opcodes.backprop(%Inference{
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:x, 1}, {:x, 0}}],
           regs: [[%{0 => :foo}], [%{1 => builtin(:any)}]]
         })
+
+      assert [%{0 => builtin(:any), 1 => :foo}] = List.last(regs)
     end
 
     test "backward propagation mismatch"
@@ -54,12 +56,14 @@ defmodule TypeTest.Opcode.MoveTest do
     end
 
     test "backward propagation" do
-      assert %{regs: [[%{0 => builtin(:any)}]]} =
-        Inference.Opcodes.backprop(%Inference{
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:integer, 47}, {:x, 0}}],
           regs: [[%{0 => 47}], [%{0 => :foo}]]
         })
+
+      assert [%{0 => builtin(:any)}] = List.last(regs)
     end
 
     test "backward propagation mismatch"
@@ -83,12 +87,14 @@ defmodule TypeTest.Opcode.MoveTest do
     end
 
     test "backward propagation" do
-      assert %{regs: [[%{0 => builtin(:any)}]]} =
-        Inference.Opcodes.backprop(%Inference{
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:integer, 47}, {:x, 0}}],
           regs: [[%{0 => :foo}], [%{0 => :xxx}]]
         })
+
+      assert [%{0 => builtin(:any)}] = List.last(regs)
     end
 
     test "backward propagation mismatch"
@@ -112,12 +118,14 @@ defmodule TypeTest.Opcode.MoveTest do
     end
 
     test "backward propagation" do
-      assert %{regs: [[%{0 => builtin(:any)}]]} =
-        Inference.Opcodes.backprop(%Inference{
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:literal, "foo"}, {:x, 0}}],
           regs: [[%{0 => %Type{module: String, name: :t}}], [%{0 => :foo}]]
         })
+
+      assert [%{0 => builtin(:any)}] = List.last(regs)
     end
 
     test "backward propagation mismatch"
