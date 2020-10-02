@@ -24,6 +24,8 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
+    test "backward propagation"
+
     test "integration test" do
       code = [{:move, {:x, 1}, {:x, 0}}]
 
@@ -41,6 +43,8 @@ defmodule TypeTest.Opcode.MoveTest do
           regs: [[%{}]]
         })
     end
+
+    test "backward propagation"
 
     test "integration test" do
       # TODO: write a reverse test on this that clobbers the
@@ -63,6 +67,8 @@ defmodule TypeTest.Opcode.MoveTest do
         })
     end
 
+    test "backward propagation"
+
     test "integration test" do
       # TODO: write a reverse test on this that clobbers the
       # type in the register.
@@ -83,6 +89,8 @@ defmodule TypeTest.Opcode.MoveTest do
           regs: [[%{}]]
         })
     end
+
+    test "backward propagation"
 
     test "integration test" do
       # TODO: write a reverse test on this that clobbers the

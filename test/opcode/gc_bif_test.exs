@@ -28,6 +28,7 @@ defmodule TypeTest.Opcode.GcBifTest do
         })
     end
 
+    test "backward propagation"
 
     test "integration" do
       code = [{:gc_bif, :bit_size, {:f, 0}, 1, [x: 1], {:x, 1}}]
