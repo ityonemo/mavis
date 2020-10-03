@@ -14,26 +14,25 @@ defmodule Type.Inference.Macros do
   end
 
   defmacro opcode(op_ast, do: ast) do
-    caller = __CALLER__.module
-    {fwd_ast, reg_ast, bck_ast, last_ast, prev_ast} = case ast do
+    {fwd_ast, freg_ast, bck_ast, breg_ast} = case ast do
       {:__block__, _,
-        [{:forward, _, [reg_ast, [do: fwd_ast]]},
-        {:backprop, _, [last_ast, prev_ast, [do: bck_ast]]}]} ->
+        [{:forward, _, [freg_ast, [do: fwd_ast]]},
+        {:backprop, _, [breg_ast, [do: bck_ast]]}]} ->
 
-        {fwd_ast, reg_ast, bck_ast, last_ast, prev_ast}
+        {fwd_ast, freg_ast, bck_ast, breg_ast}
       {:forward, _, [reg_ast, [do: fwd_ast]]} ->
 
-        {fwd_ast, reg_ast, {:last, [], Elixir}, {:last, [], Elixir}, {:_, [], Elixir}}
+        {fwd_ast, reg_ast, {:reg, [], Elixir}, {:reg, [], Elixir}}
     end
 
     fwd = quote do
-      def forward(unquote(op_ast), unquote(reg_ast)) do
+      def forward(unquote(op_ast), unquote(freg_ast)) do
         unquote(fwd_ast)
       end
     end
 
     bck = quote do
-      def backprop(unquote(op_ast), unquote(last_ast), unquote(prev_ast)) do
+      def backprop(unquote(op_ast), unquote(breg_ast)) do
         unquote(bck_ast)
       end
     end
@@ -52,7 +51,7 @@ defmodule Type.Inference.Macros do
       def forward(unquote(op_ast), registers), do: registers
     end
     bck = quote do
-      def backprop(unquote(op_ast), last, _prev), do: last
+      def backprop(unquote(op_ast), registers), do: registers
     end
 
     quote do

@@ -71,7 +71,7 @@ defmodule Type.Inference do
     # did we need to change any of the forward enties.
     %{stack: [this | _], regs: [[latest], [prev] | _]} = state
 
-    prev_reg = module.backprop(this, latest, prev)
+    prev_reg = module.backprop(this, latest)
 
     if prev_reg != prev do
       state

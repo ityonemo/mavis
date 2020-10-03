@@ -9,8 +9,8 @@ defmodule Type.Inference.Opcodes do
       Map.put(registers, to, registers[from])
     end
 
-    backprop(last, _prev) do
-      Map.merge(last, %{from => last[to], to => builtin(:any)})
+    backprop(registers) do
+      Map.merge(registers, %{from => registers[to], to => builtin(:any)})
     end
   end
 
@@ -19,8 +19,8 @@ defmodule Type.Inference.Opcodes do
       Map.put(registers, to, Type.of(literal))
     end
 
-    backprop(last, _prev) do
-      Map.merge(last, %{to => builtin(:any)})
+    backprop(registers) do
+      Map.merge(registers, %{to => builtin(:any)})
     end
   end
 
@@ -29,8 +29,8 @@ defmodule Type.Inference.Opcodes do
       Map.put(registers, to, builtin(:non_neg_integer))
     end
 
-    backprop(last, _prev) do
-      Map.put(last, from, %Type.Bitstring{size: 0, unit: 1})
+    backprop(registers) do
+      Map.put(registers, from, %Type.Bitstring{size: 0, unit: 1})
     end
   end
 
