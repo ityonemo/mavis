@@ -1,24 +1,23 @@
 defmodule Type.Inference do
 
-  import Type, only: [builtin: 1]
   require Type.Inference.Macros
   import Type.Inference.Macros
 
   @enforce_keys [:code, :regs]
   defstruct @enforce_keys ++ [
-    stack: [],
-    meta:  %{line: nil, label: nil}
+    stack: []
   ]
 
   @type opcode :: atom | tuple
-  @type metadata :: %{line: nil | integer, label: nil | integer}
-  @type reg_state :: %{optional(integer) => Type.t}
+  @type reg_state :: %{
+    optional(integer) => Type.t,
+    optional(:line) => non_neg_integer,
+    optional(:warn) => any}
 
   @type state :: %__MODULE__{
     code:  [opcode],
     stack: [opcode],
-    regs:  [[reg_state]],
-    meta:  metadata
+    regs:  [[reg_state]]
   }
 
   def run(code, starting_map, module \\ __MODULE__.Opcodes) do
@@ -49,9 +48,16 @@ defmodule Type.Inference do
   def do_analyze(state = %{code: []}, _), do: state
   def do_analyze(state, module) do
     state
-    |> module.forward
+    |> do_forward(module)
     |> do_backprop(module)
     |> do_analyze(module)
+  end
+
+  def do_forward(state = %{code: [instr | _], regs: [[latest] | _]},
+                 module \\ __MODULE__.Opcodes) do
+    state
+    |> push_reg([module.forward(instr, latest)])
+    |> shift
   end
 
   def do_backprop(state, module \\ __MODULE__.Opcodes)

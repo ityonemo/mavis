@@ -52,8 +52,8 @@ defmodule Type.Inference.Macros do
     %{state | regs: [replacement | rest]}
   end
 
-  def push_same_reg(state = %{regs: regs = [most_recent_regs | _]}) do
-    %{state | regs: [most_recent_regs | regs]}
+  def push_reg(state = %{regs: regs}, new_reg) do
+    %{state | regs: [new_reg | regs]}
   end
 
   def push_meta(state, key, value) do

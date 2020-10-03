@@ -16,13 +16,13 @@ defmodule TypeTest.Opcode.GcBifTest do
 
     test "forward propagation" do
       assert %{regs: [[%{0 => builtin(:non_neg_integer)}] | _]} =
-        Inference.Opcodes.forward(%Inference{
+        Inference.do_forward(%Inference{
           code: [gc_bit_size(1, 0)],
           regs: [[%{1 => builtin(:any)}]]
         })
 
       assert %{regs: [[%{1 => builtin(:non_neg_integer)}] | _]} =
-        Inference.Opcodes.forward(%Inference{
+        Inference.do_forward(%Inference{
           code: [gc_bit_size(0, 1)],
           regs: [[%{0 => builtin(:any)}]]
         })

@@ -15,7 +15,7 @@ defmodule TypeTest.Opcode.MiscTest do
     |> Enum.into(%{})
 
     assert %{regs: [[reg_map] | _]} =
-      Inference.Opcodes.forward(%Inference{
+      Inference.do_forward(%Inference{
         code: [instr],
         regs: [[reg_map]]
       })
@@ -79,8 +79,8 @@ defmodule TypeTest.Opcode.MiscTest do
     test "forward prop metadata" do
       reg_map = %{0 => builtin(:any)}
 
-      assert %{meta: %{line: 47}} =
-        Inference.Opcodes.forward(%Inference{
+      assert %{regs: [[%{line: 47}] | _]} =
+        Inference.do_forward(%Inference{
           code: [@line],
           regs: [[reg_map]]
         })

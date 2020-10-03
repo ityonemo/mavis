@@ -1,77 +1,26 @@
 defmodule Type.Inference.Opcodes do
 
-  import Type.Inference.Macros
   import Type, only: :macros
 
-  def forward(state = %{
-    code: [{:move, {:x, from}, {:x, to}} | _],
-    regs: old_registers = [[latest_registers] | _]
-  }) do
-
-    new_registers = Map.put(latest_registers, to, latest_registers[from])
-    shift(%{state | regs: [[new_registers] | old_registers]})
+  def forward({:move, {:x, from}, {:x, to}}, regs) do
+    Map.put(regs, to, regs[from])
   end
 
-  def forward(state = %{
-    code: [{:move, {:integer, literal}, {:x, to}} | _],
-    regs: old_registers = [[latest_registers] | _]
-  }) do
-
-    new_registers = Map.put(latest_registers, to, literal)
-    shift(%{state | regs: [[new_registers] | old_registers]})
+  def forward({:move, {_, literal}, {:x, to}}, regs) do
+    Map.put(regs, to, Type.of(literal))
   end
 
-  def forward(state = %{
-    code: [{:move, {:atom, literal}, {:x, to}} | _],
-    regs: old_registers = [[latest_registers] | _]
-  }) do
-
-    new_registers = Map.put(latest_registers, to, literal)
-    shift(%{state | regs: [[new_registers] | old_registers]})
+  def forward({:gc_bif, :bit_size, {:f, to}, 1, _, _}, regs) do
+    Map.put(regs, to, builtin(:non_neg_integer))
   end
 
-  def forward(state = %{
-    code: [{:move, {:literal, literal}, {:x, to}} | _],
-    regs: old_registers = [[latest_registers] | _]
-  }) do
+  def forward({:func_info, _, _, _}, regs), do: regs
 
-    new_registers = Map.put(latest_registers, to, Type.of(literal))
-    shift(%{state | regs: [[new_registers] | old_registers]})
+  def forward({:line, line}, regs) do
+    Map.put(regs, :line, line)
   end
-
-  def forward(state = %{
-    code: [{:gc_bif, :bit_size, {:f, to}, 1, _, _} | _],
-    regs: old_registers = [[latest_registers] | _]
-  }) do
-
-    new_registers = Map.put(latest_registers, to, builtin(:non_neg_integer))
-    shift(%{state | regs: [[new_registers] | old_registers]})
-  end
-
-  def forward(state = %{code: [{:func_info, _, _, _} | _]}) do
-    state
-    |> push_same_reg()
-    |> shift()
-  end
-
-  def forward(state = %{code: [{:line, line} | _]}) do
-    state
-    |> push_meta(:line, line)
-    |> push_same_reg()
-    |> shift()
-  end
-
-  def forward(state = %{code: [{:label, _} | _]}) do
-    state
-    |> push_same_reg()
-    |> shift()
-  end
-
-  def forward(state = %{code: [:return | _]}) do
-    state
-    |> push_same_reg()
-    |> shift()
-  end
+  def forward({:label, _}, regs), do: regs
+  def forward(:return, regs), do: regs
 
   ##############################################################
 
@@ -79,15 +28,7 @@ defmodule Type.Inference.Opcodes do
     Map.merge(prev, %{from => latest[to], to => builtin(:any)})
   end
 
-  def backprop({:move, {:integer, _}, {:x, to}}, _, prev) do
-    Map.put(prev, to, builtin(:any))
-  end
-
-  def backprop({:move, {:atom, _}, {:x, to}}, _, prev) do
-    Map.put(prev, to, builtin(:any))
-  end
-
-  def backprop({:move, {:literal, _}, {:x, to}}, _, prev) do
+  def backprop({:move, _, {:x, to}}, _, prev) do
     Map.put(prev, to, builtin(:any))
   end
 
