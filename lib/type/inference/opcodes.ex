@@ -20,7 +20,14 @@ defmodule Type.Inference.Opcodes do
     end
 
     backprop(registers) do
-      {:ok, Map.merge(registers, %{to => builtin(:any)})}
+      case Type.usable_as(Type.of(literal), registers[to]) do
+        :ok ->
+          {:ok, Map.merge(registers, %{to => builtin(:any)})}
+        {:maybe, _} ->
+          raise "not implemented yet"
+        {:error, _} ->
+          {:error, "foobar"}
+      end
     end
   end
 

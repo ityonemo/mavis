@@ -64,7 +64,16 @@ defmodule TypeTest.Opcode.MoveTest do
       assert [%{0 => builtin(:any)}] = List.last(regs)
     end
 
-    test "backward propagation mismatch"
+    test "backward propagation mismatch" do
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
+          code: [],
+          stack: [{:move, {:integer, 47}, {:x, 0}}],
+          regs: [[%{0 => :foo}], [%{0 => :foo}]]
+        })
+
+      assert [] = List.first(regs)
+    end
 
     test "integration test" do
       code = [{:move, {:integer, 47}, {:x, 0}}]
@@ -89,13 +98,22 @@ defmodule TypeTest.Opcode.MoveTest do
         Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:integer, 47}, {:x, 0}}],
-          regs: [[%{0 => :foo}], [%{0 => :xxx}]]
+          regs: [[%{0 => 47}], [%{0 => :xxx}]]
         })
 
       assert [%{0 => builtin(:any)}] = List.last(regs)
     end
 
-    test "backward propagation mismatch"
+    test "backward propagation mismatch" do
+      assert %{regs: regs} =
+        Inference.do_backprop(%Inference{
+          code: [],
+          stack: [{:move, {:literal, "foo"}, {:x, 0}}],
+          regs: [[%{0 => builtin(:integer)}], [%{0 => :foo}]]
+        })
+
+      assert [] = List.first(regs)
+    end
 
     test "integration test" do
       code = [{:move, {:atom, :foo}, {:x, 0}}]
@@ -125,8 +143,6 @@ defmodule TypeTest.Opcode.MoveTest do
 
       assert [%{0 => builtin(:any)}] = List.last(regs)
     end
-
-    test "backward propagation mismatch"
 
     test "integration test" do
       code = [{:move, {:literal, "foo"}, {:x, 0}}]
