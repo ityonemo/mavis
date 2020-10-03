@@ -4,6 +4,8 @@ defmodule Type.Inference.Macros do
 
   defmacro __using__(_) do
     quote do
+      @behaviour Type.Inference.Api
+
       import Type.Inference.Macros, only: [opcode: 1, opcode: 2]
 
       Module.register_attribute(__MODULE__, :forwards, accumulate: true)
@@ -22,7 +24,7 @@ defmodule Type.Inference.Macros do
         {fwd_ast, freg_ast, bck_ast, breg_ast}
       {:forward, _, [reg_ast, [do: fwd_ast]]} ->
 
-        {fwd_ast, reg_ast, {:reg, [], Elixir}, {:reg, [], Elixir}}
+        {fwd_ast, reg_ast, {:ok, {:reg, [], Elixir}}, {:reg, [], Elixir}}
     end
 
     fwd = quote do
@@ -37,8 +39,6 @@ defmodule Type.Inference.Macros do
       end
     end
 
-    bck |> Macro.to_string |> IO.puts
-
     quote do
       @forwards unquote(Macro.escape(fwd))
       @backprops unquote(Macro.escape(bck))
@@ -51,7 +51,7 @@ defmodule Type.Inference.Macros do
       def forward(unquote(op_ast), registers), do: registers
     end
     bck = quote do
-      def backprop(unquote(op_ast), registers), do: registers
+      def backprop(unquote(op_ast), registers), do: {:ok, registers}
     end
 
     quote do

@@ -53,10 +53,15 @@ defmodule Type.Inference do
     |> do_analyze(module)
   end
 
-  def do_forward(state = %{code: [instr | _], regs: [[latest] | _]},
-                 module \\ __MODULE__.Opcodes) do
+  def do_forward(state, module \\ __MODULE__.Opcodes)
+  def do_forward(state = %{code: [instr | _], regs: [[latest] | _]}, module) do
     state
     |> push_reg([module.forward(instr, latest)])
+    |> shift
+  end
+  def do_forward(state = %{regs: [[] | _]}, _) do
+    state
+    |> push_reg([])
     |> shift
   end
 
@@ -71,15 +76,16 @@ defmodule Type.Inference do
     # did we need to change any of the forward enties.
     %{stack: [this | _], regs: [[latest], [prev] | _]} = state
 
-    prev_reg = module.backprop(this, latest)
-
-    if prev_reg != prev do
-      state
-      |> pop_reg_replace([prev_reg])
-      |> unshift
-      |> do_backprop(module)
-    else
-      state
+    case module.backprop(this, latest) do
+      {:ok, ^prev} ->
+        state
+      {:ok, replacement} ->
+        state
+        |> pop_reg_replace([replacement])
+        |> unshift
+        |> do_backprop(module)
+      {:error, _} ->
+        %{state | regs: [[] | tl(state.regs)]}
     end
   end
 

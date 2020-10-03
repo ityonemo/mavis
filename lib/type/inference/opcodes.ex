@@ -10,7 +10,7 @@ defmodule Type.Inference.Opcodes do
     end
 
     backprop(registers) do
-      Map.merge(registers, %{from => registers[to], to => builtin(:any)})
+      {:ok, Map.merge(registers, %{from => registers[to], to => builtin(:any)})}
     end
   end
 
@@ -20,7 +20,7 @@ defmodule Type.Inference.Opcodes do
     end
 
     backprop(registers) do
-      Map.merge(registers, %{to => builtin(:any)})
+      {:ok, Map.merge(registers, %{to => builtin(:any)})}
     end
   end
 
@@ -30,7 +30,7 @@ defmodule Type.Inference.Opcodes do
     end
 
     backprop(registers) do
-      Map.put(registers, from, %Type.Bitstring{size: 0, unit: 1})
+      {:ok, Map.put(registers, from, %Type.Bitstring{size: 0, unit: 1})}
     end
   end
 
