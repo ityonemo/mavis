@@ -2,36 +2,72 @@ defmodule Type.Inference.Macros do
 
   alias Type.Inference
 
-  defp strip({:{}, _, tup_list}), do: List.first(tup_list)
-  defp strip(tup) when is_tuple(tup), do: elem(tup, 0)
-
-  defmacro opcode(op_ast, state_ast, do: block) do
-    opcode_name = strip(op_ast)
+  defmacro __using__(_) do
     quote do
-      def do_infer(unquote(state_ast) = %{code: [op = unquote(op_ast) | rest]}) do
-        unquote(state_ast)
-        new_state = unquote(block)
+      import Type.Inference.Macros, only: [opcode: 1, opcode: 2]
 
-        if length(new_state.regs) != length(unquote(state_ast).regs) + 1 do
-          raise "the opcode #{unquote opcode_name} must append to the registers"
-        end
+      Module.register_attribute(__MODULE__, :forwards, accumulate: true)
+      Module.register_attribute(__MODULE__, :backprops, accumulate: true)
 
-        %{new_state |
-          code: rest,
-          stack: [op | unquote(state_ast).stack]}
-      end
+      @before_compile Type.Inference.Macros
     end
   end
 
-  defmacro opcode(operand) do
-    quote do
-      def do_infer(state = %{code: [op | rest]}) when op == unquote(operand) or (elem(op, 0) == unquote(operand)) do
-        repeat(%{state |
-          code: rest,
-          stack: [op | state.stack]})
+  defmacro opcode(op_ast, do: ast) do
+    caller = __CALLER__.module
+    {fwd_ast, reg_ast, bck_ast, last_ast, prev_ast} = case ast do
+      {:__block__, _,
+        [{:forward, _, [reg_ast, [do: fwd_ast]]},
+        {:backprop, _, [last_ast, prev_ast, [do: bck_ast]]}]} ->
+
+        {fwd_ast, reg_ast, bck_ast, last_ast, prev_ast}
+      {:forward, _, [reg_ast, [do: fwd_ast]]} ->
+
+        {fwd_ast, reg_ast, {:last, [], Elixir}, {:last, [], Elixir}, {:_, [], Elixir}}
+    end
+
+    fwd = quote do
+      def forward(unquote(op_ast), unquote(reg_ast)) do
+        unquote(fwd_ast)
       end
     end
+
+    bck = quote do
+      def backprop(unquote(op_ast), unquote(last_ast), unquote(prev_ast)) do
+        unquote(bck_ast)
+      end
+    end
+
+    bck |> Macro.to_string |> IO.puts
+
+    quote do
+      @forwards unquote(Macro.escape(fwd))
+      @backprops unquote(Macro.escape(bck))
+    end
   end
+
+
+  defmacro opcode(op_ast) do
+    fwd = quote do
+      def forward(unquote(op_ast), registers), do: registers
+    end
+    bck = quote do
+      def backprop(unquote(op_ast), last, _prev), do: last
+    end
+
+    quote do
+      @forwards unquote(Macro.escape(fwd))
+      @backprops unquote(Macro.escape(bck))
+    end
+  end
+
+  defmacro __before_compile__(env) do
+    caller = env.module
+    fwd = Module.get_attribute(caller, :forwards)
+    bck = Module.get_attribute(caller, :backprops)
+    {:__block__, [], Enum.reverse(bck ++ fwd)}
+  end
+
 
   ###############################################################
   ## TOOLS!
