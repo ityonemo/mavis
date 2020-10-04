@@ -262,19 +262,21 @@ defmodule Type do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
+  #######################################################################
+  ## `use Type` section - boilerplate for preventing mistakes
 
-    @group_for %{
-      "Integer" => 1,
-      "Range" => 1,
-      "Atom" => 3,
-      "Function" => 5,
-      "Tuple" => 8,
-      "Map" => 9,
-      "List" => 10,
-      "Bitstring" => 11
-    }
+  @group_for %{
+    "Integer" => 1,
+    "Range" => 1,
+    "Atom" => 3,
+    "Function" => 5,
+    "Tuple" => 8,
+    "Map" => 9,
+    "List" => 10,
+    "Bitstring" => 11
+  }
 
-    @callback group_compare(Type.t, Type.t) :: boolean
+  @callback group_compare(Type.t, Type.t) :: boolean
 
   # exists to prevent mistakes when generating functions.
   defmacro __using__(_) do

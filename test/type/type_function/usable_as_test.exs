@@ -103,18 +103,24 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
 
     test "maybes are combined if multiple maybes happen" do
       # one arity
-      assert {:maybe, _} = %Function{params: [:ok], return: builtin(:atom)} ~> %Function{params: [builtin(:atom)], return: :ok}
+      assert {:maybe, _} = %Function{params: [:ok], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom)], return: :ok}
       # two arity
-      assert {:maybe, _} = %Function{params: [:ok, builtin(:integer)], return: builtin(:atom)} ~> %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
-      assert {:maybe, _} = %Function{params: [builtin(:atom), 47], return: builtin(:atom)} ~> %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
+      assert {:maybe, _} = %Function{params: [:ok, builtin(:integer)], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
+      assert {:maybe, _} = %Function{params: [builtin(:atom), 47], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
     end
 
     test "an erroring return is an error" do
       # zero arity
-      assert {:error, _} = %Function{params: [], return: builtin(:atom)} ~> %Function{params: [], return: builtin(:integer)}
+      assert {:error, _} = %Function{params: [], return: builtin(:atom)} ~>
+        %Function{params: [], return: builtin(:integer)}
       # arity one
-      assert {:error, _} = %Function{params: [builtin(:atom)], return: builtin(:atom)} ~> %Function{params: [builtin(:atom)], return: builtin(:integer)}
-      assert {:error, _} = %Function{params: [:ok], return: builtin(:atom)} ~> %Function{params: [builtin(:atom)], return: builtin(:integer)}
+      assert {:error, _} = %Function{params: [builtin(:atom)], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom)], return: builtin(:integer)}
+      assert {:error, _} = %Function{params: [:ok], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom)], return: builtin(:integer)}
       # arity two
       assert {:error, _} = %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)} ~>
         %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:integer)}
@@ -128,8 +134,10 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
 
     test "an erroring parameter is an error" do
       # arity one, over ok
-      assert {:error, _} = %Function{params: [builtin(:atom)], return: :ok} ~> %Function{params: [builtin(:integer)], return: :ok}
-      assert {:error, _} = %Function{params: [builtin(:atom)], return: builtin(:atom)} ~> %Function{params: [builtin(:integer)], return: :ok}
+      assert {:error, _} = %Function{params: [builtin(:atom)], return: :ok} ~>
+        %Function{params: [builtin(:integer)], return: :ok}
+      assert {:error, _} = %Function{params: [builtin(:atom)], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:integer)], return: :ok}
       # arity two
       assert {:error, _} = %Function{params: [builtin(:atom), builtin(:integer)], return: :ok} ~>
         %Function{params: [builtin(:integer), builtin(:integer)], return: :ok}
