@@ -137,6 +137,26 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
       assert %Function{params: [builtin(:atom)], return: builtin(:integer)} ==
         Type.intersection(@one_arity_any, %Function{params: [builtin(:atom)], return: builtin(:integer)})
     end
+
+    test "is invalid if return mismatches" do
+      assert builtin(:none) == Type.intersection(
+        %Function{params: [@any], return: builtin(:integer)},
+        %Function{params: [@any], return: builtin(:atom)})
+    end
+
+    test "is invalid if any parameter mismatches" do
+      assert builtin(:none) == Type.intersection(
+        %Function{params: [builtin(:integer)], return: @any},
+        %Function{params: [builtin(:atom)], return: @any})
+
+      assert builtin(:none) == Type.intersection(
+        %Function{params: [builtin(:integer), @any], return: @any},
+        %Function{params: [builtin(:atom), @any], return: @any})
+
+      assert builtin(:none) == Type.intersection(
+        %Function{params: [@any, builtin(:integer)], return: @any},
+        %Function{params: [@any, builtin(:atom)], return: @any})
+    end
   end
 
 end
