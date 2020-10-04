@@ -21,7 +21,7 @@ defmodule Type.Function do
 
   @info_parts [:module, :name, :arity, :env]
   def infer(fun) do
-    [module, name, arity, env] = fun
+    [module, name, arity, _env] = fun
     |> :erlang.fun_info
     |> Keyword.take(@info_parts)
     |> Keyword.values()
@@ -57,7 +57,7 @@ defmodule Type.Function do
   end
 
   def asm(fun) do
-    [module, name, arity, env] = fun
+    [module, name, arity, _env] = fun
     |> :erlang.fun_info
     |> Keyword.take(@info_parts)
     |> Keyword.values()
