@@ -262,8 +262,7 @@ defmodule Type do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
-  defmodule Impl do
-    # exists to prevent mistakes when generating functions.
+
     @group_for %{
       "Integer" => 1,
       "Range" => 1,
@@ -277,42 +276,31 @@ defmodule Type do
 
     @callback group_compare(Type.t, Type.t) :: boolean
 
-    defmacro __using__(_) do
-      group = __CALLER__.module
-      |> Module.split
-      |> List.last
-      |> :erlang.map_get(@group_for)
+  # exists to prevent mistakes when generating functions.
+  defmacro __using__(_) do
+    group = __CALLER__.module
+    |> Module.split
+    |> List.last
+    |> :erlang.map_get(@group_for)
 
-      quote bind_quoted: [group: group] do
-        @behaviour Type.Impl
+    quote bind_quoted: [group: group] do
+      @behaviour Type
 
-        @group group
-        def typegroup(_), do: @group
+      @group group
+      def typegroup(_), do: @group
 
-        def compare(this, other) do
-          other_group = Type.typegroup(other)
-          cond do
-            @group > other_group -> :gt
-            @group < other_group -> :lt
-            true ->
-              group_compare(this, other)
-          end
+      def compare(this, other) do
+        other_group = Type.typegroup(other)
+        cond do
+          @group > other_group -> :gt
+          @group < other_group -> :lt
+          true ->
+            group_compare(this, other)
         end
-
-        # preload a group_compare definition here.
-        def group_compare(any, any), do: :eq
       end
-    end
-  end
 
-  defimpl String.Chars do
-    def to_string(%{module: nil, name: atom, params: params}) do
-      param_list = Enum.join(params, ", ")
-      "#{atom}(#{param_list})"
-    end
-    def to_string(%{module: module, name: name, params: params}) do
-      param_list = Enum.join(params, ", ")
-      "#{inspect module}.#{name}(#{param_list})"
+      # preload a group_compare definition here.
+      def group_compare(any, any), do: :eq
     end
   end
 end
@@ -465,6 +453,17 @@ defimpl Type.Properties, for: Type do
     Enum.any?(types, &Type.subtype?(a, &1))
   end
   def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
+end
+
+defimpl String.Chars, for: Type do
+  def to_string(%{module: nil, name: atom, params: params}) do
+    param_list = Enum.join(params, ", ")
+    "#{atom}(#{param_list})"
+  end
+  def to_string(%{module: module, name: name, params: params}) do
+    param_list = Enum.join(params, ", ")
+    "#{inspect module}.#{name}(#{param_list})"
+  end
 end
 
 defmodule Type.Message do

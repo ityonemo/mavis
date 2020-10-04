@@ -93,12 +93,12 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       # one arity
       assert {:maybe, _} = %Function{params: [:ok], return: builtin(:atom)} ~>
         %Function{params: [builtin(:atom)], return: builtin(:atom)}
-        
+
       # two arity}
       assert {:maybe, _} = %Function{params: [:ok, builtin(:integer)], return: builtin(:atom)} ~>
         %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
-      assert {:maybe, _} = %Function{params: [builtin(:atom), 47], return: builtin(:atom)} ~> %
-        Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
+      assert {:maybe, _} = %Function{params: [builtin(:atom), 47], return: builtin(:atom)} ~>
+        %Function{params: [builtin(:atom), builtin(:integer)], return: builtin(:atom)}
     end
 
     test "maybes are combined if multiple maybes happen" do
