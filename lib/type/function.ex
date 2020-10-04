@@ -168,6 +168,22 @@ defmodule Type.Function do
           %Function{params: target.params, return: new_ret}
         end
       end
+      def intersection(a = %{return: ret}, b = %Function{params: :any}) do
+        intersection(b, a)
+      end
+      def intersection(%{params: lp, return: lr}, %Function{params: rp, return: rr})
+          when length(lp) == length(rp) do
+
+        types = [lr | lp]
+        |> Enum.zip([rr | rp])
+        |> Enum.map(fn {l, r} -> Type.intersection(l, r) end)
+
+        if Enum.any?(types, &(&1 == builtin(:none))) do
+          builtin(:none)
+        else
+          %Function{params: tl(types), return: hd(types)}
+        end
+      end
     end
 
     def subtype?(fn_type, fn_type), do: true
