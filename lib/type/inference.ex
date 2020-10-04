@@ -34,9 +34,9 @@ defmodule Type.Inference do
 
       # we need to filter out "old" values since some values
       # could have been padded in by clobbering opcodes
-      init_params = Enum.flat_map(params, fn {k, v} ->
-        if k in initial_registers, do: [v],else: []
-      end)
+      init_params = params
+      |> Enum.filter(fn {k, _} -> k in initial_registers end)
+      |> Enum.map(&elem(&1, 1))
 
       %Type.Function{params: init_params, return: return[0]}
     end)

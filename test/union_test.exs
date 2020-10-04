@@ -136,7 +136,6 @@ defmodule TypeTest.UnionTest do
     assert builtin(:atom) = (builtin(:atom) | :bar)
   end
 
-
   alias Type.Tuple
   @any builtin(:any)
   @anytuple %Tuple{elements: :any}
@@ -186,8 +185,10 @@ defmodule TypeTest.UnionTest do
       assert %List{type: (:foo | :bar)} == (%List{type: :foo} | %List{type: :bar})
       assert %List{type: @any} == (%List{type: @any} | %List{type: :bar})
 
-      assert %List{type: (:foo | :bar), final: :end} == (%List{type: :foo, final: :end} | %List{type: :bar, final: :end})
-      assert %List{type: @any, final: :end} == (%List{type: @any, final: :end} | %List{type: :bar, final: :end})
+      assert %List{type: (:foo | :bar), final: :end} ==
+        (%List{type: :foo, final: :end} | %List{type: :bar, final: :end})
+      assert %List{type: @any, final: :end} ==
+        (%List{type: @any, final: :end} | %List{type: :bar, final: :end})
     end
 
     test "nonempty: true lists get merged into nonempty: true lists" do

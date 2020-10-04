@@ -7,7 +7,6 @@ defmodule TypeTest.TypeUnion.SubtypeTest do
 
   use Type.Operators
 
-
   describe "union types" do
     test "are in themselves and in any" do
       assert (1 | :foo) in (1 | :foo)

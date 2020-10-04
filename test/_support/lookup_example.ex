@@ -147,7 +147,8 @@ defmodule TypeTest.Example do
     @spec nonempty_improper_list_2_spec(nonempty_improper_list(integer, nil)) :: nonempty_improper_list(integer, nil)
     def nonempty_improper_list_2_spec(x), do: x
 
-    @spec nonempty_maybe_improper_list_2_spec(nonempty_maybe_improper_list(integer, nil)) :: nonempty_maybe_improper_list(integer, nil)
+    @spec nonempty_maybe_improper_list_2_spec(nonempty_maybe_improper_list(integer, nil)) ::
+      nonempty_maybe_improper_list(integer, nil)
     def nonempty_maybe_improper_list_2_spec(x), do: x
 
     @spec charlist_spec(charlist) :: charlist

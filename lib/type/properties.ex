@@ -102,7 +102,7 @@ defimpl Type.Properties, for: Range do
     def usable_as(a..b, c..d, meta) do
       cond do
         a >= c and b <= d -> :ok
-        a > d or b < c-> {:error, Type.Message.make(a..b, c..d, meta)}
+        a > d or b < c -> {:error, Type.Message.make(a..b, c..d, meta)}
         true ->
           {:maybe, [Type.Message.make(a..b, c..d, meta)]}
       end

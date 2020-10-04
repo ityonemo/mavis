@@ -194,7 +194,6 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
   end
 
-
   describe "the intersection of reference" do
     test "with any, reference is itself" do
       assert builtin(:reference) == Type.intersection(builtin(:reference), builtin(:any))

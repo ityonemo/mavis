@@ -19,7 +19,8 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     test "turns into its counterparty" do
       assert %Tuple{elements: []} == Type.intersection(@anytuple, %Tuple{elements: []})
       assert %Tuple{elements: [:foo]} == Type.intersection(@anytuple, %Tuple{elements: [:foo]})
-      assert %Tuple{elements: [:foo, builtin(:integer)]} == Type.intersection(@anytuple, %Tuple{elements: [:foo, builtin(:integer)]})
+      assert %Tuple{elements: [:foo, builtin(:integer)]} ==
+        Type.intersection(@anytuple, %Tuple{elements: [:foo, builtin(:integer)]})
     end
 
     test "with unions works as expected" do
@@ -37,12 +38,17 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
   describe "tuples with defined elements" do
     test "intersect with the cartesian intersection" do
-      assert %Tuple{elements: [:foo]} == Type.intersection(%Tuple{elements: [:foo]}, %Tuple{elements: [builtin(:atom)]})
-      assert %Tuple{elements: [:foo]} == Type.intersection(%Tuple{elements: [builtin(:atom)]}, %Tuple{elements: [:foo]})
+      assert %Tuple{elements: [:foo]} ==
+        Type.intersection(%Tuple{elements: [:foo]}, %Tuple{elements: [builtin(:atom)]})
+      assert %Tuple{elements: [:foo]} ==
+        Type.intersection(%Tuple{elements: [builtin(:atom)]}, %Tuple{elements: [:foo]})
 
-      assert %Tuple{elements: [:foo, 47]} == Type.intersection(%Tuple{elements: [:foo, builtin(:integer)]}, %Tuple{elements: [builtin(:atom), 47]})
-      assert %Tuple{elements: [:foo, 47]} == Type.intersection(%Tuple{elements: [builtin(:atom), builtin(:integer)]}, %Tuple{elements: [:foo, 47]})
-      assert %Tuple{elements: [:foo, 47]} == Type.intersection(%Tuple{elements: [:foo, 47]}, %Tuple{elements: [builtin(:atom), builtin(:integer)]})
+      assert %Tuple{elements: [:foo, 47]} ==
+        Type.intersection(%Tuple{elements: [:foo, builtin(:integer)]}, %Tuple{elements: [builtin(:atom), 47]})
+      assert %Tuple{elements: [:foo, 47]} ==
+        Type.intersection(%Tuple{elements: [builtin(:atom), builtin(:integer)]}, %Tuple{elements: [:foo, 47]})
+      assert %Tuple{elements: [:foo, 47]} ==
+        Type.intersection(%Tuple{elements: [:foo, 47]}, %Tuple{elements: [builtin(:atom), builtin(:integer)]})
     end
 
     test "a single mismatch yields none" do

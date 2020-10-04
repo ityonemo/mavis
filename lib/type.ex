@@ -118,7 +118,6 @@ defmodule Type do
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
 
-
   defmacro usable_as_start do
     quote do
       def usable_as(type, type, meta), do: :ok

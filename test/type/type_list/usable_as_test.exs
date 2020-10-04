@@ -72,17 +72,20 @@ defmodule TypeTest.TypeList.UsableAsTest do
 
   describe "for lists with 'final' specs" do
     test "it's okay if the final usable" do
-      assert :ok = %List{type: builtin(:integer), final: 1} ~> %List{type: builtin(:integer), final: builtin(:integer)}
+      assert :ok = %List{type: builtin(:integer), final: 1} ~>
+        %List{type: builtin(:integer), final: builtin(:integer)}
     end
 
     test "it's maybe if the final is maybe usable" do
       assert {:maybe, _} =
-        %List{type: builtin(:integer), final: builtin(:integer)} ~> %List{type: builtin(:integer), final: 5}
+        %List{type: builtin(:integer), final: builtin(:integer)} ~>
+          %List{type: builtin(:integer), final: 5}
     end
 
     test "it's error if the final is not usable" do
       assert {:error, _} =
-        %List{type: builtin(:integer), final: builtin(:integer)} ~> %List{type: builtin(:integer), final: builtin(:atom)}
+        %List{type: builtin(:integer), final: builtin(:integer)} ~>
+          %List{type: builtin(:integer), final: builtin(:atom)}
     end
   end
 end

@@ -42,7 +42,6 @@ defmodule Type.Inference.Macros do
     end
   end
 
-
   defmacro opcode(op_ast) do
     fwd = quote do
       def forward(unquote(op_ast), registers), do: registers
@@ -63,7 +62,6 @@ defmodule Type.Inference.Macros do
     bck = Module.get_attribute(caller, :backprops)
     {:__block__, [], Enum.reverse(bck ++ fwd)}
   end
-
 
   ###############################################################
   ## TOOLS!
