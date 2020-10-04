@@ -1,8 +1,7 @@
 defmodule Type.Function do
 
   @moduledoc """
-  represents a function type.  Note that coercion of a function type
-  operates in the *opposite* direction as
+  represents a function type.
   """
 
   @enforce_keys [:return]
