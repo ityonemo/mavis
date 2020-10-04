@@ -60,7 +60,8 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
     end
 
     test "different offsets" do
-      assert %Bitstring{size: 15, unit: 8} == Type.intersection(%Bitstring{size: 7, unit: 8}, %Bitstring{size: 15, unit: 8})
+      assert %Bitstring{size: 15, unit: 8} ==
+        Type.intersection(%Bitstring{size: 7, unit: 8}, %Bitstring{size: 15, unit: 8})
     end
 
     test "with unions" do

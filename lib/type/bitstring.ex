@@ -11,7 +11,7 @@ defmodule Type.Bitstring do
     import Type, only: :macros
     alias Type.{Bitstring, Message}
 
-    use Type.Impl
+    use Type
 
     def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
     def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt

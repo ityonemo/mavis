@@ -18,7 +18,7 @@ end
 defimpl Type.Properties, for: Integer do
   import Type, only: :macros
 
-  use Type.Impl
+  use Type
 
   @spec group_compare(integer, Type.t) :: boolean
   def group_compare(_, builtin(:integer)),              do: :lt
@@ -59,7 +59,7 @@ end
 defimpl Type.Properties, for: Range do
   import Type, only: :macros
 
-  use Type.Impl
+  use Type
 
   def group_compare(_, builtin(:integer)),                  do: :lt
   def group_compare(_, builtin(:pos_integer)),              do: :lt
@@ -102,7 +102,7 @@ defimpl Type.Properties, for: Range do
     def usable_as(a..b, c..d, meta) do
       cond do
         a >= c and b <= d -> :ok
-        a > d or b < c-> {:error, Type.Message.make(a..b, c..d, meta)}
+        a > d or b < c -> {:error, Type.Message.make(a..b, c..d, meta)}
         true ->
           {:maybe, [Type.Message.make(a..b, c..d, meta)]}
       end
@@ -162,7 +162,7 @@ end
 defimpl Type.Properties, for: Atom do
   import Type, only: :macros
 
-  use Type.Impl
+  use Type
 
   def group_compare(_, builtin(:atom)), do: :lt
   def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
@@ -182,7 +182,7 @@ end
 defimpl Type.Properties, for: List do
   import Type, only: :macros
 
-  use Type.Impl
+  use Type
 
   def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
 

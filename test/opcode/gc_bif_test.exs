@@ -40,8 +40,6 @@ defmodule TypeTest.Opcode.GcBifTest do
     end
 
     test "integration" do
-      code = [{:gc_bif, :bit_size, {:f, 0}, 1, [x: 1], {:x, 1}}]
-
       assert {:ok, %Function{
         params: [%Bitstring{size: 0, unit: 1}],
         return: builtin(:non_neg_integer)

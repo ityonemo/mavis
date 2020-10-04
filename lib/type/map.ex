@@ -10,8 +10,14 @@ defmodule Type.Map do
   }
 
   defimpl Type.Properties do
-    import Type, only: [builtin: 1]
+    #import Type, only: [builtin: 1]
 
-    use Type.Impl
+    use Type
+
+    def intersection(_, _), do: raise "unimplemented"
+
+    def subtype?(_, _), do: raise "unimplemented"
+
+    def usable_as(_, _, _), do: raise "unimplemented"
   end
 end

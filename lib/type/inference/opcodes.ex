@@ -4,6 +4,7 @@ defmodule Type.Inference.Opcodes do
 
   use Type.Inference.Macros
 
+
   opcode {:move, {:x, from}, {:x, to}} do
     forward(registers) do
       Map.put(registers, to, registers[from])

@@ -2,7 +2,6 @@ defmodule TypeTest.Opcode.MoveTest do
   # various ways that the move opcode can be a thing
 
   use ExUnit.Case, async: true
-  import TypeTest.OpcodeCase
 
   @moduletag :opcodes
 

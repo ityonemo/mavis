@@ -1,8 +1,7 @@
 defmodule Type.Function do
 
   @moduledoc """
-  represents a function type.  Note that coercion of a function type
-  operates in the *opposite* direction as
+  represents a function type.
   """
 
   @enforce_keys [:return]
@@ -21,7 +20,7 @@ defmodule Type.Function do
 
   @info_parts [:module, :name, :arity, :env]
   def infer(fun) do
-    [module, name, arity, env] = fun
+    [module, name, arity, _env] = fun
     |> :erlang.fun_info
     |> Keyword.take(@info_parts)
     |> Keyword.values()
@@ -57,7 +56,7 @@ defmodule Type.Function do
   end
 
   def asm(fun) do
-    [module, name, arity, env] = fun
+    [module, name, arity, _env] = fun
     |> :erlang.fun_info
     |> Keyword.take(@info_parts)
     |> Keyword.values()
@@ -106,7 +105,7 @@ defmodule Type.Function do
   defimpl Type.Properties do
     import Type, only: :macros
 
-    use Type.Impl
+    use Type
 
     def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
       Type.compare(r1, r2)
@@ -157,6 +156,10 @@ defmodule Type.Function do
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
         end
       end
+    end
+
+    intersection do
+      def intersection(%{}, _b), do: raise "unimplemented"
     end
 
     def subtype?(fn_type, fn_type), do: true

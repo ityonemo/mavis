@@ -50,8 +50,10 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "list finals" do
     test "are reduced" do
-      assert %List{final: builtin(:pos_integer)} == Type.intersection(%List{final: builtin(:pos_integer)}, %List{final: builtin(:integer)})
-      assert %List{final: builtin(:pos_integer)} == Type.intersection(%List{final: builtin(:integer)}, %List{final: builtin(:pos_integer)})
+      assert %List{final: builtin(:pos_integer)} ==
+        Type.intersection(%List{final: builtin(:pos_integer)}, %List{final: builtin(:integer)})
+      assert %List{final: builtin(:pos_integer)} ==
+        Type.intersection(%List{final: builtin(:integer)}, %List{final: builtin(:pos_integer)})
     end
   end
 end

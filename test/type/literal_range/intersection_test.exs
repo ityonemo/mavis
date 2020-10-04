@@ -6,8 +6,6 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
 
   import Type, only: [builtin: 1]
 
-  alias Type.List
-
   describe "the intersection of a literal range" do
     test "with itself, integer and any is itself" do
       assert -47..47 == Type.intersection(-47..47, builtin(:any))
