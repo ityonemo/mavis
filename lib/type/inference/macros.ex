@@ -1,7 +1,4 @@
 defmodule Type.Inference.Macros do
-
-  alias Type.Inference
-
   defmacro __using__(_) do
     quote do
       @behaviour Type.Inference.Api

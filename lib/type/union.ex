@@ -229,7 +229,7 @@ defmodule Type.Union do
         |> Enum.reject(&(&1 == builtin(:none)))
         |> Enum.into(%Type.Union{})
       end
-      def intersection(union, ritem) do
+      def intersection(union = %{}, ritem) do
         union.of
         |> Enum.map(&Type.intersection(&1, ritem))
         |> Enum.reject(&(&1 == builtin(:none)))

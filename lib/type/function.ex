@@ -159,6 +159,10 @@ defmodule Type.Function do
       end
     end
 
+    intersection do
+      def intersection(%{}, _b), do: raise "unimplemented"
+    end
+
     def subtype?(fn_type, fn_type), do: true
     def subtype?(_fn_type, builtin(:any)), do: true
     def subtype?(challenge, target = %Function{params: :any}) do
