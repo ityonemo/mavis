@@ -159,7 +159,15 @@ defmodule Type.Function do
     end
 
     intersection do
-      def intersection(%{}, _b), do: raise "unimplemented"
+      def intersection(%{params: :any, return: ret}, target = %Function{}) do
+        new_ret = Type.intersection(ret, target.return)
+
+        if new_ret == builtin(:none) do
+          builtin(:none)
+        else
+          %Function{params: target.params, return: new_ret}
+        end
+      end
     end
 
     def subtype?(fn_type, fn_type), do: true
