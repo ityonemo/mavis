@@ -32,20 +32,24 @@ defmodule Type.Map do
   end
 
   @doc """
-  takes a map, and applies a type to it, returning a list of all
-  valid subtypes and what their corresponding results are.
+  takes a map, and applies a preimage to it, yielding a list of
+  `{preimage_segment, image_segment}`.
+
+  the `preimage_segment`s are all types that are valid subtypes
+  of the map's preimage, and the `image_segment` represent the
+  type that is produced by the `preimage_segment`
 
   ```elixir
   iex> alias Type.Map
-  iex> Map.image_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :atom}}]}, -10..10)
+  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :atom}}]}, -10..10)
   [{-10..-1, %Type{name: :atom}}]
-  iex> Map.image_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :pos_integer}},
+  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :pos_integer}},
   ...>                           {%Type{name: :pos_integer}, %Type{name: :neg_integer}}]}, -10..10)
   [{-10..-1, %Type{name: :pos_integer}},
    {1..10,   %Type{name: :neg_integer}}]
   ```
   """
-  def image_of(map, src_type) do
+  def segments_of(map, src_type) do
     import Type, only: [builtin: 1]
     (map.required ++ map.optional)
     |> Enum.flat_map(fn {key_type, val_type} ->
@@ -75,13 +79,13 @@ defmodule Type.Map do
         # this gives us a list of preimage segments, each of
         # which has a consistent image type.
         optionals = map
-        |> Map.image_of(preimage_intersection)
+        |> Map.segments_of(preimage_intersection)
         |> Enum.flat_map(fn {preimage_segment, image_type} ->
 
           # resegment each of these preimage segments based on
           # what the target is capable of doing.
           tgt
-          |> Map.image_of(preimage_segment)
+          |> Map.segments_of(preimage_segment)
           |> Enum.flat_map(fn {preimage_subsegment, new_image_type} ->
             # for each of these smaller segments, find the common
             # type that applies to that segment.
@@ -105,5 +109,19 @@ defmodule Type.Map do
     def subtype?(_, _), do: raise "unimplemented"
 
     def usable_as(_, _, _), do: raise "unimplemented"
+  end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+    def inspect(%{required: required, optional: optional}, opts) do
+      requireds = Enum.map(required, fn {src, dst} ->
+        concat(["required(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+      end)
+      optionals = Enum.map(optional, fn {src, dst} ->
+        concat(["optional(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+      end)
+      inner = concat(Enum.intersperse(requireds ++ optionals, ", "))
+      concat(["%{", inner, "}"])
+    end
   end
 end

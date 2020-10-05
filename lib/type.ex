@@ -122,6 +122,32 @@ defmodule Type do
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
 
+  ## fetching AnD StuFF
+
+  def fetch_type(module, fun, arity \\ 0) do
+    with {:ok, specs} <- Code.Typespec.fetch_types(module) do
+      specs
+      |> Enum.find_value(fn
+        {:type, {^fun, type, params}} -> type
+        _ -> false
+      end)
+      |> parse_spec
+    end
+  end
+
+  def parse_spec({:type, _, :map, params}) do
+    optionals = Enum.map(params, fn
+      {:type, _, :map_field_assoc, [src_type, dst_type]} ->
+        {parse_spec(src_type), parse_spec(dst_type)}
+    end)
+    %Type.Map{optional: optionals}
+  end
+
+  def parse_spec({:type, _, :range, [first, last]}), do: parse_spec(first)..parse_spec(last)
+  def parse_spec({:op, _, :-, value}), do: -parse_spec(value)
+  def parse_spec({:integer, _, value}), do: value
+  def parse_spec({:type, _, type, []}), do: builtin(type)
+
   defmacro usable_as_start do
     quote do
       def usable_as(type, type, meta), do: :ok
@@ -461,14 +487,23 @@ defimpl Type.Properties, for: Type do
   def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 
-defimpl String.Chars, for: Type do
-  def to_string(%{module: nil, name: atom, params: params}) do
-    param_list = Enum.join(params, ", ")
-    "#{atom}(#{param_list})"
+defimpl Inspect, for: Type do
+  import Inspect.Algebra
+  def inspect(%{module: nil, name: name, params: params}, opts) do
+    param_list = params
+    |> Enum.map(&to_doc(&1, opts))
+    |> Enum.intersperse(", ")
+    |> concat
+
+    concat(["#{name}(", param_list, ")"])
   end
-  def to_string(%{module: module, name: name, params: params}) do
-    param_list = Enum.join(params, ", ")
-    "#{inspect module}.#{name}(#{param_list})"
+  def inspect(%{module: module, name: name, params: params}, opts) do
+    param_list = params
+    |> Enum.map(&to_doc(&1, opts))
+    |> Enum.intersperse(", ")
+    |> concat
+
+    concat([to_doc(module, opts), ".#{name}(", param_list, ")"])
   end
 end
 
