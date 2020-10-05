@@ -45,7 +45,7 @@ defmodule Type.Union do
   def type_merge(a, b..c) when b == a + 1 do
     {[], a..c}
   end
-  def type_merge(a..b, c..d) when c <= b do
+  def type_merge(a..b, c..d) when c <= b + 1 do
     {[], a..d}
   end
   def type_merge(builtin(:neg_integer), _..0) do

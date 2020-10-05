@@ -33,6 +33,10 @@ defmodule Type do
   @spec intersection(t, t) :: t
   defdelegate intersection(a, b), to: Type.Properties
 
+  def union(types) when is_list(types) do
+    Enum.into(types, struct(Type.Union))
+  end
+
   @spec compare({t, t}) :: boolean
   def compare({t1, t2}), do: compare(t1, t2)
 

@@ -46,6 +46,10 @@ defmodule TypeTest.UnionTest do
       assert 1..4 == (2..4 | 1..3)
       assert 1..3 == (2..3 | 1..2)
     end
+
+    test "adjacent ranges are merged" do
+      assert 1..4 == (1..2 | 3..4)
+    end
   end
 
   describe "when collecting neg_integer in unions" do
