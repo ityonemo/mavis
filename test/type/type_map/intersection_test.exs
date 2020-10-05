@@ -67,9 +67,6 @@ defmodule TypeTest.TypeMap.IntersectionTest do
   end
 
   @foo_int %Map{required: [foo: builtin(:integer)]}
-  @bar_int %Map{required: [bar: builtin(:integer)]}
-  @foo_atom %Map{required: [foo: builtin(:atom)]}
-
   describe "maps with required types" do
     test "intersect with the intersection of the values" do
       assert %Map{required: [foo: 3..5]} ==
@@ -78,11 +75,13 @@ defmodule TypeTest.TypeMap.IntersectionTest do
     end
 
     test "intersect with none if they don't match" do
-      assert builtin(:none) == Type.intersection(@foo_int, @bar_int)
+      assert builtin(:none) == Type.intersection(@foo_int,
+                                %Map{required: [bar: builtin(:integer)]})
     end
 
     test "intersect with none if their value types don't match" do
-      assert builtin(:none) == Type.intersection(@foo_int, @foo_atom)
+      assert builtin(:none) == Type.intersection(@foo_int,
+                                 %Map{required: [foo: builtin(:atom)]})
     end
   end
 
@@ -92,18 +91,19 @@ defmodule TypeTest.TypeMap.IntersectionTest do
                            %Map{optional: [foo: builtin(:integer)]})
     end
 
-    test "intersect optional key types, if necessary"
+    test "intersect optional key types, if necessary" do
       assert @foo_int == Type.intersection(@foo_int,
-                           %Map{optional: [{builtin(:atom), builtin(:integer)}]}
+                           %Map{optional: [{builtin(:atom), builtin(:integer)}]})
     end
 
-    test "intersect value types"
+    test "intersect value types" do
       assert %Map{required: [foo: 1..10]} == Type.intersection(@foo_int,
-                           %Map{optional: [{builtin(:atom), 1..10}]}
+                           %Map{optional: [{builtin(:atom), 1..10}]})
     end
 
     test "intersect with none if it's impossible to construct the required" do
-      
+      assert builtin(:none) == Type.intersection(@foo_int,
+                           %Map{optional: [{builtin(:integer), builtin(:integer)}]})
     end
   end
 end
