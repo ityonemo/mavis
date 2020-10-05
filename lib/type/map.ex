@@ -37,15 +37,15 @@ defmodule Type.Map do
 
   ```elixir
   iex> alias Type.Map
-  iex> Map.image_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :atom}}]}, -10..10)
+  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :atom}}]}, -10..10)
   [{-10..-1, %Type{name: :atom}}]
-  iex> Map.image_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :pos_integer}},
+  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :pos_integer}},
   ...>                           {%Type{name: :pos_integer}, %Type{name: :neg_integer}}]}, -10..10)
   [{-10..-1, %Type{name: :pos_integer}},
    {1..10,   %Type{name: :neg_integer}}]
   ```
   """
-  def image_of(map, src_type) do
+  def segments_of(map, src_type) do
     import Type, only: [builtin: 1]
     (map.required ++ map.optional)
     |> Enum.flat_map(fn {key_type, val_type} ->
@@ -62,7 +62,7 @@ defmodule Type.Map do
 
     import Type, only: :macros
     use Type
-    alias Type.Map
+    alias Type.{Map, Union}
 
     intersection do
       def intersection(map, tgt = %Map{}) do
@@ -71,36 +71,84 @@ defmodule Type.Map do
         |> Map.preimage
         |> Type.intersection(Map.preimage(tgt))
 
-        # apply the intersected preimages to the first map.
-        # this gives us a list of preimage segments, each of
-        # which has a consistent image type.
-        optionals = map
-        |> Map.image_of(preimage_intersection)
-        |> Enum.flat_map(fn {preimage_segment, image_type} ->
-
-          # resegment each of these preimage segments based on
-          # what the target is capable of doing.
-          tgt
-          |> Map.image_of(preimage_segment)
-          |> Enum.flat_map(fn {preimage_subsegment, new_image_type} ->
-            # for each of these smaller segments, find the common
-            # type that applies to that segment.
-            image_intersect = Type.intersection(image_type, new_image_type)
-
-            if image_intersect == builtin(:none) do
-              # if they have nothing in common, drop the segment.
-              []
-            else
-              # otherwise keep this subsegment, attached to the
-              # full common ground.
-              [{preimage_subsegment, image_intersect}]
-            end
-          end)
-        end)
-
-        %Map{optional: optionals}
+        # required properties can fail.
+        case evaluate_requireds(map, tgt, preimage_intersection) do
+          {:ok, requireds} ->
+            optionals = evaluate_optionals(map, tgt, preimage_intersection)
+            %Map{optional: optionals -- requireds, required: requireds}
+          :empty ->
+            builtin(:none)
+        end
       end
     end
+
+    defp evaluate_requireds(map, tgt, preimage_intersection) do
+      # union the required keys from the map and the target.  This
+      # is the full set of required keys from all of the maps.
+      all_req_keys = (Enum.map(map.required, &elem(&1, 0)) ++
+                      Enum.map(tgt.required, &elem(&1, 0)))
+                     |> Enum.uniq
+
+      # check that all required keys exist in the preimage intersection, if
+      # it doesn't then we can do a n early eiit.
+      if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
+        req_kv = Enum.map(all_req_keys, fn rq_key ->
+          val_type = evaluate_singleton(map, rq_key)
+          |> Type.intersection(evaluate_singleton(tgt, rq_key))
+
+          val_type == builtin(:none) && throw :empty
+
+          {rq_key, val_type}
+        end)
+        {:ok, req_kv}
+      else
+        :empty
+      end
+    catch
+      :empty -> :empty
+    end
+
+    defp evaluate_singleton(map, singleton) do
+      optionals = Enum.flat_map(map.optional, fn
+        {preimage, image} ->
+          if Type.subtype?(singleton, preimage), do: [image], else: []
+      end)
+
+      requireds = Enum.flat_map(map.required, fn
+        {^singleton, image} -> [image]
+        _ -> []
+      end)
+
+      Enum.reduce(optionals ++ requireds, &Type.intersection/2)
+    end
+
+    defp evaluate_optionals(map, tgt, preimage) do
+      # apply the intersected preimages to the first map.
+      # this gives us a list of preimage segments, each of
+      # which has a consistent image type.
+      map
+      |> Map.segments_of(preimage)
+      |> Enum.flat_map(fn {preimage_segment, image_type} ->
+        # resegment each of these preimage segments based on
+        # what the target is capable of doing.
+        tgt
+        |> Map.segments_of(preimage_segment)
+        |> Enum.flat_map(fn {preimage_subsegment, new_image_type} ->
+          # for each of these smaller segments, find the common
+          # type that applies to that segment.
+          image_intersect = Type.intersection(image_type, new_image_type)
+          if image_intersect == builtin(:none) do
+            # if they have nothing in common, drop the segment.
+            []
+          else
+            # otherwise keep this subsegment, attached to the
+            # full common ground.
+            [{preimage_subsegment, image_intersect}]
+          end
+        end)
+      end)
+    end
+
 
     def subtype?(_, _), do: raise "unimplemented"
 

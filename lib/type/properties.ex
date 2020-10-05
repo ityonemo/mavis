@@ -11,7 +11,7 @@ defprotocol Type.Properties do
   @spec typegroup(Type.t) :: Type.group
   def typegroup(type)
 
-  @spec intersection(Type.t, Type.t) :: :gt | :eq | :lt
+  @spec intersection(Type.t, Type.t) :: Type.t
   def intersection(type, type)
 end
 

@@ -37,7 +37,7 @@ defmodule Type do
     Enum.into(types, struct(Type.Union))
   end
 
-  @spec compare({t, t}) :: boolean
+  @spec compare({t, t}) :: :lt | :gt | :eq
   def compare({t1, t2}), do: compare(t1, t2)
 
   @spec compare(t, t) :: :lt | :gt | :eq
@@ -175,6 +175,7 @@ defmodule Type do
 
   defmacro intersection(do: block) do
     quote do
+      @spec intersection(Type.t, Type.t) :: Type.t
       def intersection(type, type), do: type
       def intersection(type, builtin(:any)), do: type
 
