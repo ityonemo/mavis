@@ -1,13 +1,21 @@
 defmodule Type.Map do
   defstruct [required: [], optional: []]
 
-  @type optional :: {Type.t, Type.t}
-  @type requirable :: {integer | atom, Type.t}
+  @type required :: %{optional(integer | atom) => Type.t}
+  @type optional :: %{optional(Type.t) => Type.t}
 
   @type t :: %__MODULE__{
-    required: [requirable],
-    optional: [optional]
+    required: required,
+    optional: optional
   }
+
+  @spec build(required :: required | keyword(Type.t), optional :: optional) :: t
+  def build(required, optional) do
+    %__MODULE__{
+      required: Enum.into(required, %{}),
+      optional: Enum.into(optional, %{})
+    }
+  end
 
   @doc """
   the full union of all possible key values for the passed map.
