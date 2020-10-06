@@ -20,7 +20,6 @@ defimpl Type.Properties, for: Integer do
 
   use Type
 
-  @spec group_compare(integer, Type.t) :: boolean
   def group_compare(_, builtin(:integer)),              do: :lt
   def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
   def group_compare(_, builtin(:non_neg_integer)),      do: :lt

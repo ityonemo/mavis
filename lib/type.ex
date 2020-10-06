@@ -281,7 +281,7 @@ defmodule Type do
     "Bitstring" => 11
   }
 
-  @callback group_compare(Type.t, Type.t) :: boolean
+  @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
 
   # exists to prevent mistakes when generating functions.
   defmacro __using__(_) do

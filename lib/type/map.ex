@@ -21,10 +21,17 @@ defmodule Type.Map do
   %Type{name: :non_neg_integer}
   ```
   """
-  def preimage(map) do
+
+  def preimage(map, filter_type \\ %Type{name: :any})
+  def preimage(map, %Type{module: nil, name: :any, params: []}) do
     map
     |> keytypes
     |> Type.union
+  end
+  def preimage(map, filter_type) do
+    (map.required ++ map.optional)
+    |> Enum.map(&Type.intersection(elem(&1, 0), filter_type))
+    |> Enum.into(%Type.Union{})
   end
 
   defp keytypes(map) do
@@ -58,11 +65,67 @@ defmodule Type.Map do
     end)
   end
 
+  def apply(map, type) do
+    map
+    |> segments_of(type)
+    |> Enum.map(&elem(&1, 1))
+    |> Enum.into(%Type.Union{})
+  end
+
+  def preimages_of(%{required: required, optional: optional}) do
+    Enum.map(optional, fn {k, _} -> k end)
+    ++ Enum.map(required, fn {k, _} -> k end)
+  end
+
+  # takes a preimage and segments it across all domains, sorting
+  # at the end.
+  def preimage_segments(map, filter_type) do
+    (map.required ++ map.optional)
+    |> Enum.map(&Type.intersection(elem(&1, 0), filter_type))
+    |> Enum.sort({:asc, Type})
+  end
+
+  def required_key?(map, key) do
+    key in Enum.map(map.required, &elem(&1, 0))
+  end
+
   defimpl Type.Properties do
 
     import Type, only: :macros
+    alias Type.Map
+
     use Type
-    alias Type.{Map, Union}
+
+    ##############################################################
+    ## comparison
+
+    def group_compare(m1, m2) do
+      preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
+      cond do
+        preimage_cmp != :eq -> preimage_cmp
+        :eq ->
+          m1
+          |> Map.preimage_segments(%Type{name: :any})
+          |> Enum.flat_map(&Map.preimage_segments(m2, &1))
+          |> Enum.each(fn segment ->
+            required = check_required(m1, m2, segment)
+            required != :eq && throw required
+
+            valtype = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
+            valtype != :eq && throw valtype
+          end)
+      end
+    catch
+      valtype when valtype in [:gt, :lt] -> valtype
+    end
+
+    defp check_required(m1, m2, segment) do
+      case {Map.required_key?(m1, segment), Map.required_key?(m2, segment)} do
+        {false, true} -> :gt
+        {true, false} -> :lt
+        _ -> :eq
+      end
+    end
 
     intersection do
       def intersection(map, tgt = %Map{}) do
@@ -148,7 +211,6 @@ defmodule Type.Map do
         end)
       end)
     end
-
 
     def subtype?(_, _), do: raise "unimplemented"
 
