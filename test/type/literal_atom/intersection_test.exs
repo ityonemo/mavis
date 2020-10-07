@@ -22,6 +22,10 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
       assert builtin(:none) == Type.intersection(:foo, (builtin(:integer) | builtin(:port)))
     end
 
+    test "with the none type is none" do
+      assert builtin(:none) == Type.intersection(:foo, builtin(:none))
+    end
+
     test "with all other types is none" do
       TypeTest.Targets.except([:foo, builtin(:atom)])
       |> Enum.each(fn target ->

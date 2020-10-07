@@ -138,7 +138,7 @@ defmodule Type.Map do
   defimpl Type.Properties do
 
     import Type, only: :macros
-    alias Type.Map
+    alias Type.{Map, Message}
 
     use Type
 
@@ -290,6 +290,80 @@ defmodule Type.Map do
     end
     def subtype?(_, _), do: false
 
-    def usable_as(_, _, _), do: raise "unimplemented"
+    usable_as do
+      def usable_as(challenge, target = %Map{}, meta) do
+        # check to make sure required types are in required
+           (check_preimages(challenge, target, meta)
+         ++ check_target_required(challenge, target, meta)
+         ++ check_challenge_required(challenge, target, meta)
+         ++ check_challenge_optional(challenge, target, meta))
+        |> Enum.reduce(:ok, &Type.ternary_and/2)
+      end
+    end
+
+    defp check_preimages(challenge, target, meta) do
+      challenge_preimage = challenge.optional
+      |> Elixir.Map.keys
+      |> Enum.into(%Type.Union{})
+
+      target_preimage = target.optional
+      |> Elixir.Map.keys
+      |> Enum.into(%Type.Union{})
+
+      is_preimage = Type.intersection(challenge_preimage, target_preimage)
+
+      if is_preimage == challenge_preimage do
+        [:ok]
+      else
+        [{:maybe, [Message.make(challenge, target, meta)]}]
+      end
+    end
+
+    defp check_target_required(challenge, target, meta) do
+      target.required
+      |> Enum.map(fn {key, value} ->
+        cond do
+          :erlang.is_map_key(key, challenge.required) ->
+            Type.usable_as(target.required[:key], value, meta)
+          (challenge_value = Map.apply(challenge, key)) != builtin(:none) ->
+            Type.ternary_and(
+              {:maybe, [Message.make(challenge, target, meta)]},
+              Type.usable_as(challenge_value, value, meta))
+          true ->
+            {:error, Message.make(challenge, target, meta)}
+        end
+      end)
+    end
+
+    defp check_challenge_required(challenge, target, meta) do
+      challenge.required
+      |> Enum.map(fn {key, value} ->
+        cond do
+          :erlang.is_map_key(key, target.required) ->
+            Type.usable_as(value, target.required[key], meta)
+          (target_value = Map.apply(target, key)) != builtin(:none) ->
+            Type.usable_as(value, target_value, meta)
+          true ->
+            {:error, Message.make(challenge, target, meta)}
+        end
+      end)
+    end
+
+    defp check_challenge_optional(challenge, target, meta) do
+      challenge.optional
+      |> Enum.flat_map(fn {key_type, value_type} ->
+        target
+        |> Map.resegment([key_type])
+        |> Enum.map(&{&1, value_type})
+      end)
+      |> Enum.map(fn {segment, value_type} ->
+        Type.usable_as(value_type, Map.apply(target, segment), meta)
+      end)
+      |> Enum.map(fn
+        {:error, msg} -> {:maybe, [msg]}
+        any -> any
+      end)
+    end
+
   end
 end
