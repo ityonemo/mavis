@@ -1,5 +1,5 @@
 defmodule Type.Map do
-  defstruct [required: [], optional: []]
+  defstruct [required: %{}, optional: %{}]
 
   @type required :: %{optional(integer | atom) => Type.t}
   @type optional :: %{optional(Type.t) => Type.t}
@@ -9,92 +9,124 @@ defmodule Type.Map do
     optional: optional
   }
 
-  @spec build(required :: required | keyword(Type.t), optional :: optional) :: t
-  def build(required, optional) do
+  @spec build(required :: required, optional :: optional) :: t
+  def build(required \\ %{}, optional) do
     %__MODULE__{
-      required: Enum.into(required, %{}),
-      optional: Enum.into(optional, %{})
+      required: required,
+      optional: to_map(optional)
     }
   end
+
+  defp to_map(lst) when is_list(lst), do: Enum.into(lst, %{})
+  defp to_map(map), do: map
 
   @doc """
   the full union of all possible key values for the passed map.
 
   ```elixir
   iex> alias Type.Map
-  iex> Map.preimage(%Map{optional: [{%Type{name: :integer}, %Type{name: :any}}]})
+  iex> import Type
+  iex> Map.preimage(Map.build(%{builtin(:integer) => builtin(:any)}))
   %Type{name: :integer}
-  iex> Map.preimage(%Map{optional: [{%Type{name: :pos_integer}, %Type{name: :any}}],
-  ...>                   required: [{0, %Type{name: :any}}]})
+  iex> Map.preimage(Map.build(%{0 => builtin(:any)},
+  ...>                        %{builtin(:pos_integer) => builtin(:any)}))
   %Type{name: :non_neg_integer}
   ```
   """
-
-  def preimage(map, filter_type \\ %Type{name: :any})
-  def preimage(map, %Type{module: nil, name: :any, params: []}) do
+  def preimage(map) do
     map
     |> keytypes
     |> Type.union
   end
-  def preimage(map, filter_type) do
-    (map.required ++ map.optional)
-    |> Enum.map(&Type.intersection(elem(&1, 0), filter_type))
-    |> Enum.into(%Type.Union{})
-  end
 
+  # helper function to get the raw key types out, with no set-theoretic
+  # operations performed on them.
   defp keytypes(map) do
-    Enum.map(map.required ++ map.optional, &(elem(&1, 0)))
+    Map.keys(map.required) ++ Map.keys(map.optional)
   end
 
   @doc """
-  takes a map, and applies a type to it, returning a list of all
-  valid subtypes and what their corresponding results are.
+  calculates the image of a map when given a clamping type for the preimage.
 
-  ```elixir
+  If any part of the clamp doesn't exist in in the map's preimage, it
+  is ignored.
+
+  ### Example:
+
+  (note that `0` is in the clamp `-5..5`, but is not in the map preimage)
+
+  ```
   iex> alias Type.Map
-  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :atom}}]}, -10..10)
-  [{-10..-1, %Type{name: :atom}}]
-  iex> Map.segments_of(%Map{optional: [{%Type{name: :neg_integer}, %Type{name: :pos_integer}},
-  ...>                           {%Type{name: :pos_integer}, %Type{name: :neg_integer}}]}, -10..10)
-  [{-10..-1, %Type{name: :pos_integer}},
-   {1..10,   %Type{name: :neg_integer}}]
+  iex> import Type
+  iex> Map.apply(Map.build(%{builtin(:neg_integer) => :foo,
+  ...>                       builtin(:pos_integer) => :bar}), -5..5)
+  %Type.Union{of: [:bar, :foo]}
   ```
   """
-  def segments_of(map, src_type) do
+  def apply(map, preimage_clamp) do
+    # find the required image
+    required_image = apply_partial(map.required, preimage_clamp)
+    optional_image = apply_partial(map.optional, preimage_clamp)
+
+    Type.union(required_image ++ optional_image)
+  end
+
+  # performs an apply operation on either the required part or the
+  # optional part of a map type.  Returns a list of images.  You
+  # should perfrom the union operation *outside* this function
+  defp apply_partial(req_or_opt, preimage_subtype) do
     import Type, only: [builtin: 1]
-    (map.required ++ map.optional)
-    |> Enum.flat_map(fn {key_type, val_type} ->
-      key_is = Type.intersection(key_type, src_type)
-      if key_is == builtin(:none) do
+    req_or_opt
+    |> Enum.flat_map(fn {keytype, valtype}->
+      if Type.intersection(keytype, preimage_subtype) == builtin(:none) do
         []
       else
-        [{key_is, val_type}]
+        [valtype]
       end
     end)
   end
 
-  def apply(map, type) do
+  @spec resegment(t) :: [Type.t]
+  @spec resegment(t, [Type.t]) :: [Type.t]
+  @doc """
+  Takes a list of (disjoint) preimage types "segments" and splits
+  them further in such a way that each segment has a consistent
+  single type in the map's image.
+
+  - Discards any preimage subsegments which are not present in the map.
+  - Does not validate that passed list of preimages are actually disjoint.
+  - No guarantees are made on the order of the resulting list.
+
+  ```elixir
+  iex> alias Type.Map
+  iex> import Type
+  iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg}), [-10..10])
+  [-10..-1]
+  iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg,
+  ...>                           builtin(:pos_integer) => :pos}), [-10..10])
+  [-10..-1, 1..10]
+  ```
+  """
+  def resegment(map, preimages \\ [%Type{name: :any}])
+  def resegment(map, [%Type{module: nil, name: :any, params: []}]) do
+    Map.keys(map.required) ++ Map.keys(map.optional)
+  end
+  def resegment(_map, []), do: []
+  def resegment(map, [preimage_segment | rest]) do
+    import Type, only: [builtin: 1]
+
     map
-    |> segments_of(type)
-    |> Enum.map(&elem(&1, 1))
-    |> Enum.into(%Type.Union{})
-  end
-
-  def preimages_of(%{required: required, optional: optional}) do
-    Enum.map(optional, fn {k, _} -> k end)
-    ++ Enum.map(required, fn {k, _} -> k end)
-  end
-
-  # takes a preimage and segments it across all domains, sorting
-  # at the end.
-  def preimage_segments(map, filter_type) do
-    (map.required ++ map.optional)
-    |> Enum.map(&Type.intersection(elem(&1, 0), filter_type))
-    |> Enum.sort({:asc, Type})
+    |> keytypes
+    |> Enum.flat_map(fn key_type ->
+      case Type.intersection(key_type, preimage_segment) do
+        builtin(:none) -> resegment(map, rest)
+        other -> [other | resegment(map, rest)]
+      end
+    end)
   end
 
   def required_key?(map, key) do
-    key in Enum.map(map.required, &elem(&1, 0))
+    :erlang.is_map_key(key, map.required)
   end
 
   defimpl Type.Properties do
@@ -113,21 +145,20 @@ defmodule Type.Map do
         preimage_cmp != :eq -> preimage_cmp
         :eq ->
           m1
-          |> Map.preimage_segments(%Type{name: :any})
-          |> Enum.flat_map(&Map.preimage_segments(m2, &1))
+          |> Map.resegment(Map.resegment(m2))
           |> Enum.each(fn segment ->
-            required = check_required(m1, m2, segment)
-            required != :eq && throw required
+            req_order = required_ordering(m1, m2, segment)
+            req_order != :eq && throw req_order
 
-            valtype = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
-            valtype != :eq && throw valtype
+            val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
+            val_order != :eq && throw val_order
           end)
       end
     catch
       valtype when valtype in [:gt, :lt] -> valtype
     end
 
-    defp check_required(m1, m2, segment) do
+    defp required_ordering(m1, m2, segment) do
       case {Map.required_key?(m1, segment), Map.required_key?(m2, segment)} do
         {false, true} -> :gt
         {true, false} -> :lt
@@ -145,8 +176,13 @@ defmodule Type.Map do
         # required properties can fail.
         case evaluate_requireds(map, tgt, preimage_intersection) do
           {:ok, requireds} ->
-            optionals = evaluate_optionals(map, tgt, preimage_intersection)
-            %Map{optional: optionals -- requireds, required: requireds}
+            optionals = map
+            |> evaluate_optionals(tgt, preimage_intersection)
+            |> Elixir.Map.drop(Elixir.Map.keys(requireds))
+            # TODO: ^^ remove the above line when Map.build does this
+            # step for you.
+
+            Map.build(requireds, optionals)
           :empty ->
             builtin(:none)
         end
@@ -156,14 +192,15 @@ defmodule Type.Map do
     defp evaluate_requireds(map, tgt, preimage_intersection) do
       # union the required keys from the map and the target.  This
       # is the full set of required keys from all of the maps.
-      all_req_keys = (Enum.map(map.required, &elem(&1, 0)) ++
-                      Enum.map(tgt.required, &elem(&1, 0)))
-                     |> Enum.uniq
+      all_req_keys = Elixir.Map.keys(map.required)
+      |> Kernel.++(Elixir.Map.keys(tgt.required))
+      |> Enum.uniq
 
       # check that all required keys exist in the preimage intersection, if
-      # it doesn't then we can do a n early eiit.
+      # it doesn't then we can do an early eiit.
       if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
-        req_kv = Enum.map(all_req_keys, fn rq_key ->
+        req_kv = all_req_keys
+        |> Enum.map(fn rq_key ->
           val_type = evaluate_singleton(map, rq_key)
           |> Type.intersection(evaluate_singleton(tgt, rq_key))
 
@@ -171,6 +208,8 @@ defmodule Type.Map do
 
           {rq_key, val_type}
         end)
+        |> Enum.into(%{})
+
         {:ok, req_kv}
       else
         :empty
@@ -198,26 +237,17 @@ defmodule Type.Map do
       # this gives us a list of preimage segments, each of
       # which has a consistent image type.
       map
-      |> Map.segments_of(preimage)
-      |> Enum.flat_map(fn {preimage_segment, image_type} ->
-        # resegment each of these preimage segments based on
-        # what the target is capable of doing.
-        tgt
-        |> Map.segments_of(preimage_segment)
-        |> Enum.flat_map(fn {preimage_subsegment, new_image_type} ->
-          # for each of these smaller segments, find the common
-          # type that applies to that segment.
-          image_intersect = Type.intersection(image_type, new_image_type)
-          if image_intersect == builtin(:none) do
-            # if they have nothing in common, drop the segment.
-            []
-          else
-            # otherwise keep this subsegment, attached to the
-            # full common ground.
-            [{preimage_subsegment, image_intersect}]
-          end
-        end)
+      |> Map.resegment(Map.resegment(tgt))
+      |> Enum.flat_map(fn segment ->
+        map
+        |> Map.apply(segment)
+        |> Type.intersection(Map.apply(tgt, segment))
+        |> case do
+          builtin(:none) -> []
+          image -> [{segment, image}]
+        end
       end)
+      |> Enum.into(%{})
     end
 
     def subtype?(_, _), do: raise "unimplemented"

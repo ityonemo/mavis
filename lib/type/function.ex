@@ -168,7 +168,7 @@ defmodule Type.Function do
           %Function{params: target.params, return: new_ret}
         end
       end
-      def intersection(a = %{return: ret}, b = %Function{params: :any}) do
+      def intersection(a, b = %Function{params: :any}) do
         intersection(b, a)
       end
       def intersection(%{params: lp, return: lr}, %Function{params: rp, return: rr})

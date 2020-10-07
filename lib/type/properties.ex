@@ -184,13 +184,22 @@ defimpl Type.Properties, for: List do
   use Type
 
   def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
+  def group_compare(_, _) do
+    raise "any list other than the empty list [] is an invalid type!"
+  end
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
+    def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
+      raise "any list other than the empty list [] is an invalid type!"
+    end
   end
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
+    def intersection(list, _) when is_list(list) and length(list) > 0  do
+      raise "any list other than the empty list [] is an invalid type!"
+    end
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok

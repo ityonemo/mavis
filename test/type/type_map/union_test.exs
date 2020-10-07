@@ -12,8 +12,10 @@ defmodule TypeTest.TypeMap.UnionTest do
 
   describe "for the empty map type" do
     test "either a required or optional descriptor works" do
-      assert %Map{required: [foo: @any]} == (@empty_map | %Map{required: [foo: @any]})
-      assert %Map{optional: [foo: @any]} == (@empty_map | %Map{optional: [foo: @any]})
+      assert Map.build(%{foo: @any}, %{}) ==
+        (@empty_map | Map.build(%{foo: @any}, %{}))
+      assert Map.build(foo: @any) ==
+        (@empty_map | Map.build(foo: @any))
     end
   end
 

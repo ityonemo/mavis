@@ -21,7 +21,13 @@ defmodule Type do
   @type ternary :: :ok | maybe | error
 
   defmacro builtin(type) do
-    quote do %Type{module: nil, name: unquote(type)} end
+    quote do %Type{module: nil, name: unquote(type), params: []} end
+  end
+
+  # note, you can't use remote in matches.
+  defmacro remote({{:., _, [module_ast, name]}, _, params}) do
+    module = Macro.expand(module_ast, __CALLER__)
+    Macro.escape(%Type{module: module, name: name, params: params})
   end
 
   defdelegate usable_as(type, target, meta \\ []), to: Type.Properties
@@ -213,20 +219,19 @@ defmodule Type do
     map
     |> Map.keys
     |> Enum.map(&{&1, Type.of(&1)})
-    |> Enum.sort_by(&elem(&1, 1), {:asc, Type})
     |> Enum.reduce(%Type.Map{}, fn
       {key, _}, acc when is_integer(key) or is_atom(key) ->
         val_type = map
         |> Map.get(key)
         |> Type.of
 
-        %{acc | required: acc.required ++ [{key, val_type}]}
+        %{acc | required: Map.put(acc.required, key, val_type)}
       {key, key_type}, acc ->
         val_type = map
         |> Map.get(key)
         |> Type.of
 
-        %{acc | optional: acc.optional ++ [{key_type, val_type}]}
+        %{acc | optional: Map.put(acc.optional, key_type, val_type)}
     end)
   end
   def of(function) when is_function(function) do
@@ -250,7 +255,7 @@ defmodule Type do
 
   def of_bitstring(bitstring, bits_so_far \\ 0)
   def of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
-  def of_bitstring(<<>>, _size), do: %Type{name: :t, module: String}
+  def of_bitstring(<<>>, _size), do: remote(String.t)
   def of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
     of_bitstring(rest, so_far + 8)
   end
