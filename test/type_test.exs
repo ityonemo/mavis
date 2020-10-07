@@ -5,7 +5,7 @@ defmodule TypeTest do
 
   use Type.Operators
 
-  import Type, only: [builtin: 1]
+  import Type, only: [builtin: 1, remote: 1]
 
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
@@ -83,20 +83,23 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: [foo: %Type{name: :t, module: String}]} == Type.of(%{foo: "foo"})
-      assert %Type.Map{required: [bar: 1, foo: %Type{name: :t, module: String}]} == Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: [{1, %Type{name: :t, module: String}}]} == Type.of(%{1 => "foo"})
+      assert %Type.Map{required: %{foo: remote(String.t)}} ==
+        Type.of(%{foo: "foo"})
+      assert %Type.Map{required: %{bar: 1, foo: remote(String.t)}} ==
+        Type.of(%{foo: "foo", bar: 1})
+      assert %Type.Map{required: %{1 => remote(String.t)}} ==
+        Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: [{%Type{name: :t, module: String}, %Type{name: :t, module: String}}]} ==
+      assert %Type.Map{optional: %{remote(String.t) => remote(String.t)}} ==
         Type.of(%{"foo" => "bar"})
     end
 
     test "assigns bitstrings correctly" do
       assert %Type.Bitstring{size: 0, unit: 0} == Type.of("")
       assert %Type.Bitstring{size: 7, unit: 0} == Type.of(<<123::7>>)
-      assert %Type{name: :t, module: String} == Type.of("foobar")
-      assert %Type{name: :t, module: String} == Type.of("東京")
-      assert %Type{name: :t, module: String} == Type.of("🇫🇲")
+      assert remote(String.t) == Type.of("foobar")
+      assert remote(String.t) == Type.of("東京")
+      assert remote(String.t) == Type.of("🇫🇲")
       assert %Type.Bitstring{size: 56, unit: 0} == Type.of("foobar" <> <<0>>)
       assert %Type.Bitstring{size: 16, unit: 0} == Type.of(<<255, 255>>)
     end
@@ -120,7 +123,7 @@ defmodule TypeTest do
 
     test "a lambda that sets a value" do
       assert %Type.Function{params: [], return: 47} == Type.of(&TypeTest.LambdaExamples.forty_seven/0)
-      assert %Type.Function{params: [], return: %Type{module: String, name: :t}} == Type.of(&TypeTest.LambdaExamples.forty_seven_str/0)
+      assert %Type.Function{params: [], return: remote(String.t)} == Type.of(&TypeTest.LambdaExamples.forty_seven_str/0)
     end
 
     test "a lambda with a backpropagating function" do

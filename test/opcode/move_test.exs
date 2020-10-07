@@ -125,7 +125,7 @@ defmodule TypeTest.Opcode.MoveTest do
 
   describe "move opcode string literal move" do
     test "forward propagation" do
-      assert %{regs: [[%{0 => %Type{module: String, name: :t}}] | _]} =
+      assert %{regs: [[%{0 => remote(String.t)}] | _]} =
         Inference.do_forward(%Inference{
           code: [{:move, {:literal, "foo"}, {:x, 0}}],
           regs: [[%{}]]
@@ -137,7 +137,7 @@ defmodule TypeTest.Opcode.MoveTest do
         Inference.do_backprop(%Inference{
           code: [],
           stack: [{:move, {:literal, "foo"}, {:x, 0}}],
-          regs: [[%{0 => %Type{module: String, name: :t}}], [%{0 => :foo}]]
+          regs: [[%{0 => remote(String.t)}], [%{0 => :foo}]]
         })
 
       assert [%{0 => builtin(:any)}] = List.last(regs)
@@ -147,7 +147,7 @@ defmodule TypeTest.Opcode.MoveTest do
       code = [{:move, {:literal, "foo"}, {:x, 0}}]
 
       assert {:ok, %Function{
-        params: [builtin(:any)], return: %Type{module: String, name: :t}
+        params: [builtin(:any)], return: remote(String.t)
       }} = Inference.run(code, %{0 => builtin(:any)})
     end
   end

@@ -45,7 +45,7 @@ defmodule Type.Union do
   def type_merge(a, b..c) when b == a + 1 do
     {[], a..c}
   end
-  def type_merge(a..b, c..d) when c <= b do
+  def type_merge(a..b, c..d) when c <= b + 1 do
     {[], a..d}
   end
   def type_merge(builtin(:neg_integer), _..0) do
@@ -168,6 +168,23 @@ defmodule Type.Union do
     {[], %List{type: type, nonempty: false}}
   end
 
+  alias Type.Map
+  # maps
+  def type_merge(left = %Map{}, right = %Map{}) do
+    # for maps, it's the subset relationship, but possibly
+    # optionalized
+    optionalized_right = Map.optionalize(right)
+    cond do
+      Type.subtype?(left, right) ->
+        {[], right}
+      Type.subtype?(left, optionalized_right) ->
+        {[], optionalized_right}
+      true ->
+        # just output the default
+        {[left], right}
+    end
+  end
+
   # any
   def type_merge(_, builtin(:any)) do
     {[], builtin(:any)}
@@ -181,9 +198,6 @@ defmodule Type.Union do
     import Type, only: :macros
 
     def compare(_union, builtin(:none)), do: :gt
-    def compare(_union, %Type.Union{}) do
-      raise "hell"
-    end
     def compare(union, type) do
       union.of
       |> Elixir.List.last
