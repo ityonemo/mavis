@@ -12,12 +12,12 @@ defmodule TypeTest.TypeMap.UnionTest do
 
   describe "for the empty map type" do
     test "union with an optional or required term is the same" do
-      assert Map.build(%{foo: @any}, %{}) ==
+      assert Map.build(foo: @any) ==
         (@empty_map | Map.build(%{foo: @any}, %{}))
       assert Map.build(foo: @any) ==
         (@empty_map | Map.build(foo: @any))
-      assert Map.build(%{foo: @any}, %{bar: @any}) ==
-        (@empty_map | Map.build(%{foo: @any}, %{bar: @any}))
+      assert Map.build(%{foo: @any, bar: builtin(:integer)}) ==
+        (@empty_map | Map.build(%{foo: @any}, %{bar: builtin(:integer)}))
     end
   end
 
@@ -25,6 +25,11 @@ defmodule TypeTest.TypeMap.UnionTest do
     test "union with the same type, but optional is optional" do
       assert Map.build(foo: @any) ==
         (Map.build(foo: @any) | Map.build(foo: @any))
+    end
+
+    test "unions are not merged for disjoint required types" do
+      assert %Type.Union{} =
+        (Map.build(foo: @any) | Map.build(bar: @any))
     end
   end
 
@@ -55,13 +60,13 @@ defmodule TypeTest.TypeMap.UnionTest do
       ## the union.
 
       assert %Type.Union{} =
-        (Map.build(foo: @any, bar: builtin(:integer) |
-         Map.build(foo: builtin(:integer), bar: @any)))
+        (Map.build(foo: @any, bar: builtin(:integer)) |
+         Map.build(foo: builtin(:integer), bar: @any))
     end
     test "the side that has extra keys has even one value that's smaller" do
       assert %Type.Union{} =
-        (Map.build(foo: @any, bar: 1..10, baz: builtin(:atom), quux: builtin(:integer) |
-         Map.build(foo: @any, bar: builtin(:integer), baz: :ping)))
+        (Map.build(foo: @any, bar: 1..10, baz: builtin(:atom), quux: builtin(:integer)) |
+         Map.build(foo: @any, bar: builtin(:integer), baz: :ping))
     end
   end
 

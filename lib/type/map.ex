@@ -39,9 +39,10 @@ defmodule Type.Map do
     |> Type.union
   end
 
+  @doc false
   # helper function to get the raw key types out, with no set-theoretic
   # operations performed on them.
-  defp keytypes(map) do
+  def keytypes(map) do
     Map.keys(map.required) ++ Map.keys(map.optional)
   end
 
@@ -129,6 +130,11 @@ defmodule Type.Map do
     :erlang.is_map_key(key, map.required)
   end
 
+  # takes all required terms and makes them optional
+  def optionalize(map) do
+    build(Map.merge(map.optional, map.required))
+  end
+
   defimpl Type.Properties do
 
     import Type, only: :macros
@@ -177,7 +183,7 @@ defmodule Type.Map do
         case evaluate_requireds(map, tgt, preimage_intersection) do
           {:ok, requireds} ->
             optionals = map
-            |> evaluate_optionals(tgt, preimage_intersection)
+            |> evaluate_optionals(tgt)
             |> Elixir.Map.drop(Elixir.Map.keys(requireds))
             # TODO: ^^ remove the above line when Map.build does this
             # step for you.
@@ -232,7 +238,7 @@ defmodule Type.Map do
       Enum.reduce(optionals ++ requireds, &Type.intersection/2)
     end
 
-    defp evaluate_optionals(map, tgt, preimage) do
+    defp evaluate_optionals(map, tgt) do
       # apply the intersected preimages to the first map.
       # this gives us a list of preimage segments, each of
       # which has a consistent image type.
@@ -250,7 +256,39 @@ defmodule Type.Map do
       |> Enum.into(%{})
     end
 
-    def subtype?(_, _), do: raise "unimplemented"
+    def subtype?(_, builtin(:any)), do: true
+    def subtype?(challenge, target = %Map{}) do
+      # check to make sure that all segments are
+      # subtypes as expected.
+      segments = Map.resegment(challenge, Map.resegment(target))
+
+      segment_union = Enum.into(segments, %Type.Union{})
+
+      # make sure that each part of the challenge is represented
+      # in the segments
+      challenge
+      |> Map.keytypes
+      |> Enum.all?(&Type.subtype?(&1, segment_union))
+      |> Kernel.||(throw false)
+
+      Enum.each(segments, fn segment ->
+        challenge
+        |> Map.apply(segment)
+        |> Type.subtype?(Map.apply(target, segment))
+        |> Kernel.||(throw false)
+      end)
+      # check that all required bits of b are
+      # required in a.  Note that we already know that
+      # the subset situation is valid from the above code.
+      target.required
+      |> Elixir.Map.keys
+      |> Enum.all?(fn key ->
+        :erlang.is_map_key(key, challenge.required)
+      end)
+    catch
+      false -> false
+    end
+    def subtype?(_, _), do: false
 
     def usable_as(_, _, _), do: raise "unimplemented"
   end
