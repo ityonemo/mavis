@@ -50,4 +50,11 @@ defmodule TypeTest.TypeExample do
     @type function_type :: function
   end
 
+  defmodule Tuples do
+    @type empty_literal :: {}
+    @type ok_literal :: {:ok, any}
+    @type tuple_type :: tuple
+    @type mfa_type :: mfa
+  end
+
 end

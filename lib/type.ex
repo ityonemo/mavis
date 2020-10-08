@@ -131,13 +131,15 @@ defmodule Type do
   ## fetching AnD StuFF
 
   def fetch_type(module, fun, _arity \\ 0) do
-    with {:ok, specs} <- Code.Typespec.fetch_types(module) do
-      specs
-      |> Enum.find_value(fn
-        {:type, {^fun, type, _params}} -> type
-        _ -> false
-      end)
-      |> parse_spec
+    with {:ok, specs} <- Code.Typespec.fetch_types(module),
+         type when not is_nil(type) <- Enum.find_value(specs, fn
+           {:type, {^fun, type, _params}} -> type
+            _ -> false
+           end) do
+
+      {:ok, parse_spec(type)}
+    else
+      _ -> {:error, "foo"}
     end
   end
 
@@ -159,6 +161,12 @@ defmodule Type do
   def parse_spec({:type, _, :fun, [{:type, _, :product, params}, return]}) do
     param_types = Enum.map(params, &parse_spec/1)
     struct(Type.Function, params: param_types, return: parse_spec(return))
+  end
+  def parse_spec({:type, _, :tuple, :any}) do
+    struct(Type.Tuple, elements: :any)
+  end
+  def parse_spec({:type, _, :tuple, elements}) do
+    struct(Type.Tuple, elements: Enum.map(elements, &parse_spec/1))
   end
   # overrides
   def parse_spec({:type, _, :term, []}), do: builtin(:any)
@@ -184,6 +192,9 @@ defmodule Type do
   end
   def parse_spec({:type, _, :function, []}) do
     struct(Type.Function, params: :any, return: builtin(:any))
+  end
+  def parse_spec({:type, _, :mfa, []}) do
+    struct(Type.Tuple, elements: [builtin(:module), builtin(:atom), 0..255])
   end
   # default builtin
   def parse_spec({:type, _, type, []}), do: builtin(type)

@@ -9,31 +9,31 @@ defmodule TypeTest.Type.FetchType.BasicsTest do
   @source TypeTest.TypeExample.Basics
 
   test "any is any" do
-    assert builtin(:any) == Type.fetch_type(@source, :any_type)
+    assert {:ok, builtin(:any)} == Type.fetch_type(@source, :any_type)
   end
 
   test "term is any" do
-    assert builtin(:any) == Type.fetch_type(@source, :term_type)
+    assert {:ok, builtin(:any)} == Type.fetch_type(@source, :term_type)
   end
 
   test "none is none" do
-    assert builtin(:none) == Type.fetch_type(@source, :none_type)
+    assert {:ok, builtin(:none)} == Type.fetch_type(@source, :none_type)
   end
 
   test "pid is pid" do
-    assert builtin(:pid) == Type.fetch_type(@source, :pid_type)
+    assert {:ok, builtin(:pid)} == Type.fetch_type(@source, :pid_type)
   end
 
   test "port is port" do
-    assert builtin(:port) == Type.fetch_type(@source, :port_type)
+    assert {:ok, builtin(:port)} == Type.fetch_type(@source, :port_type)
   end
 
   test "reference is reference" do
-    assert builtin(:reference) == Type.fetch_type(@source, :reference_type)
+    assert {:ok, builtin(:reference)} == Type.fetch_type(@source, :reference_type)
   end
 
   test "identifier is a union of pid, port, and reference" do
-    assert (builtin(:pid) | builtin(:port) | builtin(:reference)) ==
+    assert {:ok, (builtin(:pid) | builtin(:port) | builtin(:reference))} ==
       Type.fetch_type(@source, :identifier_type)
   end
 
