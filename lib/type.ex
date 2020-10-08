@@ -152,6 +152,15 @@ defmodule Type do
   def parse_spec({:type, _, :range, [first, last]}), do: parse_spec(first)..parse_spec(last)
   def parse_spec({:op, _, :-, value}), do: -parse_spec(value)
   def parse_spec({:integer, _, value}), do: value
+  def parse_spec({:atom, _, value}), do: value
+  def parse_spec({:type, _, :fun, [{:type, _, :any}, return]}) do
+    struct(Type.Function, params: :any, return: parse_spec(return))
+  end
+  def parse_spec({:type, _, :fun, [{:type, _, :product, params}, return]}) do
+    param_types = Enum.map(params, &parse_spec/1)
+    struct(Type.Function, params: param_types, return: parse_spec(return))
+  end
+  # overrides
   def parse_spec({:type, _, :term, []}), do: builtin(:any)
   def parse_spec({:type, _, :arity, []}), do: 0..255
   def parse_spec({:type, _, :byte, []}), do: 0..255
@@ -165,8 +174,18 @@ defmodule Type do
   def parse_spec({:type, _, :identifier, []}) do
     ~w(port pid reference)a
     |> Enum.map(&builtin/1)
-    |> Enum.into(Type.Union.__struct__())
+    |> Enum.into(struct(Type.Union))
   end
+  def parse_spec({:type, _, :boolean, []}) do
+    Type.Union.of(true, false)
+  end
+  def parse_spec({:type, _, :fun, []}) do
+    struct(Type.Function, params: :any, return: builtin(:any))
+  end
+  def parse_spec({:type, _, :function, []}) do
+    struct(Type.Function, params: :any, return: builtin(:any))
+  end
+  # default builtin
   def parse_spec({:type, _, type, []}), do: builtin(type)
 
   defmacro usable_as_start do

@@ -33,4 +33,21 @@ defmodule TypeTest.TypeExample do
     @type timeout_type :: timeout
   end
 
+  defmodule Atoms do
+    @type literal_atom :: :literal
+    @type atom_type :: atom
+    @type boolean_type :: boolean
+    @type module_type :: module
+    @type node_type :: node
+  end
+
+  defmodule Functions do
+    # literals
+    @type zero_arity :: (-> any)
+    @type two_arity :: (integer, atom -> float)
+    @type any_arity :: (... -> any)
+    @type fun_type :: fun
+    @type function_type :: function
+  end
+
 end
