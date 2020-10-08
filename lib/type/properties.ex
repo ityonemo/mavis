@@ -11,7 +11,7 @@ defprotocol Type.Properties do
   @spec typegroup(Type.t) :: Type.group
   def typegroup(type)
 
-  @spec intersection(Type.t, Type.t) :: :gt | :eq | :lt
+  @spec intersection(Type.t, Type.t) :: Type.t
   def intersection(type, type)
 end
 
@@ -20,7 +20,6 @@ defimpl Type.Properties, for: Integer do
 
   use Type
 
-  @spec group_compare(integer, Type.t) :: boolean
   def group_compare(_, builtin(:integer)),              do: :lt
   def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
   def group_compare(_, builtin(:non_neg_integer)),      do: :lt
@@ -185,13 +184,22 @@ defimpl Type.Properties, for: List do
   use Type
 
   def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
+  def group_compare(_, _) do
+    raise "any list other than the empty list [] is an invalid type!"
+  end
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
+    def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
+      raise "any list other than the empty list [] is an invalid type!"
+    end
   end
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
+    def intersection(list, _) when is_list(list) and length(list) > 0  do
+      raise "any list other than the empty list [] is an invalid type!"
+    end
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok
