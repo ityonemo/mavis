@@ -153,6 +153,15 @@ defmodule Type do
   def parse_spec({:op, _, :-, value}), do: -parse_spec(value)
   def parse_spec({:integer, _, value}), do: value
   def parse_spec({:type, _, :term, []}), do: builtin(:any)
+  def parse_spec({:type, _, :arity, []}), do: 0..255
+  def parse_spec({:type, _, :byte, []}), do: 0..255
+  def parse_spec({:type, _, :char, []}), do: 0..0x10FFFF
+  def parse_spec({:type, _, :number, []}) do
+    Type.Union.of(builtin(:integer), builtin(:float))
+  end
+  def parse_spec({:type, _, :timeout, []}) do
+    Type.Union.of(builtin(:non_neg_integer), :infinity)
+  end
   def parse_spec({:type, _, :identifier, []}) do
     ~w(port pid reference)a
     |> Enum.map(&builtin/1)
