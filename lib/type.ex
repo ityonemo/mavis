@@ -130,11 +130,11 @@ defmodule Type do
 
   ## fetching AnD StuFF
 
-  def fetch_type(module, fun, arity \\ 0) do
+  def fetch_type(module, fun, _arity \\ 0) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module) do
       specs
       |> Enum.find_value(fn
-        {:type, {^fun, type, params}} -> type
+        {:type, {^fun, type, _params}} -> type
         _ -> false
       end)
       |> parse_spec
@@ -152,6 +152,12 @@ defmodule Type do
   def parse_spec({:type, _, :range, [first, last]}), do: parse_spec(first)..parse_spec(last)
   def parse_spec({:op, _, :-, value}), do: -parse_spec(value)
   def parse_spec({:integer, _, value}), do: value
+  def parse_spec({:type, _, :term, []}), do: builtin(:any)
+  def parse_spec({:type, _, :identifier, []}) do
+    ~w(port pid reference)a
+    |> Enum.map(&builtin/1)
+    |> Enum.into(Type.Union.__struct__())
+  end
   def parse_spec({:type, _, type, []}), do: builtin(type)
 
   defmacro usable_as_start do
