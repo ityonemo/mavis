@@ -136,6 +136,7 @@ defmodule Type do
            {:type, {^fun, type, _params}} -> type
             _ -> false
            end) do
+      type |> IO.inspect(label: "139")
 
       {:ok, parse_spec(type)}
     else
@@ -168,6 +169,8 @@ defmodule Type do
   def parse_spec({:type, _, :tuple, elements}) do
     struct(Type.Tuple, elements: Enum.map(elements, &parse_spec/1))
   end
+  # empty list
+  def parse_spec({:type, _, nil, []}), do: []
   # overrides
   def parse_spec({:type, _, :term, []}), do: builtin(:any)
   def parse_spec({:type, _, :arity, []}), do: 0..255
@@ -195,6 +198,60 @@ defmodule Type do
   end
   def parse_spec({:type, _, :mfa, []}) do
     struct(Type.Tuple, elements: [builtin(:module), builtin(:atom), 0..255])
+  end
+  def parse_spec({:type, _, :list, []}) do
+    struct(Type.List, type: builtin(:any))
+  end
+  def parse_spec({:type, _, :list, [type]}) do
+    struct(Type.List, type: parse_spec(type))
+  end
+  def parse_spec({:type, _, :nonempty_list, []}) do
+    struct(Type.List, type: builtin(:any), nonempty: true)
+  end
+  def parse_spec({:type, _, :nonempty_list, [type]}) do
+    struct(Type.List, type: parse_spec(type), nonempty: true)
+  end
+
+  def parse_spec({:type, _, :maybe_improper_list, []}) do
+    struct(Type.List, final: builtin(:any))
+  end
+  def parse_spec({:type, _, :maybe_improper_list, [type, final]}) do
+    struct(Type.List,
+      type: parse_spec(type),
+      final: Type.Union.of(parse_spec(final), []))
+  end
+  def parse_spec({:type, _, :nonempty_improper_list, [type, final]}) do
+    struct(Type.List,
+      type: parse_spec(type),
+      nonempty: true,
+      final: parse_spec(final))
+  end
+  def parse_spec({:type, _, :nonempty_maybe_improper_list, []}) do
+    struct(Type.List, nonempty: true, final: builtin(:any))
+  end
+  def parse_spec({:type, _, :nonempty_maybe_improper_list, [type, final]}) do
+    struct(Type.List,
+      type: parse_spec(type),
+      nonempty: true,
+      final: Type.Union.of(parse_spec(final), []))
+  end
+  def parse_spec({:type, _, :union, types}) do
+    types
+    |> Enum.map(&parse_spec/1)
+    |> Enum.into(struct(Type.Union))
+  end
+  # overridden remote types
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}) do
+    struct(Type.List, type: 0..0x10FFFF)
+  end
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}) do
+    struct(Type.List, type: 0..0x10FFFF, nonempty: true)
+  end
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}) do
+    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), builtin(:any)]))
+  end
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}) do
+    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), parse_spec(type)]))
   end
   # default builtin
   def parse_spec({:type, _, type, []}), do: builtin(type)

@@ -153,7 +153,6 @@ defmodule TypeTest.UnionTest do
       assert @anytuple == (@anytuple | %Tuple{elements: [:foo]} | %Tuple{elements: [:bar]})
     end
 
-    @tag :one
     test "tuples are merged if their elements can merge" do
       assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} | %Tuple{elements: [:foo, :bar]})
 
@@ -179,6 +178,11 @@ defmodule TypeTest.UnionTest do
       ) do
         IO.warn("this test can't be solved without a SAT solver")
       end
+    end
+
+    test "orthogonal tuples don't merge" do
+      assert %Type.Union{} = (%Type.Tuple{elements: [:foo, builtin(:integer)]} |
+                              %Type.Tuple{elements: [:bar, builtin(:float)]})
     end
   end
 
@@ -211,5 +215,4 @@ defmodule TypeTest.UnionTest do
       assert %List{type: @any} = (%List{type: @any} | %List{type: :foo, nonempty: true})
     end
   end
-
 end

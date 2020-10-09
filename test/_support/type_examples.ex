@@ -57,4 +57,30 @@ defmodule TypeTest.TypeExample do
     @type mfa_type :: mfa
   end
 
+  defmodule Lists do
+    @type literal_0 :: []
+    @type literal_1 :: [integer]
+
+    @type nonempty_any :: [...]
+    @type nonempty_typed :: [integer, ...]
+    @type keyword_literal :: [foo: integer]
+    @type keyword_2_literal :: [foo: integer, bar: float]
+
+    @type list_0 :: list()
+    @type list_1 :: list(integer)
+    @type nonempty_list_1 :: nonempty_list(integer)
+    @type maybe_improper_list_2 :: maybe_improper_list(integer, nil)
+    @type nonempty_improper_list_2 :: nonempty_improper_list(integer, nil)
+    @type nonempty_maybe_improper_list_2 :: nonempty_maybe_improper_list(integer, nil)
+
+    @type charlist_type :: charlist
+    @type nonempty_charlist_type :: nonempty_charlist
+
+    @type keyword_0 :: keyword
+    @type keyword_1 :: keyword(integer)
+
+    @type nonempty_list_0 :: nonempty_list
+    @type maybe_improper_list_0 :: maybe_improper_list
+    @type nonempty_maybe_improper_list_0 :: nonempty_maybe_improper_list
+  end
 end
