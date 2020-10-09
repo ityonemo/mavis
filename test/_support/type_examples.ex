@@ -83,4 +83,32 @@ defmodule TypeTest.TypeExample do
     @type maybe_improper_list_0 :: maybe_improper_list
     @type nonempty_maybe_improper_list_0 :: nonempty_maybe_improper_list
   end
+
+  defmodule Bitstrings do
+    @type empty_bitstring :: <<>>
+    @type size_bitstring :: <<_::47>>
+    @type unit_bitstring :: <<_::_*8>>
+    @type size_unit_bitstring :: <<_::12, _::_*8>>
+
+    @type binary_type :: binary
+    @type bitstring_type :: bitstring
+
+    @type iodata_type :: iodata
+    @type iolist_type :: iolist
+  end
+
+  defmodule Maps do
+    defstruct [:foo]
+
+    @type empty_map_type :: %{}
+    @type atom_key_type :: %{atom: integer}
+    @type required_literal_type :: %{required(:foo) => integer}
+    @type optional_literal_type :: %{optional(:foo) => integer}
+    @type struct_literal_type :: %__MODULE__{}
+    @type struct_defined_literal_type :: %__MODULE__{foo: integer}
+
+    @type map_type :: map
+    @type struct_type :: struct
+  end
+
 end

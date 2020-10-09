@@ -136,8 +136,6 @@ defmodule Type do
            {:type, {^fun, type, _params}} -> type
             _ -> false
            end) do
-      type |> IO.inspect(label: "139")
-
       {:ok, parse_spec(type)}
     else
       _ -> {:error, "foo"}
@@ -145,11 +143,12 @@ defmodule Type do
   end
 
   def parse_spec({:type, _, :map, params}) do
-    optionals = Enum.map(params, fn
-      {:type, _, :map_field_assoc, [src_type, dst_type]} ->
-        {parse_spec(src_type), parse_spec(dst_type)}
+    Enum.reduce(params, struct(Type.Map), fn
+      {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
+        %{map | optional: Map.put(optional, parse_spec(src_type), parse_spec(dst_type))}
+      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{required: required} ->
+        %{map | required: Map.put(required, parse_spec(src_type), parse_spec(dst_type))}
     end)
-    %Type.Map{optional: optionals}
   end
 
   def parse_spec({:type, _, :range, [first, last]}), do: parse_spec(first)..parse_spec(last)
@@ -234,6 +233,18 @@ defmodule Type do
       type: parse_spec(type),
       nonempty: true,
       final: Type.Union.of(parse_spec(final), []))
+  end
+  def parse_spec({:type, _, :bitstring, []}) do
+    struct(Type.Bitstring, size: 0, unit: 1)
+  end
+  def parse_spec({:type, _, :binary, []}) do
+    struct(Type.Bitstring, size: 0, unit: 8)
+  end
+  def parse_spec({:type, _, :binary, [size, unit]}) do
+    struct(Type.Bitstring, size: parse_spec(size), unit: parse_spec(unit))
+  end
+  def parse_spec({:type, _, :iodata, []}) do
+    Type.Union.of(struct(Type.Bitstring, size: 0, unit: 8), builtin(:iolist))
   end
   def parse_spec({:type, _, :union, types}) do
     types
