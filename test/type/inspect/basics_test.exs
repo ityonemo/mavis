@@ -1,9 +1,7 @@
 defmodule TypeTest.Type.Inspect.BasicsTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
   import TypeTest.InspectCase
-
   @moduletag :inspect
 
   @source TypeTest.TypeExample.Basics

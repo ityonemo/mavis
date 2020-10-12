@@ -1,10 +1,8 @@
 defmodule TypeTest.Type.FetchType.MapsTest do
   use ExUnit.Case, async: true
+  @moduletag :fetch
 
   import Type, only: :macros
-  import Type.Operators
-
-  @moduletag :fetch
 
   alias Type.Map
 

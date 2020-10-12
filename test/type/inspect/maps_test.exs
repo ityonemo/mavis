@@ -1,11 +1,10 @@
 defmodule TypeTest.Type.Inspect.MapsTest do
   use ExUnit.Case, async: true
+  
+  import TypeTest.InspectCase
+  @moduletag :inspect
 
   import Type, only: :macros
-  import Type.Operators
-  import TypeTest.InspectCase
-
-  @moduletag :inspect
 
   alias Type.Map
 

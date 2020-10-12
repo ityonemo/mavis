@@ -1,12 +1,7 @@
-defmodule TypeTest.Type.FetchType.EtcTest do
+defmodule TypeTest.Type.Inspect.EtcTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
-  import Type.Operators
-
-  alias Type.Message
   import TypeTest.InspectCase
-
   @moduletag :inspect
 
   @unions TypeTest.TypeExample.Unions

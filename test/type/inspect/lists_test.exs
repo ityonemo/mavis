@@ -1,15 +1,10 @@
 defmodule TypeTest.Type.Inspect.ListsTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
-  import Type.Operators
   import TypeTest.InspectCase
-
   @moduletag :inspect
-
+  
   @source TypeTest.TypeExample.Lists
-
-  alias Type.List
 
   test "literal/0 is empty list" do
     assert "[]" == inspect_type(@source, :literal_0)

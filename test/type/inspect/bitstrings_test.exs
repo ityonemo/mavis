@@ -1,23 +1,14 @@
 defmodule TypeTest.Type.Inspect.BitstringsTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
   import TypeTest.InspectCase
-
   @moduletag :inspect
-
-  alias Type.Bitstring
 
   @source TypeTest.TypeExample.Bitstrings
 
   test "empty bitstring literal" do
     assert "<<>>" == inspect_type(@source, :empty_bitstring)
   end
-
-  @type empty_bitstring :: <<>>
-  @type size_bitstring :: <<_::47>>
-  @type unit_bitstring :: <<_::_*8>>
-  @type size_unit_bitstring :: <<_::12, _::_*8>>
 
   test "sized bitstring literal" do
     assert "<<_::47>>" == inspect_type(@source, :size_bitstring)

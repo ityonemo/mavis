@@ -1,10 +1,7 @@
 defmodule TypeTest.Type.Inspect.NumbersTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
-  import Type.Operators
   import TypeTest.InspectCase
-
   @moduletag :inspect
 
   @source TypeTest.TypeExample.Numbers

@@ -36,7 +36,7 @@ defmodule Type.Bitstring do
           unit == 0 ->
             {:error, Message.make(challenge, target, meta)}
           rem(size_a - size_b, unit) != 0 ->
-            :foo
+            {:error, Message.make(challenge, target, meta)}
           size_b > size_a ->
             {:maybe, [Message.make(challenge, target, meta)]}
           true ->
@@ -107,7 +107,6 @@ defmodule Type.Bitstring do
   end
 
   defimpl Inspect do
-    import Inspect.Algebra
     def inspect(%{size: 0, unit: 0}, _opts), do: "<<>>"
     def inspect(%{size: 0, unit: 1}, _opts) do
       "bitstring()"
@@ -123,9 +122,6 @@ defmodule Type.Bitstring do
     end
     def inspect(%{size: size, unit: unit}, _opts) do
       "<<_::#{size}, _::_*#{unit}>>"
-    end
-    def inspect(_, _) do
-      "foo"
     end
   end
 end

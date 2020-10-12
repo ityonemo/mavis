@@ -1,14 +1,10 @@
 defmodule TypeTest.Type.Inspect.TuplesTest do
   use ExUnit.Case, async: true
 
-  import Type, only: :macros
   import TypeTest.InspectCase
-
   @moduletag :inspect
 
   @source TypeTest.TypeExample.Tuples
-
-  alias Type.Tuple
 
   test "empty tuple" do
     assert "{}" == inspect_type(@source, :empty_literal)
