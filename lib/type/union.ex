@@ -275,46 +275,49 @@ defmodule Type.Union do
     import Inspect.Algebra
     def inspect(%{of: types}, opts) do
       cond do
+        # override for boolean
         (true in types) and (false in types) ->
-          boolean_inspect(types -- [true, false], opts)
+          override(types -- [true, false], :boolean, opts)
 
+        # override for identifier
         (builtin(:reference) in types) and
         (builtin(:port) in types) and
         (builtin(:pid) in types) ->
-          identifier_inspect(types --
-          [builtin(:reference), builtin(:port), builtin(:pid)], opts)
+          override(types -- [builtin(:reference), builtin(:port), builtin(:pid)],
+                   :identifier,
+                   opts)
 
+        # override for iodata
         (builtin(:iolist) in types) and
         (%Type.Bitstring{size: 0, unit: 8} in types) ->
-          iodata_inspect(types --
-          [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}], opts)
+          override(types -- [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}],
+                   :iodata,
+                   opts)
+
+        # override for number
+        (builtin(:float) in types) and
+        (builtin(:integer) in types) ->
+          override(types -- [builtin(:float), builtin(:integer)],
+                   :number,
+                   opts)
+
+        # override for timeout
+        (builtin(:non_neg_integer) in types) and
+        (:infinity in types) ->
+          override(types -- [builtin(:non_neg_integer), :infinity],
+                   :timeout,
+                   opts)
 
         true -> normal_inspect(types, opts)
       end
     end
 
-    defp boolean_inspect([], _) do
-      "boolean()"
+    defp override([], name, _opts) do
+      "#{name}()"
     end
-    defp boolean_inspect(types, opts) do
-      concat(["boolean() | ",
-      __MODULE__.inspect(%Type.Union{of: types}, opts)])
-    end
-
-    defp identifier_inspect([], _) do
-      "identifier()"
-    end
-    defp identifier_inspect(types, opts) do
-      concat(["identifier() | ",
-      __MODULE__.inspect(%Type.Union{of: types}, opts)])
-    end
-
-    defp iodata_inspect([], _) do
-      "iodata()"
-    end
-    defp iodata_inspect(types, opts) do
-      concat(["iodata() | ",
-      __MODULE__.inspect(%Type.Union{of: types}, opts)])
+    defp override(types, name, opts) do
+      concat(["#{name}()", " | ",
+        to_doc(%Type.Union{of: types}, opts)])
     end
 
     defp normal_inspect([singleton], opts) do
