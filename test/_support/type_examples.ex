@@ -39,6 +39,9 @@ defmodule TypeTest.TypeExample do
     @type boolean_type :: boolean
     @type module_type :: module
     @type node_type :: node
+
+    # for inspect only
+    @type boolean_or_nil :: boolean | nil
   end
 
   defmodule Functions do
@@ -87,7 +90,7 @@ defmodule TypeTest.TypeExample do
   defmodule Bitstrings do
     @type empty_bitstring :: <<>>
     @type size_bitstring :: <<_::47>>
-    @type unit_bitstring :: <<_::_*8>>
+    @type unit_bitstring :: <<_::_*16>>
     @type size_unit_bitstring :: <<_::12, _::_*8>>
 
     @type binary_type :: binary

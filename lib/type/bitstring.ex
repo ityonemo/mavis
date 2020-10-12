@@ -105,4 +105,27 @@ defmodule Type.Bitstring do
 
     def subtype?(a, b), do: usable_as(a, b, []) == :ok
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+    def inspect(%{size: 0, unit: 0}, _opts), do: "<<>>"
+    def inspect(%{size: 0, unit: 1}, _opts) do
+      "bitstring()"
+    end
+    def inspect(%{size: 0, unit: 8}, _opts) do
+      "binary()"
+    end
+    def inspect(%{size: 0, unit: unit}, _opts) do
+      "<<_::_*#{unit}>>"
+    end
+    def inspect(%{size: size, unit: 0}, _opts) do
+      "<<_::#{size}>>"
+    end
+    def inspect(%{size: size, unit: unit}, _opts) do
+      "<<_::#{size}, _::_*#{unit}>>"
+    end
+    def inspect(_, _) do
+      "foo"
+    end
+  end
 end

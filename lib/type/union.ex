@@ -270,4 +270,58 @@ defmodule Type.Union do
       {original.of, collector_fun}
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+    def inspect(%{of: types}, opts) do
+      cond do
+        (true in types) and (false in types) ->
+          boolean_inspect(types -- [true, false], opts)
+
+        (builtin(:reference) in types) and
+        (builtin(:port) in types) and
+        (builtin(:pid) in types) ->
+          identifier_inspect(types --
+          [builtin(:reference), builtin(:port), builtin(:pid)], opts)
+
+        (builtin(:iolist) in types) and
+        (%Type.Bitstring{size: 0, unit: 8} in types) ->
+          iodata_inspect(types --
+          [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}], opts)
+
+        true -> normal_inspect(types, opts)
+      end
+    end
+
+    defp boolean_inspect([], _) do
+      "boolean()"
+    end
+    defp boolean_inspect(types, opts) do
+      concat(["boolean() | ",
+      __MODULE__.inspect(%Type.Union{of: types}, opts)])
+    end
+
+    defp identifier_inspect([], _) do
+      "identifier()"
+    end
+    defp identifier_inspect(types, opts) do
+      concat(["identifier() | ",
+      __MODULE__.inspect(%Type.Union{of: types}, opts)])
+    end
+
+    defp iodata_inspect([], _) do
+      "iodata()"
+    end
+    defp iodata_inspect(types, opts) do
+      concat(["iodata() | ",
+      __MODULE__.inspect(%Type.Union{of: types}, opts)])
+    end
+
+    defp normal_inspect([singleton], opts) do
+      to_doc(singleton, opts)
+    end
+    defp normal_inspect([head | rest], opts) do
+      concat([to_doc(head, opts), " | ", normal_inspect(rest, opts)])
+    end
+  end
 end
