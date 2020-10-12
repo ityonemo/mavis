@@ -93,4 +93,20 @@ defmodule Type.Tuple do
     end
     def subtype?(_, _), do: false
   end
+
+  defimpl Inspect do
+    import Type, only: :macros
+    def inspect(%{elements: :any}, _opts) do
+      "tuple()"
+    end
+    def inspect(%{elements: [builtin(:module), builtin(:atom), 0..255]}, _opts) do
+      "mfa()"
+    end
+    def inspect(%{elements: elements}, opts) do
+      elements
+      |> List.to_tuple()
+      |> Inspect.inspect(opts)
+    end
+  end
+
 end

@@ -19,7 +19,7 @@ defmodule TypeTest.Type.FetchType.BitstringsTest do
   end
 
   test "unit bitstring literal" do
-    assert {:ok, %Bitstring{size: 0, unit: 8}} == Type.fetch_type(@source, :unit_bitstring)
+    assert {:ok, %Bitstring{size: 0, unit: 16}} == Type.fetch_type(@source, :unit_bitstring)
   end
 
   test "unit and sized bitstring literal" do

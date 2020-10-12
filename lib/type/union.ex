@@ -270,4 +270,61 @@ defmodule Type.Union do
       {original.of, collector_fun}
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+    def inspect(%{of: types}, opts) do
+      cond do
+        # override for boolean
+        (true in types) and (false in types) ->
+          override(types -- [true, false], :boolean, opts)
+
+        # override for identifier
+        (builtin(:reference) in types) and
+        (builtin(:port) in types) and
+        (builtin(:pid) in types) ->
+          override(types -- [builtin(:reference), builtin(:port), builtin(:pid)],
+                   :identifier,
+                   opts)
+
+        # override for iodata
+        (builtin(:iolist) in types) and
+        (%Type.Bitstring{size: 0, unit: 8} in types) ->
+          override(types -- [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}],
+                   :iodata,
+                   opts)
+
+        # override for number
+        (builtin(:float) in types) and
+        (builtin(:integer) in types) ->
+          override(types -- [builtin(:float), builtin(:integer)],
+                   :number,
+                   opts)
+
+        # override for timeout
+        (builtin(:non_neg_integer) in types) and
+        (:infinity in types) ->
+          override(types -- [builtin(:non_neg_integer), :infinity],
+                   :timeout,
+                   opts)
+
+        true -> normal_inspect(types, opts)
+      end
+    end
+
+    defp override([], name, _opts) do
+      "#{name}()"
+    end
+    defp override(types, name, opts) do
+      concat(["#{name}()", " | ",
+        to_doc(%Type.Union{of: types}, opts)])
+    end
+
+    defp normal_inspect([singleton], opts) do
+      to_doc(singleton, opts)
+    end
+    defp normal_inspect([head | rest], opts) do
+      concat([to_doc(head, opts), " | ", normal_inspect(rest, opts)])
+    end
+  end
 end

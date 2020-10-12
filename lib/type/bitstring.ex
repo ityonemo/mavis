@@ -36,7 +36,7 @@ defmodule Type.Bitstring do
           unit == 0 ->
             {:error, Message.make(challenge, target, meta)}
           rem(size_a - size_b, unit) != 0 ->
-            :foo
+            {:error, Message.make(challenge, target, meta)}
           size_b > size_a ->
             {:maybe, [Message.make(challenge, target, meta)]}
           true ->
@@ -104,5 +104,24 @@ defmodule Type.Bitstring do
     defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
 
     def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  end
+
+  defimpl Inspect do
+    def inspect(%{size: 0, unit: 0}, _opts), do: "<<>>"
+    def inspect(%{size: 0, unit: 1}, _opts) do
+      "bitstring()"
+    end
+    def inspect(%{size: 0, unit: 8}, _opts) do
+      "binary()"
+    end
+    def inspect(%{size: 0, unit: unit}, _opts) do
+      "<<_::_*#{unit}>>"
+    end
+    def inspect(%{size: size, unit: 0}, _opts) do
+      "<<_::#{size}>>"
+    end
+    def inspect(%{size: size, unit: unit}, _opts) do
+      "<<_::#{size}, _::_*#{unit}>>"
+    end
   end
 end

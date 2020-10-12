@@ -1,10 +1,8 @@
 defmodule TypeTest.Type.FetchType.TuplesTest do
   use ExUnit.Case, async: true
+  @moduletag :fetch
 
   import Type, only: :macros
-  import Type.Operators
-
-  @moduletag :fetch
 
   @source TypeTest.TypeExample.Tuples
 
