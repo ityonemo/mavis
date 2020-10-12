@@ -1,10 +1,10 @@
-defmodule TypeTest.Example do
-  defmodule Basics do
+defmodule TypeTest.SpecExample do
+  defmodule Builtins do
     @spec any_spec(any) :: any
     def any_spec(x), do: x
 
-    @spec none_spec(none) :: none
-    def none_spec(x), do: x
+    @spec none_spec(any) :: none
+    def none_spec(_), do: raise "foo"
 
     @spec pid_spec(pid) :: pid
     def pid_spec(x), do: x
@@ -227,5 +227,4 @@ defmodule TypeTest.Example do
     @spec struct_spec(struct) :: struct
     def struct_spec(x), do: x
   end
-
 end

@@ -366,4 +366,18 @@ defmodule Type.Map do
     end
 
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+    def inspect(%{required: required, optional: optional}, opts) do
+      requireds = Enum.map(required, fn {src, dst} ->
+        concat(["required(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+      end)
+      optionals = Enum.map(optional, fn {src, dst} ->
+        concat(["optional(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+      end)
+      inner = concat(Enum.intersperse(requireds ++ optionals, ", "))
+      concat(["%{", inner, "}"])
+    end
+  end
 end
