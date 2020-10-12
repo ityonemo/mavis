@@ -197,4 +197,22 @@ defmodule Type.Function do
     end
     def subtype?(_, _), do: false
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
+    def inspect(%{params: params, return: return}, opts) do
+      concat(["(", render_params(params, opts),
+              " -> ", to_doc(return, opts), ")"])
+    end
+
+    defp render_params(:any, _), do: "..."
+    defp render_params(lst, opts) do
+      lst
+      |> Enum.map(&to_doc(&1, opts))
+      |> Enum.intersperse(", ")
+      |> concat
+    end
+  end
 end

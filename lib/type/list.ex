@@ -77,4 +77,97 @@ defmodule Type.List do
     end
     def subtype?(_, _), do: false
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    import Type, only: :macros
+
+    #########################################################
+    ## SPECIAL CASES
+
+    # override for charlist
+    def inspect(list = %{final: [], type: 0..1114111}, _) do
+      "#{nonempty_prefix list}charlist()"
+    end
+    def inspect(%{final: [], type: builtin(:any), nonempty: true}, _), do: "[...]"
+    def inspect(%{final: [], type: builtin(:any)}, _), do: "list()"
+    # keyword list literal syntax
+    def inspect(%{
+        final: [],
+        nonempty: false,
+        type: %Type.Tuple{elements: [k, v]}}, opts) when is_atom(k) do
+      to_doc([{k, v}], opts)
+    end
+    def inspect(%{
+        final: [],
+        nonempty: false,
+        type: type = %Type.Union{}}, opts) do
+      if Enum.all?(type.of, &match?(
+            %Type.Tuple{elements: [e, _]} when is_atom(e), &1)) do
+        type.of
+        |> Enum.map(&List.to_tuple(&1.elements))
+        |> to_doc(opts)
+      else
+        render_basic(type, opts)
+      end
+    end
+    # keyword syntax
+    def inspect(%{final: [],
+                  nonempty: false,
+                  type: %Type.Tuple{elements: [builtin(:atom),
+                                               builtin(:any)]}}, _) do
+      "keyword()"
+    end
+    def inspect(%{final: [],
+                  nonempty: false,
+                  type: %Type.Tuple{elements: [builtin(:atom),
+                                               type]}}, opts) do
+      concat(["keyword(", to_doc(type, opts), ")"])
+    end
+
+    ##########################################################
+    ## GENERAL CASES
+
+    def inspect(list = %{final: []}, opts), do: render_basic(list, opts)
+    # check for maybe_improper
+    def inspect(list = %{final: final = %Type.Union{}}, opts) do
+      if [] in final.of do
+        render_maybe_improper(list, opts)
+      else
+        render_improper(list, opts)
+      end
+    end
+    def inspect(list = %{type: builtin(:any), final: builtin(:any)}, _) do
+      "#{nonempty_prefix list}maybe_improper_list()"
+    end
+    def inspect(list, opts), do: render_improper(list, opts)
+
+    defp render_basic(list, opts) do
+      nonempty_prefix = if list.nonempty do
+        "..., "
+      else
+        ""
+      end
+
+      concat(["[", nonempty_prefix, to_doc(list.type, opts), "]"])
+    end
+
+    defp render_maybe_improper(list, opts) do
+      improper_final = Enum.into(list.final.of -- [[]], %Type.Union{})
+      concat(["#{nonempty_prefix list}maybe_improper_list(",
+              to_doc(list.type, opts), ", ",
+              to_doc(improper_final, opts), ")"])
+    end
+
+    defp render_improper(list = %{nonempty: true}, opts) do
+      concat(["nonempty_improper_list(",
+              to_doc(list.type, opts), ", ",
+              to_doc(list.final, opts), ")"])
+    end
+
+    defp nonempty_prefix(list) do
+      if list.nonempty, do: "nonempty_", else: ""
+    end
+  end
 end

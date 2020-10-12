@@ -46,11 +46,14 @@ defmodule TypeTest.TypeExample do
 
   defmodule Functions do
     # literals
-    @type zero_arity :: (-> any)
+    @type zero_arity :: ( -> any)
     @type two_arity :: (integer, atom -> float)
     @type any_arity :: (... -> any)
     @type fun_type :: fun
     @type function_type :: function
+
+    # for inspect tests
+    @type any_to_integer :: (... -> integer)
   end
 
   defmodule Tuples do
