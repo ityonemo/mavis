@@ -34,13 +34,13 @@ defmodule Type.Union do
 
   @spec merge([Type.t], Type.t, [Type.t]) :: [Type.t]
   defp merge([top | rest], type, stack) do
-
     with cmp when cmp != :eq <- Type.compare(top, type),
-         {new_type, new_list} <- type_merge(cmp, top, type, rest) do
+         {_, {new_type, new_list}} <- {cmp, type_merge(cmp, top, type, rest)} do
       merge(new_list, new_type, stack)
     else
       :eq -> unroll([top | rest], stack)
-      {:nomerge, top, type} -> unroll([top, type | rest], stack)
+      {:gt, :nomerge} -> merge(rest, type, [top | stack])
+      {:lt, :nomerge} -> unroll([type, top | rest], stack)
     end
   end
   defp merge([], type, stack), do: unroll([type], stack)
@@ -149,7 +149,6 @@ defmodule Type.Union do
     {builtin(:atom), rest}
   end
 
-
   # tuples
   alias Type.Tuple
   def type_merge([%Tuple{} | rest], %Tuple{elements: :any}) do
@@ -167,7 +166,7 @@ defmodule Type.Union do
     end)
     {%Tuple{elements: merged_elements}, rest}
   catch
-    :nomerge -> {:nomerge, rhs, lhs}
+    :nomerge -> :nomerge
   end
 
   # lists
@@ -189,7 +188,10 @@ defmodule Type.Union do
            final: Type.Union.of(fl, fr)}, rest}
   end
   def type_merge([[] | rest], %List{type: type, final: []}) do
-    {%List{type: type, nonempty: false}, rest}
+    {%List{type: type}, rest}
+  end
+  def type_merge([%List{type: type, final: [], nonempty: true} | rest], []) do
+    {%List{type: type}, rest}
   end
 
   # maps
@@ -203,9 +205,7 @@ defmodule Type.Union do
         {right, rest}
       Type.subtype?(left, optionalized_right) ->
         {optionalized_right, rest}
-      true ->
-        # just output the default
-        {:nomerge, right, left}
+      true -> :nomerge
     end
   end
 
@@ -213,7 +213,7 @@ defmodule Type.Union do
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
   end
-  def type_merge([type | _rest], top), do: {:nomerge, top, type}
+  def type_merge([type | _rest], top), do: :nomerge
 
   defimpl Type.Properties do
     import Type, only: :macros

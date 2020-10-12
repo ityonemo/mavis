@@ -31,7 +31,11 @@ defmodule TypeTest.UnionTest do
     end
 
     test "when you send a union into collectible, it gets unwrapped" do
-      assert %Union{of: [7, 5, 3, 1]} = Enum.into([%Union{of: [1, 5]}, %Union{of: [3, 7]}], %Union{})
+      assert %Union{of: [7, 5, 3, 1]} = Enum.into([%Union{of: [5, 1]}, %Union{of: [7, 3]}], %Union{})
+    end
+
+    test "you can into a unions and it will be ordered as epexected" do
+      assert %Union{of: [5, 3, 1]} = Union.of(3 <|> 5, 1)
     end
   end
 
@@ -43,7 +47,7 @@ defmodule TypeTest.UnionTest do
     test "a preceding range is merged in" do
       assert 1..3 == (3 <|> 1..2)
     end
-    
+
     test "an internal integer is merged" do
       assert 1..2 == 1 <|> 1..2
     end
@@ -166,12 +170,12 @@ defmodule TypeTest.UnionTest do
     end
 
     test "tuples are merged if their elements can merge" do
-#      assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, :bar]})
-#
-#      assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} <|> %Tuple{elements: [:bar, :foo]})
-#
-#      assert (%Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [@any, :bar]}) ==
-#        (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [:foo, :bar]})
+      assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, :bar]})
+
+      assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} <|> %Tuple{elements: [:bar, :foo]})
+
+      assert (%Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [@any, :bar]}) ==
+        (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [:foo, :bar]})
 
       assert %Tuple{elements: [1..2, 1..2]} == (
         %Tuple{elements: [1, 2]} <|>
@@ -184,9 +188,9 @@ defmodule TypeTest.UnionTest do
     test "complicated tuples can be merged" do
       # This should not be able to be solved without a more complicated SAT solver.
       unless %Tuple{elements: [1..3, 1..3, 1..3]} == (
-        %Tuple{elements: [(1 <|> 2), (2 <|> 3), Union.of(1, 3)]} <|>
-        %Tuple{elements: [(2 <|> 3), (1 <|> 3), Union.of(1, 2)]} <|>
-        %Tuple{elements: [(1 <|> 3), (1 <|> 2), Union.of(2, 3)]}
+        %Tuple{elements: [1 <|> 2, 2 <|> 3, 1 <|> 3]} <|>
+        %Tuple{elements: [2 <|> 3, 1 <|> 3, 1 <|> 2]} <|>
+        %Tuple{elements: [1 <|> 3, 1 <|> 2, 2 <|> 3]}
       ) do
         IO.warn("this test can't be solved without a SAT solver")
       end
@@ -199,7 +203,6 @@ defmodule TypeTest.UnionTest do
   end
 
   alias Type.List
-
   describe "for the list type" do
     test "lists with the same end type get merged" do
       assert %List{type: (:foo <|> :bar)} == (%List{type: :foo} <|> %List{type: :bar})
