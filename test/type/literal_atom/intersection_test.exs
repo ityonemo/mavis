@@ -8,28 +8,28 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
 
   describe "the intersection of a literal atom" do
     test "with itself, atoms, and any is itself" do
-      assert :foo == Type.intersection(:foo, builtin(:any))
-      assert :foo == Type.intersection(:foo, builtin(:atom))
-      assert :foo == Type.intersection(:foo, :foo)
+      assert :foo == :foo <~> builtin(:any)
+      assert :foo == :foo <~> builtin(:atom)
+      assert :foo == :foo <~> :foo
     end
 
     test "with other atoms is none" do
-      assert builtin(:none) == Type.intersection(:foo, :bar)
+      assert builtin(:none) == :foo <~> :bar
     end
 
     test "with unions works as expected" do
-      assert :foo == Type.intersection(:foo, (builtin(:atom) <|> builtin(:integer)))
-      assert builtin(:none) == Type.intersection(:foo, (builtin(:integer) <|> builtin(:port)))
+      assert :foo == :foo <~> (builtin(:atom) <|> builtin(:integer))
+      assert builtin(:none) == :foo <~> (builtin(:integer) <|> builtin(:port))
     end
 
     test "with the none type is none" do
-      assert builtin(:none) == Type.intersection(:foo, builtin(:none))
+      assert builtin(:none) == :foo <~> builtin(:none)
     end
 
     test "with all other types is none" do
       TypeTest.Targets.except([:foo, builtin(:atom)])
       |> Enum.each(fn target ->
-        assert builtin(:none) == Type.intersection(:foo, target)
+        assert builtin(:none) == :foo <~> target
       end)
     end
   end

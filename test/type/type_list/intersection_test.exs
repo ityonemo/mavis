@@ -10,50 +10,50 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "normal list" do
     test "intersects with any and self" do
-      assert %List{} == Type.intersection(%List{}, builtin(:any))
-      assert %List{} == Type.intersection(%List{}, %List{})
+      assert %List{} == %List{} <~> builtin(:any)
+      assert %List{} == %List{} <~> %List{}
     end
 
     test "intersects with empty list as empty list" do
-      assert [] == Type.intersection(%List{}, [])
+      assert [] == %List{} <~> []
     end
 
     test "intersects with another list with the intersection of types" do
-      assert %List{type: builtin(:integer)} == Type.intersection(%List{}, %List{type: builtin(:integer)})
-      assert %List{type: 47} == Type.intersection(%List{type: 47}, %List{type: builtin(:integer)})
+      assert %List{type: builtin(:integer)} == %List{} <~> %List{type: builtin(:integer)}
+      assert %List{type: 47} == %List{type: 47} <~> %List{type: builtin(:integer)}
     end
 
     test "with unions works as expected" do
-      assert [] == Type.intersection(%List{}, ([] <|> builtin(:atom)))
-      assert builtin(:none) == Type.intersection(%List{}, (builtin(:atom) <|> builtin(:port)))
+      assert [] == %List{} <~> ([] <|> builtin(:atom))
+      assert builtin(:none) == %List{} <~> (builtin(:atom) <|> builtin(:port))
     end
 
     test "doesn't intersect with anything else" do
       TypeTest.Targets.except([%List{}, []])
       |> Enum.each(fn target ->
-        assert builtin(:none) == Type.intersection(%List{}, target)
+        assert builtin(:none) == %List{} <~> target
       end)
     end
   end
 
   describe "nonempty list" do
     test "intersects with any and self" do
-      assert %List{nonempty: true} == Type.intersection(%List{}, %List{nonempty: true})
-      assert %List{nonempty: true} == Type.intersection(%List{nonempty: true}, %List{})
+      assert %List{nonempty: true} == %List{} <~> %List{nonempty: true}
+      assert %List{nonempty: true} == %List{nonempty: true} <~> %List{}
     end
 
     test "doesn't intersect with empty list" do
-      assert builtin(:none) == Type.intersection([], %List{nonempty: true})
-      assert builtin(:none) == Type.intersection(%List{nonempty: true}, [])
+      assert builtin(:none) == [] <~> %List{nonempty: true}
+      assert builtin(:none) == %List{nonempty: true} <~> []
     end
   end
 
   describe "list finals" do
     test "are reduced" do
       assert %List{final: builtin(:pos_integer)} ==
-        Type.intersection(%List{final: builtin(:pos_integer)}, %List{final: builtin(:integer)})
+        %List{final: builtin(:pos_integer)} <~> %List{final: builtin(:integer)}
       assert %List{final: builtin(:pos_integer)} ==
-        Type.intersection(%List{final: builtin(:integer)}, %List{final: builtin(:pos_integer)})
+        %List{final: builtin(:integer)} <~> %List{final: builtin(:pos_integer)}
     end
   end
 end
