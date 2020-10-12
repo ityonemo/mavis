@@ -130,142 +130,161 @@ defmodule Type do
 
   ## fetching AnD StuFF
 
-  def fetch_type(module, fun, _arity \\ 0) do
+  def fetch_type(module, fun, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
-         type when not is_nil(type) <- Enum.find_value(specs, fn
-           {:type, {^fun, type, _params}} -> type
-            _ -> false
-           end) do
-      {:ok, parse_spec(type)}
+         {type, assignments} <- find_type(specs, fun, params)  do
+      {:ok, parse_spec(type, assignments)}
     else
-      _ -> {:error, "foo"}
+      _ -> {:error, struct(Type.Message,
+        type: %Type{module: module, name: fun, params: params},
+        meta: meta ++ [message: "not found"])}
     end
   end
 
-  def parse_spec({:type, _, :map, params}) do
+  def find_type(specs, fun, params) do
+    Enum.find_value(specs, fn
+      {:type, {^fun, type, tparams}} when length(tparams) == length(params) ->
+        assignments = tparams |> Enum.zip(params) |> Enum.into(%{})
+        {type, assignments}
+       _ -> false
+      end)
+  end
+
+  def parse_spec({:type, _, :map, params}, assigns) do
     Enum.reduce(params, struct(Type.Map), fn
       {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
-        %{map | optional: Map.put(optional, parse_spec(src_type), parse_spec(dst_type))}
+        %{map | optional: Map.put(optional, parse_spec(src_type, assigns), parse_spec(dst_type, assigns))}
       {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{required: required} ->
-        %{map | required: Map.put(required, parse_spec(src_type), parse_spec(dst_type))}
+        %{map | required: Map.put(required, parse_spec(src_type, assigns), parse_spec(dst_type, assigns))}
     end)
   end
 
-  def parse_spec({:type, _, :range, [first, last]}), do: parse_spec(first)..parse_spec(last)
-  def parse_spec({:op, _, :-, value}), do: -parse_spec(value)
-  def parse_spec({:integer, _, value}), do: value
-  def parse_spec({:atom, _, value}), do: value
-  def parse_spec({:type, _, :fun, [{:type, _, :any}, return]}) do
-    struct(Type.Function, params: :any, return: parse_spec(return))
+  # fix assigns
+  def parse_spec(key, assigns) when is_map_key(assigns, key) do
+    assigns[key]
   end
-  def parse_spec({:type, _, :fun, [{:type, _, :product, params}, return]}) do
-    param_types = Enum.map(params, &parse_spec/1)
-    struct(Type.Function, params: param_types, return: parse_spec(return))
+  # general types
+  def parse_spec({:type, _, :range, [first, last]}, assigns), do: parse_spec(first, assigns)..parse_spec(last, assigns)
+  def parse_spec({:op, _, :-, value}, assigns), do: -parse_spec(value, assigns)
+  def parse_spec({:integer, _, value}, _), do: value
+  def parse_spec({:atom, _, value}, _), do: value
+  def parse_spec({:type, _, :fun, [{:type, _, :any}, return]}, assigns) do
+    struct(Type.Function, params: :any, return: parse_spec(return, assigns))
   end
-  def parse_spec({:type, _, :tuple, :any}) do
+  def parse_spec({:type, _, :fun, [{:type, _, :product, params}, return]}, assigns) do
+    param_types = Enum.map(params, &parse_spec(&1, assigns))
+    struct(Type.Function, params: param_types, return: parse_spec(return, assigns))
+  end
+  def parse_spec({:type, _, :tuple, :any}, _) do
     struct(Type.Tuple, elements: :any)
   end
-  def parse_spec({:type, _, :tuple, elements}) do
-    struct(Type.Tuple, elements: Enum.map(elements, &parse_spec/1))
+  def parse_spec({:type, _, :tuple, elements}, assigns) do
+    struct(Type.Tuple, elements: Enum.map(elements, &parse_spec(&1, assigns)))
   end
   # empty list
-  def parse_spec({:type, _, nil, []}), do: []
+  def parse_spec({:type, _, nil, []}, _), do: []
   # overrides
-  def parse_spec({:type, _, :term, []}), do: builtin(:any)
-  def parse_spec({:type, _, :arity, []}), do: 0..255
-  def parse_spec({:type, _, :byte, []}), do: 0..255
-  def parse_spec({:type, _, :char, []}), do: 0..0x10FFFF
-  def parse_spec({:type, _, :number, []}) do
+  def parse_spec({:type, _, :term, []}, _), do: builtin(:any)
+  def parse_spec({:type, _, :arity, []}, _), do: 0..255
+  def parse_spec({:type, _, :byte, []}, _), do: 0..255
+  def parse_spec({:type, _, :char, []}, _), do: 0..0x10FFFF
+  def parse_spec({:type, _, :number, []}, _) do
     Type.Union.of(builtin(:integer), builtin(:float))
   end
-  def parse_spec({:type, _, :timeout, []}) do
+  def parse_spec({:type, _, :timeout, []}, _) do
     Type.Union.of(builtin(:non_neg_integer), :infinity)
   end
-  def parse_spec({:type, _, :identifier, []}) do
+  def parse_spec({:type, _, :identifier, []}, _) do
     ~w(port pid reference)a
     |> Enum.map(&builtin/1)
     |> Enum.into(struct(Type.Union))
   end
-  def parse_spec({:type, _, :boolean, []}) do
+  def parse_spec({:type, _, :boolean, []}, _) do
     Type.Union.of(true, false)
   end
-  def parse_spec({:type, _, :fun, []}) do
+  def parse_spec({:type, _, :fun, []}, _) do
     struct(Type.Function, params: :any, return: builtin(:any))
   end
-  def parse_spec({:type, _, :function, []}) do
+  def parse_spec({:type, _, :function, []}, _) do
     struct(Type.Function, params: :any, return: builtin(:any))
   end
-  def parse_spec({:type, _, :mfa, []}) do
+  def parse_spec({:type, _, :mfa, []}, _) do
     struct(Type.Tuple, elements: [builtin(:module), builtin(:atom), 0..255])
   end
-  def parse_spec({:type, _, :list, []}) do
+  def parse_spec({:type, _, :list, []}, _) do
     struct(Type.List, type: builtin(:any))
   end
-  def parse_spec({:type, _, :list, [type]}) do
-    struct(Type.List, type: parse_spec(type))
+  def parse_spec({:type, _, :list, [type]}, assigns) do
+    struct(Type.List, type: parse_spec(type, assigns))
   end
-  def parse_spec({:type, _, :nonempty_list, []}) do
+  def parse_spec({:type, _, :nonempty_list, []}, _) do
     struct(Type.List, type: builtin(:any), nonempty: true)
   end
-  def parse_spec({:type, _, :nonempty_list, [type]}) do
-    struct(Type.List, type: parse_spec(type), nonempty: true)
+  def parse_spec({:type, _, :nonempty_list, [type]}, assigns) do
+    struct(Type.List, type: parse_spec(type, assigns), nonempty: true)
   end
 
-  def parse_spec({:type, _, :maybe_improper_list, []}) do
+  def parse_spec({:type, _, :maybe_improper_list, []}, _) do
     struct(Type.List, final: builtin(:any))
   end
-  def parse_spec({:type, _, :maybe_improper_list, [type, final]}) do
+  def parse_spec({:type, _, :maybe_improper_list, [type, final]}, assigns) do
     struct(Type.List,
-      type: parse_spec(type),
-      final: Type.Union.of(parse_spec(final), []))
+      type: parse_spec(type, assigns),
+      final: Type.Union.of(parse_spec(final, assigns), []))
   end
-  def parse_spec({:type, _, :nonempty_improper_list, [type, final]}) do
+  def parse_spec({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
     struct(Type.List,
-      type: parse_spec(type),
+      type: parse_spec(type, assigns),
       nonempty: true,
-      final: parse_spec(final))
+      final: parse_spec(final, assigns))
   end
-  def parse_spec({:type, _, :nonempty_maybe_improper_list, []}) do
+  def parse_spec({:type, _, :nonempty_maybe_improper_list, []}, _) do
     struct(Type.List, nonempty: true, final: builtin(:any))
   end
-  def parse_spec({:type, _, :nonempty_maybe_improper_list, [type, final]}) do
+  def parse_spec({:type, _, :nonempty_maybe_improper_list, [type, final]}, assigns) do
     struct(Type.List,
-      type: parse_spec(type),
+      type: parse_spec(type, assigns),
       nonempty: true,
-      final: Type.Union.of(parse_spec(final), []))
+      final: Type.Union.of(parse_spec(final, assigns), []))
   end
-  def parse_spec({:type, _, :bitstring, []}) do
+  def parse_spec({:type, _, :bitstring, []}, _) do
     struct(Type.Bitstring, size: 0, unit: 1)
   end
-  def parse_spec({:type, _, :binary, []}) do
+  def parse_spec({:type, _, :binary, []}, _) do
     struct(Type.Bitstring, size: 0, unit: 8)
   end
-  def parse_spec({:type, _, :binary, [size, unit]}) do
-    struct(Type.Bitstring, size: parse_spec(size), unit: parse_spec(unit))
+  def parse_spec({:type, _, :binary, [size, unit]}, assigns) do
+    struct(Type.Bitstring, size: parse_spec(size, assigns), unit: parse_spec(unit, assigns))
   end
-  def parse_spec({:type, _, :iodata, []}) do
+  def parse_spec({:type, _, :iodata, []}, _) do
     Type.Union.of(struct(Type.Bitstring, size: 0, unit: 8), builtin(:iolist))
   end
-  def parse_spec({:type, _, :union, types}) do
+  def parse_spec({:type, _, :union, types}, assigns) do
     types
-    |> Enum.map(&parse_spec/1)
+    |> Enum.map(&parse_spec(&1, assigns))
     |> Enum.into(struct(Type.Union))
   end
   # overridden remote types
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}) do
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _) do
     struct(Type.List, type: 0..0x10FFFF)
   end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}) do
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _) do
     struct(Type.List, type: 0..0x10FFFF, nonempty: true)
   end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}) do
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
     struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), builtin(:any)]))
   end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}) do
-    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), parse_spec(type)]))
+  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
+    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), parse_spec(type, assigns)]))
+  end
+  # general remote type
+  def parse_spec({:remote_type, _, [module, name, args]}, assigns) do
+    %Type{module: parse_spec(module, assigns),
+          name: parse_spec(name, assigns),
+          params: Enum.map(args, &parse_spec(&1, assigns))}
   end
   # default builtin
-  def parse_spec({:type, _, type, []}), do: builtin(type)
+  def parse_spec({:type, _, type, []}, _), do: builtin(type)
 
   defmacro usable_as_start do
     quote do

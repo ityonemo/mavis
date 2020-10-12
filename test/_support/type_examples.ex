@@ -111,4 +111,13 @@ defmodule TypeTest.TypeExample do
     @type struct_type :: struct
   end
 
+  defmodule Unions do
+    @type of_atoms :: :foo | :bar
+  end
+
+  defmodule Remote do
+    @type elixir_string :: String.t
+    @type foobar :: Foo.bar(integer)
+    @type with_arity(t) :: t
+  end
 end

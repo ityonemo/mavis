@@ -227,5 +227,4 @@ defmodule TypeTest.SpecExample do
     @spec struct_spec(struct) :: struct
     def struct_spec(x), do: x
   end
-
 end
