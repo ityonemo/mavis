@@ -34,12 +34,8 @@ defmodule Type.Union do
 
   @spec merge([Type.t], Type.t, [Type.t]) :: [Type.t]
   defp merge([top | rest], type, stack) do
-    #top |> IO.inspect(label: "37")
-    #rest  |> IO.inspect(label: "38")
-    #type  |> IO.inspect(label: "39")
-    #stack |> IO.inspect(label: "40")
 
-    with cmp when cmp != :eq <- Type.compare(top, type), #|> IO.inspect(label: "42"),
+    with cmp when cmp != :eq <- Type.compare(top, type),
          {new_type, new_list} <- type_merge(cmp, top, type, rest) do
       merge(new_list, new_type, stack)
     else
@@ -57,10 +53,7 @@ defmodule Type.Union do
 
   @spec type_merge(:gt | :lt, Type.t, Type.t, [Type.t]) :: {Type.t, [Type.t]}
   def type_merge(:gt, top, type, rest) do
-    #type |> IO.inspect(label: "60")
-    #top |> IO.inspect(label: "61")
-    #rest |> IO.inspect(label: "62")
-    type_merge([type | rest], top) #|> IO.inspect(label: "63")
+    type_merge([type | rest], top)
   end
   def type_merge(:lt, top, type, rest) do
     type_merge([top | rest], type)
@@ -72,6 +65,9 @@ defmodule Type.Union do
     {a..b, rest}
   end
   def type_merge([a | rest], b..c) when b == a + 1 do
+    {a..c, rest}
+  end
+  def type_merge([b | rest], a..c) when a <= b and b <= c do
     {a..c, rest}
   end
   def type_merge([a..b | rest], c) when c == b + 1 do
