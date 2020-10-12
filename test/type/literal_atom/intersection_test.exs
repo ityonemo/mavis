@@ -18,8 +18,8 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert :foo == Type.intersection(:foo, (builtin(:atom) | builtin(:integer)))
-      assert builtin(:none) == Type.intersection(:foo, (builtin(:integer) | builtin(:port)))
+      assert :foo == Type.intersection(:foo, (builtin(:atom) <|> builtin(:integer)))
+      assert builtin(:none) == Type.intersection(:foo, (builtin(:integer) <|> builtin(:port)))
     end
 
     test "with the none type is none" do

@@ -27,9 +27,9 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
 
     test "a union with the appropriate category" do
-      assert 47 ~> (builtin(:pos_integer) | :infinity) == :ok
-      assert 47 ~> (builtin(:non_neg_integer) | :infinity) == :ok
-      assert 47 ~> (builtin(:integer) | :infinity) == :ok
+      assert 47 ~> (builtin(:pos_integer) <|> :infinity) == :ok
+      assert 47 ~> (builtin(:non_neg_integer) <|> :infinity) == :ok
+      assert 47 ~> (builtin(:integer) <|> :infinity) == :ok
     end
 
     test "any" do
@@ -61,7 +61,7 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
 
     test "a union with the noninclusive categories" do
-      assert {:error, _} = -47 ~> (builtin(:pos_integer) | :infinity)
+      assert {:error, _} = -47 ~> (builtin(:pos_integer) <|> :infinity)
     end
 
     test "any other type" do

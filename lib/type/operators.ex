@@ -2,7 +2,7 @@ defmodule Type.Operators do
   defmacro __using__(_opts) do
     quote do
       import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
-      import Type.Operators, only: [|: 2, ~>: 2, >: 2, <: 2, <=: 2, >=: 2, in: 2]
+      import Type.Operators, only: [<~>: 2, <|>: 2, ~>: 2, >: 2, <: 2, <=: 2, >=: 2, in: 2]
     end
   end
 
@@ -15,11 +15,13 @@ defmodule Type.Operators do
 
   @doc """
   shortcut for `Type.Union.of/2`
-
-  Note that `|` is a bit of a special form in the parser, and if you try to create a union'd type
-  at the end of a list, you might have a rude surprise.
   """
-  defdelegate a | b, to: Type.Union, as: :of
+  defdelegate a <|> b, to: Type.Union, as: :of
+
+  @doc """
+  shortcut for `Type.intersection/2
+  """
+  defdelegate a <~> b, to: Type, as: :intersection
 
   @doc """
   shortcut for `Type.compare/2`

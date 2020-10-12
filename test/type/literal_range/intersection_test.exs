@@ -70,8 +70,8 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert (1 | 9..10) == Type.intersection(1..10, (0..1 | 9..15))
-      assert builtin(:none) == Type.intersection(1..10, (builtin(:atom) | builtin(:port)))
+      assert (1 <|> 9..10) == Type.intersection(1..10, (0..1 <|> 9..15))
+      assert builtin(:none) == Type.intersection(1..10, (builtin(:atom) <|> builtin(:port)))
     end
 
     test "with all other types is none" do

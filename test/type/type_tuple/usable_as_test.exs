@@ -17,7 +17,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     end
 
     test "you can use it in a union type" do
-      assert :ok = @any_tuple ~> (@any_tuple | builtin(:atom))
+      assert :ok = @any_tuple ~> (@any_tuple <|> builtin(:atom))
     end
 
     test "it might be usable as a specified tuple" do
@@ -30,7 +30,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     end
 
     test "you can't use it in a union type of orthogonal types" do
-      assert {:error, _} = @any_tuple ~> (builtin(:integer) | :infinity)
+      assert {:error, _} = @any_tuple ~> (builtin(:integer) <|> :infinity)
     end
 
     test "you can't use it for anything else" do

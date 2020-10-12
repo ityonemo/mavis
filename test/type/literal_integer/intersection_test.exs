@@ -33,8 +33,8 @@ defmodule TypeTest.LiteralInteger.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert 47 == Type.intersection(47, (builtin(:integer) | :infinity))
-      assert builtin(:none) == Type.intersection(47, (builtin(:atom) | builtin(:port)))
+      assert 47 == Type.intersection(47, (builtin(:integer) <|> :infinity))
+      assert builtin(:none) == Type.intersection(47, (builtin(:atom) <|> builtin(:port)))
     end
 
     test "with all other types is none" do

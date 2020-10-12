@@ -45,10 +45,10 @@ defmodule TypeTest.TypeMap.IntersectionTest do
     test "segments its matches correctly" do
       # These maps can take integers.
       # Map 1:      0   3       5      7
-      # <-----------|---|-------|------|-->
-      #    atom         |<-int->| atom |
+      # <-----------<|>---<|>-------<|>------<|>-->
+      #    atom         <|><-int-><|> atom <|>
       # Map 2:      0
-      # <-----------|---------------->
+      # <-----------<|>---------------->
       #               atom
       #
       # intersection should be 0..2 => atom, 6..7 => atom

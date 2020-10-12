@@ -17,7 +17,7 @@ defmodule TypeTest.Type.FetchType.AtomsTest do
   end
 
   test "boolean" do
-    assert {:ok, (true | false)} == Type.fetch_type(@source, :boolean_type)
+    assert {:ok, (true <|> false)} == Type.fetch_type(@source, :boolean_type)
   end
 
   test "module" do

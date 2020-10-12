@@ -24,8 +24,8 @@ defmodule TypeTest.TypeList.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert [] == Type.intersection(%List{}, ([] | builtin(:atom)))
-      assert builtin(:none) == Type.intersection(%List{}, (builtin(:atom) | builtin(:port)))
+      assert [] == Type.intersection(%List{}, ([] <|> builtin(:atom)))
+      assert builtin(:none) == Type.intersection(%List{}, (builtin(:atom) <|> builtin(:port)))
     end
 
     test "doesn't intersect with anything else" do

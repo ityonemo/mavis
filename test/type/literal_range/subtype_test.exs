@@ -37,14 +37,14 @@ defmodule TypeTest.LiteralRange.SubtypeTest do
     end
 
     test "is a subtype of unions with ranges and integer classes" do
-      assert -47..-1 in (-47..-1 | builtin(:atom))
-      assert -47..-1 in (-50..-1 | builtin(:atom))
-      assert -47..-1 in (builtin(:neg_integer) | builtin(:atom))
-      assert -47..-1 in (builtin(:integer) | builtin(:atom))
+      assert -47..-1 in (-47..-1 <|> builtin(:atom))
+      assert -47..-1 in (-50..-1 <|> builtin(:atom))
+      assert -47..-1 in (builtin(:neg_integer) <|> builtin(:atom))
+      assert -47..-1 in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal types" do
-      refute -47..-1 in (builtin(:pos_integer) | builtin(:atom))
+      refute -47..-1 in (builtin(:pos_integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of other types" do
@@ -62,8 +62,8 @@ defmodule TypeTest.LiteralRange.SubtypeTest do
     end
 
     test "is a subtype of a strategic partial" do
-      assert -10..0 in (-10..-1 | builtin(:non_neg_integer))
-      assert -1..0 in (-1 | builtin(:non_neg_integer))
+      assert -10..0 in (-10..-1 <|> builtin(:non_neg_integer))
+      assert -1..0 in (-1 <|> builtin(:non_neg_integer))
     end
 
     test "is not a subtype of any of the integer classes" do
@@ -80,8 +80,8 @@ defmodule TypeTest.LiteralRange.SubtypeTest do
     end
 
     test "is a subtype of strategic partials" do
-      assert -10..10 in (-10..-1 | builtin(:non_neg_integer))
-      assert -1..128 in (-1 | builtin(:non_neg_integer))
+      assert -10..10 in (-10..-1 <|> builtin(:non_neg_integer))
+      assert -1..128 in (-1 <|> builtin(:non_neg_integer))
     end
 
     test "is not a subtype of any of the integer classes" do
@@ -99,13 +99,13 @@ defmodule TypeTest.LiteralRange.SubtypeTest do
     end
 
     test "is a subtype of correct integer classes" do
-      assert 0..42 in (builtin(:non_neg_integer) | builtin(:atom))
-      assert 0..42 in (builtin(:integer) | builtin(:atom))
+      assert 0..42 in (builtin(:non_neg_integer) <|> builtin(:atom))
+      assert 0..42 in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal types" do
-      refute 0..42 in (builtin(:neg_integer) | builtin(:atom))
-      refute 0..42 in (builtin(:pos_integer) | builtin(:atom))
+      refute 0..42 in (builtin(:neg_integer) <|> builtin(:atom))
+      refute 0..42 in (builtin(:pos_integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of some integer classes" do
@@ -123,13 +123,13 @@ defmodule TypeTest.LiteralRange.SubtypeTest do
     end
 
     test "is a subtype of correct integer classes" do
-      assert 1..47 in (builtin(:pos_integer) | builtin(:atom))
-      assert 1..47 in (builtin(:non_neg_integer) | builtin(:atom))
-      assert 1..47 in (builtin(:integer) | builtin(:atom))
+      assert 1..47 in (builtin(:pos_integer) <|> builtin(:atom))
+      assert 1..47 in (builtin(:non_neg_integer) <|> builtin(:atom))
+      assert 1..47 in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal types" do
-      refute 1..47 in (builtin(:neg_integer) | builtin(:atom))
+      refute 1..47 in (builtin(:neg_integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of some integer classes" do

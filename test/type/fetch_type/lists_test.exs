@@ -35,7 +35,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "keyword/2 literal list" do
-    keyword_type = (%Type.Tuple{elements: [:foo, builtin(:integer)]} | %Type.Tuple{elements: [:bar, builtin(:float)]})
+    keyword_type = (%Type.Tuple{elements: [:foo, builtin(:integer)]} <|> %Type.Tuple{elements: [:bar, builtin(:float)]})
     assert {:ok, %List{type: keyword_type}} ==
       Type.fetch_type(@source, :keyword_2_literal)
   end
@@ -56,7 +56,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "maybe_improper_list/2" do
-    assert {:ok, %List{type: builtin(:integer), final: (nil | [])}} ==
+    assert {:ok, %List{type: builtin(:integer), final: (nil <|> [])}} ==
       Type.fetch_type(@source, :maybe_improper_list_2)
   end
 
@@ -66,7 +66,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, %List{type: builtin(:integer), nonempty: true, final: (nil | [])}} ==
+    assert {:ok, %List{type: builtin(:integer), nonempty: true, final: (nil <|> [])}} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_2)
   end
 

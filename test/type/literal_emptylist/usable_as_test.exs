@@ -20,8 +20,8 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "a union with list" do
-      assert ([] ~> ([] | builtin(:atom))) == :ok
-      assert ([] ~> (%List{} | builtin(:atom))) == :ok
+      assert ([] ~> ([] <|> builtin(:atom))) == :ok
+      assert ([] ~> (%List{} <|> builtin(:atom))) == :ok
     end
 
     test "any" do
@@ -42,7 +42,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "a union without list" do
-      assert {:error, _} = ([] ~> (builtin(:integer) | builtin(:float)))
+      assert {:error, _} = ([] ~> (builtin(:integer) <|> builtin(:float)))
     end
 
     test "any other type" do

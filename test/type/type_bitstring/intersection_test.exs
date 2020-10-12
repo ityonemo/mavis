@@ -65,8 +65,8 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
     end
 
     test "with unions" do
-      assert @basic_binary == Type.intersection(@basic_binary, (@basic_bitstring | builtin(:atom)))
-      assert builtin(:none) == Type.intersection(@basic_binary, (builtin(:atom) | builtin(:port)))
+      assert @basic_binary == Type.intersection(@basic_binary, (@basic_bitstring <|> builtin(:atom)))
+      assert builtin(:none) == Type.intersection(@basic_binary, (builtin(:atom) <|> builtin(:port)))
     end
   end
 end

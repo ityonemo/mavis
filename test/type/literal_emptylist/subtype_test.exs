@@ -23,12 +23,12 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
     end
 
     test "is a subtype of a union with itself or generic list type" do
-      assert [] in ([] | builtin(:atom))
-      assert [] in (%List{} | builtin(:integer))
+      assert [] in ([] <|> builtin(:atom))
+      assert [] in (%List{} <|> builtin(:integer))
     end
 
     test "is not a subtype of a union with orthogonal types" do
-      refute [] in (%List{nonempty: true} | :infinity)
+      refute [] in (%List{nonempty: true} <|> :infinity)
     end
 
     test "is not a subtype of nonempty lists or list with different finals" do

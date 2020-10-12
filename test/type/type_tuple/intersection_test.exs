@@ -24,8 +24,8 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert %Tuple{elements: []} == Type.intersection(@anytuple, (%Tuple{elements: []} | 1..10))
-      assert builtin(:none) == Type.intersection(@anytuple, (builtin(:atom) | builtin(:port)))
+      assert %Tuple{elements: []} == Type.intersection(@anytuple, (%Tuple{elements: []} <|> 1..10))
+      assert builtin(:none) == Type.intersection(@anytuple, (builtin(:atom) <|> builtin(:port)))
     end
 
     test "doesn't intersect with anything else" do

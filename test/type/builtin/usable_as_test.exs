@@ -26,9 +26,9 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self, integer and any" do
-      assert :ok = builtin(:neg_integer) ~> (builtin(:neg_integer) | builtin(:atom))
-      assert :ok = builtin(:neg_integer) ~> (builtin(:integer) | builtin(:atom))
-      assert :ok = builtin(:neg_integer) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:neg_integer) ~> (builtin(:neg_integer) <|> builtin(:atom))
+      assert :ok = builtin(:neg_integer) ~> (builtin(:integer) <|> builtin(:atom))
+      assert :ok = builtin(:neg_integer) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "could be usable as a negative number, partially negative range" do
@@ -41,7 +41,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as a union with a range" do
-      assert {:maybe, _} = builtin(:neg_integer) ~> (-10..-1 | :pos_integer)
+      assert {:maybe, _} = builtin(:neg_integer) ~> (-10..-1 <|> :pos_integer)
     end
 
     test "cannot be usable as a non-negative number, or positive range" do
@@ -52,7 +52,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:neg_integer) ~> (builtin(:pos_integer) | builtin(:atom))
+      assert {:error, _} = builtin(:neg_integer) ~> (builtin(:pos_integer) <|> builtin(:atom))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -73,9 +73,9 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self, integer and any" do
-      assert :ok = builtin(:non_neg_integer) ~> (builtin(:non_neg_integer) | builtin(:atom))
-      assert :ok = builtin(:non_neg_integer) ~> (builtin(:integer) | builtin(:atom))
-      assert :ok = builtin(:non_neg_integer) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:non_neg_integer) ~> (builtin(:non_neg_integer) <|> builtin(:atom))
+      assert :ok = builtin(:non_neg_integer) ~> (builtin(:integer) <|> builtin(:atom))
+      assert :ok = builtin(:non_neg_integer) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "could be usable as a non negative number, positive number, partially non negative range" do
@@ -92,7 +92,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as a union with a range" do
-      assert {:maybe, _} = builtin(:non_neg_integer) ~> (1..10 | :neg_integer)
+      assert {:maybe, _} = builtin(:non_neg_integer) ~> (1..10 <|> :neg_integer)
     end
 
     test "cannot be usable as a negative number, or negative range" do
@@ -103,7 +103,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:non_neg_integer) ~> (builtin(:neg_integer) | builtin(:atom))
+      assert {:error, _} = builtin(:non_neg_integer) ~> (builtin(:neg_integer) <|> builtin(:atom))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -126,9 +126,9 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self, integer and any" do
-      assert :ok = builtin(:pos_integer) ~> (builtin(:pos_integer) | builtin(:atom))
-      assert :ok = builtin(:pos_integer) ~> (builtin(:integer) | builtin(:atom))
-      assert :ok = builtin(:pos_integer) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:pos_integer) ~> (builtin(:pos_integer) <|> builtin(:atom))
+      assert :ok = builtin(:pos_integer) ~> (builtin(:integer) <|> builtin(:atom))
+      assert :ok = builtin(:pos_integer) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "could be usable as a positive number, partially positive range" do
@@ -141,7 +141,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as a union with a range" do
-      assert {:maybe, _} = builtin(:pos_integer) ~> (1..10 | :neg_integer)
+      assert {:maybe, _} = builtin(:pos_integer) ~> (1..10 <|> :neg_integer)
     end
 
     test "cannot be usable as a negative number, negative range" do
@@ -154,7 +154,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:pos_integer) ~> (builtin(:neg_integer) | builtin(:atom))
+      assert {:error, _} = builtin(:pos_integer) ~> (builtin(:neg_integer) <|> builtin(:atom))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -175,8 +175,8 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self and any" do
-      assert :ok = builtin(:integer) ~> (builtin(:integer) | builtin(:atom))
-      assert :ok = builtin(:integer) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:integer) ~> (builtin(:integer) <|> builtin(:atom))
+      assert :ok = builtin(:integer) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "could be usable as a number, or range" do
@@ -196,7 +196,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:integer) ~> (builtin(:float) | builtin(:atom))
+      assert {:error, _} = builtin(:integer) ~> (builtin(:float) <|> builtin(:atom))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -217,12 +217,12 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self and any" do
-      assert :ok = builtin(:float) ~> (builtin(:float) | builtin(:atom))
-      assert :ok = builtin(:float) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:float) ~> (builtin(:float) <|> builtin(:atom))
+      assert :ok = builtin(:float) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:float) ~> (builtin(:pid) | builtin(:atom))
+      assert {:error, _} = builtin(:float) ~> (builtin(:pid) <|> builtin(:atom))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -242,8 +242,8 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self and any" do
-      assert :ok = builtin(:atom) ~> (builtin(:atom) | builtin(:integer))
-      assert :ok = builtin(:atom) ~> (builtin(:any) | builtin(:integer))
+      assert :ok = builtin(:atom) ~> (builtin(:atom) <|> builtin(:integer))
+      assert :ok = builtin(:atom) ~> (builtin(:any) <|> builtin(:integer))
     end
 
     test "might be usable as an atom literal" do
@@ -252,7 +252,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:atom) ~> (builtin(:float) | builtin(:integer))
+      assert {:error, _} = builtin(:atom) ~> (builtin(:float) <|> builtin(:integer))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -272,12 +272,12 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self and any" do
-      assert :ok = builtin(:reference) ~> (builtin(:reference) | builtin(:atom))
-      assert :ok = builtin(:reference) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:reference) ~> (builtin(:reference) <|> builtin(:atom))
+      assert :ok = builtin(:reference) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:reference) ~> (builtin(:atom) | builtin(:pid))
+      assert {:error, _} = builtin(:reference) ~> (builtin(:atom) <|> builtin(:pid))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -297,7 +297,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:port) ~> (builtin(:atom) | builtin(:pid))
+      assert {:error, _} = builtin(:port) ~> (builtin(:atom) <|> builtin(:pid))
     end
 
     test "cannot generally be used as incompatible types" do
@@ -317,12 +317,12 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "is usable as a union with self and any" do
-      assert :ok = builtin(:pid) ~> (builtin(:pid) | builtin(:atom))
-      assert :ok = builtin(:pid) ~> (builtin(:any) | builtin(:atom))
+      assert :ok = builtin(:pid) ~> (builtin(:pid) <|> builtin(:atom))
+      assert :ok = builtin(:pid) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = builtin(:pid) ~> (builtin(:atom) | builtin(:reference))
+      assert {:error, _} = builtin(:pid) ~> (builtin(:atom) <|> builtin(:reference))
     end
 
     test "cannot generally be used as incompatible types" do

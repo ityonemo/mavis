@@ -44,8 +44,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert -10..-1 == Type.intersection(builtin(:neg_integer), (-10..10 | 15..16))
-      assert builtin(:none) == Type.intersection(builtin(:neg_integer), (1..10 | 12..16))
+      assert -10..-1 == Type.intersection(builtin(:neg_integer), (-10..10 <|> 15..16))
+      assert builtin(:none) == Type.intersection(builtin(:neg_integer), (1..10 <|> 12..16))
     end
 
     test "with all other types is none" do
@@ -77,8 +77,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert (1..10 | 15..16) == Type.intersection(builtin(:pos_integer), (-10..10 | 15..16))
-      assert builtin(:none) == Type.intersection(builtin(:pos_integer), (:foo | -42))
+      assert (1..10 <|> 15..16) == Type.intersection(builtin(:pos_integer), (-10..10 <|> 15..16))
+      assert builtin(:none) == Type.intersection(builtin(:pos_integer), (:foo <|> -42))
     end
 
     test "with all other types is none" do
@@ -114,8 +114,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert (0..10 | 15..16) == Type.intersection(builtin(:non_neg_integer), (-10..10 | 15..16))
-      assert builtin(:none) == Type.intersection(builtin(:non_neg_integer), (:foo | -42))
+      assert (0..10 <|> 15..16) == Type.intersection(builtin(:non_neg_integer), (-10..10 <|> 15..16))
+      assert builtin(:none) == Type.intersection(builtin(:non_neg_integer), (:foo <|> -42))
     end
 
     test "with all other types is none" do
@@ -140,8 +140,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert (-10..10 | 15..16) == Type.intersection(builtin(:integer), (-10..10 | 15..16))
-      assert builtin(:none) == Type.intersection(builtin(:integer), (:foo | builtin(:pid)))
+      assert (-10..10 <|> 15..16) == Type.intersection(builtin(:integer), (-10..10 <|> 15..16))
+      assert builtin(:none) == Type.intersection(builtin(:integer), (:foo <|> builtin(:pid)))
     end
 
     test "with all other types is none" do
@@ -159,8 +159,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert builtin(:float) == Type.intersection(builtin(:float), (builtin(:float) | 15..16))
-      assert builtin(:none) == Type.intersection(builtin(:float), (:foo | builtin(:pid)))
+      assert builtin(:float) == Type.intersection(builtin(:float), (builtin(:float) <|> 15..16))
+      assert builtin(:none) == Type.intersection(builtin(:float), (:foo <|> builtin(:pid)))
     end
 
     test "with all other types is none" do
@@ -182,8 +182,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert :foo == Type.intersection(builtin(:atom), (builtin(:float) | :foo | 10..12))
-      assert builtin(:none) == Type.intersection(builtin(:atom), (builtin(:integer) | builtin(:pid)))
+      assert :foo == Type.intersection(builtin(:atom), (builtin(:float) <|> :foo <|> 10..12))
+      assert builtin(:none) == Type.intersection(builtin(:atom), (builtin(:integer) <|> builtin(:pid)))
     end
 
     test "with all other types is none" do
@@ -201,8 +201,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert builtin(:reference) == Type.intersection(builtin(:reference), (builtin(:reference) | :foo | 10..12))
-      assert builtin(:none) == Type.intersection(builtin(:reference), (builtin(:integer) | builtin(:pid)))
+      assert builtin(:reference) == Type.intersection(builtin(:reference), (builtin(:reference) <|> :foo <|> 10..12))
+      assert builtin(:none) == Type.intersection(builtin(:reference), (builtin(:integer) <|> builtin(:pid)))
     end
 
     test "with all other types is none" do
@@ -220,8 +220,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert builtin(:port) == Type.intersection(builtin(:port), (builtin(:port) | :foo | 10..12))
-      assert builtin(:none) == Type.intersection(builtin(:port), (builtin(:integer) | builtin(:pid)))
+      assert builtin(:port) == Type.intersection(builtin(:port), (builtin(:port) <|> :foo <|> 10..12))
+      assert builtin(:none) == Type.intersection(builtin(:port), (builtin(:integer) <|> builtin(:pid)))
     end
 
     test "with all other types is none" do
@@ -239,8 +239,8 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert builtin(:pid) == Type.intersection(builtin(:pid), (builtin(:pid) | :foo | 10..12))
-      assert builtin(:none) == Type.intersection(builtin(:pid), (builtin(:integer) | builtin(:port)))
+      assert builtin(:pid) == Type.intersection(builtin(:pid), (builtin(:pid) <|> :foo <|> 10..12))
+      assert builtin(:none) == Type.intersection(builtin(:pid), (builtin(:integer) <|> builtin(:port)))
     end
 
     test "with all other types is none" do

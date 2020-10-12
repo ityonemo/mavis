@@ -22,8 +22,8 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
     end
 
     test "with unions works as expected" do
-      assert [] == Type.intersection([], ([] | builtin(:integer)))
-      assert builtin(:none) == Type.intersection([], (builtin(:integer) | builtin(:port)))
+      assert [] == Type.intersection([], ([] <|> builtin(:integer)))
+      assert builtin(:none) == Type.intersection([], (builtin(:integer) <|> builtin(:port)))
     end
 
     test "with all other types is none" do

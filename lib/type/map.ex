@@ -61,7 +61,7 @@ defmodule Type.Map do
   iex> import Type
   iex> Map.apply(Map.build(%{builtin(:neg_integer) => :foo,
   ...>                       builtin(:pos_integer) => :bar}), -5..5)
-  %Type.Union{of: [:bar, :foo]}
+  %Type.Union{of: [:foo, :bar]}
   ```
   """
   def apply(map, preimage_clamp) do

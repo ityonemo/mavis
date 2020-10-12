@@ -111,11 +111,11 @@ defmodule TypeTest.TypeBitString.UsableAsTest do
   end
 
   test "bitstrings are usable as unions including their supertype" do
-    assert :ok = %Bitstring{size: 16, unit: 8} ~> (%Bitstring{size: 0, unit: 8} | builtin(:atom))
+    assert :ok = %Bitstring{size: 16, unit: 8} ~> (%Bitstring{size: 0, unit: 8} <|> builtin(:atom))
   end
 
   test "bitstrings are not usable as disjoint unions" do
-    assert {:error, _} = %Bitstring{size: 16, unit: 8} ~> (builtin(:pid) | builtin(:atom))
+    assert {:error, _} = %Bitstring{size: 16, unit: 8} ~> (builtin(:pid) <|> builtin(:atom))
   end
 
   test "bitstrings generally are not usable as other types" do
