@@ -28,6 +28,11 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
               final: @final}
     end
 
+    test "is a subtype of itself defined explicitly, but with extras" do
+      assert builtin(:iolist) in %List{type: @ltype <|> builtin(:atom), final: @final}
+      assert builtin(:iolist) in %List{type: @ltype, final: @final <|> builtin(:atom)}
+    end
+
     test "is not a subtype of a list missing iolist, binary, or char are subtypes of iolists" do
       refute builtin(:iolist) in %List{type: @char <|> builtin(:iolist), final: @final}
       refute builtin(:iolist) in %List{type: @binary <|> builtin(:iolist), final: @final}
