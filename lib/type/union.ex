@@ -218,9 +218,24 @@ defmodule Type.Union do
   defimpl Type.Properties do
     import Type, only: :macros
 
+    alias Type.Union
+
+    def compare(%{of: llist}, %Union{of: rlist}) do
+      union_list_compare(llist, rlist)
+    end
     def compare(%{of: [first | _]}, type) do
       case Type.compare(first, type) do
         :eq -> :gt
+        order -> order
+      end
+    end
+
+    defp union_list_compare([], []), do: :eq
+    defp union_list_compare([], _), do: :lt
+    defp union_list_compare(_, []), do: :gt
+    defp union_list_compare([lh | lrest], [rh | rrest]) do
+      case Type.compare(lh, rh) do
+        :eq -> union_list_compare(lrest, rrest)
         order -> order
       end
     end

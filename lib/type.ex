@@ -621,10 +621,8 @@ defimpl Type.Properties, for: Type do
   end
 
   def compare(this, other) do
-    this |> IO.inspect(label: "624")
-    other |> IO.inspect(label: "625")
-    this_group = Type.typegroup(this) |> IO.inspect(label: "626")
-    other_group = Type.typegroup(other) |> IO.inspect(label: "627")
+    this_group = Type.typegroup(this)
+    other_group = Type.typegroup(other)
     cond do
       this_group > other_group -> :gt
       this_group < other_group -> :lt
