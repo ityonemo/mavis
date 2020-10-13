@@ -130,6 +130,24 @@ defmodule Type do
 
   ## fetching AnD StuFF
 
+  def fetch_spec(module, fun, arity) do
+    with {:ok, specs} <- Code.Typespec.fetch_specs(module),
+         spec <- find_spec(specs, fun, arity) do
+      {:ok, spec}
+    else
+      :error ->
+        {:error, "this module was not found"}
+      nil -> :unknown
+    end
+  end
+
+  def find_spec(specs, fun, arity) do
+    Enum.find_value(specs, fn
+      {{^fun, ^arity}, [spec]} -> parse_spec(spec)
+      _ -> false
+    end)
+  end
+
   def fetch_type(module, fun, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
          {type, assignments} <- find_type(specs, fun, params)  do
@@ -150,6 +168,7 @@ defmodule Type do
       end)
   end
 
+  def parse_spec(spec, assigns \\ %{})
   def parse_spec({:type, _, :map, params}, assigns) do
     Enum.reduce(params, struct(Type.Map), fn
       {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
