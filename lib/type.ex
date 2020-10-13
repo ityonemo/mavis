@@ -610,6 +610,8 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
+    # iolist
+    def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
     # any
     def intersection(builtin(:any), type), do: type
   end

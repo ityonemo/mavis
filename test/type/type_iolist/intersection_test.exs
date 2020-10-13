@@ -13,7 +13,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
   @binary %Bitstring{size: 0, unit: 8}
 
   describe "iolist" do
-    test "intersects with any and self" do
+    test "intersects with any, and self" do
       assert builtin(:iolist) == builtin(:iolist) <~> @any
       assert builtin(:iolist) == @any <~> builtin(:iolist)
 
@@ -32,7 +32,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
     test "intersects with a binary list" do
       assert %List{type: @binary} == builtin(:iolist) <~> %List{type: @binary}
-      assert %List{type: @binary} == %List{type: @char} <~> builtin(:iolist)
+      assert %List{type: @binary} == %List{type: @binary} <~> builtin(:iolist)
     end
 
     test "acts as if it is a maybe_empty list" do
@@ -55,6 +55,21 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
       three_in = %List{type: %List{type: %List{type: @binary}}}
       assert three_in == builtin(:iolist) <~> three_in
       assert three_in == three_in <~> builtin(:iolist)
+    end
+
+    test "if the list is different, there's no intersection" do
+      assert builtin(:none) == builtin(:iolist) <~> %List{type: builtin(:atom)}
+    end
+
+    test "if the final is different, there's no interesction" do
+      assert builtin(:none) == builtin(:iolist) <~> %List{final: builtin(:atom)}
+    end
+
+    test "intersects with nothing else" do
+      TypeTest.Targets.except([[], %List{}])
+      |> Enum.each(fn target ->
+        assert builtin(:none) == builtin(:iolist) <~> target
+      end)
     end
   end
 end

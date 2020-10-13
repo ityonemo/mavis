@@ -197,6 +197,7 @@ defimpl Type.Properties, for: List do
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
+    def intersection([], builtin(:iolist)), do: Type.Iolist.intersection_with([])
     def intersection(list, _) when is_list(list) and length(list) > 0  do
       raise "any list other than the empty list [] is an invalid type!"
     end

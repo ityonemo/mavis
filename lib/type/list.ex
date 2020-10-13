@@ -59,6 +59,7 @@ defmodule Type.List do
             %List{type: type, final: final, nonempty: a.nonempty or b.nonempty}
         end
       end
+      def intersection(a, builtin(:iolist)), do: Type.Iolist.intersection_with(a)
     end
 
     # can't simply forward to usable_as, because any of the encapsulated
@@ -99,7 +100,7 @@ defmodule Type.List do
         type: %Type.Tuple{elements: [k, v]}}, opts) when is_atom(k) do
       to_doc([{k, v}], opts)
     end
-    def inspect(%{
+    def inspect(list = %{
         final: [],
         nonempty: false,
         type: type = %Type.Union{}}, opts) do
@@ -110,7 +111,7 @@ defmodule Type.List do
         |> Enum.map(&List.to_tuple(&1.elements))
         |> to_doc(opts)
       else
-        render_basic(type, opts)
+        render_basic(list, opts)
       end
     end
     # keyword syntax
