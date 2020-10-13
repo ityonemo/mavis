@@ -131,13 +131,20 @@ defmodule Type do
   ## fetching AnD StuFF
 
   def fetch_spec(module, fun, arity) do
-    with {:ok, specs} <- Code.Typespec.fetch_specs(module),
-         spec <- find_spec(specs, fun, arity) do
+    with {:module, _} <- Code.ensure_loaded(module),
+         {:ok, specs} <- Code.Typespec.fetch_specs(module),
+         spec when spec != nil <- find_spec(specs, fun, arity) do
       {:ok, spec}
     else
       :error ->
         {:error, "this module was not found"}
-      nil -> :unknown
+      nil ->
+        if function_exported?(module, fun, arity) do
+          :unknown
+        else
+          {:error, "this function was not found"}
+        end
+      error -> error
     end
   end
 
@@ -203,6 +210,7 @@ defmodule Type do
   # empty list
   def parse_spec({:type, _, nil, []}, _), do: []
   # overrides
+  def parse_spec({:type, _, :no_return, []}, _), do: builtin(:none)
   def parse_spec({:type, _, :term, []}, _), do: builtin(:any)
   def parse_spec({:type, _, :arity, []}, _), do: 0..255
   def parse_spec({:type, _, :byte, []}, _), do: 0..255
