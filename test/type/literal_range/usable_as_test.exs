@@ -26,16 +26,16 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
 
     test "stitched ranges" do
-      assert (-10..10 ~> (-10..-1 | builtin(:non_neg_integer))) == :ok
-      assert (-10..10 ~> (builtin(:neg_integer) | 0..10)) == :ok
-      assert (-10..0 ~> (builtin(:neg_integer) | 0)) == :ok
-      assert (-1..10 ~> (-1 | builtin(:non_neg_integer))) == :ok
+      assert (-10..10 ~> (-10..-1 <|> builtin(:non_neg_integer))) == :ok
+      assert (-10..10 ~> (builtin(:neg_integer) <|> 0..10)) == :ok
+      assert (-10..0 ~> (builtin(:neg_integer) <|> 0)) == :ok
+      assert (-1..10 ~> (-1 <|> builtin(:non_neg_integer))) == :ok
     end
 
     test "a union with the appropriate category" do
-      assert 1..47 ~> (builtin(:pos_integer) | :infinity) == :ok
-      assert 1..47 ~> (builtin(:non_neg_integer) | :infinity) == :ok
-      assert 1..47 ~> (builtin(:integer) | :infinity) == :ok
+      assert 1..47 ~> (builtin(:pos_integer) <|> :infinity) == :ok
+      assert 1..47 ~> (builtin(:non_neg_integer) <|> :infinity) == :ok
+      assert 1..47 ~> (builtin(:integer) <|> :infinity) == :ok
     end
 
     test "any" do
@@ -74,7 +74,7 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
 
     test "a union with a partially overlapping category" do
-      assert {:maybe, _} = 1..47 ~> (1..10 | :infinity)
+      assert {:maybe, _} = 1..47 ~> (1..10 <|> :infinity)
     end
   end
 
@@ -98,7 +98,7 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     end
 
     test "a union with a disjoint categories" do
-      assert {:error, _} = 1..47 ~> (builtin(:atom) | builtin(:pid))
+      assert {:error, _} = 1..47 ~> (builtin(:atom) <|> builtin(:pid))
     end
 
     test "any other type" do

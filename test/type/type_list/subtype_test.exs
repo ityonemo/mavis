@@ -20,11 +20,11 @@ defmodule TypeTest.TypeList.SubtypeTest do
     end
 
     test "is a subtype of correct unions" do
-      assert %List{type: 5} in (%List{type: builtin(:integer)} | builtin(:atom))
+      assert %List{type: 5} in (%List{type: builtin(:integer)} <|> builtin(:atom))
     end
 
     test "is not a subtype of unions of orthogonal types" do
-      refute %List{type: builtin(:integer)} in (%List{type: builtin(:atom)} | builtin(:atom))
+      refute %List{type: builtin(:integer)} in (%List{type: builtin(:atom)} <|> builtin(:atom))
     end
 
     test "is not a subtype if the inner type is not a subtype" do

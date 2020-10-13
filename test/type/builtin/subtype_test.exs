@@ -17,7 +17,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of a union with itself" do
-      assert builtin(:none) in (builtin(:none) | builtin(:integer))
+      assert builtin(:none) in (builtin(:none) <|> builtin(:integer))
     end
 
     test "is not a subtype of all types" do
@@ -39,13 +39,13 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:neg_integer) in (builtin(:neg_integer) | builtin(:atom))
-      assert builtin(:neg_integer) in (builtin(:integer) | builtin(:atom))
+      assert builtin(:neg_integer) in (builtin(:neg_integer) <|> builtin(:atom))
+      assert builtin(:neg_integer) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:neg_integer) in (builtin(:pid) | builtin(:atom))
-      refute builtin(:neg_integer) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:neg_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute builtin(:neg_integer) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all types" do
@@ -68,14 +68,14 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:pos_integer) in (builtin(:pos_integer) | builtin(:atom))
-      assert builtin(:pos_integer) in (builtin(:non_neg_integer) | builtin(:atom))
-      assert builtin(:pos_integer) in (builtin(:integer) | builtin(:atom))
+      assert builtin(:pos_integer) in (builtin(:pos_integer) <|> builtin(:atom))
+      assert builtin(:pos_integer) in (builtin(:non_neg_integer) <|> builtin(:atom))
+      assert builtin(:pos_integer) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:pos_integer) in (builtin(:pid) | builtin(:atom))
-      refute builtin(:pos_integer) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:pos_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute builtin(:pos_integer) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all types" do
@@ -97,13 +97,13 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:non_neg_integer) in (builtin(:non_neg_integer) | builtin(:atom))
-      assert builtin(:non_neg_integer) in (builtin(:integer) | builtin(:atom))
+      assert builtin(:non_neg_integer) in (builtin(:non_neg_integer) <|> builtin(:atom))
+      assert builtin(:non_neg_integer) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:non_neg_integer) in (builtin(:pid) | builtin(:atom))
-      refute builtin(:non_neg_integer) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:non_neg_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute builtin(:non_neg_integer) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all types" do
@@ -125,11 +125,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:integer) in (builtin(:integer) | builtin(:atom))
+      assert builtin(:integer) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:integer) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:integer) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all other types" do
@@ -151,11 +151,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:float) in (builtin(:float) | builtin(:atom))
+      assert builtin(:float) in (builtin(:float) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:float) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:float) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all other types" do
@@ -177,11 +177,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:atom) in (builtin(:integer) | builtin(:atom))
+      assert builtin(:atom) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:atom) in (builtin(:pid) | builtin(:integer))
+      refute builtin(:atom) in (builtin(:pid) <|> builtin(:integer))
     end
 
     test "is not a subtype of all other types" do
@@ -203,11 +203,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:reference) in (builtin(:reference) | builtin(:atom))
+      assert builtin(:reference) in (builtin(:reference) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:reference) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:reference) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all other types" do
@@ -229,11 +229,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:port) in (builtin(:port) | builtin(:atom))
+      assert builtin(:port) in (builtin(:port) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:port) in (builtin(:pid) | builtin(:atom))
+      refute builtin(:port) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of all other types" do
@@ -255,11 +255,11 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:pid) in (builtin(:pid) | builtin(:atom))
+      assert builtin(:pid) in (builtin(:pid) <|> builtin(:atom))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:pid) in (builtin(:integer) | builtin(:atom))
+      refute builtin(:pid) in (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not a subtype of all other types" do

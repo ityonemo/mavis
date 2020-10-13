@@ -106,6 +106,7 @@ defmodule Type.List do
       if Enum.all?(type.of, &match?(
             %Type.Tuple{elements: [e, _]} when is_atom(e), &1)) do
         type.of
+        |> Enum.reverse
         |> Enum.map(&List.to_tuple(&1.elements))
         |> to_doc(opts)
       else

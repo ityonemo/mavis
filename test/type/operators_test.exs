@@ -10,8 +10,8 @@ defmodule TypeTest.OperatorsTest do
     assert (:foo ~> builtin(:atom)) == :ok
   end
 
-  test "|/2 is the type union operator" do
-    assert :foo | :bar == %Type.Union{of: [:bar, :foo]}
+  test "<|>/2 is the type union operator" do
+    assert :foo <|> :bar == %Type.Union{of: [:foo, :bar]}
   end
 
   test "ordering operators work as erlang terms" do

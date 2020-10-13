@@ -33,7 +33,7 @@ defmodule TypeTest.Type.FetchType.BasicsTest do
   end
 
   test "identifier is a union of pid, port, and reference" do
-    assert {:ok, (builtin(:pid) | builtin(:port) | builtin(:reference))} ==
+    assert {:ok, (builtin(:pid) <|> builtin(:port) <|> builtin(:reference))} ==
       Type.fetch_type(@source, :identifier_type)
   end
 

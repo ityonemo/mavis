@@ -36,12 +36,12 @@ defmodule TypeTest.Type.FetchType.NumbersTest do
   end
 
   test "number" do
-    assert {:ok, (builtin(:float) | builtin(:integer))} ==
+    assert {:ok, (builtin(:float) <|> builtin(:integer))} ==
       Type.fetch_type(@source, :number_type)
   end
 
   test "timeout" do
-    assert {:ok, (builtin(:non_neg_integer) | :infinity)} ==
+    assert {:ok, (builtin(:non_neg_integer) <|> :infinity)} ==
       Type.fetch_type(@source, :timeout_type)
   end
 end

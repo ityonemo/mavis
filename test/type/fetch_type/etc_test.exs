@@ -12,7 +12,7 @@ defmodule TypeTest.Type.FetchType.EtcTest do
   @remote TypeTest.TypeExample.Remote
 
   test "union (of atoms)" do
-    assert {:ok, (:foo | :bar)} == Type.fetch_type(@unions, :of_atoms)
+    assert {:ok, (:foo <|> :bar)} == Type.fetch_type(@unions, :of_atoms)
   end
 
   describe "remote type" do

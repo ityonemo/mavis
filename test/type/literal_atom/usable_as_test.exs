@@ -17,8 +17,8 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
     end
 
     test "a union with atoms" do
-      assert (:foo ~> (:foo | 1..47)) == :ok
-      assert (:foo ~> (builtin(:atom) | 47)) == :ok
+      assert (:foo ~> (:foo <|> 1..47)) == :ok
+      assert (:foo ~> (builtin(:atom) <|> 47)) == :ok
     end
 
     test "any" do
@@ -31,7 +31,7 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
 
   describe "atoms not usable as" do
     test "a union without atoms" do
-      assert {:error, _} = (:foo ~> (builtin(:integer) | builtin(:float)))
+      assert {:error, _} = (:foo ~> (builtin(:integer) <|> builtin(:float)))
     end
 
     test "any other type" do
