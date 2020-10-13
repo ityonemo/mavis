@@ -574,6 +574,14 @@ defimpl Type.Properties, for: Type do
     {:maybe, [Message.make(builtin(:atom), atom, meta)]}
   end
 
+  # iolist
+  def usable_as(builtin(:iolist), [], meta) do
+    {:maybe, [Message.make(builtin(:iolist), [], meta)]}
+  end
+  def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
+    Type.Iolist.usable_as_list(list, meta)
+  end
+
   # any
   def usable_as(builtin(:any), any_other_type, meta) do
     {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}

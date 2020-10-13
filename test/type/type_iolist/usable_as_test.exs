@@ -42,12 +42,16 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
       assert {:maybe, _} = builtin(:iolist) ~> %List{type: @ltype, final: @final, nonempty: true}
     end
 
+    test "is maybe usable as an empty list" do
+      assert {:maybe, _} = builtin(:iolist) ~> []
+    end
+
     test "is not usable as a list with totally different types" do
       assert {:error, _} = builtin(:iolist) ~> %List{type: builtin(:atom)}
     end
 
     test "are not usable as other types" do
-      TypeTest.Targets.except([%List{}])
+      TypeTest.Targets.except([[], %List{}])
       |> Enum.each(fn target ->
         assert {:error, _} = builtin(:iolist) ~> target
       end)
@@ -55,6 +59,10 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
   end
 
   describe "lists" do
+    test "empty list is usable as iolist" do
+      assert :ok = [] ~> builtin(:iolist)
+    end
+
     test "missing iolist, binary, or char are usable as iolists" do
       assert :ok = %List{type: @char <|> builtin(:iolist), final: @final} ~> builtin(:iolist)
       assert :ok = %List{type: @binary <|> builtin(:iolist), final: @final} ~> builtin(:iolist)
@@ -62,7 +70,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "missing a final component are usable as iolists" do
-      assert :ok = %List{type: @ltype} in builtin(:iolist)
+      assert :ok = %List{type: @ltype} ~> builtin(:iolist)
       assert :ok = %List{type: @ltype, final: @binary} ~> builtin(:iolist)
     end
 
@@ -73,6 +81,10 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     test "overly large domains are maybe usable" do
       assert {:maybe, _} = %List{type: builtin(:any)} ~> builtin(:iolist)
       assert {:maybe, _} = %List{type: @ltype, final: builtin(:any)} ~> builtin(:iolist)
+    end
+
+    test "any is maybe usable" do
+      assert {:maybe, _} = builtin(:any) ~> builtin(:iolist)
     end
 
     test "with nothing in common are not usable as iolists" do

@@ -36,9 +36,13 @@ defmodule Type.List do
         end
       end
 
+      def usable_as(challenge, builtin(:iolist), meta) do
+        Type.Iolist.usable_as_iolist(challenge, meta)
+      end
+
       def usable_as(challenge, target = %List{}, meta) do
-        u1 = Type.usable_as(challenge.type, target.type)
-        u2 = Type.usable_as(challenge.final, target.final)
+        u1 = Type.usable_as(challenge.type, target.type, meta)
+        u2 = Type.usable_as(challenge.final, target.final, meta)
 
         case Type.ternary_and(u1, u2) do
           :ok -> :ok

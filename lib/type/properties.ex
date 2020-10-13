@@ -190,6 +190,7 @@ defimpl Type.Properties, for: List do
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
+    def usable_as([], builtin(:iolist), _), do: :ok
     def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
       raise "any list other than the empty list [] is an invalid type!"
     end
