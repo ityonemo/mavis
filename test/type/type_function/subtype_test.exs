@@ -13,8 +13,8 @@ defmodule TypeTest.TypeFunction.SubtypeTest do
 
   describe "the any function" do
     test "is a subtype of itself and any" do
-      assert @any_function ~> @any_function
-      assert @any_function ~> builtin(:any)
+      assert @any_function in @any_function
+      assert @any_function in builtin(:any)
     end
 
     test "are not subtypes of other types" do

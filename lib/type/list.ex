@@ -36,9 +36,13 @@ defmodule Type.List do
         end
       end
 
+      def usable_as(challenge, builtin(:iolist), meta) do
+        Type.Iolist.usable_as_iolist(challenge, meta)
+      end
+
       def usable_as(challenge, target = %List{}, meta) do
-        u1 = Type.usable_as(challenge.type, target.type)
-        u2 = Type.usable_as(challenge.final, target.final)
+        u1 = Type.usable_as(challenge.type, target.type, meta)
+        u2 = Type.usable_as(challenge.final, target.final, meta)
 
         case Type.ternary_and(u1, u2) do
           :ok -> :ok
@@ -59,6 +63,7 @@ defmodule Type.List do
             %List{type: type, final: final, nonempty: a.nonempty or b.nonempty}
         end
       end
+      def intersection(a, builtin(:iolist)), do: Type.Iolist.intersection_with(a)
     end
 
     # can't simply forward to usable_as, because any of the encapsulated
@@ -66,6 +71,7 @@ defmodule Type.List do
     def subtype?(list_type, list_type), do: true
     def subtype?(_list_type, builtin(:any)), do: true
     # same nonempty is okay
+    def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
     def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
       when ne_c == ne_t or ne_c do
 
@@ -99,7 +105,7 @@ defmodule Type.List do
         type: %Type.Tuple{elements: [k, v]}}, opts) when is_atom(k) do
       to_doc([{k, v}], opts)
     end
-    def inspect(%{
+    def inspect(list = %{
         final: [],
         nonempty: false,
         type: type = %Type.Union{}}, opts) do
@@ -110,7 +116,7 @@ defmodule Type.List do
         |> Enum.map(&List.to_tuple(&1.elements))
         |> to_doc(opts)
       else
-        render_basic(type, opts)
+        render_basic(list, opts)
       end
     end
     # keyword syntax

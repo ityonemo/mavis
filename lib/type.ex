@@ -506,7 +506,7 @@ defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
-    float: 2, atom: 3, reference: 4, port: 6, pid: 7, any: 12}
+    float: 2, atom: 3, reference: 4, port: 6, pid: 7, iolist: 10, any: 12}
 
   import Type, only: :macros
 
@@ -574,6 +574,14 @@ defimpl Type.Properties, for: Type do
     {:maybe, [Message.make(builtin(:atom), atom, meta)]}
   end
 
+  # iolist
+  def usable_as(builtin(:iolist), [], meta) do
+    {:maybe, [Message.make(builtin(:iolist), [], meta)]}
+  end
+  def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
+    Type.Iolist.usable_as_list(list, meta)
+  end
+
   # any
   def usable_as(builtin(:any), any_other_type, meta) do
     {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
@@ -610,6 +618,8 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
+    # iolist
+    def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
     # any
     def intersection(builtin(:any), type), do: type
   end
@@ -644,10 +654,17 @@ defimpl Type.Properties, for: Type do
   def group_compare(builtin(:atom), _),                  do: :gt
   def group_compare(_, builtin(:atom)),                  do: :lt
 
+  # group compare for iolist
+  def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
+  def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
+
   def group_compare(_, _),                               do: :gt
 
   def subtype?(a, %Type.Union{of: types}) do
     Enum.any?(types, &Type.subtype?(a, &1))
+  end
+  def subtype?(builtin(:iolist), list = %Type.List{}) do
+    Type.Iolist.supertype_of_iolist?(list)
   end
   def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
