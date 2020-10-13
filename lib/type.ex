@@ -506,7 +506,7 @@ defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
-    float: 2, atom: 3, reference: 4, port: 6, pid: 7, any: 12}
+    float: 2, atom: 3, reference: 4, port: 6, pid: 7, iolist: 10, any: 12}
 
   import Type, only: :macros
 
@@ -621,8 +621,10 @@ defimpl Type.Properties, for: Type do
   end
 
   def compare(this, other) do
-    this_group = Type.typegroup(this)
-    other_group = Type.typegroup(other)
+    this |> IO.inspect(label: "624")
+    other |> IO.inspect(label: "625")
+    this_group = Type.typegroup(this) |> IO.inspect(label: "626")
+    other_group = Type.typegroup(other) |> IO.inspect(label: "627")
     cond do
       this_group > other_group -> :gt
       this_group < other_group -> :lt
@@ -645,6 +647,10 @@ defimpl Type.Properties, for: Type do
   # group compare for the atom block
   def group_compare(builtin(:atom), _),                  do: :gt
   def group_compare(_, builtin(:atom)),                  do: :lt
+
+  # group compare for iolist
+  def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
+  def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
 
   def group_compare(_, _),                               do: :gt
 

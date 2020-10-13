@@ -7,7 +7,7 @@ defmodule Type.Union do
   """
 
   defstruct [of: []]
-  @type t :: %__MODULE__{of: [Type.t]}
+  @type t :: %__MODULE__{of: [Type.t, ...]}
 
   import Type, only: [builtin: 1]
 

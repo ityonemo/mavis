@@ -12,6 +12,7 @@ defmodule Type.Iolist do
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}
+  @ltype Enum.into([@char, @binary, builtin(:iolist)], %Union{})
   @final Union.of([], @binary)
 
   def intersection_with([]), do: []
@@ -31,4 +32,19 @@ defmodule Type.Iolist do
     end
   end
   def intersection_with(_), do: builtin(:none)
+
+  def compare_list(list) do
+    case Type.compare(@ltype, list.type) do
+      :eq -> Type.compare(@final, list.final)
+      ordered -> ordered
+    end
+  end
+
+  def compare_list_inv(list) do
+    case compare_list(list) do
+      :gt -> :lt
+      :eq -> :eq
+      :lt -> :gt
+    end
+  end
 end
