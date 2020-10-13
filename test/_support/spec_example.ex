@@ -1,9 +1,12 @@
 defmodule TypeTest.SpecExample do
-  defmodule Builtins do
+  defmodule Basics do
     @spec any_spec(any) :: any
     def any_spec(x), do: x
 
-    @spec none_spec(any) :: none
+    @spec term_spec(term) :: term
+    def term_spec(x), do: x
+
+    @spec none_spec(any) :: no_return
     def none_spec(_), do: raise "foo"
 
     @spec pid_spec(pid) :: pid
@@ -24,11 +27,17 @@ defmodule TypeTest.SpecExample do
 
   defmodule Numbers do
     # literals
-    @spec literal_spec(47) :: 47
-    def literal_spec(x), do: x
+    @spec literal_int_spec(47) :: 47
+    def literal_int_spec(x), do: x
+
+    @spec literal_neg_int_spec(-47) :: -47
+    def literal_neg_int_spec(x), do: x
 
     @spec range_spec(7..47) :: 7..47
     def range_spec(x), do: x
+
+    @spec neg_range_spec(-47..-7) :: -47..-7
+    def neg_range_spec(x), do: x
 
     # builtins
     @spec float_spec(float) :: float
@@ -87,7 +96,7 @@ defmodule TypeTest.SpecExample do
     @spec zero_arity_spec((-> any)) :: (-> any)
     def zero_arity_spec(x), do: x
 
-    @spec two_arity_spec((any, any -> any)) :: (any, any -> any)
+    @spec two_arity_spec((integer, atom -> float)) :: (integer, atom -> float)
     def two_arity_spec(x), do: x
 
     @spec any_arity_spec((... -> integer)) :: (... -> integer)
@@ -135,6 +144,9 @@ defmodule TypeTest.SpecExample do
     @spec keyword_2_literal_spec([foo: integer, bar: float]) :: [foo: integer, bar: float]
     def keyword_2_literal_spec(x), do: x
 
+    @spec list_0_spec(list) :: list
+    def list_0_spec(x), do: x
+
     @spec list_1_spec(list(integer)) :: list(integer)
     def list_1_spec(x), do: x
 
@@ -177,10 +189,10 @@ defmodule TypeTest.SpecExample do
     @spec empty_bitstring_spec(<<>>) :: <<>>
     def empty_bitstring_spec(x), do: x
 
-    @spec sized_bitstring_spec(<<_::47>>) :: <<_::47>>
-    def sized_bitstring_spec(x), do: x
+    @spec size_bitstring_spec(<<_::47>>) :: <<_::47>>
+    def size_bitstring_spec(x), do: x
 
-    @spec unit_bitstring_spec(<<_::_*8>>) :: <<_::_*8>>
+    @spec unit_bitstring_spec(<<_::_*16>>) :: <<_::_*16>>
     def unit_bitstring_spec(x), do: x
 
     @spec size_unit_bitstring_spec(<<_::12, _::_*8>>) :: <<_::12, _::_*8>>
@@ -227,4 +239,19 @@ defmodule TypeTest.SpecExample do
     @spec struct_spec(struct) :: struct
     def struct_spec(x), do: x
   end
+
+  defmodule Unions do
+    @spec of_atoms(:foo | :bar) :: :foo | :bar
+    def of_atoms(x), do: x
+  end
+
+  defmodule Remote do
+    @spec elixir_string(String.t) :: String.t
+    def elixir_string(x), do: x
+
+    @spec foobar(Foo.bar(integer)) :: Foo.bar(integer)
+    def foobar(x), do: x
+  end
+
+  def no_spec(x), do: x
 end
