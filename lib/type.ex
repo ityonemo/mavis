@@ -655,6 +655,9 @@ defimpl Type.Properties, for: Type do
   def subtype?(a, %Type.Union{of: types}) do
     Enum.any?(types, &Type.subtype?(a, &1))
   end
+  def subtype?(builtin(:iolist), list = %Type.List{}) do
+    Type.Iolist.supertype_of_iolist?(list)
+  end
   def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 

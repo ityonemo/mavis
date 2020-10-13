@@ -67,6 +67,7 @@ defmodule Type.List do
     def subtype?(list_type, list_type), do: true
     def subtype?(_list_type, builtin(:any)), do: true
     # same nonempty is okay
+    def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
     def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
       when ne_c == ne_t or ne_c do
 

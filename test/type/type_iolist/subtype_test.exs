@@ -15,16 +15,17 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
   @final [] <|> @binary
 
   describe "the iolist" do
-    test "is a subtype of itself, general list, and any" do
+    test "is a subtype of itself, general maybe improper list, and any" do
       assert builtin(:iolist) in builtin(:iolist)
-      assert builtin(:iolist) in %List{}
+      assert builtin(:iolist) in %List{final: builtin(:any)}
       assert builtin(:iolist) in builtin(:any)
     end
 
     test "is a subtype of itself defined recursively" do
       assert builtin(:iolist) in %List{type: @ltype, final: @final}
       assert builtin(:iolist) in
-        %List{type: %List{type: @ltype, final: @final}, final: @final}
+        %List{type: %List{type: @ltype, final: @final} <|> @char <|> @binary,
+              final: @final}
     end
 
     test "is not a subtype of a list missing iolist, binary, or char are subtypes of iolists" do
@@ -43,7 +44,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except(%List{})
+      TypeTest.Targets.except([%List{}])
       |> Enum.each(fn target ->
         refute builtin(:iolist) in target
       end)

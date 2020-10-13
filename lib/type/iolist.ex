@@ -15,6 +15,8 @@ defmodule Type.Iolist do
   @ltype Enum.into([@char, @binary, builtin(:iolist)], %Union{})
   @final Union.of([], @binary)
 
+  # INTERSECTIONS
+
   def intersection_with([]), do: []
   def intersection_with(list = %List{}) do
     # iolist is char | binary | iolist
@@ -33,6 +35,8 @@ defmodule Type.Iolist do
   end
   def intersection_with(_), do: builtin(:none)
 
+  # COMPARISONS
+
   def compare_list(list) do
     case Type.compare(@ltype, list.type) do
       :eq -> Type.compare(@final, list.final)
@@ -46,5 +50,14 @@ defmodule Type.Iolist do
       :eq -> :eq
       :lt -> :gt
     end
+  end
+
+  def subtype_of_iolist?(list) do
+    Type.subtype?(list.type, @ltype) and Type.subtype?(list.final, @final)
+  end
+
+  def supertype_of_iolist?(list) do
+    Type.subtype?(@ltype, list.type) and Type.subtype?(@final, list.final)
+      and not list.nonempty
   end
 end
