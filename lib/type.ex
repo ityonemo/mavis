@@ -458,6 +458,41 @@ defmodule Type do
     end
   end
 
+  defmacro subtype(do: block) do
+    quote do
+      def subtype?(a, a), do: true
+
+      unless __MODULE__ == Type.Properties.Type.Union do
+        def subtype?(a, %Type.Union{of: types}) do
+          Enum.any?(types, &Type.subtype?(a, &1))
+        end
+      end
+
+      if __MODULE__ == Type.Properties.Type do
+        def subtype?(builtin(:none), _), do: false
+      end
+
+      def subtype?(_, builtin(:any)), do: true
+
+      # TODO make is_remote and is_builtin guards
+      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
+        r_solved = Type.fetch_type!(right)
+        if left == r_solved do
+          false
+        else
+          Type.subtype?(left, r_solved)
+        end
+      end
+
+      unquote(block)
+    end
+  end
+  defmacro subtype(:usable_as) do
+    quote do
+      def subtype?(a, b), do: usable_as(a, b, []) == :ok
+    end
+  end
+
   def lexical_compare(left = %{module: m, name: n}, right) do
     with {:m, ^m} <- {:m, right.module},
          {:n, ^n} <- {:n, right.name} do
@@ -774,13 +809,17 @@ defimpl Type.Properties, for: Type do
     def group_compare(_, _),                               do: :gt
   end
 
-  def subtype?(a, %Type.Union{of: types}) do
-    Enum.any?(types, &Type.subtype?(a, &1))
+  subtype do
+    def subtype?(builtin(:iolist), list = %Type.List{}) do
+      Type.Iolist.supertype_of_iolist?(list)
+    end
+    def subtype?(left = %Type{module: m}, right) when not is_nil(m) do
+      left
+      |> Type.fetch_type!
+      |> Type.subtype?(right)
+    end
+    def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
   end
-  def subtype?(builtin(:iolist), list = %Type.List{}) do
-    Type.Iolist.supertype_of_iolist?(list)
-  end
-  def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 
 defimpl Inspect, for: Type do

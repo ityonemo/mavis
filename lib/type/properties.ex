@@ -54,7 +54,7 @@ defimpl Type.Properties, for: Integer do
     def intersection(i, builtin(:integer)), do: i
   end
 
-  def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  subtype :usable_as
 end
 
 defimpl Type.Properties, for: Range do
@@ -159,7 +159,7 @@ defimpl Type.Properties, for: Range do
     |> Enum.reduce(&Type.ternary_or/2)
   end
 
-  def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  subtype :usable_as
 end
 
 defimpl Type.Properties, for: Atom do
@@ -212,5 +212,5 @@ defimpl Type.Properties, for: List do
     end
   end
 
-  def subtype?(a, b), do: usable_as(a, b, []) == :ok
+  subtype :usable_as
 end

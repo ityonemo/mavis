@@ -281,8 +281,10 @@ defmodule Type.Union do
       end
     end
 
-    def subtype?(%{of: types}, target) do
-      Enum.all?(types, &Type.subtype?(&1, target))
+    subtype do
+      def subtype?(%{of: types}, target) do
+        Enum.all?(types, &Type.subtype?(&1, target))
+      end
     end
   end
 

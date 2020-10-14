@@ -277,39 +277,40 @@ defmodule Type.Map do
       |> Enum.into(%{})
     end
 
-    def subtype?(_, builtin(:any)), do: true
-    def subtype?(challenge, target = %Map{}) do
-      # check to make sure that all segments are
-      # subtypes as expected.
-      segments = Map.resegment(challenge, Map.resegment(target))
+    subtype do
+      def subtype?(challenge, target = %Map{}) do
+        # check to make sure that all segments are
+        # subtypes as expected.
+        segments = Map.resegment(challenge, Map.resegment(target))
 
-      segment_union = Enum.into(segments, %Type.Union{})
+        segment_union = Enum.into(segments, %Type.Union{})
 
-      # make sure that each part of the challenge is represented
-      # in the segments
-      challenge
-      |> Map.keytypes
-      |> Enum.all?(&Type.subtype?(&1, segment_union))
-      |> Kernel.||(throw false)
-
-      Enum.each(segments, fn segment ->
+        # make sure that each part of the challenge is represented
+        # in the segments
         challenge
-        |> Map.apply(segment)
-        |> Type.subtype?(Map.apply(target, segment))
+        |> Map.keytypes
+        |> Enum.all?(&Type.subtype?(&1, segment_union))
         |> Kernel.||(throw false)
-      end)
-      # check that all required bits of b are
-      # required in a.  Note that we already know that
-      # the subset situation is valid from the above code.
-      target.required
-      |> Elixir.Map.keys
-      |> Enum.all?(fn key ->
-        :erlang.is_map_key(key, challenge.required)
-      end)
-    catch
-      false -> false
+
+        Enum.each(segments, fn segment ->
+          challenge
+          |> Map.apply(segment)
+          |> Type.subtype?(Map.apply(target, segment))
+          |> Kernel.||(throw false)
+        end)
+        # check that all required bits of b are
+        # required in a.  Note that we already know that
+        # the subset situation is valid from the above code.
+        target.required
+        |> Elixir.Map.keys
+        |> Enum.all?(fn key ->
+          :erlang.is_map_key(key, challenge.required)
+        end)
+      catch
+        false -> false
+      end
+      def subtype?(_, _), do: false
     end
-    def subtype?(_, _), do: false
 
     usable_as do
       def usable_as(challenge, target = %Map{}, meta) do

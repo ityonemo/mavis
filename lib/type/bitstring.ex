@@ -105,7 +105,7 @@ defmodule Type.Bitstring do
 
     defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
 
-    def subtype?(a, b), do: usable_as(a, b, []) == :ok
+    subtype :usable_as
   end
 
   defimpl Inspect do

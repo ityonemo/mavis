@@ -43,7 +43,7 @@ defmodule TypeTest.Remote.SubtypeTest do
   # make an exception for empty binary
   describe "empty binary" do
     test "is a subtype of String.t()" do
-      assert %Bitstring{size: 0, unit: 0} in String.t()
+      assert %Bitstring{size: 0, unit: 0} in remote(String.t())
     end
   end
 end

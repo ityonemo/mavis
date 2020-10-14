@@ -68,22 +68,21 @@ defmodule Type.List do
       def intersection(a, builtin(:iolist)), do: Type.Iolist.intersection_with(a)
     end
 
-    # can't simply forward to usable_as, because any of the encapsulated
-    # types might have a usable_as rule that isn't strictly subtype?
-    def subtype?(list_type, list_type), do: true
-    def subtype?(_list_type, builtin(:any)), do: true
-    # same nonempty is okay
-    def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
-    def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
-      when ne_c == ne_t or ne_c do
+    subtype do
+      # can't simply forward to usable_as, because any of the encapsulated
+      # types might have a usable_as rule that isn't strictly subtype?
+      def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
+      def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
+        when ne_c == ne_t or ne_c do
 
-      Type.subtype?(challenge.type, target.type) and
-        Type.subtype?(challenge.final, target.final)
+        Type.subtype?(challenge.type, target.type) and
+          Type.subtype?(challenge.final, target.final)
+      end
+      def subtype?(challenge, %Union{of: types}) do
+        Enum.any?(types, &Type.subtype?(challenge, &1))
+      end
+      def subtype?(_, _), do: false
     end
-    def subtype?(challenge, %Union{of: types}) do
-      Enum.any?(types, &Type.subtype?(challenge, &1))
-    end
-    def subtype?(_, _), do: false
   end
 
   defimpl Inspect do
