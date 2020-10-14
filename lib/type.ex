@@ -416,7 +416,15 @@ defmodule Type do
         |> Map.get(key)
         |> Type.of
 
-        %{acc | optional: Map.put(acc.optional, key_type, val_type)}
+        updated_val_type = if is_map_key(acc.optional, key_type) do
+          acc.optional
+          |> Map.get(key_type)
+          |> Type.Union.of(val_type)
+        else
+          val_type
+        end
+
+        %{acc | optional: Map.put(acc.optional, key_type, updated_val_type)}
     end)
   end
   def of(function) when is_function(function) do

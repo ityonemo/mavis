@@ -92,6 +92,9 @@ defmodule TypeTest do
 
       assert %Type.Map{optional: %{remote(String.t) => remote(String.t)}} ==
         Type.of(%{"foo" => "bar"})
+
+      assert %Type.Map{optional: %{remote(String.t) => :bar <|> :quux}} ==
+        Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
     test "assigns bitstrings correctly" do
