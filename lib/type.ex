@@ -336,6 +336,24 @@ defmodule Type do
     quote do
       def usable_as(type, type, meta), do: :ok
       def usable_as(type, Type.builtin(:any), meta), do: :ok
+
+      if __MODULE__ == Type.Properties.Type.Bitstring do
+        import Type, only: [remote: 1]
+        def usable_as(%Type.Bitstring{size: 0, unit: 0}, remote(String.t()), _), do: :ok
+      end
+
+      def usable_as(challenge, target = %Type{module: m}, meta) when not is_nil(m) do
+        case Type.usable_as(challenge, Type.fetch_type!(target)) do
+          :ok ->
+            msg = """
+            #{inspect target} is usable as base type #{inspect challenge}
+            but #{inspect target} is considered to be a strict subtype because
+            it is a remote encapsulation.
+            """
+            {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
+          maybe_or_error -> maybe_or_error
+        end
+      end
     end
   end
 
@@ -658,6 +676,12 @@ defimpl Type.Properties, for: Type do
 
   # trap anys as ok
   def usable_as(_, builtin(:any), _meta), do: :ok
+
+  def usable_as(challenge = %Type{module: m}, target, meta) when not is_nil(m) do
+    challenge
+    |> Type.fetch_type!()
+    |> Type.usable_as(target, meta)
+  end
 
   # negative integer
   def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok

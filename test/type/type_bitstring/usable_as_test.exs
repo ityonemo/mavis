@@ -73,6 +73,10 @@ defmodule TypeTest.TypeBitString.UsableAsTest do
     end
 
     test "is maybe usable as some things" do
+      # not known if we have enough to get past the first size
+      assert {:maybe, _} =
+        @basic_binary ~> %Bitstring{size: 4, unit: 4}
+
       # not known if there are enough multiples to get there.
       assert {:maybe, [%Message{type: @basic_binary, target: %Bitstring{size: 8, unit: 0}}]} =
         @basic_binary ~> %Bitstring{size: 8, unit: 0}

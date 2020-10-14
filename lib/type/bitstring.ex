@@ -72,7 +72,7 @@ defmodule Type.Bitstring do
           rem(size_a - size_b, unit_gcd) != 0 ->
             {:error, Message.make(challenge, target, meta)}
           # the challenge lattice strictly overlays the target lattice
-          unit_gcd == unit_b ->
+          unit_gcd == unit_b and size_b < size_a ->
             :ok
           true ->
             {:maybe, [Message.make(challenge, target, meta)]}
