@@ -653,6 +653,12 @@ defimpl Type.Properties, for: Type do
   end
 
   def group_compare(type, type),                         do: :eq
+  def group_compare(type1, %Type.Union{of: [type2 | _]}) do
+    case group_compare(type1, type1) do
+      :gt -> :gt
+      _ -> :lt
+    end
+  end
 
   # group compare for the integer block.
   def group_compare(builtin(:integer), _),               do: :gt
