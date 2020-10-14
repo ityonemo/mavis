@@ -1,6 +1,8 @@
 defmodule Type.Map do
   defstruct [required: %{}, optional: %{}]
 
+  import Type, only: :macros
+
   @type required :: %{optional(integer | atom) => Type.t}
   @type optional :: %{optional(Type.t) => Type.t}
 
@@ -63,13 +65,31 @@ defmodule Type.Map do
   ...>                       builtin(:pos_integer) => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
   ```
+
+  If any part of the clamp has conflicting definitions, it is dropped.
+
+  ```
+  iex> alias Type.Map
+  iex> import Type
+  iex> Map.apply(Map.build(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
+  :foo
+  ```
   """
   def apply(map, preimage_clamp) do
-    # find the required image
-    required_image = apply_partial(map.required, preimage_clamp)
-    optional_image = apply_partial(map.optional, preimage_clamp)
+    map
+    |> resegment([preimage_clamp])
+    |> Enum.map(&segment_apply(map, &1))
+    |> Enum.reject(&(&1 == builtin(:none)))
+    |> Type.union
+  end
 
-    Type.union(required_image ++ optional_image)
+  # finds the image of map under a preimage segment.  Note that
+  # this algorithm only works correctly if the segment is a valid
+  # preimage segment of the map type.
+  defp segment_apply(map, segment) do
+    required_image = apply_partial(map.required, segment)
+    optional_image = apply_partial(map.optional, segment)
+    Type.intersect(required_image ++ optional_image)
   end
 
   # performs an apply operation on either the required part or the

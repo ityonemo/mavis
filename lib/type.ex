@@ -43,6 +43,12 @@ defmodule Type do
     Enum.into(types, struct(Type.Union))
   end
 
+  def intersect([]), do: builtin(:none)
+  def intersect([a]), do: a
+  def intersect([a | b]) do
+    Type.intersection(a, Type.intersect(b))
+  end
+
   @spec compare({t, t}) :: :lt | :gt | :eq
   def compare({t1, t2}), do: compare(t1, t2)
 
@@ -404,7 +410,7 @@ defmodule Type do
     map
     |> Map.keys
     |> Enum.map(&{&1, Type.of(&1)})
-    |> Enum.reduce(%Type.Map{}, fn
+    |> Enum.reduce(struct(Type.Map), fn
       {key, _}, acc when is_integer(key) or is_atom(key) ->
         val_type = map
         |> Map.get(key)

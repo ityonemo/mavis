@@ -113,4 +113,22 @@ defmodule TypeTest.TypeMap.UsableAsTest do
         Map.build(%{foo: builtin(:integer)}, %{})
     end
   end
+
+  describe "when a map has multiple optional fields which overlap" do
+    @dual_map Map.build(%{:foo => builtin(:neg_integer) <|> nil,
+                          builtin(:atom) => builtin(:pos_integer) <|> nil})
+
+    test "if a map fulfills both it is usable" do
+      assert :ok = Map.build(foo: nil) ~> @dual_map
+    end
+
+    test "if a map does not fulfill both it is not usable" do
+      # if it's optional, not having the parameter is valid.
+      assert {:maybe, _} = Map.build(foo: -1) ~> @dual_map
+      assert {:maybe, _} = Map.build(foo: 1) ~> @dual_map
+      # if it's a required parameter we won't be happy.
+      assert {:error, _} = Map.build(%{foo: -1}, %{}) ~> @dual_map
+      assert {:error, _} = Map.build(%{foo: 1}, %{}) ~> @dual_map
+    end
+  end
 end
