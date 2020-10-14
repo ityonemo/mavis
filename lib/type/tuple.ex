@@ -11,23 +11,24 @@ defmodule Type.Tuple do
 
     alias Type.{Message, Tuple, Union}
 
-    # NB: any for both is already filtered by the predefined group_compare
-    def group_compare(%{elements: :any}, %Tuple{}), do: :gt
-    def group_compare(_, %Tuple{elements: :any}), do:   :lt
-    def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
-    def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
-    def group_compare(tuple1, tuple2) do
-      tuple1.elements
-      |> Enum.zip(tuple2.elements)
-      |> Enum.each(fn {t1, t2} ->
-        compare = Type.compare(t1, t2)
-        unless compare == :eq do
-          throw compare
-        end
-      end)
-      :eq
-    catch
-      compare when compare in [:gt, :lt] -> compare
+    group_compare do
+      def group_compare(%{elements: :any}, %Tuple{}), do: :gt
+      def group_compare(_, %Tuple{elements: :any}), do:   :lt
+      def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
+      def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
+      def group_compare(tuple1, tuple2) do
+        tuple1.elements
+        |> Enum.zip(tuple2.elements)
+        |> Enum.each(fn {t1, t2} ->
+          compare = Type.compare(t1, t2)
+          unless compare == :eq do
+            throw compare
+          end
+        end)
+        :eq
+      catch
+        compare when compare in [:gt, :lt] -> compare
+      end
     end
 
     usable_as do

@@ -178,24 +178,25 @@ defmodule Type.Map do
 
     ##############################################################
     ## comparison
+    group_compare do
+      def group_compare(m1, m2) do
+        preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
+        cond do
+          preimage_cmp != :eq -> preimage_cmp
+          :eq ->
+            m1
+            |> Map.resegment(Map.resegment(m2))
+            |> Enum.each(fn segment ->
+              req_order = required_ordering(m1, m2, segment)
+              req_order != :eq && throw req_order
 
-    def group_compare(m1, m2) do
-      preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
-      cond do
-        preimage_cmp != :eq -> preimage_cmp
-        :eq ->
-          m1
-          |> Map.resegment(Map.resegment(m2))
-          |> Enum.each(fn segment ->
-            req_order = required_ordering(m1, m2, segment)
-            req_order != :eq && throw req_order
-
-            val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
-            val_order != :eq && throw val_order
-          end)
+              val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
+              val_order != :eq && throw val_order
+            end)
+        end
+      catch
+        valtype when valtype in [:gt, :lt] -> valtype
       end
-    catch
-      valtype when valtype in [:gt, :lt] -> valtype
     end
 
     defp required_ordering(m1, m2, segment) do

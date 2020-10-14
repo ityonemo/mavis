@@ -388,6 +388,20 @@ defmodule Type do
     end
   end
 
+  defmacro group_compare(do: block) do
+    quote do
+      def group_compare(type, type), do: :eq
+      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
+        case group_compare(type1, type2) do
+          :gt -> :gt
+          _ -> :lt
+        end
+      end
+
+      unquote(block)
+    end
+  end
+
   def of(value)
   def of(integer) when is_integer(integer), do: integer
   def of(float) when is_float(float), do: builtin(:float)
@@ -509,9 +523,6 @@ defmodule Type do
             group_compare(this, other)
         end
       end
-
-      # preload a group_compare definition here.
-      def group_compare(any, any), do: :eq
     end
   end
 end
@@ -652,33 +663,27 @@ defimpl Type.Properties, for: Type do
     end
   end
 
-  def group_compare(type, type),                         do: :eq
-  def group_compare(type1, %Type.Union{of: [type2 | _]}) do
-    case group_compare(type1, type1) do
-      :gt -> :gt
-      _ -> :lt
-    end
+  group_compare do
+    # group compare for the integer block.
+    def group_compare(builtin(:integer), _),               do: :gt
+    def group_compare(_, builtin(:integer)),               do: :lt
+    def group_compare(builtin(:non_neg_integer), _),       do: :gt
+    def group_compare(_, builtin(:non_neg_integer)),       do: :lt
+    def group_compare(builtin(:pos_integer), _),           do: :gt
+    def group_compare(_, builtin(:pos_integer)),           do: :lt
+    def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt
+    def group_compare(_, _..b) when b >= 0,                do: :lt
+
+    # group compare for the atom block
+    def group_compare(builtin(:atom), _),                  do: :gt
+    def group_compare(_, builtin(:atom)),                  do: :lt
+
+    # group compare for iolist
+    def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
+    def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
+    
+    def group_compare(_, _),                               do: :gt
   end
-
-  # group compare for the integer block.
-  def group_compare(builtin(:integer), _),               do: :gt
-  def group_compare(_, builtin(:integer)),               do: :lt
-  def group_compare(builtin(:non_neg_integer), _),       do: :gt
-  def group_compare(_, builtin(:non_neg_integer)),       do: :lt
-  def group_compare(builtin(:pos_integer), _),           do: :gt
-  def group_compare(_, builtin(:pos_integer)),           do: :lt
-  def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt
-  def group_compare(_, _..b) when b >= 0,                do: :lt
-
-  # group compare for the atom block
-  def group_compare(builtin(:atom), _),                  do: :gt
-  def group_compare(_, builtin(:atom)),                  do: :lt
-
-  # group compare for iolist
-  def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
-  def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
-
-  def group_compare(_, _),                               do: :gt
 
   def subtype?(a, %Type.Union{of: types}) do
     Enum.any?(types, &Type.subtype?(a, &1))

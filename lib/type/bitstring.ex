@@ -13,13 +13,11 @@ defmodule Type.Bitstring do
 
     use Type
 
-    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
-    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt
-    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: :gt
-    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: :lt
-    # TODO: drop this is as a macro.
-    def group_compare(bitstring, %Type.Union{of: types}) do
-      if Type.compare(bitstring, hd(types)) == :gt, do: :gt, else: :lt
+    group_compare do
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: :gt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: :lt
     end
 
     usable_as do

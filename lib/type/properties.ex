@@ -20,20 +20,22 @@ defimpl Type.Properties, for: Integer do
 
   use Type
 
-  def group_compare(_, builtin(:integer)),              do: :lt
-  def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
-  def group_compare(_, builtin(:non_neg_integer)),      do: :lt
-  def group_compare(_, builtin(:pos_integer)),          do: :lt
-  def group_compare(left, _..last),                     do: (if left > last, do: :gt, else: :lt)
-  def group_compare(left, right) when is_integer(right) do
-    cond do
-      left > right -> :gt
-      left < right -> :lt
-      true -> :eq
+  group_compare do
+    def group_compare(_, builtin(:integer)),              do: :lt
+    def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
+    def group_compare(_, builtin(:non_neg_integer)),      do: :lt
+    def group_compare(_, builtin(:pos_integer)),          do: :lt
+    def group_compare(left, _..last),                     do: (if left > last, do: :gt, else: :lt)
+    def group_compare(left, right) when is_integer(right) do
+      cond do
+        left > right -> :gt
+        left < right -> :lt
+        true -> :eq
+      end
     end
-  end
-  def group_compare(left, %Type.Union{of: ints}) do
-    group_compare(left, List.last(ints))
+    def group_compare(left, %Type.Union{of: ints}) do
+      group_compare(left, List.last(ints))
+    end
   end
 
   usable_as do
@@ -60,23 +62,25 @@ defimpl Type.Properties, for: Range do
 
   use Type
 
-  def group_compare(_, builtin(:integer)),                  do: :lt
-  def group_compare(_, builtin(:pos_integer)),              do: :lt
-  def group_compare(_, builtin(:non_neg_integer)),          do: :lt
-  def group_compare(_..last, builtin(:neg_integer)),        do: (if last >= 0, do: :gt, else: :lt)
-  def group_compare(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
-  def group_compare(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
-  def group_compare(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
-  def group_compare(first..last, %Type.Union{of: [init | types]}) do
-    case List.last(types) do
-      _..b when b < last -> :gt
-      _..b ->
-        # the range is bigger if it's bigger than the biggest union
-        Type.compare(init, first) && (last >= b)
-      i when i < last -> :gt
-      i when is_integer(i) ->
-        Type.compare(init, first) && (last >= i)
-      _ -> :lt
+  group_compare do
+    def group_compare(_, builtin(:integer)),                  do: :lt
+    def group_compare(_, builtin(:pos_integer)),              do: :lt
+    def group_compare(_, builtin(:non_neg_integer)),          do: :lt
+    def group_compare(_..last, builtin(:neg_integer)),        do: (if last >= 0, do: :gt, else: :lt)
+    def group_compare(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
+    def group_compare(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
+    def group_compare(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
+    def group_compare(first..last, %Type.Union{of: [init | types]}) do
+      case List.last(types) do
+        _..b when b < last -> :gt
+        _..b ->
+          # the range is bigger if it's bigger than the biggest union
+          Type.compare(init, first) && (last >= b)
+        i when i < last -> :gt
+        i when is_integer(i) ->
+          Type.compare(init, first) && (last >= i)
+        _ -> :lt
+      end
     end
   end
 
@@ -163,8 +167,10 @@ defimpl Type.Properties, for: Atom do
 
   use Type
 
-  def group_compare(_, builtin(:atom)), do: :lt
-  def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
+  group_compare do
+    def group_compare(_, builtin(:atom)), do: :lt
+    def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
+  end
 
   usable_as do
     def usable_as(_, builtin(:atom), _), do: :ok
@@ -183,9 +189,11 @@ defimpl Type.Properties, for: List do
 
   use Type
 
-  def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
-  def group_compare(_, _) do
-    raise "any list other than the empty list [] is an invalid type!"
+  group_compare do
+    def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
+    def group_compare(_, _) do
+      raise "any list other than the empty list [] is an invalid type!"
+    end
   end
 
   usable_as do
