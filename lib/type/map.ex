@@ -74,6 +74,16 @@ defmodule Type.Map do
   iex> Map.apply(Map.build(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
   :foo
   ```
+
+  If any part of the clamp has a more restrictive definition, all type
+  restrictions must apply
+
+  ```
+  iex> alias Type.Map
+  iex> import Type
+  iex> Map.apply(Map.build(%{0..3 => 1..10, builtin(:pos_integer) => 0..5}), 1..3)
+  1..5
+  ```
   """
   def apply(map, preimage_clamp) do
     map
