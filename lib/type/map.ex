@@ -85,6 +85,10 @@ defmodule Type.Map do
   1..5
   ```
   """
+  def apply(map, singleton) when is_integer(singleton) or is_atom(singleton) do
+    # optimization for the singleton case.
+    segment_apply(map, singleton)
+  end
   def apply(map, preimage_clamp) do
     map
     |> resegment([preimage_clamp])
@@ -95,7 +99,7 @@ defmodule Type.Map do
 
   # finds the image of map under a preimage segment.  Note that
   # this algorithm only works correctly if the segment is a valid
-  # preimage segment of the map type.
+  # preimage segment of the map type, or if it's a singleton.
   defp segment_apply(map, segment) do
     required_image = apply_partial(map.required, segment)
     optional_image = apply_partial(map.optional, segment)
@@ -237,8 +241,8 @@ defmodule Type.Map do
       if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
         req_kv = all_req_keys
         |> Enum.map(fn rq_key ->
-          val_type = evaluate_singleton(map, rq_key)
-          |> Type.intersection(evaluate_singleton(tgt, rq_key))
+          val_type = Map.apply(map, rq_key)
+          |> Type.intersection(Map.apply(tgt, rq_key))
 
           val_type == builtin(:none) && throw :empty
 
@@ -252,20 +256,6 @@ defmodule Type.Map do
       end
     catch
       :empty -> :empty
-    end
-
-    defp evaluate_singleton(map, singleton) do
-      optionals = Enum.flat_map(map.optional, fn
-        {preimage, image} ->
-          if Type.subtype?(singleton, preimage), do: [image], else: []
-      end)
-
-      requireds = Enum.flat_map(map.required, fn
-        {^singleton, image} -> [image]
-        _ -> []
-      end)
-
-      Enum.reduce(optionals ++ requireds, &Type.intersection/2)
     end
 
     defp evaluate_optionals(map, tgt) do
@@ -322,8 +312,7 @@ defmodule Type.Map do
 
     usable_as do
       def usable_as(challenge, target = %Map{}, meta) do
-        # check to make sure required types are in required
-           (check_preimages(challenge, target, meta)
+        (check_preimages(challenge, target, meta)
          ++ check_target_required(challenge, target, meta)
          ++ check_challenge_required(challenge, target, meta)
          ++ check_challenge_optional(challenge, target, meta))
@@ -350,15 +339,23 @@ defmodule Type.Map do
     end
 
     defp check_target_required(challenge, target, meta) do
+      # checks that the challenge map can supply all of the required
+      # keys that the target needs; if they are optional, then it's a
+      # maybe; in either case the image of the challenger key must be
+      # usable as the image of the target key.
       target.required
-      |> Enum.map(fn {key, value} ->
+      |> Enum.map(fn {key, _} ->
+        target_image = Map.apply(target, key)
+        challenge_image = Map.apply(challenge, key)
         cond do
           :erlang.is_map_key(key, challenge.required) ->
-            Type.usable_as(target.required[:key], value, meta)
-          (challenge_value = Map.apply(challenge, key)) != builtin(:none) ->
+            Type.usable_as(challenge_image, target_image, meta)
+
+          challenge_image != builtin(:none) ->
             Type.ternary_and(
               {:maybe, [Message.make(challenge, target, meta)]},
-              Type.usable_as(challenge_value, value, meta))
+              Type.usable_as(challenge_image, target_image, meta))
+
           true ->
             {:error, Message.make(challenge, target, meta)}
         end

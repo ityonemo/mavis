@@ -117,18 +117,28 @@ defmodule TypeTest.TypeMap.UsableAsTest do
   describe "when a map has multiple optional fields which overlap" do
     @dual_map Map.build(%{:foo => builtin(:neg_integer) <|> nil,
                           builtin(:atom) => builtin(:pos_integer) <|> nil})
+    @dual_req Map.build(%{foo: builtin(:neg_integer) <|> nil},
+                        %{builtin(:atom) => builtin(:pos_integer) <|> nil})
 
     test "if a map fulfills both it is usable" do
       assert :ok = Map.build(foo: nil) ~> @dual_map
+      assert :ok = Map.build(%{foo: nil}, %{}) ~> @dual_req
     end
 
     test "if a map does not fulfill both it is not usable" do
+      ## when the target type has optional overlap
       # if it's optional, not having the parameter is valid.
       assert {:maybe, _} = Map.build(foo: -1) ~> @dual_map
       assert {:maybe, _} = Map.build(foo: 1) ~> @dual_map
       # if it's a required parameter we won't be happy.
       assert {:error, _} = Map.build(%{foo: -1}, %{}) ~> @dual_map
       assert {:error, _} = Map.build(%{foo: 1}, %{}) ~> @dual_map
+
+      ## when the target type has an overlap in required, it's toast.
+      assert {:error, _} = Map.build(foo: -1) ~> @dual_req
+      assert {:error, _} = Map.build(foo: 1) ~> @dual_req
+      assert {:error, _} = Map.build(%{foo: -1}, %{}) ~> @dual_req
+      assert {:error, _} = Map.build(%{foo: 1}, %{}) ~> @dual_req
     end
   end
 end
