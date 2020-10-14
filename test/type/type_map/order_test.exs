@@ -19,6 +19,10 @@ defmodule TypeTest.TypeMap.OrderTest do
       assert @any_map > Map.build(foo: @any)
     end
 
+    test "is smaller than a union containing it" do
+      assert @any_map < nil <|> @any_map
+    end
+
     test "empty maps are smaller than other maps" do
       assert %Map{} < Map.build(%{foo: @any}, %{})
       assert %Map{} < Map.build(%{builtin(:integer) => @any}, %{})

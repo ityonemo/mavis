@@ -23,11 +23,11 @@ defmodule TypeTest.TypeIolist.OrderTest do
     end
 
     test "is bigger than `less than complete` iolists" do
-#      assert builtin(:iolist) > %List{type: builtin(:iolist) <|> @char}
+      assert builtin(:iolist) > %List{type: builtin(:iolist) <|> @char}
       assert builtin(:iolist) > %List{type: builtin(:iolist) <|> @binary}
-#      assert builtin(:iolist) > %List{type: @char <|> @binary}
-#      assert builtin(:iolist) > %List{type: @ltype}
-#      assert builtin(:iolist) > %List{type: @ltype, final: @binary}
+      assert builtin(:iolist) > %List{type: @char <|> @binary}
+      assert builtin(:iolist) > %List{type: @ltype}
+      assert builtin(:iolist) > %List{type: @ltype, final: @binary}
     end
 
     test "is equal to manually defined iolists with recursion" do
@@ -36,6 +36,10 @@ defmodule TypeTest.TypeIolist.OrderTest do
       assert :eq == Type.compare(builtin(:iolist),
         %List{type: %List{type: @ltype, final: @final} <|> @char <|> @binary,
               final: @final})
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:iolist) < nil <|> builtin(:iolist)
     end
 
     test "is smaller than `strange iolists` which are superclasses" do
