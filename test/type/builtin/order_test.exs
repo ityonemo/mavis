@@ -73,6 +73,10 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:pos_integer) > 42..47
     end
 
+    test "is smaller than a union containing it" do
+      assert builtin(:pos_integer) < builtin(:pos_integer) <|> -1
+    end
+
     test "is smaller than the classes it's a subclass of" do
       assert builtin(:pos_integer) < builtin(:non_neg_integer)
       assert builtin(:pos_integer) < builtin(:integer)
@@ -97,6 +101,10 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:non_neg_integer) > 47
       assert builtin(:non_neg_integer) > 42..47
       assert builtin(:non_neg_integer) > builtin(:pos_integer)
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:non_neg_integer) < builtin(:non_neg_integer) <|> -1
     end
 
     test "is smaller than the classes it's a subclass of" do
@@ -136,6 +144,10 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:float) > builtin(:integer) # outside of group
     end
 
+    test "is smaller than a union containing it" do
+      assert builtin(:float) < builtin(:float) <|> 0
+    end
+
     test "is smaller than most other things" do
       assert builtin(:float) < builtin(:atom)      # outside of group
       assert builtin(:float) < builtin(:any)       # top
@@ -152,6 +164,10 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:atom) > :foo
     end
 
+    test "is smaller than a union containing it" do
+      assert builtin(:atom) < builtin(:atom) <|> builtin(:integer)
+    end
+
     test "is smaller than reference and top" do
       assert builtin(:atom) < builtin(:reference) # outside of group
       assert builtin(:atom) < builtin(:any)       # top
@@ -162,6 +178,10 @@ defmodule TypeTest.Builtin.OrderTest do
     test "is bigger than bottom and atom" do
       assert builtin(:reference) > builtin(:none) # bottom
       assert builtin(:reference) > builtin(:atom) # outside of group
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:reference) < builtin(:reference) <|> builtin(:integer)
     end
 
     test "is smaller than port and top" do
@@ -176,6 +196,10 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:port) > builtin(:reference) # outside of group
     end
 
+    test "is smaller than a union containing it" do
+      assert builtin(:port) < builtin(:port) <|> builtin(:integer)
+    end
+
     test "is smaller than pid and top" do
       assert builtin(:port) < builtin(:pid) # outside of group
       assert builtin(:port) < builtin(:any) # top
@@ -186,6 +210,10 @@ defmodule TypeTest.Builtin.OrderTest do
     test "is bigger than bottom and reference" do
       assert builtin(:pid) > builtin(:none)      # bottom
       assert builtin(:pid) > builtin(:port) # outside of group
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:pid) < builtin(:pid) <|> builtin(:integer)
     end
 
     test "is smaller than tuple and top" do
