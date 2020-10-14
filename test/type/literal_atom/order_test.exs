@@ -18,6 +18,10 @@ defmodule TypeTest.LiteralAtom.OrderTest do
       assert :bar < :foo
     end
 
+    test "is smaller than a union containing it" do
+      assert :foo < :foo <|> :bar
+    end
+
     test "is smaller than atom, which it is a subset of" do
       assert :foo < builtin(:atom)
     end
