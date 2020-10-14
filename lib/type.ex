@@ -161,27 +161,31 @@ defmodule Type do
     end)
   end
 
-  def fetch_type!(module, fun, params \\ []) do
-    case fetch_type(module, fun, params) do
+  def fetch_type!(%Type{module: module, name: name, params: params})
+      when not is_nil(module) do
+    fetch_type!(module, name, params)
+  end
+  def fetch_type!(module, name, params \\ []) do
+    case fetch_type(module, name, params) do
       {:ok, specs} -> specs
       {:error, msg} -> raise "#{inspect msg.type} type not found"
     end
   end
 
-  def fetch_type(module, fun, params \\ [], meta \\ []) do
+  def fetch_type(module, name, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
-         {type, assignments} <- find_type(specs, fun, params)  do
+         {type, assignments} <- find_type(specs, name, params)  do
       {:ok, parse_spec(type, assignments)}
     else
       _ -> {:error, struct(Type.Message,
-        type: %Type{module: module, name: fun, params: params},
+        type: %Type{module: module, name: name, params: params},
         meta: meta ++ [message: "not found"])}
     end
   end
 
-  defp find_type(specs, fun, params) do
+  defp find_type(specs, name, params) do
     Enum.find_value(specs, fn
-      {:type, {^fun, type, tparams}} when length(tparams) == length(params) ->
+      {:type, {^name, type, tparams}} when length(tparams) == length(params) ->
         assignments = tparams |> Enum.zip(params) |> Enum.into(%{})
         {type, assignments}
        _ -> false
@@ -391,11 +395,9 @@ defmodule Type do
       end
       end
 
-      def intersection(left, %Type{module: module, name: name, params: params})
-          when not is_nil(module) do
+      def intersection(left, right = %Type{module: m}) when not is_nil(m) do
         # special case.
-        right = Type.fetch_type!(module, name, params)
-        Type.intersection(left, right)
+        Type.intersection(left, Type.fetch_type!(right))
       end
 
       unless __MODULE__ == Type.Properties.Type.Union do
@@ -413,6 +415,38 @@ defmodule Type do
   defmacro group_compare(do: block) do
     quote do
       def group_compare(type, type), do: :eq
+
+      # check for dual remote types
+      def group_compare(left = %Type{module: m1}, right = %Type{module: m2})
+          when not (is_nil(m1) or is_nil(m2)) do
+        case group_compare(Type.fetch_type!(left), Type.fetch_type!(right)) do
+          :eq ->
+            Type.lexical_compare(left, right)
+          order -> order
+        end
+      end
+
+      def group_compare(left = %Type{module: m}, right)
+          when not is_nil(m) do
+        left
+        |> Type.fetch_type!
+        |> group_compare(right)
+        |> case do
+          :eq -> :lt
+          order -> order
+        end
+      end
+
+      def group_compare(left, right = %Type{module: m})
+          when not is_nil(m) do
+        left
+        |> group_compare(Type.fetch_type!(right))
+        |> case do
+          :eq -> :gt
+          order -> order
+        end
+      end
+
       def group_compare(type1, %Type.Union{of: [type2 | _]}) do
         case group_compare(type1, type2) do
           :gt -> :gt
@@ -422,6 +456,27 @@ defmodule Type do
 
       unquote(block)
     end
+  end
+
+  def lexical_compare(left = %{module: m, name: n}, right) do
+    with {:m, ^m} <- {:m, right.module},
+         {:n, ^n} <- {:n, right.name} do
+      left.params
+      |> Enum.zip(right.params)
+      |> Enum.each(fn {l, r} ->
+        comp = Type.compare(l, r)
+        unless comp == :eq do
+          throw comp
+        end
+      end)
+      raise "unreachable"
+    else
+      {:m, _} -> if m > right.module, do: :gt, else: :lt
+      {:n, _} -> if n > right.name, do: :gt, else: :lt
+    end
+  catch
+    :gt -> :gt
+    :lt -> :lt
   end
 
   def of(value)
@@ -678,8 +733,13 @@ defimpl Type.Properties, for: Type do
     end
   end
 
-  def typegroup(%{module: nil, name: name, params: []}) do
+  def typegroup(%{module: nil, name: name}) do
     @groups_for[name]
+  end
+  def typegroup(type) do
+    type
+    |> Type.fetch_type!()
+    |> Type.typegroup()
   end
 
   def compare(this, other) do
