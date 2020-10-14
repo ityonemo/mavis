@@ -161,6 +161,13 @@ defmodule Type do
     end)
   end
 
+  def fetch_type!(module, fun, params \\ []) do
+    case fetch_type(module, fun, params) do
+      {:ok, specs} -> specs
+      {:error, msg} -> raise "#{inspect msg.type} type not found"
+    end
+  end
+
   def fetch_type(module, fun, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
          {type, assignments} <- find_type(specs, fun, params)  do
@@ -172,7 +179,7 @@ defmodule Type do
     end
   end
 
-  def find_type(specs, fun, params) do
+  defp find_type(specs, fun, params) do
     Enum.find_value(specs, fn
       {:type, {^fun, type, tparams}} when length(tparams) == length(params) ->
         assignments = tparams |> Enum.zip(params) |> Enum.into(%{})
@@ -181,6 +188,8 @@ defmodule Type do
       end)
   end
 
+  # TODO:
+  # move to own module
   def parse_spec(spec, assigns \\ %{})
   def parse_spec({:type, _, :map, params}, assigns) do
     Enum.reduce(params, struct(Type.Map), fn
@@ -376,10 +385,23 @@ defmodule Type do
       def intersection(type, type), do: type
       def intersection(type, builtin(:any)), do: type
 
+      if __MODULE__ == Type.Properties.Type do
+      def intersection(builtin(:any), type) do
+        type
+      end
+      end
+
+      def intersection(left, %Type{module: module, name: name, params: params})
+          when not is_nil(module) do
+        # special case.
+        right = Type.fetch_type!(module, name, params)
+        Type.intersection(left, right)
+      end
+
       unless __MODULE__ == Type.Properties.Type.Union do
-        def intersection(type, union = %Type.Union{}) do
-          Type.intersection(union, type)
-        end
+      def intersection(type, union = %Type.Union{}) do
+        Type.intersection(union, type)
+      end
       end
 
       unquote(block)
@@ -645,8 +667,15 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
     # iolist
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
-    # any
-    def intersection(builtin(:any), type), do: type
+
+    # remote types
+    def intersection(%Type{module: module, name: name, params: params}, right)
+        when not is_nil(module) do
+      # deal with errors later.
+      # TODO: implement type caching system
+      left = Type.fetch_type!(module, name, params)
+      Type.intersection(left, right)
+    end
   end
 
   def typegroup(%{module: nil, name: name, params: []}) do
@@ -681,7 +710,7 @@ defimpl Type.Properties, for: Type do
     # group compare for iolist
     def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
     def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
-    
+
     def group_compare(_, _),                               do: :gt
   end
 
