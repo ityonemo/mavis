@@ -139,7 +139,7 @@ defmodule Type do
   def fetch_spec(module, fun, arity) do
     with {:module, _} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module),
-         spec when spec != nil <- find_spec(specs, fun, arity) do
+         spec when spec != nil <- find_spec(module, specs, fun, arity) do
       {:ok, spec}
     else
       :error ->
@@ -154,9 +154,9 @@ defmodule Type do
     end
   end
 
-  def find_spec(specs, fun, arity) do
+  def find_spec(module, specs, fun, arity) do
     Enum.find_value(specs, fn
-      {{^fun, ^arity}, [spec]} -> parse_spec(spec)
+      {{^fun, ^arity}, [spec]} -> parse_spec(spec, %{"$module": module})
       _ -> false
     end)
   end
@@ -174,7 +174,7 @@ defmodule Type do
 
   def fetch_type(module, name, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
-         {type, assignments} <- find_type(specs, name, params)  do
+         {type, assignments} <- find_type(module, specs, name, params) do
       {:ok, parse_spec(type, assignments)}
     else
       _ -> {:error, struct(Type.Message,
@@ -183,19 +183,29 @@ defmodule Type do
     end
   end
 
-  defp find_type(specs, name, params) do
+  @prefixes ~w(type typep opaque)a
+
+  defp find_type(module, specs, name, params) do
     Enum.find_value(specs, fn
-      {:type, {^name, type, tparams}} when length(tparams) == length(params) ->
-        assignments = tparams |> Enum.zip(params) |> Enum.into(%{})
+      {t, {^name, type, tparams}}
+          when t in @prefixes and length(tparams) == length(params) ->
+        assignments = tparams
+        |> Enum.map(fn {:var, _, key} -> key end)
+        |> Enum.zip(params)
+        |> Enum.into(%{"$module": module})
         {type, assignments}
-       _ -> false
-      end)
+      _ ->
+        false
+    end)
   end
 
   # TODO:
   # move to own module
   def parse_spec(spec, assigns \\ %{})
-  def parse_spec({:type, _, :map, params}, assigns) do
+  def parse_spec({:type, _, :map, :any}, _assigns) do
+    struct(Type.Map, optional: builtin(:any))
+  end
+  def parse_spec({:type, _, :map, params}, assigns) when is_list(params) do
     Enum.reduce(params, struct(Type.Map), fn
       {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
         %{map | optional: Map.put(optional, parse_spec(src_type, assigns), parse_spec(dst_type, assigns))}
@@ -205,8 +215,11 @@ defmodule Type do
   end
 
   # fix assigns
-  def parse_spec(key, assigns) when is_map_key(assigns, key) do
+  def parse_spec({:var, _, key}, assigns) when is_map_key(assigns, key) do
     assigns[key]
+  end
+  def parse_spec({:var, _, :_}, _assigns) do
+    builtin(:any)
   end
   # general types
   def parse_spec({:type, _, :range, [first, last]}, assigns), do: parse_spec(first, assigns)..parse_spec(last, assigns)
@@ -329,8 +342,19 @@ defmodule Type do
           name: parse_spec(name, assigns),
           params: Enum.map(args, &parse_spec(&1, assigns))}
   end
+  # general local type
+  def parse_spec({:user_type, _, name, args}, assigns) do
+    %Type{module: Map.fetch!(assigns, :"$module"),
+          name: name,
+          params: Enum.map(args, &parse_spec(&1, assigns))}
+  end
+  # annotated types can just be ignored
+  def parse_spec({:ann_type, _, [_type_annotation, type]}, assigns) do
+    parse_spec(type, assigns)
+  end
   # default builtin
   def parse_spec({:type, _, type, []}, _), do: builtin(type)
+  def parse_spec({:type, _, :bounded_fun, _}, _), do: :no
 
   defmacro usable_as_start do
     quote do

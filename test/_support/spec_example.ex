@@ -107,6 +107,18 @@ defmodule TypeTest.SpecExample do
 
     @spec function_spec(function) :: function
     def function_spec(x), do: x
+
+    @spec basic_when(t) :: t when t: var
+    def basic_when(x), do: x
+
+    @spec basic_when_any(t) :: t when t: any
+    def basic_when_any(x), do: x
+
+    @spec basic_when_int(t) :: t when t: integer
+    def basic_when_int(x), do: x
+
+    @spec basic_when_union(t) :: t | atom when t: integer
+    def basic_when_union(x), do: x
   end
 
   defmodule Tuples do
