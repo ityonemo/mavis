@@ -32,14 +32,14 @@ defimpl Type.Properties, for: Type.Function.Var do
     end
   end
 
-  import Type
+  import Type, only: :macros
 
   intersection do
-    def intersection(%Var{}, %Var{}) do
+    def intersection(_, %Var{}) do
       raise "can't intersect two var types"
     end
 
-    def intersection(left = %Var{}, right) do
+    def intersection(left, right) do
       case Type.intersection(left.constraint, right) do
         builtin(:none) -> builtin(:none)
         type -> %{left | constraint: type}
@@ -47,11 +47,21 @@ defimpl Type.Properties, for: Type.Function.Var do
     end
   end
 
-  def subtype?(_, _) do
-    raise "what"
+  subtype do
+    def subtype?(left, right = %Var{}) do
+      Type.subtype?(left.constraint, right.constraint)
+    end
+    def subtype?(left, right) do
+      Type.subtype?(left.constraint, right)
+    end
   end
 
-  def usable_as(_, _, _meta) do
-    raise "nope"
+  usable_as do
+    def usable_as(left, right, meta) do
+      left  |> IO.inspect(label: "61")
+      right |> IO.inspect(label: "62")
+      meta  |> IO.inspect(label: "63")
+      raise "nope"
+    end
   end
 end

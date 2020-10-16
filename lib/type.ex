@@ -388,6 +388,10 @@ defmodule Type do
         def usable_as(%Type.Bitstring{size: 0, unit: 0}, remote(String.t()), _), do: :ok
       end
 
+      def usable_as(challenge, target = %Type.Function.Var{}, meta) do
+        Type.usable_as(challenge, target.constraint, meta)
+      end
+
       def usable_as(challenge, target = %Type{module: m}, meta) when not is_nil(m) do
         case Type.usable_as(challenge, Type.fetch_type!(target)) do
           :ok ->
@@ -539,6 +543,8 @@ defmodule Type do
   end
 
   defmacro subtype(do: block) do
+    # TODO: figure out how to DRY this.
+
     quote do
       def subtype?(a, a), do: true
 
@@ -560,8 +566,11 @@ defmodule Type do
         if left == r_solved do
           false
         else
-          Type.subtype?(left, r_solved)
+          subtype?(left, r_solved)
         end
+      end
+      def subtype?(left, %Type.Function.Var{constraint: c}) do
+        subtype?(left, c)
       end
 
       unquote(block)
@@ -569,6 +578,17 @@ defmodule Type do
   end
   defmacro subtype(:usable_as) do
     quote do
+      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
+        r_solved = Type.fetch_type!(right)
+        if left == r_solved do
+          false
+        else
+          subtype?(left, r_solved)
+        end
+      end
+      def subtype?(a, %Type.Function.Var{constraint: c}) do
+        subtype?(a, c)
+      end
       def subtype?(a, b), do: usable_as(a, b, []) == :ok
     end
   end
@@ -734,6 +754,11 @@ defimpl Type.Properties, for: Type do
   # none type
   def usable_as(builtin(:none), target, meta) do
     {:error, Message.make(builtin(:none), target, meta)}
+  end
+
+  # vars are transparent
+  def usable_as(challenge, target = %Type.Function.Var{}, meta) do
+    Type.usable_as(challenge, target.constraint, meta)
   end
 
   # trap anys as ok
