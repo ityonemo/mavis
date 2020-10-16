@@ -22,4 +22,22 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
   test "function" do
     assert "function()" == inspect_type(@source, :function_type)
   end
+
+  defp inspect_spec(name) do
+    {:ok, specs} = TypeTest.SpecExample
+    |> Code.Typespec.fetch_specs
+
+    specs
+    |> Enum.find_value(fn
+      {{^name, _}, [spec]} -> spec
+      _ -> false
+    end)
+    |> Type.parse_spec()
+    |> inspect
+  end
+
+  test "function with when statement" do
+    assert "(t -> t when t)" == inspect_spec(:when_var_1)
+    assert "(t1, t2 -> t1 | t2 when t1, t2)" == inspect_spec(:when_var_2)
+  end
 end

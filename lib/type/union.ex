@@ -213,7 +213,7 @@ defmodule Type.Union do
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
   end
-  def type_merge([type | _rest], top), do: :nomerge
+  def type_merge([type | _rest], _top), do: :nomerge
 
   defimpl Type.Properties do
     import Type, only: :macros

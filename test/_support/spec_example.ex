@@ -254,4 +254,22 @@ defmodule TypeTest.SpecExample do
   end
 
   def no_spec(x), do: x
+
+  @spec valid_spec(any) :: any
+  def valid_spec(x), do: x
+
+  @spec when_var_1(t) :: t when t: var
+  def when_var_1(x), do: x
+
+  @spec when_var_2(t1, t2) :: t1 | t2 when t1: var, t2: var
+  def when_var_2(x, y), do: max(x, y)
+
+  @spec basic_when_any(t) :: t when t: any
+  def basic_when_any(x), do: x
+
+  @spec basic_when_int(t) :: t when t: integer
+  def basic_when_int(x), do: x
+
+  @spec basic_when_union(t) :: t | atom when t: integer
+  def basic_when_union(x), do: x
 end
