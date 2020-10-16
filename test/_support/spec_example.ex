@@ -255,6 +255,9 @@ defmodule TypeTest.SpecExample do
 
   def no_spec(x), do: x
 
+  @spec with_annotation(foo :: any) :: any
+  def with_annotation(x), do: x
+
   @spec valid_spec(any) :: any
   def valid_spec(x), do: x
 

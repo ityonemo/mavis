@@ -52,6 +52,11 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
 
   alias Type.Function.Var
 
+  test "with annotation" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :with_annotation, 1)
+    assert %Function{params: [builtin(:any)], return: builtin(:any)} = fun
+  end
+
   test "function with basic when statement" do
     assert {:ok, fun} = Type.fetch_spec(@example, :when_var_1, 1)
 

@@ -126,4 +126,5 @@ defmodule TypeTest.TypeExample do
     @type foobar :: Foo.bar(integer)
     @type with_arity(t) :: t
   end
+
 end
