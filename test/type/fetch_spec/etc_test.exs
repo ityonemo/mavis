@@ -5,12 +5,13 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   import Type.Operators
   import TypeTest.SpecCase
 
-  alias Type.Message
+  alias Type.{Function, Message}
 
   @moduletag :fetch
 
   @unions TypeTest.SpecExample.Unions
   @remote TypeTest.SpecExample.Remote
+  @example TypeTest.SpecExample
 
   test "union (of atoms)" do
     assert {:ok, identity_for(:foo <|> :bar)} == Type.fetch_spec(@unions, :of_atoms, 1)
@@ -38,7 +39,7 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   end
 
   test "spec not provided" do
-    assert :unknown = Type.fetch_spec(TypeTest.SpecExample, :no_spec, 1)
+    assert :unknown = Type.fetch_spec(@example, :no_spec, 1)
   end
 
   test "nonexistent function" do
@@ -46,6 +47,57 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   end
 
   test "wrong arity" do
+    assert {:error, _} = Type.fetch_spec(@example, :valid_spec, 2)
+  end
 
+  alias Type.Function.Var
+
+  test "function with basic when statement" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :when_var_1, 1)
+
+    assert %Function{
+      params: [%Var{name: :t}],
+      return: %Var{name: :t}
+    } = fun
+  end
+
+  test "function with multiple when statement" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :when_var_2, 2)
+
+    return_union = %Var{name: :t1} <|> %Var{name: :t2}
+
+    assert %Function{
+      params: [%Var{name: :t1}, %Var{name: :t2}],
+      return: ^return_union
+    } = fun
+  end
+
+  test "basic constrained function" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_any, 1)
+
+    assert %Function{
+      params: [%Var{name: :t, constraint: builtin(:any)}],
+      return: %Var{name: :t, constraint: builtin(:any)}
+    } = fun
+  end
+
+  test "type constrained function" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_int, 1)
+
+    assert %Function{
+      params: [%Var{name: :t, constraint: builtin(:integer)}],
+      return: %Var{name: :t, constraint: builtin(:integer)}
+    } = fun
+  end
+
+  test "type constrained result" do
+    assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_union, 1)
+
+    type_union = %Var{name: :t, constraint: builtin(:integer)} <|> builtin(:atom)
+
+    assert %Function{
+      params: [%Var{name: :t, constraint: builtin(:integer)}],
+      return: ^type_union
+    } = fun
   end
 end

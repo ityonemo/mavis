@@ -215,11 +215,17 @@ defmodule Type do
   end
 
   # fix assigns
-  def parse_spec({:var, _, key}, assigns) when is_map_key(assigns, key) do
-    assigns[key]
+  def parse_spec({:var, _, name}, assigns) when is_map_key(assigns, name) do
+    assigns[name]
   end
   def parse_spec({:var, _, :_}, _assigns) do
     builtin(:any)
+  end
+  def parse_spec({:var, _, name}, assigns) when is_map_key(assigns, {name, :subtype_of}) do
+    struct(Type.Function.Var, name: name, constraint: assigns[{name, :subtype_of}])
+  end
+  def parse_spec({:var, _, name}, _assigns) do
+    struct(Type.Function.Var, name: name)
   end
   # general types
   def parse_spec({:type, _, :range, [first, last]}, assigns), do: parse_spec(first, assigns)..parse_spec(last, assigns)
@@ -354,7 +360,23 @@ defmodule Type do
   end
   # default builtin
   def parse_spec({:type, _, type, []}, _), do: builtin(type)
-  def parse_spec({:type, _, :bounded_fun, _}, _), do: :no
+  def parse_spec({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
+    # TODO: write a test against constraint assignment
+    parse_spec(fun, add_constraints(assigns, constraints))
+  end
+
+  defp add_constraints(assigns, []), do: assigns
+  defp add_constraints(assigns, [constraint | rest]) do
+    assigns
+    |> add_constraint(constraint)
+    |> add_constraints(rest)
+  end
+
+  defp add_constraint(assigns, {:type, _, :constraint,
+                                [{:atom, _, :is_subtype},
+                                [{:var, _, name}, type]]}) do
+    Map.put(assigns, {name, :subtype_of}, parse_spec(type, assigns))
+  end
 
   defmacro usable_as_start do
     quote do

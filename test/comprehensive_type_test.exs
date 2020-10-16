@@ -1,6 +1,8 @@
 defmodule TypeTest.ComprehensiveTypeTest do
   use ExUnit.Case, async: true
 
+  @moduletag :comprehensive
+
   # tests that mavis understands all standard library types successfully
 
   import Type, only: :macros
