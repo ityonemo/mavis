@@ -12,6 +12,8 @@ end
 
 defimpl Type.Properties, for: Type.Function.Var do
 
+  alias Type.Function.Var
+
   def typegroup(%{constraint: constraint}) do
     Type.typegroup(constraint)
   end
@@ -25,14 +27,12 @@ defimpl Type.Properties, for: Type.Function.Var do
 
   import Type
 
-  group_compare do
-    def group_compare(_, _) do
-      raise "hell"
-    end
-  end
-
   intersection do
-    def intersection(left = %Type.Function.Var{}, right) do
+    def intersection(%Var{}, %Var{}) do
+      raise "can't intersect two var types"
+    end
+
+    def intersection(left = %Var{}, right) do
       case Type.intersection(left.constraint, right) do
         builtin(:none) -> builtin(:none)
         type -> %{left | constraint: type}

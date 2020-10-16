@@ -527,6 +527,13 @@ defmodule Type do
         end
       end
 
+      def group_compare(type, var = %Type.Function.Var{}) do
+        case group_compare(type, var.constraint) do
+          :eq -> :gt
+          order -> order
+        end
+      end
+
       unquote(block)
     end
   end
