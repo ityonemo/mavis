@@ -204,6 +204,9 @@ defmodule Type.Function do
     import Inspect.Algebra
 
     def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
+    def inspect(%{params: :any, return: return}, opts) do
+      concat(basic_inspect(:any, return, opts) ++ [")"])
+    end
     def inspect(%{params: params, return: return}, opts) do
 
       # check if any of the params or the returns have *when* statements
