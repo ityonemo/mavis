@@ -634,8 +634,8 @@ defmodule Type do
   end
   def of(map) when is_map(map) do
     map
-    |> Map.keys
-    |> Enum.map(&{&1, Type.of(&1)})
+    |> Map.keys 
+    |> Enum.map(&{&1, Type.of(&1)}) 
     |> Enum.reduce(struct(Type.Map), fn
       {key, _}, acc when is_integer(key) or is_atom(key) ->
         val_type = map
@@ -669,7 +669,7 @@ defmodule Type do
   end
 
   defp of_list([head | rest], so_far) do
-    of_list(rest, Type.Union.of(head, so_far))
+    of_list(rest, Type.Union.of(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
     %Type.List{type: so_far, nonempty: true}

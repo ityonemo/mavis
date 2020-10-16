@@ -48,4 +48,34 @@ defmodule TypeTest.Type.FetchType.EtcTest do
       %Type{module: @unions, name: :nonexistent}
     } = msg
   end
+
+  def isa(value, type) do
+    value
+    |> Type.of
+    |> Type.subtype?(type)
+  end
+
+  test "recursively defined type" do
+    {:ok, json} = Type.fetch_type(@example, :json)
+
+    assert isa(true, json)
+    assert isa(false, json)
+    assert isa(nil, json)
+    assert isa(47, json)
+    assert isa(47.0, json)
+    assert isa("47", json)
+
+    refute isa(:foo, json)
+
+    assert isa(["47"], json)
+    assert isa(["47", true], json)
+
+    refute isa(["47", :foo], json)
+
+    assert isa(%{"foo" => "bar"}, json)
+    assert isa(%{"foo" => ["bar", "baz"]}, json)
+
+    refute isa(%{foo: "bar"}, json)
+    refute isa(%{"foo" => ["bar", :baz]}, json)
+  end
 end
