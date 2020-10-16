@@ -31,8 +31,13 @@ defimpl Type.Properties, for: Type.Function.Var do
     end
   end
 
-  def intersection(_, _) do
-    raise "cain"
+  intersection do
+    def intersection(left = %Type.Function.Var{}, right) do
+      case Type.intersection(left.constraint, right) do
+        builtin(:none) -> builtin(:none)
+        type -> %{left | constraint: type}
+      end
+    end
   end
 
   def subtype?(_, _) do

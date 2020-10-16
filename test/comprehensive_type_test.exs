@@ -65,5 +65,4 @@ defmodule TypeTest.ComprehensiveTypeTest do
   defp do_fetch_spec(module, {fun, arity}) do
     Type.fetch_spec(module, fun, arity)
   end
-
 end

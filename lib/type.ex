@@ -470,6 +470,15 @@ defmodule Type do
       end
       end
 
+      unless __MODULE__ == Type.Properties.Type.Function.Var do
+      def intersection(left, right = %Type.Function.Var{}) do
+        case Type.intersection(left, right.constraint) do
+          builtin(:none) -> builtin(:none)
+          type -> %{right | constraint: type}
+        end
+      end
+      end
+
       unquote(block)
 
       def intersection(_, _), do: builtin(:none)

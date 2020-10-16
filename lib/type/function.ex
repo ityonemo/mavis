@@ -205,8 +205,31 @@ defmodule Type.Function do
 
     def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
     def inspect(%{params: params, return: return}, opts) do
-      concat(["(", render_params(params, opts),
-              " -> ", to_doc(return, opts), ")"])
+
+      # check if any of the params or the returns have *when* statements
+      # TODO: nested variables
+
+      [return | params]
+      |> Enum.filter(fn
+        %Type.Function.Var{} -> true
+        _ -> false
+      end)
+      |> case do
+        [] -> basic_inspect(params, return, opts)
+        free_vars ->
+          when_list = free_vars
+          |> Enum.uniq
+          |> Enum.map(&Inspect.inspect(&1, opts))
+          |> Enum.intersperse(", ")
+
+          basic_inspect(params, return, opts) ++ [" when " | when_list]
+      end
+      |> Kernel.++([")"])
+      |> concat
+    end
+
+    defp basic_inspect(params, return, opts) do
+      ["(", render_params(params, opts), " -> ", to_doc(return, opts)]
     end
 
     defp render_params(:any, _), do: "..."
