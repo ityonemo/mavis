@@ -11,6 +11,7 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
 
   @any builtin(:any)
   @any_var %Var{name: :foo}
+  @bar_var %Var{name: :bar}
 
   describe "the any variable" do
     test "is smaller than the pure type" do
@@ -28,7 +29,6 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
   end
 
   describe "the negative integer variable" do
-
     @neg_var %Var{name: :foo, constraint: builtin(:neg_integer)}
 
     test "is smaller than the pure type" do
@@ -46,4 +46,15 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
       assert 0 > @neg_var
     end
   end
+
+  describe "when comparing two vars" do
+    test "when the constraints are the same it's lexical" do
+      assert @bar_var < @any_var
+    end
+
+    test "when the constraints are different it's constraint order" do
+      assert @neg_var < @bar_var
+    end
+  end
+
 end

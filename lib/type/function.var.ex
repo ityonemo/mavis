@@ -18,6 +18,13 @@ defimpl Type.Properties, for: Type.Function.Var do
     Type.typegroup(constraint)
   end
 
+  def compare(lhs, rhs = %Var{}) do
+    case Type.compare(lhs.constraint, rhs.constraint) do
+      comp when comp != :eq -> comp
+      :eq -> Type.compare(lhs.name, rhs.name)
+    end
+  end
+
   def compare(%{constraint: constraint}, rhs) do
     case Type.compare(constraint, rhs) do
       :eq -> :lt
