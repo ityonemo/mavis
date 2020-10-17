@@ -154,6 +154,48 @@ defmodule TypeTest.Builtin.OrderTest do
     end
   end
 
+  describe "node" do
+    test "is bigger than bottom and float" do
+      assert builtin(:node) > builtin(:none)  # bottom
+      assert builtin(:node) > builtin(:float) # outside of group
+    end
+
+    test "is bigger than that which it is a superclass of" do
+      assert builtin(:node) > :nonode@nohost
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:node) < builtin(:node) <|> builtin(:integer)
+    end
+
+    test "is smaller than atom, reference and top" do
+      assert builtin(:node) < builtin(:atom)
+      assert builtin(:node) < builtin(:reference) # outside of group
+      assert builtin(:node) < builtin(:any)       # top
+    end
+  end
+
+  describe "module" do
+    test "is bigger than bottom and float" do
+      assert builtin(:module) > builtin(:none)  # bottom
+      assert builtin(:module) > builtin(:float) # outside of group
+    end
+
+    test "is bigger than that which it is a superclass of" do
+      assert builtin(:module) > :nonode@nohost
+    end
+
+    test "is smaller than a union containing it" do
+      assert builtin(:module) < builtin(:module) <|> builtin(:integer)
+    end
+
+    test "is smaller than atom, reference and top" do
+      assert builtin(:module) < builtin(:atom)
+      assert builtin(:module) < builtin(:reference) # outside of group
+      assert builtin(:module) < builtin(:any)       # top
+    end
+  end
+
   describe "atom" do
     test "is bigger than bottom and float" do
       assert builtin(:atom) > builtin(:none)  # bottom

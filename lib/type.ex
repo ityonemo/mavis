@@ -76,6 +76,8 @@ defmodule Type do
   - group 2: float
   - group 3
     - [atom literal]
+    - node
+    - module
     - atom
   - group 4: reference
   - group 5
@@ -776,7 +778,8 @@ defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
-    float: 2, atom: 3, reference: 4, port: 6, pid: 7, iolist: 10, any: 12}
+    float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
+    iolist: 10, any: 12}
 
   import Type, only: :macros
 
@@ -905,6 +908,12 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
+    def intersection(builtin(:node), atom) when is_atom(atom), do: node_or_none(atom)
+    def intersection(builtin(:node), builtin(:atom)), do: builtin(:node)
+    def intersection(builtin(:module), atom) when is_atom(atom), do: module_or_none(atom)
+    def intersection(builtin(:module), builtin(:atom)), do: builtin(:module)
+    def intersection(builtin(:atom), builtin(:module)), do: builtin(:module)
+    def intersection(builtin(:atom), builtin(:node)), do: builtin(:node)
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
     # iolist
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
@@ -917,6 +926,20 @@ defimpl Type.Properties, for: Type do
       left = Type.fetch_type!(module, name, params)
       Type.intersection(left, right)
     end
+  end
+
+  def node_or_none(atom) do
+    atom
+    |> Atom.to_string
+    |> String.split("@")
+    |> case do
+      [_, _] -> atom
+      _ -> builtin(:none)
+    end
+  end
+
+  def module_or_none(atom) do
+    if function_exported?(atom, :module_info, 0), do: atom, else: builtin(:none)
   end
 
   def typegroup(%{module: nil, name: name}) do
@@ -950,6 +973,10 @@ defimpl Type.Properties, for: Type do
     # group compare for the atom block
     def group_compare(builtin(:atom), _),                  do: :gt
     def group_compare(_, builtin(:atom)),                  do: :lt
+    def group_compare(builtin(:module), _),                do: :gt
+    def group_compare(_, builtin(:module)),                do: :lt
+    def group_compare(builtin(:node), _),                  do: :gt
+    def group_compare(_, builtin(:node)),                  do: :lt
 
     # group compare for iolist
     def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)

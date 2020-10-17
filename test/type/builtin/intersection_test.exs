@@ -171,6 +171,32 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
   end
 
+  describe "the intersection of module" do
+    test "with any, atom, and itself is itself" do
+      assert builtin(:module) == builtin(:module) <~> builtin(:any)
+      assert builtin(:module) == builtin(:module) <~> builtin(:atom)
+      assert builtin(:module) == builtin(:module) <~> builtin(:module)
+    end
+
+    test "with an atom that is a module is itself" do
+      assert Kernel == builtin(:module) <~> Kernel
+      assert builtin(:none) == builtin(:module) <~> :foobar
+    end
+  end
+
+  describe "the intersection of node" do
+    test "with any, atom, and itself is itself" do
+      assert builtin(:node) == builtin(:node) <~> builtin(:any)
+      assert builtin(:node) == builtin(:node) <~> builtin(:atom)
+      assert builtin(:node) == builtin(:node) <~> builtin(:node)
+    end
+
+    test "with an atom that has node form is itself" do
+      assert :nonode@nohost == builtin(:node) <~> :nonode@nohost
+      assert builtin(:none) == builtin(:node) <~> :foobar
+    end
+  end
+
   describe "the intersection of atom" do
     test "with any, atom is itself" do
       assert builtin(:atom) == builtin(:atom) <~> builtin(:any)

@@ -178,6 +178,8 @@ defimpl Type.Properties, for: Atom do
 
   intersection do
     def intersection(atom, builtin(:atom)), do: atom
+    def intersection(atom, builtin(:node)), do: Type.Properties.Type.node_or_none(atom)
+    def intersection(atom, builtin(:module)), do: Type.Properties.Type.module_or_none(atom)
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok

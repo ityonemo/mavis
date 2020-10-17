@@ -17,6 +17,16 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
       assert builtin(:none) == :foo <~> :bar
     end
 
+    test "with node works is itself if it has node form" do
+      assert :nonode@nohost == :nonode@nohost <~> builtin(:node)
+      assert builtin(:none) == :foobar <~> builtin(:node)
+    end
+
+    test "with module works if it has module form" do
+      assert Kernel == Kernel <~> builtin(:module)
+      assert builtin(:none) == :foobar <~> builtin(:module)
+    end
+
     test "with unions works as expected" do
       assert :foo == :foo <~> (builtin(:atom) <|> builtin(:integer))
       assert builtin(:none) == :foo <~> (builtin(:integer) <|> builtin(:port))
