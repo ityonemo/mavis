@@ -32,7 +32,7 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
       {{^name, _}, [spec]} -> spec
       _ -> false
     end)
-    |> Type.parse_spec()
+    |> Type.Spec.parse()
     |> inspect
   end
 
