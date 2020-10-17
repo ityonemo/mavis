@@ -27,6 +27,22 @@ defmodule TypeTest.Type.FetchType.EtcTest do
     end
   end
 
+  describe "local type (:user_type)" do
+    test "basic case" do
+      # verify that the user_type type actually has the
+      # erlang user_type keyword in it.
+
+      {:ok, specs} = Code.Typespec.fetch_types(@example)
+      assert {:user_type, _, _, _} = Enum.find_value(specs, fn
+        {:type, {:user_type, typespec}} -> typespec
+        _ -> false
+      end)
+
+      assert {:ok, %Type{module: @example, name: :other_type}} =
+        Type.fetch_type(@example, :user_type)
+    end
+  end
+
   test "type with arity" do
     assert {:ok, builtin(:integer)} ==
       Type.fetch_type(@remote, :with_arity, [builtin(:integer)])

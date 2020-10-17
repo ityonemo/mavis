@@ -131,4 +131,7 @@ defmodule TypeTest.TypeExample do
 
   @type regression_1 :: list(integer | regression_1)
 
+  @type other_type :: term
+  @type user_type :: other_type
+
 end
