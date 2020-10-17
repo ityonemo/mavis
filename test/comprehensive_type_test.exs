@@ -16,7 +16,7 @@ defmodule TypeTest.ComprehensiveTypeTest do
   Agent Application Config Config.Provider Config.Reader DynamicSupervisor
   GenServer Node Process Registry Supervisor Task Task.Supervisor Collectable
   Enumerable Inspect Inspect.Algebra Inspect.Opts List.Chars Protocol
-  String.Chars Code Kernel.ParallelCompiler ~Macro Macro.Env),
+  String.Chars Code Kernel.ParallelCompiler Macro Macro.Env),
   &Module.concat(Elixir, &1))
 
 
