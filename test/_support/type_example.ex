@@ -127,6 +127,10 @@ defmodule TypeTest.TypeExample do
     @type with_arity(t) :: t
   end
 
+  defmodule Opaque do
+    @opaque opaque :: integer
+  end
+
   @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
 
   @type regression_1 :: list(integer | regression_1)
@@ -134,4 +138,9 @@ defmodule TypeTest.TypeExample do
   @type other_type :: term
   @type user_type :: other_type
 
+  @typep typep :: term
+
+  # note without the helper, elixir compiler won't compile in the
+  # typep value.
+  @type helper :: typep
 end

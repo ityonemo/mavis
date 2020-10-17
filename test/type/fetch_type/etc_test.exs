@@ -34,12 +34,21 @@ defmodule TypeTest.Type.FetchType.EtcTest do
 
       {:ok, specs} = Code.Typespec.fetch_types(@example)
       assert {:user_type, _, _, _} = Enum.find_value(specs, fn
-        {:type, {:user_type, typespec}} -> typespec
+        {:type, {:user_type, typespec, []}} -> typespec
         _ -> false
       end)
 
       assert {:ok, %Type{module: @example, name: :other_type}} =
         Type.fetch_type(@example, :user_type)
+    end
+  end
+
+  describe "private type" do
+    test "basic case" do
+      {:ok, specs} = Code.Typespec.fetch_types(@example)
+      assert Enum.find(specs, &match?({:typep, {:typep, _, _}}, &1))
+
+      assert {:ok, builtin(:any)} = Type.fetch_type(@example, :typep)
     end
   end
 
