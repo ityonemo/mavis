@@ -275,4 +275,9 @@ defmodule TypeTest.SpecExample do
 
   @spec basic_when_union(t) :: t | atom when t: integer
   def basic_when_union(x), do: x
+
+  @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
+
+  @spec basic_with_json(json) :: json
+  def basic_with_json(x), do: x
 end

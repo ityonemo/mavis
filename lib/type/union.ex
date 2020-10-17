@@ -18,6 +18,17 @@ defmodule Type.Union do
     Enum.into([left, right], %__MODULE__{})
   end
 
+  @doc """
+  Exists to make it possible to do recursive types without
+  descending into an infinite loop.
+  """
+  def append_type(union = %__MODULE__{}, type) do
+    %{union| of: union.of ++ [type]}
+  end
+  def append_type(nonunion, type) do
+    %__MODULE__{of: [nonunion, type]}
+  end
+
   @spec collapse(t) :: Type.t
   def collapse(%__MODULE__{of: []}), do: builtin(:none)
   def collapse(%__MODULE__{of: [singleton]}), do: singleton
@@ -27,6 +38,10 @@ defmodule Type.Union do
   # special case merging a union with another union.
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
+  end
+  def merge(union = %__MODULE__{of: list}, type = %Type{module: m})
+      when not is_nil(m) do
+    %{union | of: list ++ [type]}
   end
   def merge(union = %__MODULE__{of: list}, type) do
     %{union | of: merge(list, type, [])}
@@ -213,7 +228,7 @@ defmodule Type.Union do
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
   end
-  def type_merge([type | _rest], _top), do: :nomerge
+  def type_merge([_type | _rest], _top), do: :nomerge
 
   defimpl Type.Properties do
     import Type, only: :macros
@@ -293,7 +308,8 @@ defmodule Type.Union do
 
     def into(original) do
       collector_fun = fn
-        union, {:cont, elem} -> Union.merge(union, elem)
+        union, {:cont, elem} ->
+          Union.merge(union, elem)
         union, :done -> Union.collapse(union)
         _set, :halt -> :ok
       end

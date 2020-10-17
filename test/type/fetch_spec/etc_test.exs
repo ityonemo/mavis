@@ -105,4 +105,12 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
       return: ^type_union
     } = fun
   end
+
+  test "referring to a recursive type" do
+    assert {:ok, spec} = Type.fetch_spec(@example, :basic_with_json, 1)
+
+    json = %Type{module: @example, name: :json}
+
+    assert %Function{params: [^json], return: ^json} = spec
+  end
 end

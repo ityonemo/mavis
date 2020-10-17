@@ -65,7 +65,7 @@ defmodule Type do
   order between two different types (see `typegroup/1`)
 
   The order is as follows:
-  - group 0: none
+  - group 0: none and foreign calls
   - group 1
     - [negative integer literal]
     - neg_integer
@@ -156,7 +156,8 @@ defmodule Type do
 
   def find_spec(module, specs, fun, arity) do
     Enum.find_value(specs, fn
-      {{^fun, ^arity}, [spec]} -> parse_spec(spec, %{"$module": module})
+      {{^fun, ^arity}, [spec]} ->
+        parse_spec(spec, %{"$mfa": {module, fun, arity}})
       _ -> false
     end)
   end
@@ -186,13 +187,15 @@ defmodule Type do
   @prefixes ~w(type typep opaque)a
 
   defp find_type(module, specs, name, params) do
+    arity = length(params)
+
     Enum.find_value(specs, fn
       {t, {^name, type, tparams}}
-          when t in @prefixes and length(tparams) == length(params) ->
+          when t in @prefixes and length(tparams) == arity ->
         assignments = tparams
         |> Enum.map(fn {:var, _, key} -> key end)
         |> Enum.zip(params)
-        |> Enum.into(%{"$module": module})
+        |> Enum.into(%{"$mfa": {module, name, arity}})
         {type, assignments}
       _ ->
         false
@@ -350,7 +353,7 @@ defmodule Type do
   end
   # general local type
   def parse_spec({:user_type, _, name, args}, assigns) do
-    %Type{module: Map.fetch!(assigns, :"$module"),
+    %Type{module: assigns |> Map.fetch!(:"$mfa") |> elem(0),
           name: name,
           params: Enum.map(args, &parse_spec(&1, assigns))}
   end
@@ -364,6 +367,10 @@ defmodule Type do
     # TODO: write a test against constraint assignment
     parse_spec(fun, add_constraints(assigns, constraints))
   end
+
+  defp match_mfa(%Type{module: m, name: f, params: p}, {m, f, a})
+      when length(p) == a, do: true
+  defp match_mfa(_, _), do: false
 
   defp add_constraints(assigns, []), do: assigns
   defp add_constraints(assigns, [constraint | rest]) do
@@ -669,7 +676,7 @@ defmodule Type do
   end
 
   defp of_list([head | rest], so_far) do
-    of_list(rest, Type.Union.of(head, so_far))
+    of_list(rest, Type.Union.of(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
     %Type.List{type: so_far, nonempty: true}
@@ -882,11 +889,9 @@ defimpl Type.Properties, for: Type do
   def typegroup(%{module: nil, name: name}) do
     @groups_for[name]
   end
-  def typegroup(type) do
-    type
-    |> Type.fetch_type!()
-    |> Type.typegroup()
-  end
+  # String.t is special-cased.
+  def typegroup(%{module: String, name: :t}), do: 11
+  def typegroup(type), do: 0
 
   def compare(this, other) do
     this_group = Type.typegroup(this)
