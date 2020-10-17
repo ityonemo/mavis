@@ -18,17 +18,6 @@ defmodule Type.Union do
     Enum.into([left, right], %__MODULE__{})
   end
 
-  @doc """
-  Exists to make it possible to do recursive types without
-  descending into an infinite loop.
-  """
-  def append_type(union = %__MODULE__{}, type) do
-    %{union| of: union.of ++ [type]}
-  end
-  def append_type(nonunion, type) do
-    %__MODULE__{of: [nonunion, type]}
-  end
-
   @spec collapse(t) :: Type.t
   def collapse(%__MODULE__{of: []}), do: builtin(:none)
   def collapse(%__MODULE__{of: [singleton]}), do: singleton

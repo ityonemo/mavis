@@ -175,9 +175,19 @@ defmodule Type do
 
   def fetch_type(module, name, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
-         {type, assignments} <- find_type(module, specs, name, params) do
+         {type, assignments = %{"$opaque": false}} <-
+            find_type(module, specs, name, params) do
       {:ok, parse_spec(type, assignments)}
     else
+      {type, assignments = %{"$opaque": true}} ->
+        inner_type = parse_spec(type, assignments)
+        {:ok, struct(Type.Opaque,
+          type: inner_type,
+          module: module,
+          name: name,
+          params: params
+        )}
+
       _ -> {:error, struct(Type.Message,
         type: %Type{module: module, name: name, params: params},
         meta: meta ++ [message: "not found"])}
@@ -195,7 +205,9 @@ defmodule Type do
         assignments = tparams
         |> Enum.map(fn {:var, _, key} -> key end)
         |> Enum.zip(params)
-        |> Enum.into(%{"$mfa": {module, name, arity}})
+        |> Enum.into(%{
+          "$mfa": {module, name, arity},
+          "$opaque": t == :opaque})
         {type, assignments}
       _ ->
         false
@@ -399,6 +411,13 @@ defmodule Type do
         Type.usable_as(challenge, target.constraint, meta)
       end
 
+      def usable_as(challenge, target = %Type.Opaque{}, meta) do
+        case Type.usable_as(challenge, target.type) do
+          :ok -> {:warn, Type.Message.make(challenge, target, meta)}
+          usable -> usable
+        end
+      end
+
       def usable_as(challenge, target = %Type{module: m}, meta) when not is_nil(m) do
         case Type.usable_as(challenge, Type.fetch_type!(target)) do
           :ok ->
@@ -538,10 +557,17 @@ defmodule Type do
         end
       end
 
+      def group_compare(type1, %Type.Opaque{type: type2}) do
+        case group_compare(type1, type2) do
+          :eq -> :gt
+          cmp -> cmp
+        end
+      end
+
       def group_compare(type, var = %Type.Function.Var{}) do
         case group_compare(type, var.constraint) do
           :eq -> :gt
-          order -> order
+          cmp -> cmp
         end
       end
 
@@ -766,6 +792,13 @@ defimpl Type.Properties, for: Type do
   # vars are transparent
   def usable_as(challenge, target = %Type.Function.Var{}, meta) do
     Type.usable_as(challenge, target.constraint, meta)
+  end
+
+  def usable_as(challenge, target = %Type.Opaque{}, meta) do
+    case Type.usable_as(challenge, target.type) do
+      :ok -> {:warn, Type.Message.make(challenge, target, meta)}
+      usable -> usable
+    end
   end
 
   # trap anys as ok
