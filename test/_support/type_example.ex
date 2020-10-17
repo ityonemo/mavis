@@ -129,4 +129,6 @@ defmodule TypeTest.TypeExample do
 
   @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
 
+  @type regression_1 :: list(integer | regression_1)
+
 end

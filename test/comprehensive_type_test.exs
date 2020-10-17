@@ -10,13 +10,13 @@ defmodule TypeTest.ComprehensiveTypeTest do
   @elixir_modules Enum.map(~w(Kernel Kernel.SpecialForms Atom Base Bitwise
   Date DateTime Exception Float Function Integer Module NaiveDateTime Record
   Regex String Time Tuple URI Version Version.Requirement Access Date.Range
-  Enum Keyword List Map MapSet Range Stream ~File File.Stat File.Stream
-  ~IO ~IO.ANSI IO.Stream OptionParser Path Port StringIO System Calendar
+  Enum Keyword List Map MapSet Range Stream File File.Stat File.Stream
+  IO IO.ANSI IO.Stream OptionParser Path Port StringIO System Calendar
   Calendar.ISO Calendar.TimeZoneDatabase Calendar.UTCOnlyTimeZoneDatabase
   Agent Application Config Config.Provider Config.Reader DynamicSupervisor
   GenServer Node Process Registry Supervisor Task Task.Supervisor Collectable
   Enumerable Inspect Inspect.Algebra Inspect.Opts List.Chars Protocol
-  String.Chars ~Code Kernel.ParallelCompiler ~Macro Macro.Env),
+  String.Chars Code Kernel.ParallelCompiler ~Macro Macro.Env),
   &Module.concat(Elixir, &1))
 
 

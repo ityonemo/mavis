@@ -58,10 +58,7 @@ defimpl Type.Properties, for: Type.Function.Var do
 
   usable_as do
     def usable_as(left, right, meta) do
-      left  |> IO.inspect(label: "61")
-      right |> IO.inspect(label: "62")
-      meta  |> IO.inspect(label: "63")
-      raise "nope"
+      raise "unreachable"
     end
   end
 end

@@ -43,7 +43,7 @@ defmodule TypeTest.Type.FetchType.EtcTest do
   end
 
   test "nonexistent type" do
-    assert {:error, msg} = Type.fetch_type(@unions, :nonexistent, 0, [file: "foo", line: 47])
+    assert {:error, msg} = Type.fetch_type(@unions, :nonexistent, [], [file: "foo", line: 47])
     assert %Message{type:
       %Type{module: @unions, name: :nonexistent}
     } = msg
