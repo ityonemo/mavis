@@ -176,7 +176,6 @@ defmodule TypeTest.Builtin.UsableAsTest do
 
     test "is usable as a union with self and any" do
       assert :ok = builtin(:integer) ~> (builtin(:integer) <|> builtin(:atom))
-      assert :ok = builtin(:integer) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "could be usable as a number, or range" do
@@ -218,7 +217,6 @@ defmodule TypeTest.Builtin.UsableAsTest do
 
     test "is usable as a union with self and any" do
       assert :ok = builtin(:float) ~> (builtin(:float) <|> builtin(:atom))
-      assert :ok = builtin(:float) ~> (builtin(:any) <|> builtin(:atom))
     end
 
     test "is not usable as a union of disjoint types" do
@@ -235,6 +233,61 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
   end
 
+  describe "node" do
+    test "is usable as self, atom, and any" do
+      assert :ok = builtin(:node) ~> builtin(:node)
+      assert :ok = builtin(:node) ~> builtin(:atom)
+      assert :ok = builtin(:node) ~> builtin(:any)
+    end
+
+    test "is usable as a union with self or atom" do
+      assert :ok = builtin(:node) ~> (builtin(:node) <|> builtin(:integer))
+      assert :ok = builtin(:node) ~> (builtin(:atom) <|> builtin(:integer))
+    end
+
+    test "might be usable as an atom literal with node form" do
+      assert {:maybe, [%Message{type: builtin(:node), target: :nonode@nohost}]} =
+        builtin(:node) ~> :nonode@nohost
+    end
+
+    test "is not usable as an atom literal without node form" do
+      assert {:error, %Message{type: builtin(:node), target: :foobar}} ==
+        builtin(:node) ~> :foobar
+    end
+
+    test "is not usable as a union of disjoint types" do
+      assert {:error, _} = builtin(:node) ~> (builtin(:float) <|> builtin(:integer))
+    end
+  end
+
+  describe "module" do
+    test "is usable as self, atom, and any" do
+      assert :ok = builtin(:module) ~> builtin(:module)
+      assert :ok = builtin(:module) ~> builtin(:atom)
+      assert :ok = builtin(:module) ~> builtin(:any)
+    end
+
+    test "is usable as a union with self or atom" do
+      assert :ok = builtin(:module) ~> (builtin(:module) <|> builtin(:integer))
+      assert :ok = builtin(:module) ~> (builtin(:atom) <|> builtin(:integer))
+    end
+
+    test "might be usable as an atom literal that is a module" do
+      assert {:maybe, [%Message{type: builtin(:module), target: Kernel}]} =
+        builtin(:module) ~> Kernel
+    end
+
+    # TODO :test that this message contains relevant information.
+    test "is maybe usable as an atom literal that isn't a module (yet)" do
+      assert {:maybe, [%Message{type: builtin(:module), target: :foobar}]} ==
+        builtin(:module) ~> :foobar
+    end
+
+    test "is not usable as a union of disjoint types" do
+      assert {:error, _} = builtin(:module) ~> (builtin(:float) <|> builtin(:integer))
+    end
+  end
+
   describe "atom" do
     test "is usable as self and any" do
       assert :ok = builtin(:atom) ~> builtin(:atom)
@@ -243,12 +296,18 @@ defmodule TypeTest.Builtin.UsableAsTest do
 
     test "is usable as a union with self and any" do
       assert :ok = builtin(:atom) ~> (builtin(:atom) <|> builtin(:integer))
-      assert :ok = builtin(:atom) ~> (builtin(:any) <|> builtin(:integer))
     end
 
     test "might be usable as an atom literal" do
       assert {:maybe, [%Message{type: builtin(:atom), target: :foo}]} =
         builtin(:atom) ~> :foo
+    end
+
+    test "might be usable as a node or module" do
+      assert {:maybe, [%Message{type: builtin(:atom), target: builtin(:node)}]} =
+        builtin(:atom) ~> builtin(:node)
+      assert {:maybe, [%Message{type: builtin(:atom), target: builtin(:module)}]} =
+        builtin(:atom) ~> builtin(:module)
     end
 
     test "is not usable as a union of disjoint types" do

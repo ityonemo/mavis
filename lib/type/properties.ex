@@ -167,6 +167,8 @@ defimpl Type.Properties, for: Atom do
 
   use Type
 
+  alias Type.Message
+
   group_compare do
     def group_compare(_, builtin(:atom)), do: :lt
     def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
@@ -174,12 +176,30 @@ defimpl Type.Properties, for: Atom do
 
   usable_as do
     def usable_as(_, builtin(:atom), _), do: :ok
+    def usable_as(atom, builtin(:node), meta) do
+      if Type.Properties.Type.valid_node?(atom) do
+        :ok
+      else
+        {:error, Message.make(atom, builtin(:node), meta)}
+      end
+    end
+    def usable_as(atom, builtin(:module), meta) do
+      if Type.Properties.Type.valid_module?(atom) do
+        :ok
+      else
+        {:maybe, [Message.make(atom, builtin(:module), meta)]}
+      end
+    end
   end
 
   intersection do
     def intersection(atom, builtin(:atom)), do: atom
-    def intersection(atom, builtin(:node)), do: Type.Properties.Type.node_or_none(atom)
-    def intersection(atom, builtin(:module)), do: Type.Properties.Type.module_or_none(atom)
+    def intersection(atom, builtin(:node)) do
+      if Type.Properties.Type.valid_node?(atom), do: atom, else: builtin(:none)
+    end
+    def intersection(atom, builtin(:module)) do
+      if Type.Properties.Type.valid_module?(atom), do: atom, else: builtin(:none)
+    end
   end
 
   def subtype?(a, b), do: usable_as(a, b, []) == :ok

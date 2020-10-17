@@ -141,11 +141,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
   end
 
   describe "builtin float" do
-    test "is a subtype of itself" do
-      assert builtin(:float) in builtin(:float)
-    end
-
-    test "is a subtype of integer and any" do
+    test "is a subtype of itself and any" do
       assert builtin(:float) in builtin(:float)
       assert builtin(:float) in builtin(:any)
     end
@@ -166,12 +162,40 @@ defmodule TypeTest.Builtin.SubtypeTest do
     end
   end
 
-  describe "builtin atom" do
-    test "is a subtype of itself" do
-      assert builtin(:atom) in builtin(:atom)
+  describe "builtin node" do
+    test "is a subtype of itself, atom, and any" do
+      assert builtin(:node) in builtin(:node)
+      assert builtin(:node) in builtin(:atom)
+      assert builtin(:node) in builtin(:any)
     end
 
-    test "is a subtype of integer and any" do
+    test "is a subtype of unions with itself" do
+      assert builtin(:node) in (builtin(:integer) <|> builtin(:node))
+    end
+
+    test "is not a subtype of orthogonal unions" do
+      refute builtin(:node) in (builtin(:pid) <|> builtin(:integer))
+    end
+  end
+
+  describe "builtin module" do
+    test "is a subtype of itself, atom, and any" do
+      assert builtin(:module) in builtin(:module)
+      assert builtin(:module) in builtin(:atom)
+      assert builtin(:module) in builtin(:any)
+    end
+
+    test "is a subtype of unions with itself" do
+      assert builtin(:module) in (builtin(:integer) <|> builtin(:module))
+    end
+
+    test "is not a subtype of orthogonal unions" do
+      refute builtin(:module) in (builtin(:pid) <|> builtin(:integer))
+    end
+  end
+
+  describe "builtin atom" do
+    test "is a subtype of itself and any" do
       assert builtin(:atom) in builtin(:atom)
       assert builtin(:atom) in builtin(:any)
     end
@@ -193,11 +217,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
   end
 
   describe "builtin reference" do
-    test "is a subtype of itself" do
-      assert builtin(:reference) in builtin(:reference)
-    end
-
-    test "is a subtype of integer and any" do
+    test "is a subtype of itself ati aty" do
       assert builtin(:reference) in builtin(:reference)
       assert builtin(:reference) in builtin(:any)
     end
@@ -219,11 +239,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
   end
 
   describe "builtin port" do
-    test "is a subtype of itself" do
-      assert builtin(:port) in builtin(:port)
-    end
-
-    test "is a subtype of integer and any" do
+    test "is a subtype of itself and any" do
       assert builtin(:port) in builtin(:port)
       assert builtin(:port) in builtin(:any)
     end
@@ -245,11 +261,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
   end
 
   describe "builtin pid" do
-    test "is a subtype of itself" do
-      assert builtin(:pid) in builtin(:pid)
-    end
-
-    test "is a subtype of integer and any" do
+    test "is a subtype of itself and any" do
       assert builtin(:pid) in builtin(:pid)
       assert builtin(:pid) in builtin(:any)
     end

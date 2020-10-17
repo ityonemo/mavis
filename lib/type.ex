@@ -861,6 +861,26 @@ defimpl Type.Properties, for: Type do
   end
 
   # atom
+  def usable_as(builtin(:node), builtin(:atom), _meta), do: :ok
+  def usable_as(builtin(:node), atom, meta) when is_atom(atom) do
+    if valid_node?(atom) do
+      {:maybe, [Message.make(builtin(:node), atom, meta)]}
+    else
+      {:error, Message.make(builtin(:node), atom, meta)}
+    end
+  end
+  def usable_as(builtin(:module), builtin(:atom), _meta), do: :ok
+  def usable_as(builtin(:module), atom, meta) when is_atom(atom) do
+    # TODO: consider elaborating on this and making more specific
+    # warning messages for when the module is or is not detected.
+    {:maybe, [Message.make(builtin(:module), atom, meta)]}
+  end
+  def usable_as(builtin(:atom), builtin(:node), meta) do
+    {:maybe, [Message.make(builtin(:atom), builtin(:node), meta)]}
+  end
+  def usable_as(builtin(:atom), builtin(:module), meta) do
+    {:maybe, [Message.make(builtin(:atom), builtin(:module), meta)]}
+  end
   def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
     {:maybe, [Message.make(builtin(:atom), atom, meta)]}
   end
@@ -908,9 +928,13 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
-    def intersection(builtin(:node), atom) when is_atom(atom), do: node_or_none(atom)
+    def intersection(builtin(:node), atom) when is_atom(atom) do
+      if valid_node?(atom), do: atom, else: builtin(:none)
+    end
     def intersection(builtin(:node), builtin(:atom)), do: builtin(:node)
-    def intersection(builtin(:module), atom) when is_atom(atom), do: module_or_none(atom)
+    def intersection(builtin(:module), atom) when is_atom(atom) do
+      if valid_module?(atom), do: atom, else: builtin(:none)
+    end
     def intersection(builtin(:module), builtin(:atom)), do: builtin(:module)
     def intersection(builtin(:atom), builtin(:module)), do: builtin(:module)
     def intersection(builtin(:atom), builtin(:node)), do: builtin(:node)
@@ -928,18 +952,18 @@ defimpl Type.Properties, for: Type do
     end
   end
 
-  def node_or_none(atom) do
+  def valid_node?(atom) do
     atom
     |> Atom.to_string
     |> String.split("@")
     |> case do
-      [_, _] -> atom
-      _ -> builtin(:none)
+      [_, _] -> true
+      _ -> false
     end
   end
 
-  def module_or_none(atom) do
-    if function_exported?(atom, :module_info, 0), do: atom, else: builtin(:none)
+  def valid_module?(atom) do
+    function_exported?(atom, :module_info, 0)
   end
 
   def typegroup(%{module: nil, name: name}) do

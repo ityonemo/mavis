@@ -204,6 +204,8 @@ defmodule TypeTest.Builtin.OrderTest do
 
     test "is bigger than that which it is a superclass of" do
       assert builtin(:atom) > :foo
+      assert builtin(:atom) > builtin(:node)
+      assert builtin(:atom) > builtin(:module)
     end
 
     test "is smaller than a union containing it" do
