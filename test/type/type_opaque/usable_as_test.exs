@@ -6,7 +6,7 @@ defmodule TypeTest.TypeOpaque.UsableAsTest do
   import Type, only: [builtin: 1]
   use Type.Operators
 
-  alias Type.{Message, Opaque}
+  alias Type.Opaque
 
   @opaque_int %Opaque{
     module: Foo,

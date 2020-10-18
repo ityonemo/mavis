@@ -9,7 +9,7 @@ defmodule Type.Union do
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t, ...]}
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   @doc """
   special syntax for two-valued union
@@ -28,8 +28,7 @@ defmodule Type.Union do
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
   end
-  def merge(union = %__MODULE__{of: list}, type = %Type{module: m})
-      when not is_nil(m) do
+  def merge(union = %__MODULE__{of: list}, type) when is_remote(type) do
     %{union | of: list ++ [type]}
   end
   def merge(union = %__MODULE__{of: list}, type) do
@@ -222,7 +221,7 @@ defmodule Type.Union do
   defimpl Type.Properties do
     import Type, only: :macros
     import Type.Helpers
-    
+
     alias Type.Union
 
     def compare(%{of: llist}, %Union{of: rlist}) do

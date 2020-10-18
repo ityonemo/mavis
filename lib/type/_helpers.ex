@@ -83,7 +83,7 @@ defmodule Type.Helpers do
         end
       end
 
-      def usable_as(challenge, target = %Type{module: m}, meta) when not is_nil(m) do
+      def usable_as(challenge, target, meta) when is_remote(target) do
         case Type.usable_as(challenge, Type.fetch_type!(target)) do
           :ok ->
             msg = """
@@ -124,7 +124,7 @@ defmodule Type.Helpers do
       end
       end
 
-      def intersection(left, right = %Type{module: m}) when not is_nil(m) do
+      def intersection(left, right) when is_remote(right) do
         # special case.
         Type.intersection(left, Type.fetch_type!(right))
       end
@@ -155,8 +155,7 @@ defmodule Type.Helpers do
       def group_compare(type, type), do: :eq
 
       # check for dual remote types
-      def group_compare(left = %Type{module: m1}, right = %Type{module: m2})
-          when not (is_nil(m1) or is_nil(m2)) do
+      def group_compare(left, right) when is_remote(left) and is_remote(right) do
         case group_compare(Type.fetch_type!(left), Type.fetch_type!(right)) do
           :eq ->
             Type.lexical_compare(left, right)
@@ -164,8 +163,7 @@ defmodule Type.Helpers do
         end
       end
 
-      def group_compare(left = %Type{module: m}, right)
-          when not is_nil(m) do
+      def group_compare(left, right) when is_remote(left) do
         left
         |> Type.fetch_type!
         |> group_compare(right)
@@ -175,8 +173,7 @@ defmodule Type.Helpers do
         end
       end
 
-      def group_compare(left, right = %Type{module: m})
-          when not is_nil(m) do
+      def group_compare(left, right) when is_remote(right) do
         left
         |> group_compare(Type.fetch_type!(right))
         |> case do
@@ -229,7 +226,7 @@ defmodule Type.Helpers do
       def subtype?(_, builtin(:any)), do: true
 
       # TODO make is_remote and is_builtin guards
-      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
+      def subtype?(left, right) when is_remote(right) do
         r_solved = Type.fetch_type!(right)
         if left == r_solved do
           false
@@ -246,7 +243,7 @@ defmodule Type.Helpers do
   end
   defmacro subtype(:usable_as) do
     quote do
-      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
+      def subtype?(left, right) when is_remote(right) do
         r_solved = Type.fetch_type!(right)
         if left == r_solved do
           false

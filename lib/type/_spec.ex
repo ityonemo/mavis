@@ -166,10 +166,6 @@ defmodule Type.Spec do
     parse(fun, add_constraints(assigns, constraints))
   end
 
-  defp match_mfa(%Type{module: m, name: f, params: p}, {m, f, a})
-      when length(p) == a, do: true
-  defp match_mfa(_, _), do: false
-
   defp add_constraints(assigns, []), do: assigns
   defp add_constraints(assigns, [constraint | rest]) do
     assigns

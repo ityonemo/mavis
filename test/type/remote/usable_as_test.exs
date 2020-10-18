@@ -7,7 +7,7 @@ defmodule TypeTest.Remote.UsableAsTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, Message}
+  alias Type.Bitstring
 
   @empty_bitstring %Bitstring{size: 0, unit: 0}
   @basic_bitstring %Bitstring{size: 0, unit: 1}

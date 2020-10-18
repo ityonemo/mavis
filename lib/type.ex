@@ -30,6 +30,14 @@ defmodule Type do
     Macro.escape(%Type{module: module, name: name, params: params})
   end
 
+  defguard is_remote(type) when is_struct(type) and
+    :erlang.map_get(:__struct__, type) == Type and
+    :erlang.map_get(:module, type) != nil
+
+  defguard is_builtin(type) when is_struct(type) and
+    :erlang.map_get(:__struct__, type) == Type and
+    :erlang.map_get(:module, type) == nil
+
   defdelegate usable_as(type, target, meta \\ []), to: Type.Properties
   defdelegate subtype?(type, target), to: Type.Properties
 
@@ -164,8 +172,8 @@ defmodule Type do
     end)
   end
 
-  def fetch_type!(%Type{module: module, name: name, params: params})
-      when not is_nil(module) do
+  def fetch_type!(type = %Type{module: module, name: name, params: params})
+      when is_remote(type) do
     fetch_type!(module, name, params)
   end
   def fetch_type!(module, name, params \\ []) do
@@ -342,7 +350,7 @@ defimpl Type.Properties, for: Type do
   alias Type.Message
 
   usable_as do
-    def usable_as(challenge = %Type{module: m}, target, meta) when not is_nil(m) do
+    def usable_as(challenge, target, meta) when is_remote(challenge) do
       challenge
       |> Type.fetch_type!()
       |> Type.usable_as(target, meta)
@@ -477,8 +485,8 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
 
     # remote types
-    def intersection(%Type{module: module, name: name, params: params}, right)
-        when not is_nil(module) do
+    def intersection(type = %Type{module: module, name: name, params: params}, right)
+        when is_remote(type) do
       # deal with errors later.
       # TODO: implement type caching system
       left = Type.fetch_type!(module, name, params)
@@ -505,7 +513,7 @@ defimpl Type.Properties, for: Type do
   end
   # String.t is special-cased.
   def typegroup(%{module: String, name: :t}), do: 11
-  def typegroup(type), do: 0
+  def typegroup(_type), do: 0
 
   def compare(this, other) do
     this_group = Type.typegroup(this)
@@ -547,7 +555,7 @@ defimpl Type.Properties, for: Type do
     def subtype?(builtin(:iolist), list = %Type.List{}) do
       Type.Iolist.supertype_of_iolist?(list)
     end
-    def subtype?(left = %Type{module: m}, right) when not is_nil(m) do
+    def subtype?(left, right) when is_remote(left) do
       left
       |> Type.fetch_type!
       |> Type.subtype?(right)

@@ -5,7 +5,7 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   import Type.Operators
   import TypeTest.SpecCase
 
-  alias Type.{Function, Message}
+  alias Type.Function
 
   @moduletag :fetch
 

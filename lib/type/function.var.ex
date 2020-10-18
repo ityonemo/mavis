@@ -40,7 +40,7 @@ defimpl Type.Properties, for: Type.Function.Var do
       raise "can't intersect two var types"
     end
 
-    def intersection(left, right) do
+    def intersection(left = %Var{}, right) do
       case Type.intersection(left.constraint, right) do
         builtin(:none) -> builtin(:none)
         type -> %{left | constraint: type}
@@ -58,7 +58,7 @@ defimpl Type.Properties, for: Type.Function.Var do
   end
 
   usable_as do
-    def usable_as(left, right, meta) do
+    def usable_as(%Var{}, _right, _meta) do
       raise "unreachable"
     end
   end

@@ -53,7 +53,7 @@ defmodule Type.Opaque do
     end
 
     usable_as do
-      def usable_as(challenge, target, meta) do
+      def usable_as(challenge = %Opaque{}, target, meta) do
         case Type.usable_as(challenge.type, target, meta) do
           :ok ->
             # TODO: add opaqueness message here.
