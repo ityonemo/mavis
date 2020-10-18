@@ -61,7 +61,7 @@ defmodule Type.Helpers do
 
       if __MODULE__ == Type.Properties.Type do
       def usable_as(builtin(:none), target, meta) do
-        {:error, Message.make(builtin(:none), target, meta)}
+        {:error, Type.Message.make(builtin(:none), target, meta)}
       end
       end
 
@@ -96,13 +96,15 @@ defmodule Type.Helpers do
         end
       end
 
+      unquote(block)
+
+      # some integer types override the union analysis, so this must
+      # come at the end.
       def usable_as(challenge, %Type.Union{of: types}, meta) do
         types
         |> Enum.map(&Type.usable_as(challenge, &1, meta))
         |> Enum.reduce(&Type.ternary_or/2)
       end
-
-      unquote(block)
 
       def usable_as(challenge, union, meta) do
         {:error, Type.Message.make(challenge, union, meta)}

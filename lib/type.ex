@@ -319,6 +319,13 @@ defmodule Type do
   def of_bitstring(bitstring, so_far) do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
+
+  @spec isa?(t, term) :: boolean
+  def isa?(type, term) do
+    term
+    |> of
+    |> subtype?(type)
+  end
 end
 
 defimpl Type.Properties, for: Type do
@@ -566,25 +573,5 @@ defimpl Inspect, for: Type do
     |> concat
 
     concat([to_doc(module, opts), ".#{name}(", param_list, ")"])
-  end
-end
-
-defmodule Type.Message do
-  @enforce_keys [:type, :target]
-  defstruct @enforce_keys ++ [meta: []]
-
-  @type t :: %__MODULE__{
-    type:   Type.t,
-    target: Type.t,
-    meta:   [
-      file: Path.t,
-      line: non_neg_integer,
-      warning: atom,
-      message: String.t
-    ]
-  }
-
-  def make(type, target, meta) do
-    %__MODULE__{type: type, target: target, meta: meta}
   end
 end
