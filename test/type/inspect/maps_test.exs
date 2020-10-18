@@ -1,6 +1,6 @@
 defmodule TypeTest.Type.Inspect.MapsTest do
   use ExUnit.Case, async: true
-  
+
   import TypeTest.InspectCase
   @moduletag :inspect
 

@@ -19,7 +19,6 @@ defmodule TypeTest.ComprehensiveTypeTest do
   String.Chars Code Kernel.ParallelCompiler Macro Macro.Env),
   &Module.concat(Elixir, &1))
 
-
   test "all types" do
     @elixir_modules
     |> Enum.filter(fn module ->

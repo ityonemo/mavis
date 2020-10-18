@@ -2,7 +2,6 @@ defmodule Type.Inference.Api do
   @callback infer(function | mfa) :: Type.Function.t
 end
 
-
 defmodule Type.NoInference do
 
   @behaviour Type.Inference.Api

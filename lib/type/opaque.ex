@@ -20,7 +20,7 @@ defmodule Type.Opaque do
     import Type, only: :macros
     import Type.Helpers
 
-    alias Type.{Message,Opaque}
+    alias Type.{Message, Opaque}
 
     def compare(left = %{type: this}, right = %Opaque{type: this}) do
       left_arity = length(left.params)
@@ -77,7 +77,6 @@ defmodule Type.Opaque do
       def subtype?(_, _), do: false
     end
   end
-
 
   defimpl Inspect do
     import Inspect.Algebra
