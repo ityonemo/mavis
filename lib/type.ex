@@ -216,235 +216,6 @@ defmodule Type do
     end)
   end
 
-  defmacro usable_as_start do
-    quote do
-      def usable_as(type, type, meta), do: :ok
-      def usable_as(type, Type.builtin(:any), meta), do: :ok
-
-      if __MODULE__ == Type.Properties.Type.Bitstring do
-        import Type, only: [remote: 1]
-        def usable_as(%Type.Bitstring{size: 0, unit: 0}, remote(String.t()), _), do: :ok
-      end
-
-      def usable_as(challenge, target = %Type.Function.Var{}, meta) do
-        Type.usable_as(challenge, target.constraint, meta)
-      end
-
-      def usable_as(challenge, target = %Type.Opaque{}, meta) do
-        case Type.usable_as(challenge, target.type) do
-          :ok -> {:warn, Type.Message.make(challenge, target, meta)}
-          usable -> usable
-        end
-      end
-
-      def usable_as(challenge, target = %Type{module: m}, meta) when not is_nil(m) do
-        case Type.usable_as(challenge, Type.fetch_type!(target)) do
-          :ok ->
-            msg = """
-            #{inspect target} is usable as base type #{inspect challenge}
-            but #{inspect target} is considered to be a strict subtype because
-            it is a remote encapsulation.
-            """
-            {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
-          maybe_or_error -> maybe_or_error
-        end
-      end
-    end
-  end
-
-  @doc """
-  coda for "usable_as" function guard lists.  Performs the following two things:
-
-  - catches usable_as against unions; and performs the appropriate attempt to
-    match into each of the union's subtypes.
-  - catches all other attempts to run usable_as, and returns `:error, metadata}`
-
-  """
-  defmacro usable_as_coda do
-    quote do
-      def usable_as(challenge, %Type.Union{of: types}, meta) do
-        types
-        |> Enum.map(&Type.usable_as(challenge, &1, meta))
-        |> Enum.reduce(&Type.ternary_or/2)
-      end
-
-      def usable_as(challenge, union, meta) do
-        {:error, Type.Message.make(challenge, union, meta)}
-      end
-    end
-  end
-
-  @doc """
-  Wraps the "usable_as" function headers in common "top" and "fallback" headers.
-  This prevents errors from being made in code that must be common to all types.
-
-  Top function matches:
-  - matches equal types and makes them output :ok
-  - matches usable_as with `builtin(:any)` and makes them output :ok
-
-  Fallback function matches:
-  - see `usable_as_coda/0`
-
-  """
-  defmacro usable_as(do: block) do
-    quote do
-      Type.usable_as_start()
-
-      unquote(block)
-
-      Type.usable_as_coda()
-    end
-  end
-
-  defmacro intersection(do: block) do
-    quote do
-      @spec intersection(Type.t, Type.t) :: Type.t
-      def intersection(type, type), do: type
-      def intersection(type, builtin(:any)), do: type
-
-      if __MODULE__ == Type.Properties.Type do
-      def intersection(builtin(:any), type) do
-        type
-      end
-      end
-
-      def intersection(left, right = %Type{module: m}) when not is_nil(m) do
-        # special case.
-        Type.intersection(left, Type.fetch_type!(right))
-      end
-
-      unless __MODULE__ == Type.Properties.Type.Union do
-      def intersection(type, union = %Type.Union{}) do
-        Type.intersection(union, type)
-      end
-      end
-
-      unless __MODULE__ == Type.Properties.Type.Function.Var do
-      def intersection(left, right = %Type.Function.Var{}) do
-        case Type.intersection(left, right.constraint) do
-          builtin(:none) -> builtin(:none)
-          type -> %{right | constraint: type}
-        end
-      end
-      end
-
-      unquote(block)
-
-      def intersection(_, _), do: builtin(:none)
-    end
-  end
-
-  defmacro group_compare(do: block) do
-    quote do
-      def group_compare(type, type), do: :eq
-
-      # check for dual remote types
-      def group_compare(left = %Type{module: m1}, right = %Type{module: m2})
-          when not (is_nil(m1) or is_nil(m2)) do
-        case group_compare(Type.fetch_type!(left), Type.fetch_type!(right)) do
-          :eq ->
-            Type.lexical_compare(left, right)
-          order -> order
-        end
-      end
-
-      def group_compare(left = %Type{module: m}, right)
-          when not is_nil(m) do
-        left
-        |> Type.fetch_type!
-        |> group_compare(right)
-        |> case do
-          :eq -> :lt
-          order -> order
-        end
-      end
-
-      def group_compare(left, right = %Type{module: m})
-          when not is_nil(m) do
-        left
-        |> group_compare(Type.fetch_type!(right))
-        |> case do
-          :eq -> :gt
-          order -> order
-        end
-      end
-
-      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
-        case group_compare(type1, type2) do
-          :gt -> :gt
-          _ -> :lt
-        end
-      end
-
-      def group_compare(type1, %Type.Opaque{type: type2}) do
-        case group_compare(type1, type2) do
-          :eq -> :gt
-          cmp -> cmp
-        end
-      end
-
-      def group_compare(type, var = %Type.Function.Var{}) do
-        case group_compare(type, var.constraint) do
-          :eq -> :gt
-          cmp -> cmp
-        end
-      end
-
-      unquote(block)
-    end
-  end
-
-  defmacro subtype(do: block) do
-    # TODO: figure out how to DRY this.
-
-    quote do
-      def subtype?(a, a), do: true
-
-      unless __MODULE__ == Type.Properties.Type.Union do
-        def subtype?(a, %Type.Union{of: types}) do
-          Enum.any?(types, &Type.subtype?(a, &1))
-        end
-      end
-
-      if __MODULE__ == Type.Properties.Type do
-        def subtype?(builtin(:none), _), do: false
-      end
-
-      def subtype?(_, builtin(:any)), do: true
-
-      # TODO make is_remote and is_builtin guards
-      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
-        r_solved = Type.fetch_type!(right)
-        if left == r_solved do
-          false
-        else
-          subtype?(left, r_solved)
-        end
-      end
-      def subtype?(left, %Type.Function.Var{constraint: c}) do
-        subtype?(left, c)
-      end
-
-      unquote(block)
-    end
-  end
-  defmacro subtype(:usable_as) do
-    quote do
-      def subtype?(left, right = %Type{module: m}) when not is_nil(m) do
-        r_solved = Type.fetch_type!(right)
-        if left == r_solved do
-          false
-        else
-          subtype?(left, r_solved)
-        end
-      end
-      def subtype?(a, %Type.Function.Var{constraint: c}) do
-        subtype?(a, c)
-      end
-      def subtype?(a, b), do: usable_as(a, b, []) == :ok
-    end
-  end
-
   def lexical_compare(left = %{module: m, name: n}, right) do
     with {:m, ^m} <- {:m, right.module},
          {:n, ^n} <- {:n, right.name} do
@@ -559,122 +330,102 @@ defimpl Type.Properties, for: Type do
 
   import Type, only: :macros
 
+  import Type.Helpers
+
   alias Type.Message
 
-  def usable_as(type, type, _meta), do: :ok
+  usable_as do
+    def usable_as(challenge = %Type{module: m}, target, meta) when not is_nil(m) do
+      challenge
+      |> Type.fetch_type!()
+      |> Type.usable_as(target, meta)
+    end
 
-  # none type
-  def usable_as(builtin(:none), target, meta) do
-    {:error, Message.make(builtin(:none), target, meta)}
-  end
+    # negative integer
+    def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
 
-  # vars are transparent
-  def usable_as(challenge, target = %Type.Function.Var{}, meta) do
-    Type.usable_as(challenge, target.constraint, meta)
-  end
+    def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
+      {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
+    end
+    def usable_as(builtin(:neg_integer), a..b, meta) when a < 0 do
+      {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
+    end
 
-  def usable_as(challenge, target = %Type.Opaque{}, meta) do
-    case Type.usable_as(challenge, target.type) do
-      :ok -> {:warn, Type.Message.make(challenge, target, meta)}
-      usable -> usable
+    # non negative integer
+    def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
+
+    def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
+      {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
+    end
+    def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
+      {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
+    end
+    def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
+      {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
+    end
+
+    # positive integer
+    def usable_as(builtin(:pos_integer), builtin(target), _meta)
+      when target in [:non_neg_integer, :integer], do: :ok
+
+    def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
+      {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
+    end
+    def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
+      {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
+    end
+
+    # integer
+    def usable_as(builtin(:integer), builtin(target), meta)
+      when target in [:neg_integer, :non_neg_integer, :pos_integer] do
+        {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
+    end
+
+    def usable_as(builtin(:integer), a, meta) when is_integer(a) do
+      {:maybe, [Message.make(builtin(:integer), a, meta)]}
+    end
+    def usable_as(builtin(:integer), a..b, meta) do
+      {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
+    end
+
+    # atom
+    def usable_as(builtin(:node), builtin(:atom), _meta), do: :ok
+    def usable_as(builtin(:node), atom, meta) when is_atom(atom) do
+      if valid_node?(atom) do
+        {:maybe, [Message.make(builtin(:node), atom, meta)]}
+      else
+        {:error, Message.make(builtin(:node), atom, meta)}
+      end
+    end
+    def usable_as(builtin(:module), builtin(:atom), _meta), do: :ok
+    def usable_as(builtin(:module), atom, meta) when is_atom(atom) do
+      # TODO: consider elaborating on this and making more specific
+      # warning messages for when the module is or is not detected.
+      {:maybe, [Message.make(builtin(:module), atom, meta)]}
+    end
+    def usable_as(builtin(:atom), builtin(:node), meta) do
+      {:maybe, [Message.make(builtin(:atom), builtin(:node), meta)]}
+    end
+    def usable_as(builtin(:atom), builtin(:module), meta) do
+      {:maybe, [Message.make(builtin(:atom), builtin(:module), meta)]}
+    end
+    def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
+      {:maybe, [Message.make(builtin(:atom), atom, meta)]}
+    end
+
+    # iolist
+    def usable_as(builtin(:iolist), [], meta) do
+      {:maybe, [Message.make(builtin(:iolist), [], meta)]}
+    end
+    def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
+      Type.Iolist.usable_as_list(list, meta)
+    end
+
+    # any
+    def usable_as(builtin(:any), any_other_type, meta) do
+      {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
     end
   end
-
-  # trap anys as ok
-  def usable_as(_, builtin(:any), _meta), do: :ok
-
-  def usable_as(challenge = %Type{module: m}, target, meta) when not is_nil(m) do
-    challenge
-    |> Type.fetch_type!()
-    |> Type.usable_as(target, meta)
-  end
-
-  # negative integer
-  def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
-
-  def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
-    {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
-  end
-  def usable_as(builtin(:neg_integer), a..b, meta) when a < 0 do
-    {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
-  end
-
-  # non negative integer
-  def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
-
-  def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
-    {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
-  end
-  def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
-    {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
-  end
-  def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
-    {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
-  end
-
-  # positive integer
-  def usable_as(builtin(:pos_integer), builtin(target), _meta)
-    when target in [:non_neg_integer, :integer], do: :ok
-
-  def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
-    {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
-  end
-  def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
-    {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
-  end
-
-  # integer
-  def usable_as(builtin(:integer), builtin(target), meta)
-    when target in [:neg_integer, :non_neg_integer, :pos_integer] do
-      {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
-  end
-
-  def usable_as(builtin(:integer), a, meta) when is_integer(a) do
-    {:maybe, [Message.make(builtin(:integer), a, meta)]}
-  end
-  def usable_as(builtin(:integer), a..b, meta) do
-    {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
-  end
-
-  # atom
-  def usable_as(builtin(:node), builtin(:atom), _meta), do: :ok
-  def usable_as(builtin(:node), atom, meta) when is_atom(atom) do
-    if valid_node?(atom) do
-      {:maybe, [Message.make(builtin(:node), atom, meta)]}
-    else
-      {:error, Message.make(builtin(:node), atom, meta)}
-    end
-  end
-  def usable_as(builtin(:module), builtin(:atom), _meta), do: :ok
-  def usable_as(builtin(:module), atom, meta) when is_atom(atom) do
-    # TODO: consider elaborating on this and making more specific
-    # warning messages for when the module is or is not detected.
-    {:maybe, [Message.make(builtin(:module), atom, meta)]}
-  end
-  def usable_as(builtin(:atom), builtin(:node), meta) do
-    {:maybe, [Message.make(builtin(:atom), builtin(:node), meta)]}
-  end
-  def usable_as(builtin(:atom), builtin(:module), meta) do
-    {:maybe, [Message.make(builtin(:atom), builtin(:module), meta)]}
-  end
-  def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
-    {:maybe, [Message.make(builtin(:atom), atom, meta)]}
-  end
-
-  # iolist
-  def usable_as(builtin(:iolist), [], meta) do
-    {:maybe, [Message.make(builtin(:iolist), [], meta)]}
-  end
-  def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
-    Type.Iolist.usable_as_list(list, meta)
-  end
-
-  # any
-  def usable_as(builtin(:any), any_other_type, meta) do
-    {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
-  end
-
-  usable_as_coda()
 
   intersection do
     # negative integer

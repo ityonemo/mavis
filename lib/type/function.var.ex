@@ -33,6 +33,7 @@ defimpl Type.Properties, for: Type.Function.Var do
   end
 
   import Type, only: :macros
+  import Type.Helpers
 
   intersection do
     def intersection(_, %Var{}) do

@@ -221,7 +221,8 @@ defmodule Type.Union do
 
   defimpl Type.Properties do
     import Type, only: :macros
-
+    import Type.Helpers
+    
     alias Type.Union
 
     def compare(%{of: llist}, %Union{of: rlist}) do

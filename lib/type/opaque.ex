@@ -18,6 +18,7 @@ defmodule Type.Opaque do
 
   defimpl Type.Properties do
     import Type, only: :macros
+    import Type.Helpers
 
     alias Type.{Message,Opaque}
 
