@@ -9,7 +9,7 @@ defmodule Type.Union do
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t, ...]}
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   @doc """
   special syntax for two-valued union
@@ -27,6 +27,9 @@ defmodule Type.Union do
   # special case merging a union with another union.
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
+  end
+  def merge(union = %__MODULE__{of: list}, type) when is_remote(type) do
+    %{union | of: list ++ [type]}
   end
   def merge(union = %__MODULE__{of: list}, type) do
     %{union | of: merge(list, type, [])}
@@ -213,10 +216,11 @@ defmodule Type.Union do
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
   end
-  def type_merge([type | _rest], top), do: :nomerge
+  def type_merge([_type | _rest], _top), do: :nomerge
 
   defimpl Type.Properties do
     import Type, only: :macros
+    import Type.Helpers
 
     alias Type.Union
 
@@ -281,8 +285,10 @@ defmodule Type.Union do
       end
     end
 
-    def subtype?(%{of: types}, target) do
-      Enum.all?(types, &Type.subtype?(&1, target))
+    subtype do
+      def subtype?(%{of: types}, target) do
+        Enum.all?(types, &Type.subtype?(&1, target))
+      end
     end
   end
 
@@ -291,7 +297,8 @@ defmodule Type.Union do
 
     def into(original) do
       collector_fun = fn
-        union, {:cont, elem} -> Union.merge(union, elem)
+        union, {:cont, elem} ->
+          Union.merge(union, elem)
         union, :done -> Union.collapse(union)
         _set, :halt -> :ok
       end
@@ -302,43 +309,43 @@ defmodule Type.Union do
 
   defimpl Inspect do
     import Inspect.Algebra
+
     def inspect(%{of: types}, opts) do
       cond do
         # override for boolean
-        (true in types) and (false in types) ->
+        type_has(types, [true, false]) ->
           override(types -- [true, false], :boolean, opts)
 
         # override for identifier
-        (builtin(:reference) in types) and
-        (builtin(:port) in types) and
-        (builtin(:pid) in types) ->
-          override(types -- [builtin(:reference), builtin(:port), builtin(:pid)],
-                   :identifier,
-                   opts)
+        type_has(types, [builtin(:reference), builtin(:port), builtin(:pid)]) ->
+          types
+          |> Kernel.--([builtin(:reference), builtin(:port), builtin(:pid)])
+          |> override(:identifier, opts)
 
         # override for iodata
-        (builtin(:iolist) in types) and
-        (%Type.Bitstring{size: 0, unit: 8} in types) ->
-          override(types -- [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}],
-                   :iodata,
-                   opts)
+        type_has(types, [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) ->
+          types
+          |> Kernel.--([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
+          |> override(:iodata, opts)
 
         # override for number
-        (builtin(:float) in types) and
-        (builtin(:integer) in types) ->
-          override(types -- [builtin(:float), builtin(:integer)],
-                   :number,
-                   opts)
+        type_has(types, [builtin(:float), builtin(:integer)]) ->
+          types
+          |> Kernel.--([builtin(:float), builtin(:integer)])
+          |> override(:number, opts)
 
         # override for timeout
-        (builtin(:non_neg_integer) in types) and
-        (:infinity in types) ->
-          override(types -- [builtin(:non_neg_integer), :infinity],
-                   :timeout,
-                   opts)
+        type_has(types, [builtin(:non_neg_integer), :infinity]) ->
+          types
+          |> Kernel.--([builtin(:non_neg_integer), :infinity])
+          |> override(:timeout, opts)
 
         true -> normal_inspect(types, opts)
       end
+    end
+
+    defp type_has(types, query) do
+      Enum.all?(query, &(&1 in types))
     end
 
     defp override([], name, _opts) do

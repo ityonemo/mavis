@@ -6,7 +6,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
   import Type, only: [builtin: 1]
   use Type.Operators
 
-  alias Type.{Bitstring, List, Message}
+  alias Type.{Bitstring, List}
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}

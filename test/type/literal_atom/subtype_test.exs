@@ -20,6 +20,16 @@ defmodule TypeTest.LiteralAtom.SubtypeTest do
       assert :foo in builtin(:any)
     end
 
+    test "is a subtype of node when it has node form" do
+      assert :nonode@nohost in builtin(:node)
+      refute :foobar in builtin(:node)
+    end
+
+    test "is a subtype of module when it is a module" do
+      assert Kernel in builtin(:module)
+      refute :foobar in builtin(:module)
+    end
+
     test "is a subtype of a union with itself or atom" do
       assert :foo in (:foo <|> :bar)
       assert :foo in (:foo <|> builtin(:integer))

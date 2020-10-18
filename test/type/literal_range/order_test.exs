@@ -58,6 +58,10 @@ defmodule TypeTest.LiteralRange.OrderTest do
       assert 42..47 > 43..47
     end
 
+    test "is smaller than a union containing it" do
+      assert 42..47 < 0 <|> 42..47
+    end
+
     test "is smaller than the classes, it is a subset of" do
       assert 42..47 < 0..47
       assert 42..47 < builtin(:pos_integer)

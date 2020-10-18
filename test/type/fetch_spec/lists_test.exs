@@ -73,12 +73,12 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "charlist" do
-    assert {:ok, identity_for(%List{type: 0..1114111})} ==
+    assert {:ok, identity_for(%List{type: 0..0x10_FFFF})} ==
       Type.fetch_spec(@source, :charlist_spec, 1)
   end
 
   test "nonempty charlist" do
-    assert {:ok, identity_for(%List{type: 0..1114111, nonempty: true})} ==
+    assert {:ok, identity_for(%List{type: 0..0x10_FFFF, nonempty: true})} ==
       Type.fetch_spec(@source, :nonempty_charlist_spec, 1)
   end
 

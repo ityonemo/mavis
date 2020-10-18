@@ -13,7 +13,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
   @basic_binary    %Bitstring{size: 0, unit: 8}
 
   describe "the intersection of empty bitstring" do
-    test "with itself, integer and any is itself" do
+    test "with itself and any is itself" do
       assert @empty_bitstring == @empty_bitstring <~> builtin(:any)
       assert @empty_bitstring == @empty_bitstring <~> @empty_bitstring
     end

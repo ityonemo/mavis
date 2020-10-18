@@ -46,7 +46,7 @@ defmodule TypeTest.TypeExample do
 
   defmodule Functions do
     # literals
-    @type zero_arity :: ( -> any)
+    @type zero_arity :: (-> any)
     @type two_arity :: (integer, atom -> float)
     @type any_arity :: (... -> any)
     @type fun_type :: fun
@@ -94,7 +94,7 @@ defmodule TypeTest.TypeExample do
     @type empty_bitstring :: <<>>
     @type size_bitstring :: <<_::47>>
     @type unit_bitstring :: <<_::_*16>>
-    @type size_unit_bitstring :: <<_::12, _::_*8>>
+    @type size_unit_bitstring :: <<_::12, _::_ * 8>>
 
     @type binary_type :: binary
     @type bitstring_type :: bitstring
@@ -126,4 +126,21 @@ defmodule TypeTest.TypeExample do
     @type foobar :: Foo.bar(integer)
     @type with_arity(t) :: t
   end
+
+  defmodule Opaque do
+    @opaque opaque :: integer
+  end
+
+  @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
+
+  @type regression_1 :: list(integer | regression_1)
+
+  @type other_type :: term
+  @type user_type :: other_type
+
+  @typep typep :: term
+
+  # note without the helper, elixir compiler won't compile in the
+  # typep value.
+  @type helper :: typep
 end

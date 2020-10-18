@@ -21,8 +21,22 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
       assert (:foo ~> (builtin(:atom) <|> 47)) == :ok
     end
 
+    test "node, when they have the right form" do
+      assert :ok == :nonode@nohost ~> builtin(:node)
+    end
+
+    test "module, when they are modules" do
+      assert :ok == Kernel ~> builtin(:module)
+    end
+
     test "any" do
       assert (:foo ~> builtin(:any)) == :ok
+    end
+  end
+
+  describe "atoms are maybe usable" do
+    test "as modules if they aren't modules" do
+      assert {:maybe, _} = :foobar ~> builtin(:module)
     end
   end
 
@@ -32,6 +46,10 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
   describe "atoms not usable as" do
     test "a union without atoms" do
       assert {:error, _} = (:foo ~> (builtin(:integer) <|> builtin(:float)))
+    end
+
+    test "node, when they don't have the right form" do
+      assert {:error, _} = :foobar ~> builtin(:node)
     end
 
     test "any other type" do

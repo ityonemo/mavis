@@ -30,6 +30,14 @@ defmodule Type do
     Macro.escape(%Type{module: module, name: name, params: params})
   end
 
+  defguard is_remote(type) when is_struct(type) and
+    :erlang.map_get(:__struct__, type) == Type and
+    :erlang.map_get(:module, type) != nil
+
+  defguard is_builtin(type) when is_struct(type) and
+    :erlang.map_get(:__struct__, type) == Type and
+    :erlang.map_get(:module, type) == nil
+
   defdelegate usable_as(type, target, meta \\ []), to: Type.Properties
   defdelegate subtype?(type, target), to: Type.Properties
 
@@ -41,6 +49,12 @@ defmodule Type do
 
   def union(types) when is_list(types) do
     Enum.into(types, struct(Type.Union))
+  end
+
+  def intersect([]), do: builtin(:none)
+  def intersect([a]), do: a
+  def intersect([a | b]) do
+    Type.intersection(a, Type.intersect(b))
   end
 
   @spec compare({t, t}) :: :lt | :gt | :eq
@@ -59,7 +73,7 @@ defmodule Type do
   order between two different types (see `typegroup/1`)
 
   The order is as follows:
-  - group 0: none
+  - group 0: none and foreign calls
   - group 1
     - [negative integer literal]
     - neg_integer
@@ -70,6 +84,8 @@ defmodule Type do
   - group 2: float
   - group 3
     - [atom literal]
+    - node
+    - module
     - atom
   - group 4: reference
   - group 5
@@ -128,12 +144,12 @@ defmodule Type do
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
 
-  ## fetching AnD StuFF
+  alias Type.Spec
 
   def fetch_spec(module, fun, arity) do
     with {:module, _} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module),
-         spec when spec != nil <- find_spec(specs, fun, arity) do
+         spec when spec != nil <- find_spec(module, specs, fun, arity) do
       {:ok, spec}
     else
       :error ->
@@ -148,238 +164,85 @@ defmodule Type do
     end
   end
 
-  def find_spec(specs, fun, arity) do
+  def find_spec(module, specs, fun, arity) do
     Enum.find_value(specs, fn
-      {{^fun, ^arity}, [spec]} -> parse_spec(spec)
+      {{^fun, ^arity}, [spec]} ->
+        Spec.parse(spec, %{"$mfa": {module, fun, arity}})
       _ -> false
     end)
   end
 
-  def fetch_type(module, fun, params \\ [], meta \\ []) do
+  def fetch_type!(type = %Type{module: module, name: name, params: params})
+      when is_remote(type) do
+    fetch_type!(module, name, params)
+  end
+  def fetch_type!(module, name, params \\ []) do
+    case fetch_type(module, name, params) do
+      {:ok, specs} -> specs
+      {:error, msg} -> raise "#{inspect msg.type} type not found"
+    end
+  end
+
+  def fetch_type(module, name, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
-         {type, assignments} <- find_type(specs, fun, params)  do
-      {:ok, parse_spec(type, assignments)}
+         {type, assignments = %{"$opaque": false}} <-
+            find_type(module, specs, name, params) do
+      {:ok, Spec.parse(type, assignments)}
     else
+      {type, assignments = %{"$opaque": true}} ->
+        inner_type = Spec.parse(type, assignments)
+        {:ok, struct(Type.Opaque,
+          type: inner_type,
+          module: module,
+          name: name,
+          params: params
+        )}
+
       _ -> {:error, struct(Type.Message,
-        type: %Type{module: module, name: fun, params: params},
+        type: %Type{module: module, name: name, params: params},
         meta: meta ++ [message: "not found"])}
     end
   end
 
-  def find_type(specs, fun, params) do
-    Enum.find_value(specs, fn
-      {:type, {^fun, type, tparams}} when length(tparams) == length(params) ->
-        assignments = tparams |> Enum.zip(params) |> Enum.into(%{})
-        {type, assignments}
-       _ -> false
-      end)
-  end
+  @prefixes ~w(type typep opaque)a
 
-  def parse_spec(spec, assigns \\ %{})
-  def parse_spec({:type, _, :map, params}, assigns) do
-    Enum.reduce(params, struct(Type.Map), fn
-      {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
-        %{map | optional: Map.put(optional, parse_spec(src_type, assigns), parse_spec(dst_type, assigns))}
-      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{required: required} ->
-        %{map | required: Map.put(required, parse_spec(src_type, assigns), parse_spec(dst_type, assigns))}
+  defp find_type(module, specs, name, params) do
+    arity = length(params)
+
+    Enum.find_value(specs, fn
+      {t, {^name, type, tparams}}
+          when t in @prefixes and length(tparams) == arity ->
+        assignments = tparams
+        |> Enum.map(fn {:var, _, key} -> key end)
+        |> Enum.zip(params)
+        |> Enum.into(%{
+          "$mfa": {module, name, arity},
+          "$opaque": t == :opaque})
+        {type, assignments}
+      _ ->
+        false
     end)
   end
 
-  # fix assigns
-  def parse_spec(key, assigns) when is_map_key(assigns, key) do
-    assigns[key]
-  end
-  # general types
-  def parse_spec({:type, _, :range, [first, last]}, assigns), do: parse_spec(first, assigns)..parse_spec(last, assigns)
-  def parse_spec({:op, _, :-, value}, assigns), do: -parse_spec(value, assigns)
-  def parse_spec({:integer, _, value}, _), do: value
-  def parse_spec({:atom, _, value}, _), do: value
-  def parse_spec({:type, _, :fun, [{:type, _, :any}, return]}, assigns) do
-    struct(Type.Function, params: :any, return: parse_spec(return, assigns))
-  end
-  def parse_spec({:type, _, :fun, [{:type, _, :product, params}, return]}, assigns) do
-    param_types = Enum.map(params, &parse_spec(&1, assigns))
-    struct(Type.Function, params: param_types, return: parse_spec(return, assigns))
-  end
-  def parse_spec({:type, _, :tuple, :any}, _) do
-    struct(Type.Tuple, elements: :any)
-  end
-  def parse_spec({:type, _, :tuple, elements}, assigns) do
-    struct(Type.Tuple, elements: Enum.map(elements, &parse_spec(&1, assigns)))
-  end
-  # empty list
-  def parse_spec({:type, _, nil, []}, _), do: []
-  # overrides
-  def parse_spec({:type, _, :no_return, []}, _), do: builtin(:none)
-  def parse_spec({:type, _, :term, []}, _), do: builtin(:any)
-  def parse_spec({:type, _, :arity, []}, _), do: 0..255
-  def parse_spec({:type, _, :byte, []}, _), do: 0..255
-  def parse_spec({:type, _, :char, []}, _), do: 0..0x10FFFF
-  def parse_spec({:type, _, :number, []}, _) do
-    Type.Union.of(builtin(:integer), builtin(:float))
-  end
-  def parse_spec({:type, _, :timeout, []}, _) do
-    Type.Union.of(builtin(:non_neg_integer), :infinity)
-  end
-  def parse_spec({:type, _, :identifier, []}, _) do
-    ~w(port pid reference)a
-    |> Enum.map(&builtin/1)
-    |> Enum.into(struct(Type.Union))
-  end
-  def parse_spec({:type, _, :boolean, []}, _) do
-    Type.Union.of(true, false)
-  end
-  def parse_spec({:type, _, :fun, []}, _) do
-    struct(Type.Function, params: :any, return: builtin(:any))
-  end
-  def parse_spec({:type, _, :function, []}, _) do
-    struct(Type.Function, params: :any, return: builtin(:any))
-  end
-  def parse_spec({:type, _, :mfa, []}, _) do
-    struct(Type.Tuple, elements: [builtin(:module), builtin(:atom), 0..255])
-  end
-  def parse_spec({:type, _, :list, []}, _) do
-    struct(Type.List, type: builtin(:any))
-  end
-  def parse_spec({:type, _, :list, [type]}, assigns) do
-    struct(Type.List, type: parse_spec(type, assigns))
-  end
-  def parse_spec({:type, _, :nonempty_list, []}, _) do
-    struct(Type.List, type: builtin(:any), nonempty: true)
-  end
-  def parse_spec({:type, _, :nonempty_list, [type]}, assigns) do
-    struct(Type.List, type: parse_spec(type, assigns), nonempty: true)
-  end
-
-  def parse_spec({:type, _, :maybe_improper_list, []}, _) do
-    struct(Type.List, final: builtin(:any))
-  end
-  def parse_spec({:type, _, :maybe_improper_list, [type, final]}, assigns) do
-    struct(Type.List,
-      type: parse_spec(type, assigns),
-      final: Type.Union.of(parse_spec(final, assigns), []))
-  end
-  def parse_spec({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
-    struct(Type.List,
-      type: parse_spec(type, assigns),
-      nonempty: true,
-      final: parse_spec(final, assigns))
-  end
-  def parse_spec({:type, _, :nonempty_maybe_improper_list, []}, _) do
-    struct(Type.List, nonempty: true, final: builtin(:any))
-  end
-  def parse_spec({:type, _, :nonempty_maybe_improper_list, [type, final]}, assigns) do
-    struct(Type.List,
-      type: parse_spec(type, assigns),
-      nonempty: true,
-      final: Type.Union.of(parse_spec(final, assigns), []))
-  end
-  def parse_spec({:type, _, :bitstring, []}, _) do
-    struct(Type.Bitstring, size: 0, unit: 1)
-  end
-  def parse_spec({:type, _, :binary, []}, _) do
-    struct(Type.Bitstring, size: 0, unit: 8)
-  end
-  def parse_spec({:type, _, :binary, [size, unit]}, assigns) do
-    struct(Type.Bitstring, size: parse_spec(size, assigns), unit: parse_spec(unit, assigns))
-  end
-  def parse_spec({:type, _, :iodata, []}, _) do
-    Type.Union.of(struct(Type.Bitstring, size: 0, unit: 8), builtin(:iolist))
-  end
-  def parse_spec({:type, _, :union, types}, assigns) do
-    types
-    |> Enum.map(&parse_spec(&1, assigns))
-    |> Enum.into(struct(Type.Union))
-  end
-  # overridden remote types
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _) do
-    struct(Type.List, type: 0..0x10FFFF)
-  end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _) do
-    struct(Type.List, type: 0..0x10FFFF, nonempty: true)
-  end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
-    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), builtin(:any)]))
-  end
-  def parse_spec({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
-    struct(Type.List, type: struct(Type.Tuple, elements: [builtin(:atom), parse_spec(type, assigns)]))
-  end
-  # general remote type
-  def parse_spec({:remote_type, _, [module, name, args]}, assigns) do
-    %Type{module: parse_spec(module, assigns),
-          name: parse_spec(name, assigns),
-          params: Enum.map(args, &parse_spec(&1, assigns))}
-  end
-  # default builtin
-  def parse_spec({:type, _, type, []}, _), do: builtin(type)
-
-  defmacro usable_as_start do
-    quote do
-      def usable_as(type, type, meta), do: :ok
-      def usable_as(type, Type.builtin(:any), meta), do: :ok
-    end
-  end
-
-  @doc """
-  coda for "usable_as" function guard lists.  Performs the following two things:
-
-  - catches usable_as against unions; and performs the appropriate attempt to
-    match into each of the union's subtypes.
-  - catches all other attempts to run usable_as, and returns `:error, metadata}`
-
-  """
-  defmacro usable_as_coda do
-    quote do
-      def usable_as(challenge, %Type.Union{of: types}, meta) do
-        types
-        |> Enum.map(&Type.usable_as(challenge, &1, meta))
-        |> Enum.reduce(&Type.ternary_or/2)
-      end
-
-      def usable_as(challenge, union, meta) do
-        {:error, Type.Message.make(challenge, union, meta)}
-      end
-    end
-  end
-
-  @doc """
-  Wraps the "usable_as" function headers in common "top" and "fallback" headers.
-  This prevents errors from being made in code that must be common to all types.
-
-  Top function matches:
-  - matches equal types and makes them output :ok
-  - matches usable_as with `builtin(:any)` and makes them output :ok
-
-  Fallback function matches:
-  - see `usable_as_coda/0`
-
-  """
-  defmacro usable_as(do: block) do
-    quote do
-      Type.usable_as_start()
-
-      unquote(block)
-
-      Type.usable_as_coda()
-    end
-  end
-
-  defmacro intersection(do: block) do
-    quote do
-      @spec intersection(Type.t, Type.t) :: Type.t
-      def intersection(type, type), do: type
-      def intersection(type, builtin(:any)), do: type
-
-      unless __MODULE__ == Type.Properties.Type.Union do
-        def intersection(type, union = %Type.Union{}) do
-          Type.intersection(union, type)
+  def lexical_compare(left = %{module: m, name: n}, right) do
+    with {:m, ^m} <- {:m, right.module},
+         {:n, ^n} <- {:n, right.name} do
+      left.params
+      |> Enum.zip(right.params)
+      |> Enum.each(fn {l, r} ->
+        comp = Type.compare(l, r)
+        unless comp == :eq do
+          throw comp
         end
-      end
-
-      unquote(block)
-
-      def intersection(_, _), do: builtin(:none)
+      end)
+      raise "unreachable"
+    else
+      {:m, _} -> if m > right.module, do: :gt, else: :lt
+      {:n, _} -> if n > right.name, do: :gt, else: :lt
     end
+  catch
+    :gt -> :gt
+    :lt -> :lt
   end
 
   def of(value)
@@ -404,7 +267,7 @@ defmodule Type do
     map
     |> Map.keys
     |> Enum.map(&{&1, Type.of(&1)})
-    |> Enum.reduce(%Type.Map{}, fn
+    |> Enum.reduce(struct(Type.Map), fn
       {key, _}, acc when is_integer(key) or is_atom(key) ->
         val_type = map
         |> Map.get(key)
@@ -437,7 +300,7 @@ defmodule Type do
   end
 
   defp of_list([head | rest], so_far) do
-    of_list(rest, Type.Union.of(head, so_far))
+    of_list(rest, Type.Union.of(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
     %Type.List{type: so_far, nonempty: true}
@@ -465,48 +328,11 @@ defmodule Type do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
-  #######################################################################
-  ## `use Type` section - boilerplate for preventing mistakes
-
-  @group_for %{
-    "Integer" => 1,
-    "Range" => 1,
-    "Atom" => 3,
-    "Function" => 5,
-    "Tuple" => 8,
-    "Map" => 9,
-    "List" => 10,
-    "Bitstring" => 11
-  }
-
-  @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
-
-  # exists to prevent mistakes when generating functions.
-  defmacro __using__(_) do
-    group = __CALLER__.module
-    |> Module.split
-    |> List.last
-    |> :erlang.map_get(@group_for)
-
-    quote bind_quoted: [group: group] do
-      @behaviour Type
-
-      @group group
-      def typegroup(_), do: @group
-
-      def compare(this, other) do
-        other_group = Type.typegroup(other)
-        cond do
-          @group > other_group -> :gt
-          @group < other_group -> :lt
-          true ->
-            group_compare(this, other)
-        end
-      end
-
-      # preload a group_compare definition here.
-      def group_compare(any, any), do: :eq
-    end
+  @spec isa?(t, term) :: boolean
+  def isa?(type, term) do
+    term
+    |> of
+    |> subtype?(type)
   end
 end
 
@@ -514,88 +340,107 @@ defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
-    float: 2, atom: 3, reference: 4, port: 6, pid: 7, iolist: 10, any: 12}
+    float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
+    iolist: 10, any: 12}
 
   import Type, only: :macros
 
+  import Type.Helpers
+
   alias Type.Message
 
-  def usable_as(type, type, _meta), do: :ok
+  usable_as do
+    def usable_as(challenge, target, meta) when is_remote(challenge) do
+      challenge
+      |> Type.fetch_type!()
+      |> Type.usable_as(target, meta)
+    end
 
-  # none type
-  def usable_as(builtin(:none), target, meta) do
-    {:error, Message.make(builtin(:none), target, meta)}
-  end
+    # negative integer
+    def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
 
-  # trap anys as ok
-  def usable_as(_, builtin(:any), _meta), do: :ok
+    def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
+      {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
+    end
+    def usable_as(builtin(:neg_integer), a..b, meta) when a < 0 do
+      {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
+    end
 
-  # negative integer
-  def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
+    # non negative integer
+    def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
 
-  def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
-    {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
-  end
-  def usable_as(builtin(:neg_integer), a..b, meta) when a < 0 do
-    {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
-  end
+    def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
+      {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
+    end
+    def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
+      {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
+    end
+    def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
+      {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
+    end
 
-  # non negative integer
-  def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
+    # positive integer
+    def usable_as(builtin(:pos_integer), builtin(target), _meta)
+      when target in [:non_neg_integer, :integer], do: :ok
 
-  def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
-    {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
-  end
-  def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
-    {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
-  end
-  def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
-    {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
-  end
+    def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
+      {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
+    end
+    def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
+      {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
+    end
 
-  # positive integer
-  def usable_as(builtin(:pos_integer), builtin(target), _meta)
-    when target in [:non_neg_integer, :integer], do: :ok
+    # integer
+    def usable_as(builtin(:integer), builtin(target), meta)
+      when target in [:neg_integer, :non_neg_integer, :pos_integer] do
+        {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
+    end
 
-  def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
-    {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
-  end
-  def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
-    {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
-  end
+    def usable_as(builtin(:integer), a, meta) when is_integer(a) do
+      {:maybe, [Message.make(builtin(:integer), a, meta)]}
+    end
+    def usable_as(builtin(:integer), a..b, meta) do
+      {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
+    end
 
-  # integer
-  def usable_as(builtin(:integer), builtin(target), meta)
-    when target in [:neg_integer, :non_neg_integer, :pos_integer] do
-      {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
-  end
+    # atom
+    def usable_as(builtin(:node), builtin(:atom), _meta), do: :ok
+    def usable_as(builtin(:node), atom, meta) when is_atom(atom) do
+      if valid_node?(atom) do
+        {:maybe, [Message.make(builtin(:node), atom, meta)]}
+      else
+        {:error, Message.make(builtin(:node), atom, meta)}
+      end
+    end
+    def usable_as(builtin(:module), builtin(:atom), _meta), do: :ok
+    def usable_as(builtin(:module), atom, meta) when is_atom(atom) do
+      # TODO: consider elaborating on this and making more specific
+      # warning messages for when the module is or is not detected.
+      {:maybe, [Message.make(builtin(:module), atom, meta)]}
+    end
+    def usable_as(builtin(:atom), builtin(:node), meta) do
+      {:maybe, [Message.make(builtin(:atom), builtin(:node), meta)]}
+    end
+    def usable_as(builtin(:atom), builtin(:module), meta) do
+      {:maybe, [Message.make(builtin(:atom), builtin(:module), meta)]}
+    end
+    def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
+      {:maybe, [Message.make(builtin(:atom), atom, meta)]}
+    end
 
-  def usable_as(builtin(:integer), a, meta) when is_integer(a) do
-    {:maybe, [Message.make(builtin(:integer), a, meta)]}
-  end
-  def usable_as(builtin(:integer), a..b, meta) do
-    {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
-  end
+    # iolist
+    def usable_as(builtin(:iolist), [], meta) do
+      {:maybe, [Message.make(builtin(:iolist), [], meta)]}
+    end
+    def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
+      Type.Iolist.usable_as_list(list, meta)
+    end
 
-  # atom
-  def usable_as(builtin(:atom), atom, meta) when is_atom(atom) do
-    {:maybe, [Message.make(builtin(:atom), atom, meta)]}
+    # any
+    def usable_as(builtin(:any), any_other_type, meta) do
+      {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
+    end
   end
-
-  # iolist
-  def usable_as(builtin(:iolist), [], meta) do
-    {:maybe, [Message.make(builtin(:iolist), [], meta)]}
-  end
-  def usable_as(builtin(:iolist), list = %Type.List{}, meta) do
-    Type.Iolist.usable_as_list(list, meta)
-  end
-
-  # any
-  def usable_as(builtin(:any), any_other_type, meta) do
-    {:maybe, [Message.make(builtin(:any), any_other_type, meta)]}
-  end
-
-  usable_as_coda()
 
   intersection do
     # negative integer
@@ -625,16 +470,50 @@ defimpl Type.Properties, for: Type do
     def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
+    def intersection(builtin(:node), atom) when is_atom(atom) do
+      if valid_node?(atom), do: atom, else: builtin(:none)
+    end
+    def intersection(builtin(:node), builtin(:atom)), do: builtin(:node)
+    def intersection(builtin(:module), atom) when is_atom(atom) do
+      if valid_module?(atom), do: atom, else: builtin(:none)
+    end
+    def intersection(builtin(:module), builtin(:atom)), do: builtin(:module)
+    def intersection(builtin(:atom), builtin(:module)), do: builtin(:module)
+    def intersection(builtin(:atom), builtin(:node)), do: builtin(:node)
     def intersection(builtin(:atom), atom) when is_atom(atom), do: atom
     # iolist
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
-    # any
-    def intersection(builtin(:any), type), do: type
+
+    # remote types
+    def intersection(type = %Type{module: module, name: name, params: params}, right)
+        when is_remote(type) do
+      # deal with errors later.
+      # TODO: implement type caching system
+      left = Type.fetch_type!(module, name, params)
+      Type.intersection(left, right)
+    end
   end
 
-  def typegroup(%{module: nil, name: name, params: []}) do
+  def valid_node?(atom) do
+    atom
+    |> Atom.to_string
+    |> String.split("@")
+    |> case do
+      [_, _] -> true
+      _ -> false
+    end
+  end
+
+  def valid_module?(atom) do
+    function_exported?(atom, :module_info, 0)
+  end
+
+  def typegroup(%{module: nil, name: name}) do
     @groups_for[name]
   end
+  # String.t is special-cased.
+  def typegroup(%{module: String, name: :t}), do: 11
+  def typegroup(_type), do: 0
 
   def compare(this, other) do
     this_group = Type.typegroup(this)
@@ -646,35 +525,43 @@ defimpl Type.Properties, for: Type do
     end
   end
 
-  def group_compare(type, type),                         do: :eq
+  group_compare do
+    # group compare for the integer block.
+    def group_compare(builtin(:integer), _),               do: :gt
+    def group_compare(_, builtin(:integer)),               do: :lt
+    def group_compare(builtin(:non_neg_integer), _),       do: :gt
+    def group_compare(_, builtin(:non_neg_integer)),       do: :lt
+    def group_compare(builtin(:pos_integer), _),           do: :gt
+    def group_compare(_, builtin(:pos_integer)),           do: :lt
+    def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt
+    def group_compare(_, _..b) when b >= 0,                do: :lt
 
-  # group compare for the integer block.
-  def group_compare(builtin(:integer), _),               do: :gt
-  def group_compare(_, builtin(:integer)),               do: :lt
-  def group_compare(builtin(:non_neg_integer), _),       do: :gt
-  def group_compare(_, builtin(:non_neg_integer)),       do: :lt
-  def group_compare(builtin(:pos_integer), _),           do: :gt
-  def group_compare(_, builtin(:pos_integer)),           do: :lt
-  def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt
-  def group_compare(_, _..b) when b >= 0,                do: :lt
+    # group compare for the atom block
+    def group_compare(builtin(:atom), _),                  do: :gt
+    def group_compare(_, builtin(:atom)),                  do: :lt
+    def group_compare(builtin(:module), _),                do: :gt
+    def group_compare(_, builtin(:module)),                do: :lt
+    def group_compare(builtin(:node), _),                  do: :gt
+    def group_compare(_, builtin(:node)),                  do: :lt
 
-  # group compare for the atom block
-  def group_compare(builtin(:atom), _),                  do: :gt
-  def group_compare(_, builtin(:atom)),                  do: :lt
+    # group compare for iolist
+    def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
+    def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
 
-  # group compare for iolist
-  def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
-  def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
-
-  def group_compare(_, _),                               do: :gt
-
-  def subtype?(a, %Type.Union{of: types}) do
-    Enum.any?(types, &Type.subtype?(a, &1))
+    def group_compare(_, _),                               do: :gt
   end
-  def subtype?(builtin(:iolist), list = %Type.List{}) do
-    Type.Iolist.supertype_of_iolist?(list)
+
+  subtype do
+    def subtype?(builtin(:iolist), list = %Type.List{}) do
+      Type.Iolist.supertype_of_iolist?(list)
+    end
+    def subtype?(left, right) when is_remote(left) do
+      left
+      |> Type.fetch_type!
+      |> Type.subtype?(right)
+    end
+    def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
   end
-  def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
 end
 
 defimpl Inspect, for: Type do
@@ -694,25 +581,5 @@ defimpl Inspect, for: Type do
     |> concat
 
     concat([to_doc(module, opts), ".#{name}(", param_list, ")"])
-  end
-end
-
-defmodule Type.Message do
-  @enforce_keys [:type, :target]
-  defstruct @enforce_keys ++ [meta: []]
-
-  @type t :: %__MODULE__{
-    type:   Type.t,
-    target: Type.t,
-    meta:   [
-      file: Path.t,
-      line: non_neg_integer,
-      warning: atom,
-      message: String.t
-    ]
-  }
-
-  def make(type, target, meta) do
-    %__MODULE__{type: type, target: target, meta: meta}
   end
 end

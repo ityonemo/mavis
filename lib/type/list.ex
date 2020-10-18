@@ -14,17 +14,19 @@ defmodule Type.List do
   defimpl Type.Properties do
     import Type, only: :macros
 
-    use Type
+    use Type.Helpers
 
     alias Type.{List, Message, Union}
 
-    def group_compare(%{nonempty: ne}, []), do: if ne, do: :lt, else: :gt
-    def group_compare(%{nonempty: false}, %List{nonempty: true}), do: :gt
-    def group_compare(%{nonempty: true}, %List{nonempty: false}), do: :lt
-    def group_compare(a, b) do
-      case Type.compare(a.type, b.type) do
-        :eq -> Type.compare(a.final, b.final)
-        ordered -> ordered
+    group_compare do
+      def group_compare(%{nonempty: ne}, []), do: if ne, do: :lt, else: :gt
+      def group_compare(%{nonempty: false}, %List{nonempty: true}), do: :gt
+      def group_compare(%{nonempty: true}, %List{nonempty: false}), do: :lt
+      def group_compare(a, b) do
+        case Type.compare(a.type, b.type) do
+          :eq -> Type.compare(a.final, b.final)
+          ordered -> ordered
+        end
       end
     end
 
@@ -66,22 +68,21 @@ defmodule Type.List do
       def intersection(a, builtin(:iolist)), do: Type.Iolist.intersection_with(a)
     end
 
-    # can't simply forward to usable_as, because any of the encapsulated
-    # types might have a usable_as rule that isn't strictly subtype?
-    def subtype?(list_type, list_type), do: true
-    def subtype?(_list_type, builtin(:any)), do: true
-    # same nonempty is okay
-    def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
-    def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
-      when ne_c == ne_t or ne_c do
+    subtype do
+      # can't simply forward to usable_as, because any of the encapsulated
+      # types might have a usable_as rule that isn't strictly subtype?
+      def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
+      def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
+        when ne_c == ne_t or ne_c do
 
-      Type.subtype?(challenge.type, target.type) and
-        Type.subtype?(challenge.final, target.final)
+        Type.subtype?(challenge.type, target.type) and
+          Type.subtype?(challenge.final, target.final)
+      end
+      def subtype?(challenge, %Union{of: types}) do
+        Enum.any?(types, &Type.subtype?(challenge, &1))
+      end
+      def subtype?(_, _), do: false
     end
-    def subtype?(challenge, %Union{of: types}) do
-      Enum.any?(types, &Type.subtype?(challenge, &1))
-    end
-    def subtype?(_, _), do: false
   end
 
   defimpl Inspect do

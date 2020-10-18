@@ -3,7 +3,7 @@ defmodule TypeTest.Type.Inspect.ListsTest do
 
   import TypeTest.InspectCase
   @moduletag :inspect
-  
+
   @source TypeTest.TypeExample.Lists
 
   test "literal/0 is empty list" do

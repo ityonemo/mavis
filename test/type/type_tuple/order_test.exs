@@ -25,6 +25,10 @@ defmodule TypeTest.TypeTuple.OrderTest do
       assert %Tuple{elements: [:foo, builtin(:any)]} > %Tuple{elements: [:foo, builtin(:integer)]}
     end
 
+    test "is smaller than a union containing it" do
+      assert %Tuple{elements: [:foo]} < nil <|> %Tuple{elements: [:foo]}
+    end
+
     test "is smaller when it has fewer elements" do
       assert %Tuple{elements: []} < %Tuple{elements: [:foo]}
       assert %Tuple{elements: [:foo]} < %Tuple{elements: [:bar, :foo]}

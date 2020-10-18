@@ -71,12 +71,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "charlist" do
-    assert {:ok, %List{type: 0..1114111}} ==
+    assert {:ok, %List{type: 0..0x10_FFFF}} ==
       Type.fetch_type(@source, :charlist_type)
   end
 
   test "nonempty charlist" do
-    assert {:ok, %List{type: 0..1114111, nonempty: true}} ==
+    assert {:ok, %List{type: 0..0x10_FFFF, nonempty: true}} ==
       Type.fetch_type(@source, :nonempty_charlist_type)
   end
 

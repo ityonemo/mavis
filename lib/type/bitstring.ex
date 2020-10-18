@@ -11,15 +11,13 @@ defmodule Type.Bitstring do
     import Type, only: :macros
     alias Type.{Bitstring, Message}
 
-    use Type
+    use Type.Helpers
 
-    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
-    def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt
-    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: :gt
-    def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: :lt
-    # TODO: drop this is as a macro.
-    def group_compare(bitstring, %Type.Union{of: types}) do
-      if Type.compare(bitstring, hd(types)) == :gt, do: :gt, else: :lt
+    group_compare do
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b, do: :gt
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b, do: :lt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b, do: :gt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b, do: :lt
     end
 
     usable_as do
@@ -74,7 +72,7 @@ defmodule Type.Bitstring do
           rem(size_a - size_b, unit_gcd) != 0 ->
             {:error, Message.make(challenge, target, meta)}
           # the challenge lattice strictly overlays the target lattice
-          unit_gcd == unit_b ->
+          unit_gcd == unit_b and size_b < size_a ->
             :ok
           true ->
             {:maybe, [Message.make(challenge, target, meta)]}
@@ -107,7 +105,7 @@ defmodule Type.Bitstring do
 
     defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
 
-    def subtype?(a, b), do: usable_as(a, b, []) == :ok
+    subtype :usable_as
   end
 
   defimpl Inspect do

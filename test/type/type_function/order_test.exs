@@ -71,6 +71,10 @@ defmodule TypeTest.TypeFunction.OrderTest do
       assert param_any_fn(builtin(:any)) > param_any_fn(builtin(:integer))
     end
 
+    test "is smaller than a union containing it" do
+      assert param_any_fn(builtin(:any)) < 0 <|> param_any_fn(builtin(:any))
+    end
+
     test "is smaller than a function with a more general return" do
       assert param_any_fn(builtin(:integer)) < param_any_fn(builtin(:any))
     end
