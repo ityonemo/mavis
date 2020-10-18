@@ -5,102 +5,19 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: [], inferred: true]
+  defstruct @enforce_keys ++ [params: [], inferred: false]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any,
     return: Type.t,
-    inferred: true
+    inferred: boolean
   }
 
   import Type, only: [builtin: 1]
 
-  # inference code.  Mavis can performs type inference on function code.  The generalized
-  # bits of that are going to live here.
+  @inference_module Application.get_env(:mavis, :inference, Type.NoInference)
 
-  @info_parts [:module, :name, :arity, :env]
-  def infer(fun) do
-    [module, name, arity, _env] = fun
-    |> :erlang.fun_info
-    |> Keyword.take(@info_parts)
-    |> Keyword.values()
-
-    case :code.get_object_code(module) do
-      {^module, binary, _filepath} ->
-        {:beam_file, ^module, _funs_list, _vsn, _meta, functions} = :beam_disasm.file(binary)
-        code = Enum.find_value(functions,
-          fn
-            {:function, ^name, ^arity, _, code} -> code
-            _ -> false
-          end)
-
-        code || raise "fatal error; can't find function `#{name}/#{arity}` in module #{inspect module}"
-
-        Type.Inference.run(code, starting_map(arity))
-      :error ->
-        {:ok, %__MODULE__{params: any_for(arity), return: builtin(:any), inferred: false}}
-    end
-  end
-
-  defp any_for(arity) do
-    fn -> builtin(:any) end
-    |> Stream.repeatedly
-    |> Enum.take(arity)
-  end
-
-  defp starting_map(0), do: %{}
-  defp starting_map(arity) do
-    0..(arity - 1)
-    |> Enum.map(&{&1, builtin(:any)})
-    |> Enum.into(%{})
-  end
-
-  def asm(fun) do
-    [module, name, arity, _env] = fun
-    |> :erlang.fun_info
-    |> Keyword.take(@info_parts)
-    |> Keyword.values()
-
-    case :code.get_object_code(module) do
-      {^module, binary, _filepath} ->
-        {:beam_file, ^module, _funs_list, _vsn, _meta, functions} = :beam_disasm.file(binary)
-        code = Enum.find_value(functions,
-          fn
-            {:function, ^name, ^arity, _, code} -> code
-            _ -> false
-          end)
-
-        code || raise "fatal error; can't find function `#{name}/#{arity}` in module #{inspect module}"
-      :error ->
-        raise "nope"
-    end
-  end
-
-  def has_opcode?({m, f, a}, desired_opcode) do
-    with {^m, binary, _filepath} <- :code.get_object_code(m),
-         {:beam_file, ^m, _funs_list, _vsn, _meta, functions} <- :beam_disasm.file(binary) do
-      code = Enum.find_value(functions,
-        fn
-          {:function, ^f, ^a, _, code} -> code
-          _ -> false
-        end)
-
-      unless code do
-        raise "function #{inspect m}.#{f}/#{a} not found."
-      end
-
-      Enum.any?(code, fn
-        opcode when is_tuple(opcode) ->
-          opcode
-          |> Tuple.to_list
-          |> Enum.zip(desired_opcode)
-          |> Enum.all?(fn {a, b} -> a == b end)
-        _ -> false
-      end)
-    else
-      _ -> raise "function #{inspect m}.#{f}/#{a} not found."
-    end
-  end
+  defdelegate infer(fun), to: @inference_module
 
   defimpl Type.Properties do
     import Type, only: :macros
