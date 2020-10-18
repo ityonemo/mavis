@@ -35,9 +35,7 @@ defmodule Type.Opaque do
         true ->
           left.params
           |> Enum.zip(right.params)
-          |> Enum.find_value(fn {l, r} ->
-            if cmp = Type.compare(l, r) != :eq, do: cmp
-          end)
+          |> find_cmp
           |> Kernel.||(:eq)
       end
     end
@@ -46,6 +44,12 @@ defmodule Type.Opaque do
         :eq -> :lt
         cmp -> cmp
       end
+    end
+
+    defp find_cmp(leftrightlist) do
+      Enum.find_value(leftrightlist, fn {l, r} ->
+        if cmp = Type.compare(l, r) != :eq, do: cmp
+      end)
     end
 
     def typegroup(%{type: opaque}) do

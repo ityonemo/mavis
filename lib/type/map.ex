@@ -112,7 +112,7 @@ defmodule Type.Map do
   defp apply_partial(req_or_opt, preimage_subtype) do
     import Type, only: [builtin: 1]
     req_or_opt
-    |> Enum.flat_map(fn {keytype, valtype}->
+    |> Enum.flat_map(fn {keytype, valtype} ->
       if Type.intersection(keytype, preimage_subtype) == builtin(:none) do
         []
       else
@@ -181,9 +181,9 @@ defmodule Type.Map do
     group_compare do
       def group_compare(m1, m2) do
         preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
-        cond do
-          preimage_cmp != :eq -> preimage_cmp
-          :eq ->
+        if preimage_cmp != :eq do
+          preimage_cmp
+        else
             m1
             |> Map.resegment(Map.resegment(m2))
             |> Enum.each(fn segment ->

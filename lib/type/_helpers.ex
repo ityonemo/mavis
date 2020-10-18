@@ -1,3 +1,5 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
+
 defmodule Type.Helpers do
   #######################################################################
   ## boilerplate for preventing mistakes
@@ -209,7 +211,6 @@ defmodule Type.Helpers do
 
   defmacro subtype(do: block) do
     # TODO: figure out how to DRY this.
-
     quote do
       def subtype?(a, a), do: true
 

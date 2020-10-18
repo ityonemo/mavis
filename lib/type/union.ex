@@ -309,43 +309,43 @@ defmodule Type.Union do
 
   defimpl Inspect do
     import Inspect.Algebra
+
     def inspect(%{of: types}, opts) do
       cond do
         # override for boolean
-        (true in types) and (false in types) ->
+        type_has(types, [true, false]) ->
           override(types -- [true, false], :boolean, opts)
 
         # override for identifier
-        (builtin(:reference) in types) and
-        (builtin(:port) in types) and
-        (builtin(:pid) in types) ->
-          override(types -- [builtin(:reference), builtin(:port), builtin(:pid)],
-                   :identifier,
-                   opts)
+        type_has(types, [builtin(:reference), builtin(:port), builtin(:pid)]) ->
+          types
+          |> Kernel.--([builtin(:reference), builtin(:port), builtin(:pid)])
+          |> override(:identifier, opts)
 
         # override for iodata
-        (builtin(:iolist) in types) and
-        (%Type.Bitstring{size: 0, unit: 8} in types) ->
-          override(types -- [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}],
-                   :iodata,
-                   opts)
+        type_has(types, [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) ->
+          types
+          |> Kernel.--([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
+          |> override(:iodata, opts)
 
         # override for number
-        (builtin(:float) in types) and
-        (builtin(:integer) in types) ->
-          override(types -- [builtin(:float), builtin(:integer)],
-                   :number,
-                   opts)
+        type_has(types, [builtin(:float), builtin(:integer)]) ->
+          types
+          |> Kernel.--([builtin(:float), builtin(:integer)])
+          |> override(:number, opts)
 
         # override for timeout
-        (builtin(:non_neg_integer) in types) and
-        (:infinity in types) ->
-          override(types -- [builtin(:non_neg_integer), :infinity],
-                   :timeout,
-                   opts)
+        type_has(types, [builtin(:non_neg_integer), :infinity]) ->
+          types
+          |> Kernel.--([builtin(:non_neg_integer), :infinity])
+          |> override(:timeout, opts)
 
         true -> normal_inspect(types, opts)
       end
+    end
+
+    defp type_has(types, query) do
+      Enum.all?(query, &(&1 in types))
     end
 
     defp override([], name, _opts) do
