@@ -18,7 +18,7 @@ end
 defimpl Type.Properties, for: Integer do
   import Type, only: :macros
 
-  use Type
+  use Type.Helpers
 
   group_compare do
     def group_compare(_, builtin(:integer)),              do: :lt
@@ -60,7 +60,7 @@ end
 defimpl Type.Properties, for: Range do
   import Type, only: :macros
 
-  use Type
+  use Type.Helpers
 
   group_compare do
     def group_compare(_, builtin(:integer)),                  do: :lt
@@ -165,7 +165,7 @@ end
 defimpl Type.Properties, for: Atom do
   import Type, only: :macros
 
-  use Type
+  use Type.Helpers
 
   alias Type.Message
 
@@ -209,7 +209,7 @@ end
 defimpl Type.Properties, for: List do
   import Type, only: :macros
 
-  use Type
+  use Type.Helpers
 
   group_compare do
     def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)

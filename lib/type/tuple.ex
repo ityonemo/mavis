@@ -7,7 +7,7 @@ defmodule Type.Tuple do
   defimpl Type.Properties do
     import Type, only: :macros
 
-    use Type
+    use Type.Helpers
 
     alias Type.{Message, Tuple, Union}
 

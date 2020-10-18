@@ -174,7 +174,7 @@ defmodule Type.Map do
     import Type, only: :macros
     alias Type.{Map, Message}
 
-    use Type
+    use Type.Helpers
 
     ##############################################################
     ## comparison

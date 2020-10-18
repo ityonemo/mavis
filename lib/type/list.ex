@@ -14,7 +14,7 @@ defmodule Type.List do
   defimpl Type.Properties do
     import Type, only: :macros
 
-    use Type
+    use Type.Helpers
 
     alias Type.{List, Message, Union}
 

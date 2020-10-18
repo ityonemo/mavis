@@ -105,7 +105,7 @@ defmodule Type.Function do
   defimpl Type.Properties do
     import Type, only: :macros
 
-    use Type
+    use Type.Helpers
 
     group_compare do
       def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
