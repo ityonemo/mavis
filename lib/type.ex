@@ -247,7 +247,7 @@ defmodule Type do
               target: remote(String.t()),
               meta: [message: \"""
     binary() is an equivalent type to String.t() but it may fail because it is
-    a remote encapsulation which may have qualifications outside the type system.
+    a remote encapsulation which may require qualifications outside the type system.
     \"""]}]}
   ```
   """

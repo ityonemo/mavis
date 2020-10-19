@@ -90,7 +90,7 @@ defmodule Type.Helpers do
           :ok ->
             msg = """
             #{inspect challenge} is an equivalent type to #{inspect target} but it may fail because it is
-            a remote encapsulation which may have qualifications outside the type system.
+            a remote encapsulation which may require qualifications outside the type system.
             """
             {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
           maybe_or_error -> maybe_or_error
