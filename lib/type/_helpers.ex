@@ -89,9 +89,8 @@ defmodule Type.Helpers do
         case Type.usable_as(challenge, Type.fetch_type!(target)) do
           :ok ->
             msg = """
-            #{inspect target} is usable as base type #{inspect challenge}
-            but #{inspect target} is considered to be a strict subtype because
-            it is a remote encapsulation.
+            #{inspect challenge} is an equivalent type to #{inspect target} but it may fail because it is
+            a remote encapsulation which may have qualifications outside the type system.
             """
             {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
           maybe_or_error -> maybe_or_error

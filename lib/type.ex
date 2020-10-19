@@ -220,6 +220,7 @@ defmodule Type do
 
   ### Examples:
   ```
+  iex> import Type
   iex> Type.usable_as(1, builtin(:integer))
   :ok
   iex> Type.usable_as(1, builtin(:neg_integer))
@@ -228,6 +229,27 @@ defmodule Type do
   {:maybe, [%Type.Message{type: -10..10, target: builtin(:neg_integer)}]}
   ```
 
+  ### Remote types:
+
+  A remote type is intended to indicate that there is a quality outside of
+  the type system which specifies the type.  Thus, a remote type should
+  be usable as the type it encapsulates, but it should emit a `maybe` when
+  going the other direction:
+
+  ```
+  iex> import Type
+  iex> binary = %Type.Bitstring{size: 0, unit: 8}
+  iex> Type.usable_as(remote(String.t()), binary)
+  :ok
+  iex> Type.usable_as(binary, remote(String.t))
+  {:maybe, [%Type.Message{
+              type: binary,
+              target: remote(String.t()),
+              meta: [message: \"""
+    binary() is an equivalent type to String.t() but it may fail because it is
+    a remote encapsulation which may have qualifications outside the type system.
+    \"""]}]}
+  ```
   """
   defdelegate usable_as(challenge, target, meta \\ []), to: Type.Properties
 
