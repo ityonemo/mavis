@@ -2,6 +2,11 @@ defmodule Type.Function.Var do
   import Type, only: :macros
   @enforce_keys [:name]
   defstruct @enforce_keys ++ [constraint: builtin(:any)]
+
+  @type t :: %__MODULE__{
+    name: atom,
+    constraint: Type.t
+  }
 end
 
 defimpl Inspect, for: Type.Function.Var do

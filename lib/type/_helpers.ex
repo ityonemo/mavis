@@ -160,7 +160,7 @@ defmodule Type.Helpers do
       def group_compare(left, right) when is_remote(left) and is_remote(right) do
         case group_compare(Type.fetch_type!(left), Type.fetch_type!(right)) do
           :eq ->
-            Type.lexical_compare(left, right)
+            Type.Helpers.lexical_compare(left, right)
           order -> order
         end
       end
@@ -257,5 +257,27 @@ defmodule Type.Helpers do
       end
       def subtype?(a, b), do: usable_as(a, b, []) == :ok
     end
+  end
+
+  @doc false
+  def lexical_compare(left = %{module: m, name: n}, right) do
+    with {:m, ^m} <- {:m, right.module},
+         {:n, ^n} <- {:n, right.name} do
+      left.params
+      |> Enum.zip(right.params)
+      |> Enum.each(fn {l, r} ->
+        comp = Type.compare(l, r)
+        unless comp == :eq do
+          throw comp
+        end
+      end)
+      raise "unreachable"
+    else
+      {:m, _} -> if m > right.module, do: :gt, else: :lt
+      {:n, _} -> if n > right.name, do: :gt, else: :lt
+    end
+  catch
+    :gt -> :gt
+    :lt -> :lt
   end
 end

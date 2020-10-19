@@ -15,7 +15,7 @@ defmodule Type.Function do
 
   import Type, only: [builtin: 1]
 
-  @inference_module Application.get_env(:mavis, :inference, Type.NoInference)
+  @inference_module Application.compile_env(:mavis, :inference, Type.NoInference)
 
   defdelegate infer(fun), to: @inference_module
 

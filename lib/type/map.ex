@@ -103,7 +103,7 @@ defmodule Type.Map do
   defp segment_apply(map, segment) do
     required_image = apply_partial(map.required, segment)
     optional_image = apply_partial(map.optional, segment)
-    Type.intersect(required_image ++ optional_image)
+    Type.intersection(required_image ++ optional_image)
   end
 
   # performs an apply operation on either the required part or the

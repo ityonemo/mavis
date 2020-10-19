@@ -2,6 +2,7 @@ defmodule TypeTest do
 
   # tests on the Type module
   use ExUnit.Case, async: true
+  doctest Type
 
   use Type.Operators
 
