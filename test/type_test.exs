@@ -4,6 +4,10 @@ defmodule TypeTest do
   use ExUnit.Case, async: true
   doctest Type
 
+  # tests on types
+  doctest Type.Bitstring
+  doctest Type.Function
+
   use Type.Operators
 
   import Type, only: [builtin: 1, remote: 1]

@@ -212,6 +212,30 @@ defmodule Type.Union do
     end
   end
 
+  # functions
+  alias Type.Function
+  def type_merge([left = %Function{params: p} | rest], right = %Function{params: p}) do
+    {%Function{params: p, return: Type.union(left.return, right.return)}, rest}
+  end
+
+  # bitstrings and binaries
+  alias Type.Bitstring
+  def type_merge(_, %Bitstring{unit: 0}), do: :nomerge
+  def type_merge([left = %Bitstring{unit: 0} | rest], right = %Bitstring{}) do
+    if rem(right.size - left.size, right.unit) == 0 do
+      {right, rest}
+    else
+      :nomerge
+    end
+  end
+  def type_merge([left = %Bitstring{} | rest], right = %Bitstring{}) do
+    if rem(left.size - right.size, Integer.gcd(left.unit, right.unit)) == 0 do
+      {right, rest}
+    else
+      :nomerge
+    end
+  end
+
   # any
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
