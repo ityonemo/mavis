@@ -2,6 +2,15 @@ defmodule TypeTest do
 
   # tests on the Type module
   use ExUnit.Case, async: true
+  doctest Type
+
+  # tests on types
+  doctest Type.Bitstring
+  doctest Type.Function
+  doctest Type.List
+  doctest Type.NoInference
+  doctest Type.Tuple
+  doctest Type.Union
 
   use Type.Operators
 

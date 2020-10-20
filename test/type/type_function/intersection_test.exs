@@ -122,20 +122,15 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
         @two_arity_any <~> %Function{params: [@any, @any], return: builtin(:integer)}
     end
 
-    test "reduces parameter types" do
-      assert %Function{params: [builtin(:integer)], return: @any} ==
+    test "is invalid if any parameter types mismatches" do
+      assert builtin(:none) ==
         @one_arity_any <~> %Function{params: [builtin(:integer)], return: @any}
 
-      assert %Function{params: [builtin(:integer), @any], return: @any} ==
+      assert builtin(:none) ==
         @two_arity_any <~> %Function{params: [builtin(:integer), @any], return: @any}
 
-      assert %Function{params: [@any, builtin(:atom)], return: @any} ==
+      assert builtin(:none) ==
         @two_arity_any <~> %Function{params: [@any, builtin(:atom)], return: @any}
-    end
-
-    test "reduces both" do
-      assert %Function{params: [builtin(:atom)], return: builtin(:integer)} ==
-        @one_arity_any <~> %Function{params: [builtin(:atom)], return: builtin(:integer)}
     end
 
     test "is invalid if return mismatches" do

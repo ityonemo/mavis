@@ -33,4 +33,9 @@ defmodule TypeTest.Type.FetchType.MapsTest do
     assert {:ok, Map.build(%{__struct__: @source, foo: builtin(:integer)}, %{})} ==
       Type.fetch_type(@source, :struct_defined_literal_type)
   end
+
+  test "downgraded nonliteral type" do
+    assert {:ok, Map.build(%{builtin(:integer) => builtin(:integer)})} ==
+      Type.fetch_type(@source, :downgraded_key_type)
+  end
 end

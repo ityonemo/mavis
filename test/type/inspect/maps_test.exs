@@ -14,6 +14,10 @@ defmodule TypeTest.Type.Inspect.MapsTest do
     assert "%{}" == inspect_type(@source, :empty_map_type)
   end
 
+  test "the any map type" do
+    assert "map()" == inspect_type(@source, :any_map_type)
+  end
+
   test "atom key map literal" do
     assert "%{atom: integer()}" == inspect_type(@source, :atom_key_type)
   end

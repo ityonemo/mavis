@@ -2,8 +2,27 @@ defmodule Type.Union do
   @moduledoc """
   represents the Union of two or more types.
 
+  the associated struct has one field:
+  - `:of` which is a list of all types that are being unioned.
+
   for performance purposes, Union keeps its subtypes in
   reverse-type-order.
+
+  Type.Union implements both the enumerable protocol and the
+  collectable protocol; if you collect into a union, it will return
+  a `t:Type.t/0` result in general; it might not be a Type.Union struct:
+
+  ```
+  iex> Enum.into([1, 3], %Type.Union{})
+  %Type.Union{of: [3, 1]}
+
+  iex> inspect %Type.Union{of: [3, 1]}
+  "1 | 3"
+
+  iex> Enum.into([1..10, 11..20], %Type.Union{})
+  1..20
+  ```
+
   """
 
   defstruct [of: []]
@@ -19,11 +38,13 @@ defmodule Type.Union do
   end
 
   @spec collapse(t) :: Type.t
+  @doc false
   def collapse(%__MODULE__{of: []}), do: builtin(:none)
   def collapse(%__MODULE__{of: [singleton]}), do: singleton
   def collapse(union), do: union
 
   @spec merge(t, Type.t) :: t
+  @doc false
   # special case merging a union with another union.
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
@@ -36,6 +57,7 @@ defmodule Type.Union do
   end
 
   @spec merge([Type.t], Type.t, [Type.t]) :: [Type.t]
+  @doc false
   defp merge([top | rest], type, stack) do
     with cmp when cmp != :eq <- Type.compare(top, type),
          {_, {new_type, new_list}} <- {cmp, type_merge(cmp, top, type, rest)} do
@@ -55,6 +77,7 @@ defmodule Type.Union do
   defp unroll(list, [top | rest]), do: unroll([top | list], rest)
 
   @spec type_merge(:gt | :lt, Type.t, Type.t, [Type.t]) :: {Type.t, [Type.t]}
+  @doc false
   def type_merge(:gt, top, type, rest) do
     type_merge([type | rest], top)
   end
@@ -63,6 +86,7 @@ defmodule Type.Union do
   end
 
   @spec type_merge(Type.t, [Type.t]) :: {Type.t, [Type.t]} | :nomerge
+  @doc false
   # integers and ranges
   def type_merge([a | rest], b) when b == a + 1 do
     {a..b, rest}
@@ -209,6 +233,30 @@ defmodule Type.Union do
       Type.subtype?(left, optionalized_right) ->
         {optionalized_right, rest}
       true -> :nomerge
+    end
+  end
+
+  # functions
+  alias Type.Function
+  def type_merge([left = %Function{params: p} | rest], right = %Function{params: p}) do
+    {%Function{params: p, return: Type.union(left.return, right.return)}, rest}
+  end
+
+  # bitstrings and binaries
+  alias Type.Bitstring
+  def type_merge(_, %Bitstring{unit: 0}), do: :nomerge
+  def type_merge([left = %Bitstring{unit: 0} | rest], right = %Bitstring{}) do
+    if rem(right.size - left.size, right.unit) == 0 do
+      {right, rest}
+    else
+      :nomerge
+    end
+  end
+  def type_merge([left = %Bitstring{} | rest], right = %Bitstring{}) do
+    if rem(left.size - right.size, Integer.gcd(left.unit, right.unit)) == 0 do
+      {right, rest}
+    else
+      :nomerge
     end
   end
 

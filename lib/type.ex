@@ -1,5 +1,115 @@
 defmodule Type do
 
+  @moduledoc """
+  Type analysis system for Elixir.
+
+  Mavis implements the `Type` module, which contains a type analysis system
+  suitable to be the foundation for a compile-time static type analysis engine.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> inspect Type.union(builtin(:non_neg_integer), :infinity)
+  "timeout()"
+  iex> Type.intersection(builtin(:pos_integer), -10..10)
+  1..10
+  ```
+
+  The `Type` module implements two things:
+
+  1. Core functionality for all typesytem operations.
+  2. Support datastructure for generic builtin and remote types.
+
+  ## Type representation in Mavis
+
+  The `Type` datastructure is a struct with three parameters:
+  - `module`: The module in which the type is defined; `nil` for builtins.
+  - `name`: (atom) of the type
+  - `params`: a list of type arguments to the type datastructure.  These
+    must be types themselves "as applied" to the type definition if we
+    consider it to be a function.
+
+  ### Representing other types.
+
+  The following literals are represented directly:
+  - integers
+  - `Range`s (must be increasing)
+  - atoms
+  - empty list (`[]`)
+
+  The following types have associated structs:
+  - lists: `t:Type.List.t/0`
+  - bitstrings/binaries: `t:Type.Bitstring.t/0`
+  - tuples: `t:Type.Tuple.t/0`
+  - maps: `t:Type.Map.t/0`
+  - funs: `t:Type.Function.t/0`
+
+  The following "type containers" have associated structs:
+  - unions: `t:Type.Union.t/0`
+  - opaque types: `t:Type.Opaque.t/0`
+  - function vars: `t:Type.Function.Var.t/0`
+
+  ## Supported Type operations
+
+  The mavis typesystem provides five primary operations, which might not
+  necessarily be the set of operations that one expects from a typesystem.
+  These operations are chosen specifically reflect the needs of Erlang and
+  Elixir's dynamic types and the type specification system provided by
+  dialyzer.
+
+  - `Type.union/1`
+  - `Type.intersection/1`
+  - `Type.subtype?/2`
+  - `Type.usable_as/3`
+  - `Type.of/1`
+
+  The operation `Type.isa?/2` is also provided, which is a combination of
+  `Type.of/1` and `Type.subtype?/2`.
+
+  ## Where's my builtin?
+
+  Some builtins were not introduced into the typesystem, since they are easily
+  represented as composite types.  The following builtins are not present:
+
+  - `t:term/0`
+  - `t:arity/0`
+  - `t:as_boolean/1`
+  - `t:binary/0`
+  - `t:bitstring/0`
+  - `t:byte/0`
+  - `t:char/0`
+  - `t:charlist/0`
+  - `t:nonempty_charlist/0`
+  - `t:fun/0`
+  - `t:function/0`
+  - `t:identifier/0`
+  - `t:iodata/0`
+  - `t:keyword/0`
+  - `t:keyword/1`
+  - `t:list/0`
+  - `t:nonempty_list/0`
+  - `t:maybe_improper_list/0`
+  - `t:nonempty_maybe_improper_list/0`
+  - `t:mfa/0`
+  - `t:no_return/0`
+  - `t:number/0`
+  - `t:struct/0`
+  - `t:timeout/0`
+
+  Don't try to use the `builtin/1` macro or `%Type{name: <builtin>}` with
+  these types; it won't work as expected.  In the future `builtin/1` may
+  guard against doing this.
+
+  ## The Curious case of String.t
+
+  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
+  `t:binary/0`.  As such, it is special-cased to have some properties that
+  other remote types don't have out of the box.  This sort of behaviour
+  may be changed to be extensible to custom types in a future release.
+
+  """
+
   @enforce_keys [:name]
   defstruct @enforce_keys ++ [:module, params: []]
 
@@ -8,115 +118,379 @@ defmodule Type do
     module: nil | module,
     params: [t]
   } | integer | Range.t | atom
-  | Type.AsBoolean.t
+  #| Type.AsBoolean.t
   | Type.List.t | []
   | Type.Bitstring.t
   | Type.Tuple.t
   | Type.Map.t
   | Type.Function.t
   | Type.Union.t
+  | Type.Opaque.t
+  | Type.Function.Var.t
 
+  @typedoc """
+  Represents that some but not all members of the type will succeed in
+  the operation.
+
+  should typically result in a compile-time warning.
+
+  output by `Type.usable_as/3`
+  """
   @type maybe :: {:maybe, [Type.Message.t]}
+
+  @typedoc """
+  No members of this type will suceed in the operation.
+
+  should typically result in a compile-time error.
+
+  output by `Type.usable_as/3`
+  """
   @type error  :: {:error, Type.Message.t}
+
+  @typedoc """
+  output type for `Type.usable_as/3`
+  """
   @type ternary :: :ok | maybe | error
 
+  @spec builtin(atom) :: Macro.t
+  @doc """
+  helper macro to  match on builtin types.
+
+  NB: does not currently filter on the type
+
+  ### Example:
+  ```elixir
+  iex> Type.builtin(:integer)
+  %Type{name: :integer}
+  ```
+
+  *Usable in guards*
+  """
   defmacro builtin(type) do
     quote do %Type{module: nil, name: unquote(type), params: []} end
   end
 
-  # note, you can't use remote in matches.
+  @spec remote(Macro.t) :: Macro.t
+  @doc """
+  helper macro to match on remote types
+
+  ### Example:
+  ```elixir
+  iex> Type.remote(String.t())
+  %Type{module: String, name: :t}
+  ```
+  """
   defmacro remote({{:., _, [module_ast, name]}, _, params}) do
     module = Macro.expand(module_ast, __CALLER__)
     Macro.escape(%Type{module: module, name: name, params: params})
   end
 
+  @doc """
+  guard that tests if the selected type is remote
+
+  ### Example:
+  ```
+  iex> Type.is_remote(:foo)
+  false
+  iex> Type.is_remote(%Type{name: :integer})
+  false
+  iex> Type.is_remote(%Type{module: String, name: :t})
+  true
+  ```
+  """
   defguard is_remote(type) when is_struct(type) and
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) != nil
 
+  @doc """
+  guard that tests if the selected type is builtin
+
+  ### Example:
+  ```
+  iex> Type.is_builtin(:foo)
+  false
+  iex> Type.is_builtin(%Type{name: :integer})
+  true
+  iex> Type.is_builtin(%Type{module: String, name: :t})
+  false
+  ```
+  """
   defguard is_builtin(type) when is_struct(type) and
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) == nil
 
-  defdelegate usable_as(type, target, meta \\ []), to: Type.Properties
+  @spec usable_as(t, t, keyword) :: ternary
+  @doc """
+  Main utility function for determining type correctness.
+
+  Answers the question:  If a system claims to require a certain "target
+  type" to execute without crashing, what will happen if send a term that
+  satisfies a "challenge type"?
+
+  The result may be one of:
+  - `:ok`, which signals that no crash will occur
+  - `{:maybe, [messages]}`, which signals that a crash may occur due to
+    one of the listed potential problems, but there are terms which will
+    not trigger a crash.
+  - `{:error, message}` which signals that all terms in the challenge
+    type will trigger a crash.
+
+  These three levels are intended to roughly correspond to:
+  - "no notification to the user"
+  - "emit a warning using `IO.warn/2`"
+  - "halt compilation with `CompileError`"
+
+  for a running compile-time analysis.
+
+  `usable_as/3` also may be passed metadata which can be used to correctly
+  craft warning and error messages; as well as being filters for user-defined
+  exceptions to warning or error rules.
+
+  ### Relationship to `subtype/2`
+
+  at first glance, it would seem that the `subtype?/2` function is
+  equivalent to `usable_as/3`, but there are cases where the relationship
+  is not as clear.  For example, if a function has the signature:
+
+  `(integer() -> integer())`, that is not necessarily usable as a function
+  that is `(any() -> integer())`, since it may be sent a value outside
+  of the integers.  Conversely an `(any() -> integer())` function *IS*
+  usable as an `(integer() -> integer())` function.  The subtyping
+  relationship between these function types is unclear; in the Mavis
+  system they are considered to be independent functions that are not
+  subtypes of each other.
+
+  ### Examples:
+  ```
+  iex> import Type
+  iex> Type.usable_as(1, builtin(:integer))
+  :ok
+  iex> Type.usable_as(1, builtin(:neg_integer))
+  {:error, %Type.Message{type: 1, target: builtin(:neg_integer)}}
+  iex> Type.usable_as(-10..10, builtin(:neg_integer))
+  {:maybe, [%Type.Message{type: -10..10, target: builtin(:neg_integer)}]}
+  ```
+
+  ### Remote types:
+
+  A remote type is intended to indicate that there is a quality outside of
+  the type system which specifies the type.  Thus, a remote type should
+  be usable as the type it encapsulates, but it should emit a `maybe` when
+  going the other direction:
+
+  ```
+  iex> import Type
+  iex> binary = %Type.Bitstring{size: 0, unit: 8}
+  iex> Type.usable_as(remote(String.t()), binary)
+  :ok
+  iex> Type.usable_as(binary, remote(String.t))
+  {:maybe, [%Type.Message{
+              type: binary,
+              target: remote(String.t()),
+              meta: [message: \"""
+    binary() is an equivalent type to String.t() but it may fail because it is
+    a remote encapsulation which may require qualifications outside the type system.
+    \"""]}]}
+  ```
+  """
+  defdelegate usable_as(challenge, target, meta \\ []), to: Type.Properties
+
+  @spec subtype?(t, t) :: boolean
+  @doc """
+  outputs whether one type is a subtype of itself.  To be true, the
+  following condition must be satisfied:
+
+  - if a term is in the first type, then it is also in the second type.
+
+  Note that any type is automatically a subtype of itself.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type
+  iex> Type.subtype?(10, 1..47)
+  true
+  iex> Type.subtype?(10, builtin(:integer))
+  true
+  iex> Type.subtype?(1..47, builtin(:integer))
+  true
+  iex> Type.subtype?(builtin(:integer), 1..47)
+  false
+  iex> Type.subtype?(1..47, 1..47)
+  true
+  ```
+
+  ### Remote Types
+
+  Remote types are considered to be a signal that terms in the remote type
+  satisfy "special properties".  For example, `t:String.t/0` terms are not
+  only binaries, but are UTF-8 encoded binaries.  Thus a remote type is
+  considered to be the subtype of its specification, but not vice versa:
+
+  ```elixir
+  iex> import Type
+  iex> binary = %Type.Bitstring{size: 0, unit: 8}
+  iex> Type.subtype?(remote(String.t()), binary)
+  true
+  iex> Type.subtype?(binary, remote(String.t()))
+  false
+  ```
+  """
   defdelegate subtype?(type, target), to: Type.Properties
 
-  defguard is_neg_integer(n) when is_integer(n) and n < 0
-  defguard is_pos_integer(n) when is_integer(n) and n > 0
+  @spec union(t, t) :: t
+  @doc """
+  outputs the type which is guaranteed to satisfy the following conditions:
 
-  @spec intersection(t, t) :: t
-  defdelegate intersection(a, b), to: Type.Properties
+  - if a term is in either type, it is in the result type.
+  - if a term is not in either type, it is not in the result type.
 
+  `union/2` will try to collapse types into the simplest representation,
+  but the success of this operation is not guaranteed.
+
+  ### Example:
+  ```elixir
+  iex> import Type
+  iex> inspect Type.union(builtin(:non_neg_integer), -10..10)
+  "-10..-1 | non_neg_integer()"
+  ```
+  """
+  def union(a, b), do: union([a, b])
+
+  @spec union([t]) :: t
+  @doc """
+  outputs the type which is guaranteed to satisfy the following conditions:
+
+  - if a term is in any of the types, it is in the result type.
+  - if a term is not in any type, it is not in the result type.
+
+  `union/1` will try to collapse types into the simplest representation,
+  but the success of this operation is not guaranteed.
+
+  ### Example:
+  ```elixir
+  iex> import Type
+  iex> inspect Type.union([builtin(:pos_integer), -10..10, 32, builtin(:neg_integer)])
+  "integer()"
+  ```
+  """
   def union(types) when is_list(types) do
     Enum.into(types, struct(Type.Union))
   end
 
-  def intersect([]), do: builtin(:none)
-  def intersect([a]), do: a
-  def intersect([a | b]) do
-    Type.intersection(a, Type.intersect(b))
-  end
+  @spec intersection(t, t) :: t
+  @doc """
+  outputs the type which is guaranteed to satisfy the following conditions:
 
-  @spec compare({t, t}) :: :lt | :gt | :eq
-  def compare({t1, t2}), do: compare(t1, t2)
+  - if a term is in both types, it is in the result type.
+  - if a term is not in either type, it is not in the result type.
+
+  ### Example:
+  ```elixir
+  iex> import Type
+  iex> Type.intersection(builtin(:non_neg_integer), -10..10)
+  0..10
+  ```
+  """
+  defdelegate intersection(a, b), to: Type.Properties
+
+  @spec intersection([Type.t]) :: Type.t
+  @doc """
+  outputs the type which is guaranteed to satisfy the following conditions:
+
+  - if a term is in all of the types in the list, it is in the result type.
+  - if a term is not in any of the types in the list, it is not in the result type.
+
+  ### Example:
+  ```elixir
+  iex> import Type
+  iex> Type.intersection([builtin(:pos_integer), -1..10, -6..6])
+  1..6
+  ```
+  """
+  def intersection([]), do: builtin(:none)
+  def intersection([a]), do: a
+  def intersection([a | b]) do
+    Type.intersection(a, Type.intersection(b))
+  end
 
   @spec compare(t, t) :: :lt | :gt | :eq
   @doc """
   Types have an order that facilitates calculation of collapsing values into
   unions.
 
-  For literals this follows the order in the erlang type system.  For type
-  classes and special literals (like ranges) the type should be placed in
-  order just after of its highest element.
+  Conforms to Elixir's `compare` api, so you can use this in `Enum.sort/2`
+
+  For literals this follows the order in the erlang type system.  Where one
+  type is a strict subtype of another, it should wind up less than its supertype
 
   Types are organized into groups, which exist as a fastlane for comparing
-  order between two different types (see `typegroup/1`)
+  order between two different types (see `typegroup/1`).
 
   The order is as follows:
-  - group 0: none and foreign calls
-  - group 1
+  - group 0: `t:none/0` and remote types
+  - group 1 (integers):
     - [negative integer literal]
-    - neg_integer
+    - `t:neg_integer/0`
     - [nonnegative integer literal]
-    - pos_integer
-    - non_neg_integer
-    - integer
-  - group 2: float
-  - group 3
+    - `t:pos_integer/0`
+    - `t:non_neg_integer/0`
+    - `t:integer/0`
+  - group 2: `t:float/0`
+  - group 3 (atoms):
     - [atom literal]
-    - node
-    - module
-    - atom
-  - group 4: reference
-  - group 5
+    - `t:node/0`
+    - `t:module/0`
+    - `t:atom/0`
+  - group 4: `t:reference/0`
+  - group 5 (`t:Type.List.t/0`):
     - `params: list` functions (ordered by `retval`, then `params` in dictionary order)
     - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
-  - group 6: port
-  - group 7: pid
-  - group 8
+  - group 6: `t:port/0`
+  - group 7: `t:pid/0`
+  - group 8 (`t:Type.Tuple.t/0`):
     - defined arity tuple
     - any tuple
-  - group 9: maps
-  - group 10:
+  - group 9 (`t:Type.Map.t/0`): maps
+  - group 10 (`t:Type.List.t/0`):
     - `nonempty: true` list
     - empty list literal
     - `nonempty: false` lists
-  - group 11: bitstrings
-  - group 12: any
+  - group 11 (`t:Type.Bitstring.t/0`): bitstrings and binaries
+  - group 12: `t:any/0`
 
-  ranges (group 1) come after the highest integer in the range, bigger
-  ranges come after smaller ranges
+  `t:Range.t/0` (group 1) comes after the highest integer in the range, with
+  wider ranges coming after narrower ranges.
 
-  iolist (group 10) come in the appropriate place in the range,
-  a union comes after the highest represented item in its union,
+  `t:iolist/0` (group 10) comes in the appropriate place in the list group.
+
+  a member of `t:Type.Union.t/0` comes after the highest represented item in its union.
+
+  ## Examples
+
+  ```
+  iex> import Type, only: :macros
+  iex> Type.compare(builtin(:integer), builtin(:pid))
+  :lt
+  iex> Type.compare(-5..5, 1..5)
+  :gt
+  ```
+
   """
   defdelegate compare(a, b), to: Type.Properties
 
+  @typedoc """
+  type of group assignments
+  """
   @type group :: 0..12
 
   @doc """
-  the typegroup of the type;
-  NB: group assignments may change.
+  The typegroup of the type.
+
+  This is a 'fastlane' value which simplifies generating type ordering code.
+  See `Type.compare/2` for a list of which groups the types belong to.
+
+  *NB: group assignments may change.*
   """
   @spec typegroup(t) :: group
   defdelegate typegroup(type), to: Type.Properties
@@ -128,7 +502,7 @@ defmodule Type do
   def ternary_and(:ok, :ok),                        do: :ok
   def ternary_and(:ok, other),                      do: other
   def ternary_and(other, :ok),                      do: other
-  def ternary_and({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_and({:maybe, left}, {:maybe, right}), do: {:maybe, Enum.uniq(left ++ right)}
   def ternary_and({:maybe, _}, error),              do: error
   def ternary_and(error, {:maybe, _}),              do: error
   def ternary_and(error, _),                        do: error
@@ -139,13 +513,24 @@ defmodule Type do
   # types and composes them into the appropriate ternary logic result.
   def ternary_or(:ok, _),                          do: :ok
   def ternary_or(_, :ok),                          do: :ok
-  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, Enum.uniq(left ++ right)}
   def ternary_or({:maybe, left}, _),               do: {:maybe, left}
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
 
   alias Type.Spec
 
+  @doc """
+  retrieves a typespec for a function, and converts it to a `t:Type.t/0`
+  value.
+
+  ### Example:
+  ```elixir
+  iex> {:ok, spec} = Type.fetch_spec(String, :split, 1)
+  iex> inspect spec
+  "(String.t() -> [String.t()])"
+  ```
+  """
   def fetch_spec(module, fun, arity) do
     with {:module, _} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module),
@@ -164,7 +549,7 @@ defmodule Type do
     end
   end
 
-  def find_spec(module, specs, fun, arity) do
+  defp find_spec(module, specs, fun, arity) do
     Enum.find_value(specs, fn
       {{^fun, ^arity}, [spec]} ->
         Spec.parse(spec, %{"$mfa": {module, fun, arity}})
@@ -172,17 +557,43 @@ defmodule Type do
     end)
   end
 
+  @spec fetch_type!(Type.t()) :: Type.t() | no_return
+  @doc """
+  resolves a remote type into its constitutent type.  raises if the type
+  is not found.
+  """
   def fetch_type!(type = %Type{module: module, name: name, params: params})
       when is_remote(type) do
     fetch_type!(module, name, params)
   end
-  def fetch_type!(module, name, params \\ []) do
-    case fetch_type(module, name, params) do
+
+  @spec fetch_type!(module, atom, [Type.t], keyword) :: Type.t | no_return
+  @doc """
+  see `Type.fetch_type/4`, except raises if the type is not found.
+  """
+  def fetch_type!(module, name, params \\ [], meta \\ []) do
+    case fetch_type(module, name, params, meta) do
       {:ok, specs} -> specs
       {:error, msg} -> raise "#{inspect msg.type} type not found"
     end
   end
 
+  @spec fetch_type(module, atom, [Type.t], keyword) ::
+    {:ok, Type.t} | {:error, Type.Message.t}
+  @doc """
+  retrieves a stored type from a module, and converts it to a `t:Type.t/0`
+  value.
+
+  ### Example:
+  ```elixir
+  iex> {:ok, type} = Type.fetch_type(String, :t)
+  iex> inspect type
+  "binary()"
+  ```
+
+  If the type has non-zero arity, you can specify its passed parameters
+  as the third argument.
+  """
   def fetch_type(module, name, params \\ [], meta \\ []) do
     with {:ok, specs} <- Code.Typespec.fetch_types(module),
          {type, assignments = %{"$opaque": false}} <-
@@ -224,27 +635,45 @@ defmodule Type do
     end)
   end
 
-  def lexical_compare(left = %{module: m, name: n}, right) do
-    with {:m, ^m} <- {:m, right.module},
-         {:n, ^n} <- {:n, right.name} do
-      left.params
-      |> Enum.zip(right.params)
-      |> Enum.each(fn {l, r} ->
-        comp = Type.compare(l, r)
-        unless comp == :eq do
-          throw comp
-        end
-      end)
-      raise "unreachable"
-    else
-      {:m, _} -> if m > right.module, do: :gt, else: :lt
-      {:n, _} -> if n > right.name, do: :gt, else: :lt
-    end
-  catch
-    :gt -> :gt
-    :lt -> :lt
-  end
+  @spec of(term) :: Type.t
+  @doc """
+  returns the type of the term.
 
+  ### Examples:
+  ```
+  iex> Type.of(47)
+  47
+  iex> inspect Type.of(47.0)
+  "float()"
+  iex> inspect Type.of([:foo, :bar])
+  "[:bar | :foo, ...]"
+  iex> inspect Type.of([:foo | :bar])
+  "nonempty_improper_list(:foo, :bar)"
+  ```
+
+  Note that for functions, this may not be correct unless you
+  supply an inference engine (see `Type.Function`):
+
+  ```
+  iex> inspect Type.of(&(&1 + 1))
+  "(any() -> any())"
+  ```
+
+  For maps, atom and number literals are marshalled into required
+  terms; other literals, like strings, are marshalled into optional
+  terms.
+
+  ```
+  iex> inspect Type.of(%{foo: :bar})
+  "%{foo: :bar}"
+  iex> inspect Type.of(%{1 => :one})
+  "%{required(1) => :one}"
+  iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
+  "%{optional(String.t()) => :bar | String.t()}"
+  iex> inspect Type.of(1..10)
+  "%Range{first: 1, last: 10}"
+  ```
+  """
   def of(value)
   def of(integer) when is_integer(integer), do: integer
   def of(float) when is_float(float), do: builtin(:float)
@@ -296,7 +725,7 @@ defmodule Type do
     end
   end
   def of(bitstring) when is_bitstring(bitstring) do
-    of_bitstring(bitstring, 0)
+    of_bitstring(bitstring)
   end
 
   defp of_list([head | rest], so_far) do
@@ -309,26 +738,52 @@ defmodule Type do
     %Type.List{type: so_far, nonempty: true, final: Type.of(non_list)}
   end
 
-  def of_bitstring(bitstring, bits_so_far \\ 0)
-  def of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
-  def of_bitstring(<<>>, _size), do: remote(String.t)
-  def of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
+  defp of_bitstring(bitstring, bits_so_far \\ 0)
+  defp of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
+  defp of_bitstring(<<>>, _size), do: remote(String.t)
+  defp of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
     of_bitstring(rest, so_far + 8)
   end
-  def of_bitstring(<<6::3, _::5, 2::2, _::6, rest :: binary>>, so_far) do
+  defp of_bitstring(<<6::3, _::5, 2::2, _::6, rest :: binary>>, so_far) do
     of_bitstring(rest, so_far + 16)
   end
-  def of_bitstring(<<14::4, _::4, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
+  defp of_bitstring(<<14::4, _::4, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
     of_bitstring(rest, so_far + 24)
   end
-  def of_bitstring(<<30::5, _::3, 2::2, _::6, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
+  defp of_bitstring(<<30::5, _::3, 2::2, _::6, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
     of_bitstring(rest, so_far + 32)
   end
-  def of_bitstring(bitstring, so_far) do
+  defp of_bitstring(bitstring, so_far) do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
   @spec isa?(t, term) :: boolean
+  @doc """
+  true if the passed term is an element of the type.
+
+  ## Important:
+  Note the argument order for this function, it does not have the
+  same call order, as say, javascipt's `instanceof`, or ruby's `.is_a?`
+
+  ### Example:
+  ```elixir
+  iex> import Type
+  iex> Type.isa?(builtin(:integer), 10)
+  true
+  iex> Type.isa?(builtin(:neg_integer), 10)
+  false
+  iex> Type.isa?(builtin(:pos_integer), 10)
+  true
+  iex> Type.isa?(1..9, 10)
+  false
+  iex> Type.isa?(-47..47, 10)
+  true
+  iex> Type.isa?(42, 10)
+  false
+  iex> Type.isa?(10, 10)
+  true
+  ```
+  """
   def isa?(type, term) do
     term
     |> of

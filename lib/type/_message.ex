@@ -1,4 +1,9 @@
 defmodule Type.Message do
+
+  @moduledoc """
+  TBA
+  """
+
   @enforce_keys [:type, :target]
   defstruct @enforce_keys ++ [meta: []]
 

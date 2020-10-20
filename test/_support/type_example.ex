@@ -107,6 +107,7 @@ defmodule TypeTest.TypeExample do
     defstruct [:foo]
 
     @type empty_map_type :: %{}
+    @type any_map_type :: map
     @type atom_key_type :: %{atom: integer}
     @type required_literal_type :: %{required(:foo) => integer}
     @type optional_literal_type :: %{optional(:foo) => integer}
@@ -115,6 +116,8 @@ defmodule TypeTest.TypeExample do
 
     @type map_type :: map
     @type struct_type :: struct
+
+    @type downgraded_key_type :: %{required(integer) => integer}
   end
 
   defmodule Unions do
