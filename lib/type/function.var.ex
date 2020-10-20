@@ -1,4 +1,40 @@
 defmodule Type.Function.Var do
+
+  @moduledoc """
+  a special container type indicating that the function has a type dependency.
+
+  ### Example:
+
+  The following typespec:
+
+  ```elixir
+  @spec identity(x) :: x when x: var
+  ```
+
+  generates the following typespec:
+  ```elixir
+  %Type.Function{
+    params: [%Type.Function.Var{name: :x}],
+    return: %Type.Function.Var{name: :x}
+  }
+  ```
+
+  if you further put a restriction on this typespec:
+
+  ```elixir
+  @spec identity(x) :: x when x: integer
+  ```
+
+  the `Type.Function.Var` will further exhibit the issued constraint:
+
+  ```elixir
+  %Type.Function{
+    params: [%Type.Function.Var{name: :x, constraint: %Type{name: :integer}}],
+    return: %Type.Function.Var{name: :x, constraint: %Type{name: :integer}}
+  }
+  ```
+  """
+
   import Type, only: :macros
   @enforce_keys [:name]
   defstruct @enforce_keys ++ [constraint: builtin(:any)]

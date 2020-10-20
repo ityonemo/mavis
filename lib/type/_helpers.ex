@@ -15,6 +15,12 @@ defmodule Type.Helpers do
     "Bitstring" => 11
   }
 
+  @doc """
+  Type modules should implement this function to perform comparisons against
+  all other types in their type group.
+
+  See `Type.typegroup/1`
+  """
   @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
 
   # exists to prevent mistakes when generating functions.
@@ -45,17 +51,17 @@ defmodule Type.Helpers do
   end
 
   @doc """
-  Wraps the "usable_as" function headers in common "top" and "fallback" headers.
-  This prevents errors from being made in code that must be common to all types.
+  Wraps the `Type.Properties.usable_as/3` function headers in common prologue and
+  fallback clauses.  This prevents errors from being made in code that must be common to all types.
 
-  Top function matches:
+  Prologue function matches:
   - matches equal types and makes them output :ok
   - matches usable_as with `builtin(:any)` and makes them output :ok
 
   Fallback function matches:
   - catches usable_as against unions; and performs the appropriate attempt to
     match into each of the union's subtypes.
-  - catches all other attempts to run usable_as, and returns `:error, metadata}`
+  - catches all other attempts to run usable_as, and returns `{:error, metadata}`
   """
   defmacro usable_as(do: block) do
     quote do
@@ -113,6 +119,17 @@ defmodule Type.Helpers do
     end
   end
 
+  @doc """
+  Wraps the `Type.Properties.intersection/2` function headers in a common prologue.
+  This prevents errors from being made in code that must be common to all types.
+
+  Prologue function matches:
+  - matches itself and returns itself
+  - matches `t:any/0` and returns itself
+  - calcualates intersections for remote types
+  - intersects union types
+  - intersects function var types
+  """
   defmacro intersection(do: block) do
     quote do
       @spec intersection(Type.t, Type.t) :: Type.t
@@ -151,36 +168,41 @@ defmodule Type.Helpers do
     end
   end
 
+  @doc """
+  Wraps the `c:Type.Helpers.group_compare/2` function headers in a common prologue.
+  This prevents errors from being made in code that must be common to all types.
+
+  Prologue function matches:
+  - matches identical types and reports equality
+  - matches `t:String.t/0` special case (only for `Type.Bitstring`)
+  - compares union types and puts them in
+  - compares opaque types
+  - compares function var types
+  """
   defmacro group_compare(do: block) do
     quote do
       def group_compare(type, type), do: :eq
 
-      # check for dual remote types
-      def group_compare(left, right) when is_remote(left) and is_remote(right) do
-        case group_compare(Type.fetch_type!(left), Type.fetch_type!(right)) do
-          :eq ->
-            Type.Helpers.lexical_compare(left, right)
-          order -> order
-        end
-      end
-
-      def group_compare(left, right) when is_remote(left) do
-        left
-        |> Type.fetch_type!
+      if __MODULE__ == Type.Properties.Type do
+      def group_compare(%Type{module: String, name: :t}, right) do
+        %Type.Bitstring{size: 0, unit: 8}
         |> group_compare(right)
         |> case do
           :eq -> :lt
           order -> order
         end
       end
+      end
 
-      def group_compare(left, right) when is_remote(right) do
+      if __MODULE__ == Type.Properties.Type.Bitstring do
+      def group_compare(left, %Type{module: String, name: :t}) do
         left
-        |> group_compare(Type.fetch_type!(right))
+        |> group_compare(%Type.Bitstring{size: 0, unit: 8})
         |> case do
           :eq -> :gt
           order -> order
         end
+      end
       end
 
       def group_compare(type1, %Type.Union{of: [type2 | _]}) do
@@ -208,6 +230,21 @@ defmodule Type.Helpers do
     end
   end
 
+  @doc """
+  Wraps the `Type.Properties.subtype/2` function headers in a common prologue.
+  This prevents errors from being made in code that must be common to all types.
+
+  Prologue function matches:
+  - matches itself and returns true
+  - matches `t:none/0` and returns false
+  - matches `t:any/0` and returns any
+  - calculates intersections for remote types
+  - intersects union types
+  - intersects function var types
+
+  can also take `:usable_as` as an argument; this declares that `subtype?/2` is
+  equivalent to an `:ok` response from `Type.usable_as/3`.
+  """
   defmacro subtype(do: block) do
     # TODO: figure out how to DRY this.
     quote do
@@ -225,7 +262,6 @@ defmodule Type.Helpers do
 
       def subtype?(_, builtin(:any)), do: true
 
-      # TODO make is_remote and is_builtin guards
       def subtype?(left, right) when is_remote(right) do
         r_solved = Type.fetch_type!(right)
         if left == r_solved do
