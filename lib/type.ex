@@ -66,6 +66,48 @@ defmodule Type do
 
   The operation `Type.isa?/2` is also provided, which is a combination of
   `Type.of/1` and `Type.subtype?/2`.
+
+  ## Where's my builtin?
+
+  Some builtins were not introduced into the typesystem, since they are easily
+  represented as composite types.  The following builtins are not present:
+
+  - `t:term/0`
+  - `t:arity/0`
+  - `t:as_boolean/1`
+  - `t:binary/0`
+  - `t:bitstring/0`
+  - `t:byte/0`
+  - `t:char/0`
+  - `t:charlist/0`
+  - `t:nonempty_charlist/0`
+  - `t:fun/0`
+  - `t:function/0`
+  - `t:identifier/0`
+  - `t:iodata/0`
+  - `t:keyword/0`
+  - `t:keyword/1`
+  - `t:list/0`
+  - `t:nonempty_list/0`
+  - `t:maybe_improper_list/0`
+  - `t:nonempty_maybe_improper_list/0`
+  - `t:mfa/0`
+  - `t:no_return/0`
+  - `t:number/0`
+  - `t:struct/0`
+  - `t:timeout/0`
+
+  Don't try to use the `builtin/1` macro or `%Type{name: <builtin>}` with
+  these types; it won't work as expected.  In the future `builtin/1` may
+  guard against doing this.
+
+  ## The Curious case of String.t
+
+  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
+  `t:binary/0`.  As such, it is special-cased to have some properties that
+  other remote types don't have out of the box.  This sort of behaviour
+  may be changed to be extensible to custom types in a future release.
+
   """
 
   @enforce_keys [:name]
