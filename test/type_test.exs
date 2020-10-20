@@ -7,6 +7,8 @@ defmodule TypeTest do
   # tests on types
   doctest Type.Bitstring
   doctest Type.Function
+  doctest Type.List
+  doctest Type.NoInference
 
   use Type.Operators
 

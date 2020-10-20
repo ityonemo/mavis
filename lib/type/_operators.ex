@@ -1,4 +1,7 @@
 defmodule Type.Operators do
+
+  @moduledoc "convenience functions.  Should only be used in testing."
+  
   defmacro __using__(_opts) do
     quote do
       import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]

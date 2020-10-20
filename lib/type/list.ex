@@ -1,4 +1,119 @@
 defmodule Type.List do
+  @moduledoc """
+  represents lists, except for the empty list, which is represented by
+  the empty list literal `[]`.
+
+  There are three fields for the struct defined by this module.
+
+  - `nonempty` if true, the list must have at least one element; if false, then
+    it may be the empty list `[]`.
+  - `type` the type for all elements of the list, except the final element
+  - `final` the type of the final elment.  Typically this is `[]`, but other
+    types may be used as the final element and these are called `improper` lists.
+
+  ### Examples:
+
+  - the "any proper list" type is `%Type.List{}`.  Note this is distinct from `[]`
+    ```
+    iex> inspect %Type.List{}
+    "list()"
+    ```
+  - a list of a given type
+    ```elixir
+    iex> inspect %Type.List{type: %Type{name: :integer}}
+    "[integer()]"
+    ```
+  - a nonempty list of a given type
+    ```elixir
+    iex> inspect %Type.List{type: %Type{name: :integer}, nonempty: true}
+    "[..., integer()]"
+    ```
+  - an improper list must be nonempty, and looks like the following:
+    ```elixir
+    iex> inspect %Type.List{type: %Type{module: String, name: :t},
+    ...>                    nonempty: true,
+    ...>                    final: %Type{module: String, name: :t}}
+    "nonempty_improper_list(String.t(), String.t())"
+    ```
+  - a maybe improper list should have empty list as a subtype of the final field.
+    ```elixir
+    iex> inspect %Type.List{type: %Type{module: String, name: :t},
+    ...>                    final: %Type.Union{of: [[], %Type{module: String, name: :t}]}}
+    "maybe_improper_list(String.t(), String.t())"
+    ```
+
+  ### Key functions:
+
+  #### comparison
+
+  `nonempty: false` list types come after `nonempty: true` list types; and list
+  types are ordered by the type order of their content types, followed by the type
+  order of their finals.  The empty list type comes between the two nonempty
+  categories.
+
+  ```elixir
+  iex> Type.compare(%Type.List{nonempty: true}, [])
+  :lt
+  iex> Type.compare(%Type.List{}, [])
+  :gt
+  iex> Type.compare(%Type.List{type: %Type{name: :integer}}, %Type.List{type: %Type{name: :atom}})
+  :lt
+  iex> Type.compare(%Type.List{final: %Type{name: :integer}}, %Type.List{final: %Type{name: :atom}})
+  :lt
+  ```
+
+  #### intersection
+
+  The intersection of two list types is the intersection of their contents; a
+  `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: true`
+
+  ```elixir
+  iex> Type.intersection(%Type.List{nonempty: true}, %Type.List{})
+  %Type.List{nonempty: true}
+  iex> Type.intersection(%Type.List{type: 1..20}, %Type.List{type: 10..30})
+  %Type.List{type: 10..20}
+  ```
+
+  #### union
+
+  The intersection of two list types is the union of their contents; a
+  `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: false`
+
+  ```elixir
+  iex> Type.union(%Type.List{nonempty: true}, %Type.List{})
+  %Type.List{}
+  iex> Type.union(%Type.List{type: 1..10}, %Type.List{type: 10..20})
+  %Type.List{type: 1..20}
+  ```
+
+  #### subtype?
+
+  A list type is a subtype of another if its contents are subtypes of each other;
+  a `nonempty: true` list type is subtype of its `nonempty: false` counterpart.
+
+  ```elixir
+  iex> Type.subtype?(%Type.List{nonempty: true}, %Type.List{})
+  true
+  iex> Type.subtype?(%Type.List{type: 1..10}, %Type.List{type: 2..30})
+  false
+  ```
+
+  #### usable_as
+
+  A list type is `usable_as` another if its contents are `usable_as` the other's;
+  `nonempty: false` list types might be usable as `nonempty: true` types.
+
+  ```elixir
+  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :integer}})
+  :ok
+  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :atom}})
+  {:error, %Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}}
+  iex> Type.usable_as(%Type.List{}, %Type.List{nonempty: true})
+  {:maybe, [%Type.Message{type: %Type.List{}, target: %Type.List{nonempty: true}}]}
+  ```
+
+  """
+
   defstruct [
     nonempty: false,
     type: %Type{name: :any},
@@ -33,7 +148,7 @@ defmodule Type.List do
     usable_as do
       def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
         case usable_as(challenge, %{target | nonempty: false}, meta) do
-          :ok -> {:maybe, Message.make(challenge, target, meta)}
+          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
           maybe_or_error -> maybe_or_error
         end
       end

@@ -1,4 +1,178 @@
 defmodule Type.Map do
+
+  @moduledoc """
+  represents map terms.  Note that some of the choices around how to handle
+  maps may deviate from the expectations in the typesystem.
+
+  ### Deviations:
+
+  - `Type.Map` only allows literal integers and literal atoms as
+    `required` key types.  Typespecs that put other types in as required
+    will downgrade those types to be `optional`
+  - In the future, this may be extended to ranges.
+  - map types will not by default assume `optional(any()) => any()`
+  - If multiple specifications exist for the same particular value (for example,
+    overlapping ranges in optional keys, or a overlapping types in required vs
+    optional), all specfications are applied to that value group.  This may
+    result in the map being equivalent to `%Type{name: :none}` but that will
+    not automatically be collapsed to that value.
+
+  ### Examples:
+
+  - The empty map is `%Type.Map{}`.  This is not allowed to have any k/v pairs.
+    ```
+    iex> inspect %Type.Map{}
+    "%{}"
+    ```
+  - A map with a required atom key might look as follows:
+    ```
+    iex> inspect %Type.Map{required: %{foo: %Type{name: :integer}}}
+    "%{foo: integer()}"
+    ```
+  - A map with a required integer key might look as follows:
+    ```
+    iex> inspect %Type.Map{required: %{1 => %Type{name: :integer}}}
+    "%{required(1) => integer()}"
+    ```
+  - A map with an optional key type might look as follows:
+    ```
+    iex> inspect %Type.Map{optional: %{%Type{name: :integer} => %Type{name: :integer}}}
+    "%{optional(integer()) => integer()}"
+    ```
+  - The "any" map has optional any mapping to any (note this is distinct from empty map `%{}`)
+    ```
+    iex> inspect %Type.Map{optional: %{%Type{name: :any} => %Type{name: :any}}}
+    "map()"
+    ```
+
+  ### Key functions:
+
+  #### comparison
+
+  Maps are ordered by required keys, then optional keys.  A map type
+  with a required key comes before an equivalent map type with the key optional.
+
+  ```
+  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{foo: :quux}})
+  :lt
+  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  :gt
+  iex> Type.compare(%Type.Map{required: %{foo: %Type{name: :integer}},
+  ...>                        optional: %{1 => %Type{name: :integer}}},
+  ...>              %Type.Map{required: %{foo: %Type{name: :integer}},
+  ...>                        optional: %{2 => %Type{name: :integer}}})
+  :lt
+  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  :lt
+  ```
+
+  #### intersection
+
+  If map types cannot support the same required keys, their intersection is `none()`
+  If one of the required keys can be created from the pool of the other key's optional types,
+  Then it gets realized into the intersection.  Otherwise, the intersection is the
+  intersection of key types with key values.  If the optional key or value types are totally
+  disjoint, then the intersection is the empty map `%{}` because that term is a member
+  of both types
+
+  ```
+  iex> Type.intersection(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  %Type{name: :none}
+
+  iex> Type.intersection(%Type.Map{required: %{foo: :bar}},
+  ...>                   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :atom}}})
+  %Type.Map{required: %{foo: :bar}}
+
+  iex> Type.intersection(%Type.Map{required: %{1 => 1..10}}, %Type.Map{required: %{1 => 5..20}})
+  %Type.Map{required: %{1 => 5..10}}
+
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
+  ...>                   %Type.Map{optional: %{%Type{name: :integer} => 1..10}})
+  %Type.Map{optional: %{1..10 => 1..10}}
+
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
+  ...>                   %Type.Map{optional: %{1..10 => %Type{name: :atom}}})
+  %Type.Map{}
+
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
+  ...>                   %Type.Map{optional: %{11..20 => %Type{name: :integer}}})
+  %Type.Map{}
+  ```
+
+  #### union
+
+  Map unions must be extremely parsimonious, because the specifications on the unions
+  are coupled.  Not all combinations of optional and required types can be safely
+  subjected to a union.  In general, the union algorithm will merge two types if one
+  is a strict subtype of the other.
+
+  ```
+  iex> Type.union(%Type.Map{required: %{foo: :bar}}, %Type.Map{})
+  %Type.Map{optional: %{foo: :bar}}
+
+  iex> Type.union(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  %Type.Map{optional: %{foo: :bar}}
+
+  iex> Type.union(%Type.Map{required: %{foo: 1..10}}, %Type.Map{required: %{foo: 1..20}})
+  %Type.Map{required: %{foo: 1..20}}
+
+  iex> Type.union(%Type.Map{optional: %{1..10 => 1..10}}, %Type.Map{optional: %{1..20 => 1..10}})
+  %Type.Map{optional: %{1..20 => 1..10}}
+  ```
+
+  #### subtype?
+
+  A map type is a subtype of the other if all of the keys and values of one are subtypes
+  of the other.
+
+  ```
+  iex> Type.subtype?(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{foo: %Type{name: :atom}}})
+  true
+
+  iex> Type.subtype?(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: %Type{name: :atom}}})
+  true
+
+  iex> Type.subtype?(%Type.Map{optional: %{foo: :bar}}, %Type.Map{optional: %{foo: %Type{name: :atom}}})
+  true
+
+  iex> Type.subtype?(%Type.Map{optional: %{foo: :bar}}, %Type.Map{required: %{foo: %Type{name: :atom}}})
+  false
+  ```
+
+  #### usable_as
+
+  optional keys are maybe usable as required keys; required keys are always usable
+  as optional keys.
+
+  for optional keys, if a key type is a subtype of the target's key type, then it is
+  maybe usable; if it as a supertype of the target's key type, then it is always usable.
+
+  generally optional types are `:ok` with disjoint key types, but if overlapping key types
+  have conflicting value types, then it is `:maybe` because keys must be
+
+  ```
+  iex> Type.usable_as(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  :ok
+
+  iex> Type.usable_as(%Type.Map{optional: %{foo: :bar}}, %Type.Map{required: %{foo: :bar}})
+  {:maybe, [%Type.Message{type: %Type.Map{optional: %{foo: :bar}},
+                          target: %Type.Map{required: %{foo: :bar}}}]}
+
+  iex> Type.usable_as(%Type.Map{optional: %{1..10 => 1..10}}, %Type.Map{optional: %{1..20 => 11..20}})
+  {:maybe, [%Type.Message{type: %Type.Map{optional: %{1..10 => 1..10}},
+                          target: %Type.Map{optional: %{1..20 => 11..20}}}]}
+  ```
+
+  ## Helper functions
+
+  The docs for helper functions documented here use set theory language,
+  treating maps as discrete functions with preimages and images.  This
+  page may be of help to understand this language:
+
+  https://en.wikipedia.org/wiki/Image_(mathematics)#Inverse_image
+
+  """
+
   defstruct [required: %{}, optional: %{}]
 
   import Type, only: :macros
@@ -12,6 +186,9 @@ defmodule Type.Map do
   }
 
   @spec build(required :: required, optional :: optional) :: t
+  @doc """
+  helper function to help you build map types for testing.
+  """
   def build(required \\ %{}, optional) do
     %__MODULE__{
       required: required,
@@ -160,11 +337,17 @@ defmodule Type.Map do
     end)
   end
 
-  def required_key?(map, key) do
+  @spec required_key?(t, atom | integer) :: boolean
+  @doc """
+  true if the map type specifies a singleton type as one of its required keys
+  """
+  def required_key?(map, key) when is_atom(key) or is_integer(key) do
     :erlang.is_map_key(key, map.required)
   end
 
-  # takes all required terms and makes them optional
+  @doc """
+  takes all required terms and makes them optional
+  """
   def optionalize(map) do
     build(Map.merge(map.optional, map.required))
   end
@@ -389,7 +572,7 @@ defmodule Type.Map do
         Type.usable_as(value_type, Map.apply(target, segment), meta)
       end)
       |> Enum.map(fn
-        {:error, msg} -> {:maybe, [msg]}
+        {:error, _msg} -> {:maybe, [Message.make(challenge, target, meta)]}
         any -> any
       end)
     end
@@ -400,6 +583,8 @@ defmodule Type.Map do
     import Inspect.Algebra
     import Type, only: :macros
 
+    @any %{%Type{name: :any} => %Type{name: :any}}
+
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
       |> Map.from_struct
@@ -407,6 +592,9 @@ defmodule Type.Map do
       |> inner_content(opts)
 
       concat(["%#{inspect struct}{", inner, "}"])
+    end
+    def inspect(%{optional: @any}, _opts) do
+      "map()"
     end
 
     def inspect(%{required: required, optional: optional}, opts) do

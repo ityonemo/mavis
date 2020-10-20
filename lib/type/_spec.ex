@@ -1,5 +1,7 @@
 defmodule Type.Spec do
 
+  @moduledoc false
+
   import Type, only: :macros
 
   def parse(spec, assigns \\ %{})
@@ -10,8 +12,12 @@ defmodule Type.Spec do
     Enum.reduce(params, %Type.Map{}, fn
       {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
         %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
-      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{required: required} ->
+      {:type, _, :map_field_exact, [src_type = {t, _, _}, dst_type]}, map = %{required: required}
+        when t in [:atom, :integer] ->
         %{map | required: Map.put(required, parse(src_type, assigns), parse(dst_type, assigns))}
+      # downgrade required types that aren't either integer or atom literals.
+      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{optional: optional} ->
+        %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
     end)
   end
 
@@ -153,7 +159,7 @@ defmodule Type.Spec do
           name: name,
           params: Enum.map(args, &parse(&1, assigns))}
   end
-  # annotated types can just be ignored
+  # type annotations can just be ignored
   def parse({:ann_type, _, [_type_annotation, type]}, assigns) do
     parse(type, assigns)
   end

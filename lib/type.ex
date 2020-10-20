@@ -460,7 +460,7 @@ defmodule Type do
   def ternary_and(:ok, :ok),                        do: :ok
   def ternary_and(:ok, other),                      do: other
   def ternary_and(other, :ok),                      do: other
-  def ternary_and({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_and({:maybe, left}, {:maybe, right}), do: {:maybe, Enum.uniq(left ++ right)}
   def ternary_and({:maybe, _}, error),              do: error
   def ternary_and(error, {:maybe, _}),              do: error
   def ternary_and(error, _),                        do: error
@@ -471,7 +471,7 @@ defmodule Type do
   # types and composes them into the appropriate ternary logic result.
   def ternary_or(:ok, _),                          do: :ok
   def ternary_or(_, :ok),                          do: :ok
-  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, left ++ right}
+  def ternary_or({:maybe, left}, {:maybe, right}), do: {:maybe, Enum.uniq(left ++ right)}
   def ternary_or({:maybe, left}, _),               do: {:maybe, left}
   def ternary_or(_, {:maybe, right}),              do: {:maybe, right}
   def ternary_or(error, _),                        do: error
