@@ -26,7 +26,7 @@ defmodule Type.List do
   - a nonempty list of a given type
     ```elixir
     iex> inspect %Type.List{type: %Type{name: :integer}, nonempty: true}
-    "[..., integer()]"
+    "[integer(), ...]"
     ```
   - an improper list must be nonempty, and looks like the following:
     ```elixir
@@ -267,13 +267,13 @@ defmodule Type.List do
     def inspect(list, opts), do: render_improper(list, opts)
 
     defp render_basic(list, opts) do
-      nonempty_prefix = if list.nonempty do
-        "..., "
+      nonempty_suffix = if list.nonempty do
+        ", ..."
       else
         ""
       end
 
-      concat(["[", nonempty_prefix, to_doc(list.type, opts), "]"])
+      concat(["[", to_doc(list.type, opts), nonempty_suffix, "]"])
     end
 
     defp render_maybe_improper(list, opts) do

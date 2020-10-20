@@ -4,6 +4,10 @@ defmodule Type.Map do
   represents map terms.  Note that some of the choices around how to handle
   maps may deviate from the expectations in the typesystem.
 
+  The associated struct has two parameters:
+  - `:required` a map of required key types and their associated value types.
+  - `:optional` a map of optional key types and their associated value types.
+
   ### Deviations:
 
   - `Type.Map` only allows literal integers and literal atoms as

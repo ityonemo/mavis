@@ -19,7 +19,7 @@ defmodule TypeTest.Type.Inspect.ListsTest do
   end
 
   test "nonempty typed list" do
-    assert "[..., integer()]" == inspect_type(@source, :nonempty_typed)
+    assert "[integer(), ...]" == inspect_type(@source, :nonempty_typed)
   end
 
   test "keyword/1 literal list" do

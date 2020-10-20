@@ -1,4 +1,100 @@
 defmodule Type.Tuple do
+
+  @moduledoc """
+  represents tuple types.
+
+  The associated struct has one parameter:
+  - `:elements` which may be a list of types, corresponding to the ordered
+    list of tuple element types.  May also be the atom `:any` which
+    corresponds to the any tuple.
+
+  ### Examples:
+
+  - the any tuple is `%Type.Tuple{elements: :any}`
+    ```
+    iex> inspect %Type.Tuple{elements: :any}
+    "tuple()"
+    ```
+  - generic tuples have their types as lists.
+    ```
+    iex> inspect %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]}
+    "{atom(), integer()}"
+    iex> inspect %Type.Tuple{elements: [:ok, %Type{name: :integer}]}
+    "{:ok, integer()}"
+    ```
+
+  ### Key functions:
+
+  #### comparison
+
+  longer tuples come after shorter tuples; tuples are then ordered using cartesian
+  dictionary order along the elements list.
+
+  ```
+  iex> Type.compare(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:foo]})
+  :lt
+  iex> Type.compare(%Type.Tuple{elements: [:foo, 1..10]}, %Type.Tuple{elements: [:bar, 10..20]})
+  ```
+
+  #### intersection
+
+  Tuples of different length do not intersect; the intersection is otherwise the cartesian
+  intersection of the elements.
+
+  ```
+  iex> Type.intersection(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:ok, %Type{name: :integer}]})
+  %Type{name: :none}
+
+  iex> Type.intersection(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+  ...>                   %Type.Tuple{elements: [%Type{name: :atom}, 1..10]})
+  %Type.Tuple{elements: [:ok, 1..10]}
+  ```
+
+  #### union
+
+  Only tuple types of the same length can be non-trivially unioned, and then, only if
+  one tuple type is a subtype of the other, and they must be identical across all but
+  one dimension.
+
+  ```
+  iex> Type.union(%Type.Tuple{elements: [:ok, 11..20]},
+  ...>           %Type.Tuple{elements: [:ok, 1..10]})
+  %Type.Tuple{elements: [:ok, 1..20]}
+  ```
+
+  #### subtype?
+
+  A tuple type is the subtype of another if its types are subtypes of the other
+  across all cartesian dimensions.
+
+  ```
+  iex> Type.subtype?(%Type.Tuple{elements: [:ok, 1..10]},
+  ...>               %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]})
+  true
+  ```
+
+  #### usable_as
+
+  A tuple type is usable as another if it each of its elements are usable as
+  the other across all cartesian dimensions.  If any element is disjoint, then
+  it is not usable.
+
+  ```
+  iex> Type.usable_as(%Type.Tuple{elements: [:ok, 1..10]},
+  ...>                %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]})
+  :ok
+  iex> Type.usable_as(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+  ...>                %Type.Tuple{elements: [%Type{name: :atom}, 1..10]})
+  {:maybe, [%Type.Message{type: %Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+                          target: %Type.Tuple{elements: [%Type{name: :atom}, 1..10]}}]}
+  iex> Type.usable_as(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+  ...>                %Type.Tuple{elements: [:error, 1..10]})
+  {:error, %Type.Message{type: %Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+                         target: %Type.Tuple{elements: [:error, 1..10]}}}
+  ```
+
+  """
+
   @enforce_keys [:elements]
   defstruct @enforce_keys
 

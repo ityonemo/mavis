@@ -231,7 +231,7 @@ defmodule Type.Helpers do
   end
 
   @doc """
-  Wraps the `Type.Properties.subtype/2` function headers in a common prologue.
+  Wraps the `Type.Properties.subtype?/2` function headers in a common prologue.
   This prevents errors from being made in code that must be common to all types.
 
   Prologue function matches:

@@ -604,7 +604,7 @@ defmodule Type do
   iex> inspect Type.of(47.0)
   "float()"
   iex> inspect Type.of([:foo, :bar])
-  "[..., :bar | :foo]"
+  "[:bar | :foo, ...]"
   iex> inspect Type.of([:foo | :bar])
   "nonempty_improper_list(:foo, :bar)"
   ```

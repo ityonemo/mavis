@@ -9,6 +9,8 @@ defmodule TypeTest do
   doctest Type.Function
   doctest Type.List
   doctest Type.NoInference
+  doctest Type.Tuple
+  doctest Type.Union
 
   use Type.Operators
 
