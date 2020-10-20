@@ -11,7 +11,7 @@ The package can be installed by adding `mavis` to your list of dependencies in `
 ```elixir
 def deps do
   [
-    {:mavis, "~> 0.0.1"}
+    {:mavis, "~> 0.0.2"}
   ]
 end
 ```

@@ -4,7 +4,7 @@ defmodule Mavis.MixProject do
   def project do
     [
       app: :mavis,
-      version: "0.0.1",
+      version: "0.0.2",
       elixir: "~> 1.10",
       test_coverage: [tool: ExCoveralls],
       package: [
