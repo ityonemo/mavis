@@ -4,14 +4,14 @@
 
 Advanced type system for Elixir
 
-## Future Installation
+## Installation
 
 The package can be installed by adding `mavis` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:mavis, "~> 0.1.0"}
+    {:mavis, "~> 0.0.1"}
   ]
 end
 ```
