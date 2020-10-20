@@ -76,7 +76,7 @@ defmodule Type do
     module: nil | module,
     params: [t]
   } | integer | Range.t | atom
-  | Type.AsBoolean.t
+  #| Type.AsBoolean.t
   | Type.List.t | []
   | Type.Bitstring.t
   | Type.Tuple.t

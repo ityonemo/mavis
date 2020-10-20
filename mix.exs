@@ -18,7 +18,14 @@ defmodule Mavis.MixProject do
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
-      docs: [main: "Type"]
+      docs: [
+        main: "Type",
+        groups_for_modules: [
+          "Types": [Type.AsBoolean, Type.Bitstring, Type.Function,
+          Type.Function.Var, Type.List, Type.Map, Type.Opaque, Type.Tuple,
+          Type.Union]
+        ]
+      ]
     ]
   end
 
@@ -29,7 +36,7 @@ defmodule Mavis.MixProject do
 
   defp deps, do: [
     {:credo, "~> 1.2", only: [:test, :dev], runtime: false},
-    {:ex_doc, "~> 0.21.2", only: :dev, runtime: :false},
+    {:ex_doc, "~> 0.23", only: :dev, runtime: :false},
     {:excoveralls, "~> 0.11.1", only: :test}
   ]
 
