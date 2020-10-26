@@ -178,28 +178,6 @@ defmodule Type.Helpers do
     quote do
       def group_compare(type, type), do: :eq
 
-      if __MODULE__ == Type.Properties.Type do
-      def group_compare(%Type{module: String, name: :t}, right) do
-        %Type.Bitstring{size: 0, unit: 8}
-        |> group_compare(right)
-        |> case do
-          :eq -> :lt
-          order -> order
-        end
-      end
-      end
-
-      if __MODULE__ == Type.Properties.Type.Bitstring do
-      def group_compare(left, %Type{module: String, name: :t}) do
-        left
-        |> group_compare(%Type.Bitstring{size: 0, unit: 8})
-        |> case do
-          :eq -> :gt
-          order -> order
-        end
-      end
-      end
-
       def group_compare(type1, %Type.Union{of: [type2 | _]}) do
         case group_compare(type1, type2) do
           :gt -> :gt
@@ -222,6 +200,14 @@ defmodule Type.Helpers do
       end
 
       unquote(block)
+
+      # fallback clause, but probably never gets called.
+      def group_compare(a, b) do
+        cond do
+          a < b -> :lt
+          a > b -> :gt
+        end
+      end
     end
   end
 

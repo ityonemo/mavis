@@ -1224,7 +1224,30 @@ defimpl Type.Properties, for: Type do
     def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
     def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
 
-    def group_compare(_, _),                               do: :gt
+    # group compare for strings
+    def group_compare(%Type{module: String, name: :t, params: []}, right) do
+      %Type.Bitstring{unit: 8}
+      |> Type.compare(right)
+      |> case do
+        :eq -> :lt
+        order -> order
+      end
+    end
+    def group_compare(%Type{module: String, name: :t, params: [p]}, right) do
+      lowest_idx = case p do
+        i when is_integer(i) -> [i]
+        range = _.._ -> range
+        %Type.Union{of: ints} -> ints
+      end
+      |> Enum.min
+
+      %Type.Bitstring{size: lowest_idx * 8}
+      |> Type.compare(right)
+      |> case do
+        :eq -> :lt
+        order -> order
+      end
+    end
   end
 
   subtype do
