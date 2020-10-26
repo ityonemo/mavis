@@ -1248,6 +1248,8 @@ defimpl Type.Properties, for: Type do
         order -> order
       end
     end
+
+    def group_compare(_, _), do: :gt
   end
 
   subtype do
@@ -1279,7 +1281,7 @@ defimpl Inspect, for: Type do
 
   # special case String.t.  This hides our under-the-hood
   # implementation of sized string types.
-  def inspect(%{module: String, name: :t, params: [t]}, opts) do
+  def inspect(%{module: String, name: :t, params: [_]}, _opts) do
     "String.t()"
   end
   def inspect(%{module: nil, name: name, params: params}, opts) do

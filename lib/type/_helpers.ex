@@ -200,14 +200,6 @@ defmodule Type.Helpers do
       end
 
       unquote(block)
-
-      # fallback clause, but probably never gets called.
-      def group_compare(a, b) do
-        cond do
-          a < b -> :lt
-          a > b -> :gt
-        end
-      end
     end
   end
 

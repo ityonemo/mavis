@@ -187,7 +187,6 @@ defmodule Type.Tuple do
       def subtype?(tuple, %Union{of: types}) do
         Enum.any?(types, &Type.subtype?(tuple, &1))
       end
-      def subtype?(_, _), do: false
     end
   end
 

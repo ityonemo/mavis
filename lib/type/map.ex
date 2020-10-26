@@ -496,7 +496,6 @@ defmodule Type.Map do
       catch
         false -> false
       end
-      def subtype?(_, _), do: false
     end
 
     usable_as do

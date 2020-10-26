@@ -229,7 +229,6 @@ defmodule Type.Function do
           when p_c == p_t do
         Type.subtype?(challenge.return, target.return)
       end
-      def subtype?(_, _), do: false
     end
   end
 

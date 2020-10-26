@@ -74,7 +74,6 @@ defmodule Type.Opaque do
     end
 
     subtype do
-      def subtype?(_, _), do: false
     end
   end
 
