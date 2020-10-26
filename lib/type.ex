@@ -892,8 +892,12 @@ defmodule Type do
   defp of_bitstring(bitstring, bits_so_far \\ 0)
   defp of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
   defp of_bitstring(<<>>, bits) do
-    bytes = div(bits, 8)
-    remote(String.t(bytes))
+    if Application.get_env(:mavis, :use_smart_strings, true) do
+      bytes = div(bits, 8)
+      remote(String.t(bytes))
+    else
+      remote(String.t)
+    end
   end
   defp of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
     of_bitstring(rest, so_far + 8)
