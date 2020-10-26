@@ -152,11 +152,14 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
+  @primitive_builtins [
+    :none, :neg_integer, :pos_integer, :non_neg_integer, :integer,
+    :float, :node, :module, :atom, :reference, :port, :pid, :iolist,
+    :any]
+
   @spec builtin(atom) :: Macro.t
   @doc """
   helper macro to  match on builtin types.
-
-  NB: does not currently filter on the type
 
   ### Example:
   ```elixir
@@ -166,7 +169,117 @@ defmodule Type do
 
   *Usable in guards*
   """
-  defmacro builtin(type) do
+  defmacro builtin(:term) do
+    quote do %Type{module: nil, name: :any, params: []} end
+  end
+  defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
+    quote do 0..255 end
+  end
+  defmacro builtin(:binary) do
+    quote do %Type.Bitstring{size: 0, unit: 8} end
+  end
+  defmacro builtin(:bitstring) do
+    quote do %Type.Bitstring{size: 0, unit: 1} end
+  end
+  defmacro builtin(:boolean) do
+    quote do %Type.Union{of: [true, false]} end
+  end
+  defmacro builtin(:char) do
+    quote do 0..0x10_FFFF end
+  end
+  defmacro builtin(:charlist) do
+    quote do %Type.List{type: 0..0x10_FFFF, nonempty: false, final: []} end
+  end
+  defmacro builtin(:nonempty_charlist) do
+    quote do %Type.List{type: 0..0x10_FFFF, nonempty: true, final: []} end
+  end
+  defmacro builtin(fun) when fun in [:fun, :function] do
+    quote do %Type.Function{params: :any, return: %Type{module: nil, name: :any, params: []}} end
+  end
+  defmacro builtin(:identifier) do
+    quote do
+      %Type.Union{of:
+      [%Type{module: nil, name: :pid, params: []},
+       %Type{module: nil, name: :port, params: []},
+       %Type{module: nil, name: :reference, params: []}]}
+    end
+  end
+  defmacro builtin(:iodata) do
+    quote do
+      %Type.Union{of:
+      [%Type.Bitstring{size: 0, unit: 8},
+       %Type{module: nil, name: :iolist, params: []}]}
+    end
+  end
+  defmacro builtin(:keyword) do
+    quote do
+      %Type.List{type:
+        %Type.Tuple{elements: [%Type{module: nil, name: :atom, params: []},
+                               %Type{module: nil, name: :any, params: []}]}}
+    end
+  end
+  defmacro builtin(:list) do
+    quote do
+      %Type.List{type: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:nonempty_list) do
+    quote do
+      %Type.List{type: %Type{module: nil, name: :any, params: []}, nonempty: true}
+    end
+  end
+  defmacro builtin(:maybe_improper_list) do
+    quote do
+      %Type.List{
+        type: %Type{module: nil, name: :any, params: []},
+        final: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:nonempty_maybe_improper_list) do
+    quote do
+      %Type.List{
+        type: %Type{module: nil, name: :any, params: []},
+        nonempty: true,
+        final: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:mfa) do
+    quote do
+      %Type.Tuple{elements: [
+        %Type{module: nil, name: :module, params: []},
+        %Type{module: nil, name: :atom, params: []},
+        0..255
+      ]}
+    end
+  end
+  defmacro builtin(:no_return) do
+    quote do %Type{module: nil, name: :none, params: []} end
+  end
+  defmacro builtin(:number) do
+    quote do
+      %Type.Union{of: [
+        %Type{module: nil, name: :float, params: []},
+        %Type{module: nil, name: :integer, params: []},
+      ]}
+    end
+  end
+  defmacro builtin(:struct) do
+    quote do
+      %Type.Map{required: %{__struct__: %Type{module: nil, params: [], name: :atom}},
+                optional: %{%Type{module: nil, params: [], name: :atom} =>
+                            %Type{module: nil, params: [], name: :any}}}
+    end
+  end
+  defmacro builtin(:timeout) do
+    quote do
+      %Type.Union{of: [
+        :infinity,
+        %Type{module: nil, name: :non_neg_integer, params: []},
+      ]}
+    end
+  end
+  defmacro builtin(type) when
+    not is_atom(type) or type in @primitive_builtins do
     quote do %Type{module: nil, name: unquote(type), params: []} end
   end
 
@@ -212,6 +325,15 @@ defmodule Type do
   iex> Type.is_builtin(%Type{name: :integer})
   true
   iex> Type.is_builtin(%Type{module: String, name: :t})
+  false
+  ```
+
+  Note that composite builtin types may not match with this
+  function:
+
+  ```
+  iex> import Type
+  iex> Type.is_builtin(builtin(:mfa))
   false
   ```
   """

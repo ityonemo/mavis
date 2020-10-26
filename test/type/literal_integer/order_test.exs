@@ -29,7 +29,7 @@ defmodule TypeTest.LiteralInteger.OrderTest do
       assert -47 < -42
       assert -47 < 0
       assert -47 < 47
-      assert -47 < builtin(:non_negative_integer)
+      assert -47 < builtin(:non_neg_integer)
       assert -47 < builtin(:pos_integer)
     end
 

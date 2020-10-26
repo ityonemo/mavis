@@ -9,7 +9,7 @@ defmodule TypeTest.TypeMap.OrderTest do
 
   alias Type.Map
 
-  @any builtin(:map)
+  @any builtin(:any)
   @any_map Map.build(%{@any => @any})
 
   describe "maps are first compared based on their global preimages" do
