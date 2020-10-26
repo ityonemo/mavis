@@ -190,6 +190,8 @@ defmodule Type.List do
       def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
         when ne_c == ne_t or ne_c do
 
+        Type.subtype?(challenge.type, target.type)
+
         Type.subtype?(challenge.type, target.type) and
           Type.subtype?(challenge.final, target.final)
       end

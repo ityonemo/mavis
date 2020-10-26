@@ -1254,10 +1254,15 @@ defimpl Type.Properties, for: Type do
     def subtype?(builtin(:iolist), list = %Type.List{}) do
       Type.Iolist.supertype_of_iolist?(list)
     end
-    def subtype?(left = %Type{module: String, name: :t}, right) do
-      case Type.usable_as(left, right) do
-        :ok -> true
-        _ -> false
+    def subtype?(%Type{module: String, name: :t, params: p}, right) do
+      case p do
+        [] -> Type.subtype?(builtin(:binary), right)
+        [i] when is_integer(i) ->
+          Type.subtype?(%Type.Bitstring{size: i * 8}, right)
+        range = _.._ ->
+          Enum.all?(range, &Type.subtype?(%Type.Bitstring{size: &1 * 8}, right))
+        %Type.Union{of: ints} ->
+          Enum.all?(ints, &Type.subtype?(%Type.Bitstring{size: &1 * 8}, right))
       end
     end
     def subtype?(left, right) when is_remote(left) do

@@ -231,7 +231,7 @@ defmodule Type.Helpers do
     quote do
       def subtype?(a, a), do: true
 
-      unless __MODULE__ == Type.Properties.Type.Union do
+      unless __MODULE__ in [Type.Properties.Type.Union] do
         def subtype?(a, %Type.Union{of: types}) do
           Enum.any?(types, &Type.subtype?(a, &1))
         end
@@ -256,6 +256,7 @@ defmodule Type.Helpers do
       def subtype?(left, %Type.Function.Var{constraint: c}) do
         subtype?(left, c)
       end
+      def subtype?(_, _), do: false
     end
   end
   defmacro subtype(:usable_as) do
@@ -271,6 +272,13 @@ defmodule Type.Helpers do
       def subtype?(a, %Type.Function.Var{constraint: c}) do
         subtype?(a, c)
       end
+
+      unless __MODULE__ == Type.Properties.Range do
+        def subtype?(a, %Type.Union{of: types}) do
+          Enum.any?(types, &Type.subtype?(a, &1))
+        end
+      end
+
       def subtype?(a, b), do: usable_as(a, b, []) == :ok
     end
   end
