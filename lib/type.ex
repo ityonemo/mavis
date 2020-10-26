@@ -1232,7 +1232,10 @@ defimpl Type.Properties, for: Type do
       Type.Iolist.supertype_of_iolist?(list)
     end
     def subtype?(left = %Type{module: String, name: :t}, right) do
-      string_subtype?(left, right)
+      case Type.usable_as(left, right) do
+        :ok -> true
+        _ -> false
+      end
     end
     def subtype?(left, right) when is_remote(left) do
       left
@@ -1240,10 +1243,6 @@ defimpl Type.Properties, for: Type do
       |> Type.subtype?(right)
     end
     def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
-  end
-
-  defp string_subtype?(left, right) do
-    raise "foo"
   end
 end
 
