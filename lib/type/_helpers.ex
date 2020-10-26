@@ -75,11 +75,6 @@ defmodule Type.Helpers do
 
       def usable_as(type, Type.builtin(:any), meta), do: :ok
 
-      if __MODULE__ == Type.Properties.Type.Bitstring do
-        import Type, only: [remote: 1]
-        def usable_as(%Type.Bitstring{size: 0, unit: 0}, remote(String.t()), _), do: :ok
-      end
-
       def usable_as(challenge, target = %Type.Function.Var{}, meta) do
         Type.usable_as(challenge, target.constraint, meta)
       end
@@ -90,6 +85,8 @@ defmodule Type.Helpers do
           usable -> usable
         end
       end
+
+      unquote(block)
 
       def usable_as(challenge, target, meta) when is_remote(target) do
         case Type.usable_as(challenge, Type.fetch_type!(target)) do
@@ -102,8 +99,6 @@ defmodule Type.Helpers do
           maybe_or_error -> maybe_or_error
         end
       end
-
-      unquote(block)
 
       # some integer types override the union analysis, so this must
       # come at the end.
@@ -142,11 +137,6 @@ defmodule Type.Helpers do
       end
       end
 
-      def intersection(left, right) when is_remote(right) do
-        # special case.
-        Type.intersection(left, Type.fetch_type!(right))
-      end
-
       unless __MODULE__ == Type.Properties.Type.Union do
       def intersection(type, union = %Type.Union{}) do
         Type.intersection(union, type)
@@ -163,6 +153,11 @@ defmodule Type.Helpers do
       end
 
       unquote(block)
+
+      def intersection(left, right) when is_remote(right) do
+        # special case.
+        Type.intersection(left, Type.fetch_type!(right))
+      end
 
       def intersection(_, _), do: builtin(:none)
     end
@@ -262,6 +257,8 @@ defmodule Type.Helpers do
 
       def subtype?(_, builtin(:any)), do: true
 
+      unquote(block)
+
       def subtype?(left, right) when is_remote(right) do
         r_solved = Type.fetch_type!(right)
         if left == r_solved do
@@ -273,8 +270,6 @@ defmodule Type.Helpers do
       def subtype?(left, %Type.Function.Var{constraint: c}) do
         subtype?(left, c)
       end
-
-      unquote(block)
     end
   end
   defmacro subtype(:usable_as) do

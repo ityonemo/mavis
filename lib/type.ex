@@ -293,9 +293,38 @@ defmodule Type do
   %Type{module: String, name: :t}
   ```
   """
-  defmacro remote({{:., _, [module_ast, name]}, _, params}) do
-    module = Macro.expand(module_ast, __CALLER__)
-    Macro.escape(%Type{module: module, name: name, params: params})
+  defmacro remote({{:., _, [module_ast, name]}, _, atom}) when is_atom(atom) do
+    Macro.escape(%Type{module: module_ast, name: name})
+  end
+  defmacro remote({{:., _, [module_ast, name]}, _, params_ast}) do
+    params = Enum.map(params_ast, fn ast ->
+      quote do
+        remote(unquote(ast))
+      end
+    end)
+    quote do
+      %Type{module: unquote(module_ast),
+            name: unquote(name),
+            params: unquote(params)}
+    end
+  end
+  defmacro remote(ast = {builtin, _, atom}) when is_atom(atom) do
+    # detect if we're trying to be a variable or if we're trying
+    # to call a zero-arity builtin.
+    __CALLER__.current_vars
+    |> elem(0)
+    |> Enum.any?(&match?({{^builtin, _}, _}, &1))
+    |> if do
+      ast
+    else
+      Macro.escape(%Type{module: nil, name: builtin, params: []})
+    end
+  end
+  defmacro remote({builtin, _, params}) do
+    Macro.escape(%Type{module: nil, name: builtin, params: params})
+  end
+  defmacro remote(any) do
+    quote do unquote(any) end
   end
 
   @doc """
@@ -862,7 +891,10 @@ defmodule Type do
 
   defp of_bitstring(bitstring, bits_so_far \\ 0)
   defp of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
-  defp of_bitstring(<<>>, _size), do: remote(String.t)
+  defp of_bitstring(<<>>, bits) do
+    bytes = div(bits, 8)
+    remote(String.t(bytes))
+  end
   defp of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
     of_bitstring(rest, so_far + 8)
   end
@@ -927,6 +959,13 @@ defimpl Type.Properties, for: Type do
   alias Type.Message
 
   usable_as do
+    def usable_as(challenge, target = %Type{module: String, name: :t}, meta) do
+      usable_as_string(challenge, target, meta)
+    end
+    def usable_as(challenge = %Type{module: String, name: :t}, target, meta) do
+      string_usable_as(challenge, target, meta)
+    end
+
     def usable_as(challenge, target, meta) when is_remote(challenge) do
       challenge
       |> Type.fetch_type!()
@@ -1019,6 +1058,36 @@ defimpl Type.Properties, for: Type do
     end
   end
 
+  defp usable_as_string(%Type{module: String, name: :t}, %{params: []}, _meta), do: :ok
+  defp usable_as_string(challenge = %Type{module: String, name: :t, params: []},
+                        target = %{params: [_t]}, meta) do
+    {:maybe, [Message.make(challenge, target, meta)]}
+  end
+  defp usable_as_string(challenge = %Type{module: String, name: :t, params: [pl]},
+                        target = %{params: [pr]}, meta) do
+    cond do
+      Type.subtype?(pl, pr) -> :ok
+      Type.subtype?(pr, pl) -> {:maybe, [Message.make(challenge, target, meta)]}
+      true -> {:error, Message.make(challenge, target, meta)}
+    end
+  end
+  defp usable_as_string(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+
+  defp string_usable_as(%{params: []}, target, meta) do
+    Type.usable_as(builtin(:binary), target, meta)
+  end
+  defp string_usable_as(%{params: [size]}, target, meta) when is_integer(size) do
+    Type.usable_as(%Type.Bitstring{size: size * 8}, target, meta)
+  end
+  defp string_usable_as(%{params: [%Type.Union{of: ints}]}, target, meta) do
+    ints
+    |> Enum.map(&Type.usable_as(%Type.Bitstring{size: &1 * 8}, target, meta))
+    |> Enum.reduce(&Type.ternary_and/2)
+  end
+
+
   intersection do
     # negative integer
     def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
@@ -1061,6 +1130,32 @@ defimpl Type.Properties, for: Type do
     # iolist
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
 
+    # strings
+    def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
+    def intersection(target = %Type{module: String, name: :t}, remote(String.t)), do: target
+    def intersection(%Type{module: String, name: :t, params: [lp]},
+                     %Type{module: String, name: :t, params: [rp]}) do
+      case Type.intersection(lp, rp) do
+        builtin(:none) -> builtin(:none)
+        int_type -> %Type{module: String, name: :t, params: [int_type]}
+      end
+    end
+    def intersection(%Type{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
+      lp
+      |> case do
+        i when is_integer(i) ->
+          if sized?(i, bs), do: [i], else: []
+        range = _.._ ->
+          Enum.filter(range, &sized?(&1, bs))
+        %Type.Union{of: ints} ->
+          Enum.filter(ints, &sized?(&1, bs))
+      end
+      |> case do
+        [] -> builtin(:none)
+        lst -> %Type{module: String, name: :t, params: [Enum.into(lst, %Type.Union{})]}
+      end
+    end
+
     # remote types
     def intersection(type = %Type{module: module, name: name, params: params}, right)
         when is_remote(type) do
@@ -1070,6 +1165,10 @@ defimpl Type.Properties, for: Type do
       Type.intersection(left, right)
     end
   end
+
+  def sized?(i, %{size: size}) when (i * 8) < size, do: false
+  def sized?(i, %{size: size, unit: 0}), do: i * 8 == size
+  def sized?(i, %{size: size, unit: unit}), do: rem(i * 8 - size, unit) == 0
 
   def valid_node?(atom) do
     atom
@@ -1132,6 +1231,9 @@ defimpl Type.Properties, for: Type do
     def subtype?(builtin(:iolist), list = %Type.List{}) do
       Type.Iolist.supertype_of_iolist?(list)
     end
+    def subtype?(left = %Type{module: String, name: :t}, right) do
+      string_subtype?(left, right)
+    end
     def subtype?(left, right) when is_remote(left) do
       left
       |> Type.fetch_type!
@@ -1139,10 +1241,20 @@ defimpl Type.Properties, for: Type do
     end
     def subtype?(a = builtin(_), b), do: usable_as(a, b, []) == :ok
   end
+
+  defp string_subtype?(left, right) do
+    raise "foo"
+  end
 end
 
 defimpl Inspect, for: Type do
   import Inspect.Algebra
+
+  # special case String.t.  This hides our under-the-hood
+  # implementation of sized string types.
+  def inspect(%{module: String, name: :t, params: [t]}, opts) do
+    "String.t()"
+  end
   def inspect(%{module: nil, name: name, params: params}, opts) do
     param_list = params
     |> Enum.map(&to_doc(&1, opts))

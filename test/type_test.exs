@@ -92,26 +92,26 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: %{foo: remote(String.t)}} ==
+      assert %Type.Map{required: %{foo: remote(String.t(3))}} ==
         Type.of(%{foo: "foo"})
-      assert %Type.Map{required: %{bar: 1, foo: remote(String.t)}} ==
+      assert %Type.Map{required: %{bar: 1, foo: remote(String.t(3))}} ==
         Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: %{1 => remote(String.t)}} ==
+      assert %Type.Map{required: %{1 => remote(String.t(3))}} ==
         Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: %{remote(String.t) => remote(String.t)}} ==
+      assert %Type.Map{optional: %{remote(String.t(3)) => remote(String.t(3))}} ==
         Type.of(%{"foo" => "bar"})
 
-      assert %Type.Map{optional: %{remote(String.t) => :bar <|> :quux}} ==
+      assert %Type.Map{optional: %{remote(String.t(3)) => :bar <|> :quux}} ==
         Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
     test "assigns bitstrings correctly" do
       assert %Type.Bitstring{size: 0, unit: 0} == Type.of("")
       assert %Type.Bitstring{size: 7, unit: 0} == Type.of(<<123::7>>)
-      assert remote(String.t) == Type.of("foobar")
-      assert remote(String.t) == Type.of("東京")
-      assert remote(String.t) == Type.of("🇫🇲")
+      assert remote(String.t(6)) == Type.of("foobar")
+      assert remote(String.t(6)) == Type.of("東京")
+      assert remote(String.t(8)) == Type.of("🇫🇲")
       assert %Type.Bitstring{size: 56, unit: 0} == Type.of("foobar" <> <<0>>)
       assert %Type.Bitstring{size: 16, unit: 0} == Type.of(<<255, 255>>)
     end

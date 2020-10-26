@@ -123,7 +123,7 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: [], inferred: false]
+  defstruct @enforce_keys ++ [params: :any, inferred: false]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any,
