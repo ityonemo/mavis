@@ -1,24 +1,28 @@
 defmodule Mavis.MixProject do
   use Mix.Project
 
+  @version "0.0.2"
+  @source_url "https://github.com/ityonemo/mavis/"
+
   def project do
     [
       app: :mavis,
-      version: "0.0.2",
+      version: @version,
       elixir: "~> 1.10",
       test_coverage: [tool: ExCoveralls],
       package: [
         description: "type system tools for elixir",
         licenses: ["MIT"],
         files: ~w(lib .formatter.exs mix.exs README* LICENSE* VERSIONS*),
-        links: %{"GitHub" => "https://github.com/ityonemo/mavis"}
+        links: %{"GitHub" => @source_url}
       ],
-      source_url: "https://github.com/ityonemo/state_server/",
+      source_url: @source_url,
       preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: [
+        source_ref: @version,
         main: "Type",
         groups_for_modules: [
           "Types": [Type.AsBoolean, Type.Bitstring, Type.Function,
