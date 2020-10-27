@@ -270,7 +270,23 @@ defmodule Type.Union do
     merge = Type.union(left, right)
     {remote(String.t(merge)), rest}
   end
+  def type_merge([%Type{module: String, name: :t, params: []} | rest],
+                 b = %Bitstring{size: 0, unit: unit})
+                 when unit in [1, 2, 4, 8], do: {b, rest}
+  def type_merge([%Type{module: String, name: :t, params: [p]} | rest],
+                 b = %Bitstring{size: size, unit: unit}) do
+    leftovers = p
+    |> case do
+      i when is_integer(i) -> [i]
+      range = _.._ -> range
+      %Type.Union{of: ints} -> ints
+    end
+    |> Enum.reject(&(rem(&1 * 8 - size, unit) == 0))
+    |> Enum.map(&%Type{module: String, name: :t, params: [&1]})
+    |> Enum.into(%Type.Union{})
 
+    {leftovers, [b | rest]}
+  end
   # any
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}
