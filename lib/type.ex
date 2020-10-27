@@ -10,8 +10,8 @@ defmodule Type do
   - Must be compatible with the exisiting dialyzer/typespec system
   - May extend the typespec system if it's unobtrusive and can be, at
     a minimum, *'opt-out'*.
-  - Does not have to conform to existing theoretical typesystems (e.g. [H-M]
-    (https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system))
+  - Does not have to conform to existing theoretical typesystems (e.g.
+    [H-M](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system))
   - Take maximum advantage of Elixir programming features to achieve
     readibility and extensibility.
   - Does not have to be easily usable from erlang, but must be able to
@@ -134,11 +134,11 @@ defmodule Type do
   config :mavis, :use_smart_strings, false
   ```
 
-  ### "Composite builtins"
+  ### "Aliased builtins"
 
   Some builtins were not directly introduced into the typesystem logic, since
-  they are easily represented as composite types.  The following composite
-  builtins are usable with the `builtin/1` macro, but will return false
+  they are easily represented as aliases or composite types.  The following
+  aliased builtins are usable with the `builtin/1` macro, but will return false
   with `is_builtin/1`
 
   **NB in the future the name of `is_builtin` may change to prevent confusion.**
