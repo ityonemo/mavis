@@ -3,7 +3,19 @@ defmodule Type do
   @moduledoc """
   Type analysis system for Elixir.
 
-  Mavis implements the `Type` module, which contains a type analysis system.
+  Mavis implements the `Type` module, which contains a type analysis system
+  specifically tailored for the BEAM VM.  The following considerations went
+  into its design.
+
+  - Must be compatible with the exisiting dialyzer/typespec system
+  - May extend the typespec system if it's unobtrusive and can be, at
+    a minimum, *'opt-out'*.
+  - Does not have to conform to existing theoretical typesystems (e.g. [H-M]
+    (https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system))
+  - Take maximum advantage of Elixir programming features to achieve
+    readibility and extensibility.
+  - Does not have to be easily usable from erlang, but must be able to
+    handle modules produced in erlang.
 
   ### Compile-Time Usage
 
@@ -17,8 +29,8 @@ defmodule Type do
   have already been compiled.
 
   ```elixir
-  iex> Type.fetch_type!(String, :t, [])
-  %Type.Bitstring{unit: 8}
+  iex> inspect Type.fetch_type!(String, :t, [])
+  "binary()"
   ```
 
   ### Runtime Usage
@@ -174,16 +186,16 @@ defmodule Type do
 
   ```elixir
   iex> import Type
-  iex> Type.match_type?(builtin(:module), :foo)
+  iex> Type.type_match?(builtin(:module), :foo)
   false
-  iex> Type.match_type?(builtin(:module), Kernel)
+  iex> Type.type_match?(builtin(:module), Kernel)
   true
-  iex> Type.match_type?(builtin(:module), :gen_server)
+  iex> Type.type_match?(builtin(:module), :gen_server)
   true
   iex> Type.usable_as(Enum, builtin(:module))
   :ok
   iex> Type.usable_as(:not_a_module, builtin(:module))
-  {:maybe, [%Type.Message{target: %Type{:module}, type: :not_a_module}]}
+  {:maybe, [%Type.Message{target: %Type{name: :module}, type: :not_a_module}]}
   ```
 
   A node will not be considered a node unless it has the proper form for a
@@ -191,9 +203,9 @@ defmodule Type do
 
   ```elixir
   iex> import Type
-  iex> Type.match_type?(builtin(:node), :foo)
+  iex> Type.type_match?(builtin(:node), :foo)
   false
-  iex> Type.match_type?(builtin(:node), :nonode@nohost)
+  iex> Type.type_match?(builtin(:node), :nonode@nohost)
   true
   ```
   """
