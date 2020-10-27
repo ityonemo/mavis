@@ -100,10 +100,35 @@ defmodule Type do
   The operation `Type.type_match?/2` is also provided, which is a combination of
   `Type.of/1` and `Type.subtype?/2`.
 
-  ## Where's my builtin?
+  ## Deviations from standard Elixir and Erlang
 
-  Some builtins were not introduced into the typesystem, since they are easily
-  represented as composite types.  The following builtins are not present:
+  ### The Curious case of String.t
+
+  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
+  `t:binary/0`.  As such, it is special-cased to have some properties that
+  other remote types don't have out of the box.  This sort of behaviour
+  may be changed to be extensible to custom types in a future release.
+
+  The nonexistent type `String.t/1` is also implemented, with the type
+  parameter indicating byte-lengths for compile-time constant strings.
+  This is done entirely under the hood and should not otherwise affect
+  operations.  If you encounter strange results, report them to the issue
+  tracker.
+
+  In the meantime, you may disable this feature by setting the following:
+
+  ```elixir
+  config :mavis, :use_smart_strings, false
+  ```
+
+  ### "Composite builtins"
+
+  Some builtins were not directly introduced into the typesystem logic, since
+  they are easily represented as composite types.  The following composite
+  builtins are usable with the `builtin/1` macro, but will return false
+  with `is_builtin/1`
+
+  **NB in the future the name of `is_builtin` may change to prevent confusion.**
 
   - `t:term/0`
   - `t:arity/0`
@@ -130,17 +155,46 @@ defmodule Type do
   - `t:struct/0`
   - `t:timeout/0`
 
-  Don't try to use the `builtin/1` macro or `%Type{name: <builtin>}` with
-  these types; it won't work as expected.  In the future `builtin/1` may
-  guard against doing this.
+  ```elixir
+  iex> import Type
+  iex> builtin(:timeout)
+  %Type.Union{of: [:infinity, %Type{name: :non_neg_integer}]}
+  iex> Type.is_builtin(builtin(:timeout))
+  false
+  ```
 
-  ## The Curious case of String.t
+  ### Module and Node detail
 
-  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
-  `t:binary/0`.  As such, it is special-cased to have some properties that
-  other remote types don't have out of the box.  This sort of behaviour
-  may be changed to be extensible to custom types in a future release.
+  The `t:module/0` and `t:node/0` types are given extra protection.
 
+  An atom will not be considered a module unless it is detected to exist
+  in the VM; although for `usable_as/3` it will return the `:maybe` result
+  if unconfirmed.
+
+  ```elixir
+  iex> import Type
+  iex> Type.match_type?(builtin(:module), :foo)
+  false
+  iex> Type.match_type?(builtin(:module), Kernel)
+  true
+  iex> Type.match_type?(builtin(:module), :gen_server)
+  true
+  iex> Type.usable_as(Enum, builtin(:module))
+  :ok
+  iex> Type.usable_as(:not_a_module, builtin(:module))
+  {:maybe, [%Type.Message{target: %Type{:module}, type: :not_a_module}]}
+  ```
+
+  A node will not be considered a node unless it has the proper form for a
+  node.  `usable_as/3` does not check active node lists, however.
+
+  ```elixir
+  iex> import Type
+  iex> Type.match_type?(builtin(:node), :foo)
+  false
+  iex> Type.match_type?(builtin(:node), :nonode@nohost)
+  true
+  ```
   """
 
   @enforce_keys [:name]
@@ -976,9 +1030,9 @@ defmodule Type do
   ```
   """
   def type_match?(type, term) do
-    term 
-    |> of 
-    |> subtype?(type) 
+    term
+    |> of
+    |> subtype?(type)
   end
 end
 
