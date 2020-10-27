@@ -25,4 +25,11 @@ defmodule TypeTest.Remote.OrderTest do
       assert %Bitstring{size: 0, unit: 8} > remote(String.t())
     end
   end
+
+  describe "String.t/1" do
+    test "is smaller than general String.t and bigger String.t's" do
+      assert remote(String.t(3)) < remote(String.t())
+      assert remote(String.t(3)) < remote(String.t(4))
+    end
+  end
 end

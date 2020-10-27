@@ -101,8 +101,7 @@ defmodule Type.Bitstring do
 
   """
 
-  @enforce_keys [:size, :unit]
-  defstruct @enforce_keys
+  defstruct [size: 0, unit: 0]
 
   @type t :: %__MODULE__{
     size: non_neg_integer,
@@ -116,12 +115,21 @@ defmodule Type.Bitstring do
     use Type.Helpers
 
     group_compare do
-      def group_compare(%Bitstring{unit: 0}, %Bitstring{unit: b}) when b != 0, do: :lt
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: 0}) when a != 0, do: :gt
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b,  do: :gt
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b,  do: :lt
-      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b,  do: :gt
-      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b,  do: :lt
+      def group_compare(%Bitstring{unit: 0}, %Bitstring{unit: b}) when b != 0, do: :lt 
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: 0}) when a != 0, do: :gt 
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b,  do: :gt 
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b,  do: :lt 
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b,  do: :gt 
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b,  do: :lt 
+
+      def group_compare(left, %Type{module: String, name: :t}) do
+        left
+        |> group_compare(%Type.Bitstring{size: 0, unit: 8})
+        |> case do
+          :eq -> :gt
+          order -> order
+        end
+      end
     end
 
     usable_as do
@@ -132,7 +140,7 @@ defmodule Type.Bitstring do
       end
 
       # same unit
-      def usable_as(challenge = %Bitstring{size: size_a, unit: unit},
+      def usable_as(challenge = %{size: size_a, unit: unit},
                     target = %Bitstring{size: size_b, unit: unit},
                     meta) do
 
@@ -151,7 +159,7 @@ defmodule Type.Bitstring do
       end
 
       # same size
-      def usable_as(challenge = %Bitstring{size: size, unit: unit_a},
+      def usable_as(challenge = %{size: size, unit: unit_a},
                     target = %Bitstring{size: size, unit: unit_b},
                     meta) do
         cond do
@@ -165,7 +173,7 @@ defmodule Type.Bitstring do
       end
 
       # different sizes and units
-      def usable_as(challenge = %Bitstring{size: size_a, unit: unit_a},
+      def usable_as(challenge = %{size: size_a, unit: unit_a},
                     target = %Bitstring{size: size_b, unit: unit_b}, meta) do
 
         unit_gcd = Integer.gcd(unit_a, unit_b)
@@ -182,6 +190,52 @@ defmodule Type.Bitstring do
             {:maybe, [Message.make(challenge, target, meta)]}
         end
       end
+
+      def usable_as(%{size: 0, unit: 0},
+                    %Type{module: String, name: :t, params: []}, _meta), do: :ok
+
+      def usable_as(%{size: 0, unit: 0},
+                    challenge = %Type{module: String, name: :t, params: [p]}, meta) do
+        if Type.subtype?(0, p) do
+          :ok
+        else
+          {:error, Message.make(%Type.Bitstring{}, challenge, meta)}
+        end
+      end
+
+      def usable_as(challenge, target = %Type{module: String, name: :t, params: []}, meta) do
+        case Type.usable_as(challenge, builtin(:binary)) do
+          :ok ->
+            msg = encapsulation_msg(challenge, target)
+            {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
+          error ->
+            error
+        end
+      end
+
+      def usable_as(challenge, target = %Type{module: String, name: :t, params: [p]}, meta) do
+        case p do
+          i when is_integer(i) -> [i]
+          range = _.._ -> range
+          %Type.Union{of: ints} -> ints
+        end
+        |> Enum.map(&Type.usable_as(challenge, %Type.Bitstring{size: &1 * 8}, meta))
+        |> Enum.reduce(&Type.ternary_and/2)
+        |> case do
+          :ok ->
+            msg = encapsulation_msg(challenge, target)
+            {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
+          other -> other
+        end
+      end
+    end
+
+    # TODO: DRY THIS UP into the Type module.
+    defp encapsulation_msg(challenge, target) do
+      """
+      #{inspect challenge} is an equivalent type to #{inspect target} but it may fail because it is
+      a remote encapsulation which may require qualifications outside the type system.
+      """
     end
 
     intersection do
@@ -211,6 +265,9 @@ defmodule Type.Bitstring do
         else
           builtin(:none)
         end
+      end
+      def intersection(bs, st = %Type{module: String, name: :t}) do
+        Type.intersection(st, bs)
       end
     end
 

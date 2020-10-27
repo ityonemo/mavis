@@ -4,7 +4,53 @@ defmodule Type do
   Type analysis system for Elixir.
 
   Mavis implements the `Type` module, which contains a type analysis system
-  suitable to be the foundation for a compile-time static type analysis engine.
+  specifically tailored for the BEAM VM.  The following considerations went
+  into its design.
+
+  - Must be compatible with the exisiting dialyzer/typespec system
+  - May extend the typespec system if it's unobtrusive and can be, at
+    a minimum, *'opt-out'*.
+  - Does not have to conform to existing theoretical typesystems (e.g.
+    [H-M](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system))
+  - Take maximum advantage of Elixir programming features to achieve
+    readibility and extensibility.
+  - Does not have to be easily usable from erlang, but must be able to
+    handle modules produced in erlang.
+
+  ### Compile-Time Usage
+
+  The type analysis system is designed to be a backend for a compile-time
+  typechecker (see [Selectrix](https://github.com/ityonemo/selectrix)).  This
+  system will infer the types of functions in modules and emit errors and
+  warnings if there appear to be conflicts.
+
+  One key function enabling this is `fetch_type!/3`; you can use this function
+  to retrieve typing information on typing information stored in modules that
+  have already been compiled.
+
+  ```elixir
+  iex> inspect Type.fetch_type!(String, :t, [])
+  "binary()"
+  ```
+
+  ### Runtime Usage
+
+  There's no reason why you have to use the typing library exclusively at
+  compile-time.  Here is an example of using it at runtime:
+
+  ```
+  defmodule TestJson do
+    @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
+
+    def validate_json(data) do
+      json_type = Type.fetch_type!(__MODULE__, :json, [])
+
+      if Type.type_match?(json_type, data), do: :ok, else: raise "not json"
+    end
+  end
+  ```
+
+  Note that the above example is not particularly performant.
 
   ### Examples:
 
@@ -64,13 +110,38 @@ defmodule Type do
   - `Type.usable_as/3`
   - `Type.of/1`
 
-  The operation `Type.isa?/2` is also provided, which is a combination of
+  The operation `Type.type_match?/2` is also provided, which is a combination of
   `Type.of/1` and `Type.subtype?/2`.
 
-  ## Where's my builtin?
+  ## Deviations from standard Elixir and Erlang
 
-  Some builtins were not introduced into the typesystem, since they are easily
-  represented as composite types.  The following builtins are not present:
+  ### The Curious case of String.t
+
+  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
+  `t:binary/0`.  As such, it is special-cased to have some properties that
+  other remote types don't have out of the box.  This sort of behaviour
+  may be changed to be extensible to custom types in a future release.
+
+  The nonexistent type `String.t/1` is also implemented, with the type
+  parameter indicating byte-lengths for compile-time constant strings.
+  This is done entirely under the hood and should not otherwise affect
+  operations.  If you encounter strange results, report them to the issue
+  tracker.
+
+  In the meantime, you may disable this feature by setting the following:
+
+  ```elixir
+  config :mavis, :use_smart_strings, false
+  ```
+
+  ### "Aliased builtins"
+
+  Some builtins were not directly introduced into the typesystem logic, since
+  they are easily represented as aliases or composite types.  The following
+  aliased builtins are usable with the `builtin/1` macro, but will return false
+  with `is_builtin/1`
+
+  **NB in the future the name of `is_builtin` may change to prevent confusion.**
 
   - `t:term/0`
   - `t:arity/0`
@@ -97,17 +168,46 @@ defmodule Type do
   - `t:struct/0`
   - `t:timeout/0`
 
-  Don't try to use the `builtin/1` macro or `%Type{name: <builtin>}` with
-  these types; it won't work as expected.  In the future `builtin/1` may
-  guard against doing this.
+  ```elixir
+  iex> import Type
+  iex> builtin(:timeout)
+  %Type.Union{of: [:infinity, %Type{name: :non_neg_integer}]}
+  iex> Type.is_builtin(builtin(:timeout))
+  false
+  ```
 
-  ## The Curious case of String.t
+  ### Module and Node detail
 
-  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
-  `t:binary/0`.  As such, it is special-cased to have some properties that
-  other remote types don't have out of the box.  This sort of behaviour
-  may be changed to be extensible to custom types in a future release.
+  The `t:module/0` and `t:node/0` types are given extra protection.
 
+  An atom will not be considered a module unless it is detected to exist
+  in the VM; although for `usable_as/3` it will return the `:maybe` result
+  if unconfirmed.
+
+  ```elixir
+  iex> import Type
+  iex> Type.type_match?(builtin(:module), :foo)
+  false
+  iex> Type.type_match?(builtin(:module), Kernel)
+  true
+  iex> Type.type_match?(builtin(:module), :gen_server)
+  true
+  iex> Type.usable_as(Enum, builtin(:module))
+  :ok
+  iex> Type.usable_as(:not_a_module, builtin(:module))
+  {:maybe, [%Type.Message{target: %Type{name: :module}, type: :not_a_module}]}
+  ```
+
+  A node will not be considered a node unless it has the proper form for a
+  node.  `usable_as/3` does not check active node lists, however.
+
+  ```elixir
+  iex> import Type
+  iex> Type.type_match?(builtin(:node), :foo)
+  false
+  iex> Type.type_match?(builtin(:node), :nonode@nohost)
+  true
+  ```
   """
 
   @enforce_keys [:name]
@@ -152,11 +252,14 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
+  @primitive_builtins [
+    :none, :neg_integer, :pos_integer, :non_neg_integer, :integer,
+    :float, :node, :module, :atom, :reference, :port, :pid, :iolist,
+    :any]
+
   @spec builtin(atom) :: Macro.t
   @doc """
   helper macro to  match on builtin types.
-
-  NB: does not currently filter on the type
 
   ### Example:
   ```elixir
@@ -166,7 +269,117 @@ defmodule Type do
 
   *Usable in guards*
   """
-  defmacro builtin(type) do
+  defmacro builtin(:term) do
+    quote do %Type{module: nil, name: :any, params: []} end
+  end
+  defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
+    quote do 0..255 end
+  end
+  defmacro builtin(:binary) do
+    quote do %Type.Bitstring{size: 0, unit: 8} end
+  end
+  defmacro builtin(:bitstring) do
+    quote do %Type.Bitstring{size: 0, unit: 1} end
+  end
+  defmacro builtin(:boolean) do
+    quote do %Type.Union{of: [true, false]} end
+  end
+  defmacro builtin(:char) do
+    quote do 0..0x10_FFFF end
+  end
+  defmacro builtin(:charlist) do
+    quote do %Type.List{type: 0..0x10_FFFF, nonempty: false, final: []} end
+  end
+  defmacro builtin(:nonempty_charlist) do
+    quote do %Type.List{type: 0..0x10_FFFF, nonempty: true, final: []} end
+  end
+  defmacro builtin(fun) when fun in [:fun, :function] do
+    quote do %Type.Function{params: :any, return: %Type{module: nil, name: :any, params: []}} end
+  end
+  defmacro builtin(:identifier) do
+    quote do
+      %Type.Union{of:
+      [%Type{module: nil, name: :pid, params: []},
+       %Type{module: nil, name: :port, params: []},
+       %Type{module: nil, name: :reference, params: []}]}
+    end
+  end
+  defmacro builtin(:iodata) do
+    quote do
+      %Type.Union{of:
+      [%Type.Bitstring{size: 0, unit: 8},
+       %Type{module: nil, name: :iolist, params: []}]}
+    end
+  end
+  defmacro builtin(:keyword) do
+    quote do
+      %Type.List{type:
+        %Type.Tuple{elements: [%Type{module: nil, name: :atom, params: []},
+                               %Type{module: nil, name: :any, params: []}]}}
+    end
+  end
+  defmacro builtin(:list) do
+    quote do
+      %Type.List{type: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:nonempty_list) do
+    quote do
+      %Type.List{type: %Type{module: nil, name: :any, params: []}, nonempty: true}
+    end
+  end
+  defmacro builtin(:maybe_improper_list) do
+    quote do
+      %Type.List{
+        type: %Type{module: nil, name: :any, params: []},
+        final: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:nonempty_maybe_improper_list) do
+    quote do
+      %Type.List{
+        type: %Type{module: nil, name: :any, params: []},
+        nonempty: true,
+        final: %Type{module: nil, name: :any, params: []}}
+    end
+  end
+  defmacro builtin(:mfa) do
+    quote do
+      %Type.Tuple{elements: [
+        %Type{module: nil, name: :module, params: []},
+        %Type{module: nil, name: :atom, params: []},
+        0..255
+      ]}
+    end
+  end
+  defmacro builtin(:no_return) do
+    quote do %Type{module: nil, name: :none, params: []} end
+  end
+  defmacro builtin(:number) do
+    quote do
+      %Type.Union{of: [
+        %Type{module: nil, name: :float, params: []},
+        %Type{module: nil, name: :integer, params: []},
+      ]}
+    end
+  end
+  defmacro builtin(:struct) do
+    quote do
+      %Type.Map{required: %{__struct__: %Type{module: nil, params: [], name: :atom}},
+                optional: %{%Type{module: nil, params: [], name: :atom} =>
+                            %Type{module: nil, params: [], name: :any}}}
+    end
+  end
+  defmacro builtin(:timeout) do
+    quote do
+      %Type.Union{of: [
+        :infinity,
+        %Type{module: nil, name: :non_neg_integer, params: []},
+      ]}
+    end
+  end
+  defmacro builtin(type) when
+    not is_atom(type) or type in @primitive_builtins do
     quote do %Type{module: nil, name: unquote(type), params: []} end
   end
 
@@ -180,9 +393,38 @@ defmodule Type do
   %Type{module: String, name: :t}
   ```
   """
-  defmacro remote({{:., _, [module_ast, name]}, _, params}) do
-    module = Macro.expand(module_ast, __CALLER__)
-    Macro.escape(%Type{module: module, name: name, params: params})
+  defmacro remote({{:., _, [module_ast, name]}, _, atom}) when is_atom(atom) do
+    Macro.escape(%Type{module: module_ast, name: name})
+  end
+  defmacro remote({{:., _, [module_ast, name]}, _, params_ast}) do
+    params = Enum.map(params_ast, fn ast ->
+      quote do
+        remote(unquote(ast))
+      end
+    end)
+    quote do
+      %Type{module: unquote(module_ast),
+            name: unquote(name),
+            params: unquote(params)}
+    end
+  end
+  defmacro remote(ast = {builtin, _, atom}) when is_atom(atom) do
+    # detect if we're trying to be a variable or if we're trying
+    # to call a zero-arity builtin.
+    __CALLER__.current_vars
+    |> elem(0)
+    |> Enum.any?(&match?({{^builtin, _}, _}, &1))
+    |> if do
+      ast
+    else
+      Macro.escape(%Type{module: nil, name: builtin, params: []})
+    end
+  end
+  defmacro remote({builtin, _, params}) do
+    Macro.escape(%Type{module: nil, name: builtin, params: params})
+  end
+  defmacro remote(any) do
+    quote do unquote(any) end
   end
 
   @doc """
@@ -212,6 +454,15 @@ defmodule Type do
   iex> Type.is_builtin(%Type{name: :integer})
   true
   iex> Type.is_builtin(%Type{module: String, name: :t})
+  false
+  ```
+
+  Note that composite builtin types may not match with this
+  function:
+
+  ```
+  iex> import Type
+  iex> Type.is_builtin(builtin(:mfa))
   false
   ```
   """
@@ -740,7 +991,14 @@ defmodule Type do
 
   defp of_bitstring(bitstring, bits_so_far \\ 0)
   defp of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
-  defp of_bitstring(<<>>, _size), do: remote(String.t)
+  defp of_bitstring(<<>>, bits) do
+    if Application.get_env(:mavis, :use_smart_strings, true) do
+      bytes = div(bits, 8)
+      remote(String.t(bytes))
+    else
+      remote(String.t)
+    end
+  end
   defp of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
     of_bitstring(rest, so_far + 8)
   end
@@ -757,7 +1015,7 @@ defmodule Type do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
-  @spec isa?(t, term) :: boolean
+  @spec type_match?(t, term) :: boolean
   @doc """
   true if the passed term is an element of the type.
 
@@ -768,23 +1026,23 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type
-  iex> Type.isa?(builtin(:integer), 10)
+  iex> Type.type_match?(builtin(:integer), 10)
   true
-  iex> Type.isa?(builtin(:neg_integer), 10)
+  iex> Type.type_match?(builtin(:neg_integer), 10)
   false
-  iex> Type.isa?(builtin(:pos_integer), 10)
+  iex> Type.type_match?(builtin(:pos_integer), 10)
   true
-  iex> Type.isa?(1..9, 10)
+  iex> Type.type_match?(1..9, 10)
   false
-  iex> Type.isa?(-47..47, 10)
+  iex> Type.type_match?(-47..47, 10)
   true
-  iex> Type.isa?(42, 10)
+  iex> Type.type_match?(42, 10)
   false
-  iex> Type.isa?(10, 10)
+  iex> Type.type_match?(10, 10)
   true
   ```
   """
-  def isa?(type, term) do
+  def type_match?(type, term) do
     term
     |> of
     |> subtype?(type)
@@ -805,6 +1063,13 @@ defimpl Type.Properties, for: Type do
   alias Type.Message
 
   usable_as do
+    def usable_as(challenge, target = %Type{module: String, name: :t}, meta) do
+      usable_as_string(challenge, target, meta)
+    end
+    def usable_as(challenge = %Type{module: String, name: :t}, target, meta) do
+      string_usable_as(challenge, target, meta)
+    end
+
     def usable_as(challenge, target, meta) when is_remote(challenge) do
       challenge
       |> Type.fetch_type!()
@@ -897,6 +1162,36 @@ defimpl Type.Properties, for: Type do
     end
   end
 
+  defp usable_as_string(%Type{module: String, name: :t}, %{params: []}, _meta), do: :ok
+  defp usable_as_string(challenge = %Type{module: String, name: :t, params: []},
+                        target = %{params: [_t]}, meta) do
+    {:maybe, [Message.make(challenge, target, meta)]}
+  end
+  defp usable_as_string(challenge = %Type{module: String, name: :t, params: [pl]},
+                        target = %{params: [pr]}, meta) do
+    cond do
+      Type.subtype?(pl, pr) -> :ok
+      Type.subtype?(pr, pl) -> {:maybe, [Message.make(challenge, target, meta)]}
+      true -> {:error, Message.make(challenge, target, meta)}
+    end
+  end
+  defp usable_as_string(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+
+  defp string_usable_as(%{params: []}, target, meta) do
+    Type.usable_as(builtin(:binary), target, meta)
+  end
+  defp string_usable_as(%{params: [size]}, target, meta) when is_integer(size) do
+    Type.usable_as(%Type.Bitstring{size: size * 8}, target, meta)
+  end
+  defp string_usable_as(%{params: [%Type.Union{of: ints}]}, target, meta) do
+    ints
+    |> Enum.map(&Type.usable_as(%Type.Bitstring{size: &1 * 8}, target, meta))
+    |> Enum.reduce(&Type.ternary_and/2)
+  end
+
+
   intersection do
     # negative integer
     def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
@@ -939,6 +1234,32 @@ defimpl Type.Properties, for: Type do
     # iolist
     def intersection(builtin(:iolist), any), do: Type.Iolist.intersection_with(any)
 
+    # strings
+    def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
+    def intersection(target = %Type{module: String, name: :t}, remote(String.t)), do: target
+    def intersection(%Type{module: String, name: :t, params: [lp]},
+                     %Type{module: String, name: :t, params: [rp]}) do
+      case Type.intersection(lp, rp) do
+        builtin(:none) -> builtin(:none)
+        int_type -> %Type{module: String, name: :t, params: [int_type]}
+      end
+    end
+    def intersection(%Type{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
+      lp
+      |> case do
+        i when is_integer(i) ->
+          if sized?(i, bs), do: [i], else: []
+        range = _.._ ->
+          Enum.filter(range, &sized?(&1, bs))
+        %Type.Union{of: ints} ->
+          Enum.filter(ints, &sized?(&1, bs))
+      end
+      |> case do
+        [] -> builtin(:none)
+        lst -> %Type{module: String, name: :t, params: [Enum.into(lst, %Type.Union{})]}
+      end
+    end
+
     # remote types
     def intersection(type = %Type{module: module, name: name, params: params}, right)
         when is_remote(type) do
@@ -948,6 +1269,10 @@ defimpl Type.Properties, for: Type do
       Type.intersection(left, right)
     end
   end
+
+  def sized?(i, %{size: size}) when (i * 8) < size, do: false
+  def sized?(i, %{size: size, unit: 0}), do: i * 8 == size
+  def sized?(i, %{size: size, unit: unit}), do: rem(i * 8 - size, unit) == 0
 
   def valid_node?(atom) do
     atom
@@ -1003,12 +1328,48 @@ defimpl Type.Properties, for: Type do
     def group_compare(builtin(:iolist), what), do: Type.Iolist.compare_list(what)
     def group_compare(what, builtin(:iolist)), do: Type.Iolist.compare_list_inv(what)
 
-    def group_compare(_, _),                               do: :gt
+    # group compare for strings
+    def group_compare(%Type{module: String, name: :t, params: []}, right) do
+      %Type.Bitstring{unit: 8}
+      |> Type.compare(right)
+      |> case do
+        :eq -> :lt
+        order -> order
+      end
+    end
+    def group_compare(%Type{module: String, name: :t, params: [p]}, right) do
+      lowest_idx = case p do
+        i when is_integer(i) -> [i]
+        range = _.._ -> range
+        %Type.Union{of: ints} -> ints
+      end
+      |> Enum.min
+
+      %Type.Bitstring{size: lowest_idx * 8}
+      |> Type.compare(right)
+      |> case do
+        :eq -> :lt
+        order -> order
+      end
+    end
+
+    def group_compare(_, _), do: :gt
   end
 
   subtype do
     def subtype?(builtin(:iolist), list = %Type.List{}) do
       Type.Iolist.supertype_of_iolist?(list)
+    end
+    def subtype?(%Type{module: String, name: :t, params: p}, right) do
+      case p do
+        [] -> Type.subtype?(builtin(:binary), right)
+        [i] when is_integer(i) ->
+          Type.subtype?(%Type.Bitstring{size: i * 8}, right)
+        range = _.._ ->
+          Enum.all?(range, &Type.subtype?(%Type.Bitstring{size: &1 * 8}, right))
+        %Type.Union{of: ints} ->
+          Enum.all?(ints, &Type.subtype?(%Type.Bitstring{size: &1 * 8}, right))
+      end
     end
     def subtype?(left, right) when is_remote(left) do
       left
@@ -1021,6 +1382,12 @@ end
 
 defimpl Inspect, for: Type do
   import Inspect.Algebra
+
+  # special case String.t.  This hides our under-the-hood
+  # implementation of sized string types.
+  def inspect(%{module: String, name: :t, params: [_]}, _opts) do
+    "String.t()"
+  end
   def inspect(%{module: nil, name: name, params: params}, opts) do
     param_list = params
     |> Enum.map(&to_doc(&1, opts))

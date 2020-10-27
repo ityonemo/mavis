@@ -75,11 +75,6 @@ defmodule Type.Helpers do
 
       def usable_as(type, Type.builtin(:any), meta), do: :ok
 
-      if __MODULE__ == Type.Properties.Type.Bitstring do
-        import Type, only: [remote: 1]
-        def usable_as(%Type.Bitstring{size: 0, unit: 0}, remote(String.t()), _), do: :ok
-      end
-
       def usable_as(challenge, target = %Type.Function.Var{}, meta) do
         Type.usable_as(challenge, target.constraint, meta)
       end
@@ -91,19 +86,11 @@ defmodule Type.Helpers do
         end
       end
 
-      def usable_as(challenge, target, meta) when is_remote(target) do
-        case Type.usable_as(challenge, Type.fetch_type!(target)) do
-          :ok ->
-            msg = """
-            #{inspect challenge} is an equivalent type to #{inspect target} but it may fail because it is
-            a remote encapsulation which may require qualifications outside the type system.
-            """
-            {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
-          maybe_or_error -> maybe_or_error
-        end
-      end
-
       unquote(block)
+
+      def usable_as(challenge, target, meta) when is_remote(target) do
+        Type.usable_as(challenge, Type.fetch_type!(target))
+      end
 
       # some integer types override the union analysis, so this must
       # come at the end.
@@ -142,11 +129,6 @@ defmodule Type.Helpers do
       end
       end
 
-      def intersection(left, right) when is_remote(right) do
-        # special case.
-        Type.intersection(left, Type.fetch_type!(right))
-      end
-
       unless __MODULE__ == Type.Properties.Type.Union do
       def intersection(type, union = %Type.Union{}) do
         Type.intersection(union, type)
@@ -163,6 +145,11 @@ defmodule Type.Helpers do
       end
 
       unquote(block)
+
+      def intersection(left, right) when is_remote(right) do
+        # special case.
+        Type.intersection(left, Type.fetch_type!(right))
+      end
 
       def intersection(_, _), do: builtin(:none)
     end
@@ -182,28 +169,6 @@ defmodule Type.Helpers do
   defmacro group_compare(do: block) do
     quote do
       def group_compare(type, type), do: :eq
-
-      if __MODULE__ == Type.Properties.Type do
-      def group_compare(%Type{module: String, name: :t}, right) do
-        %Type.Bitstring{size: 0, unit: 8}
-        |> group_compare(right)
-        |> case do
-          :eq -> :lt
-          order -> order
-        end
-      end
-      end
-
-      if __MODULE__ == Type.Properties.Type.Bitstring do
-      def group_compare(left, %Type{module: String, name: :t}) do
-        left
-        |> group_compare(%Type.Bitstring{size: 0, unit: 8})
-        |> case do
-          :eq -> :gt
-          order -> order
-        end
-      end
-      end
 
       def group_compare(type1, %Type.Union{of: [type2 | _]}) do
         case group_compare(type1, type2) do
@@ -250,7 +215,7 @@ defmodule Type.Helpers do
     quote do
       def subtype?(a, a), do: true
 
-      unless __MODULE__ == Type.Properties.Type.Union do
+      unless __MODULE__ in [Type.Properties.Type.Union] do
         def subtype?(a, %Type.Union{of: types}) do
           Enum.any?(types, &Type.subtype?(a, &1))
         end
@@ -261,6 +226,8 @@ defmodule Type.Helpers do
       end
 
       def subtype?(_, builtin(:any)), do: true
+
+      unquote(block)
 
       def subtype?(left, right) when is_remote(right) do
         r_solved = Type.fetch_type!(right)
@@ -273,8 +240,7 @@ defmodule Type.Helpers do
       def subtype?(left, %Type.Function.Var{constraint: c}) do
         subtype?(left, c)
       end
-
-      unquote(block)
+      def subtype?(_, _), do: false
     end
   end
   defmacro subtype(:usable_as) do
@@ -290,6 +256,13 @@ defmodule Type.Helpers do
       def subtype?(a, %Type.Function.Var{constraint: c}) do
         subtype?(a, c)
       end
+
+      unless __MODULE__ == Type.Properties.Range do
+        def subtype?(a, %Type.Union{of: types}) do
+          Enum.any?(types, &Type.subtype?(a, &1))
+        end
+      end
+
       def subtype?(a, b), do: usable_as(a, b, []) == :ok
     end
   end

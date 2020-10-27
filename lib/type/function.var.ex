@@ -93,7 +93,7 @@ defimpl Type.Properties, for: Type.Function.Var do
     def subtype?(left, right = %Var{}) do
       Type.subtype?(left.constraint, right.constraint)
     end
-    def subtype?(left, right) do
+    def subtype?(left = %{}, right) do
       Type.subtype?(left.constraint, right)
     end
   end

@@ -8,3 +8,7 @@ initial push, with full functionality across most of elixir standard library
 
 some touchup:
 - remove lambda examples from tests
+- add better support for aliased/composite builtins
+- better intro documentation
+- support for fictional `String.t/1` type; this will
+  probably be pulled out into a plugin in the future.

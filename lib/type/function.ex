@@ -27,12 +27,11 @@ defmodule Type.Function do
   ```
 
   If you would like to perform inference on the function to obtain
-  more details on the acceptable function types, set the inference module
-  at compile-time in your `config.exs`.  For example, if you're using
-  the `:mavis_inference` hex package, do:
+  more details on the acceptable function types, set the inference
+  environment variable.  For example, if you're using the `:mavis_inference` hex package, do:
 
   ```
-  config :mavis, inference: Type.Inference
+  Application.put_env(:mavis, :inference, Type.Inference)
   ```
 
   The default module for this is `Type.NoInference`
@@ -124,7 +123,7 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: [], inferred: false]
+  defstruct @enforce_keys ++ [params: :any, inferred: false]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any,
@@ -134,9 +133,10 @@ defmodule Type.Function do
 
   import Type, only: [builtin: 1]
 
-  @inference_module Application.compile_env(:mavis, :inference, Type.NoInference)
-
-  defdelegate infer(fun), to: @inference_module
+  def infer(fun) do
+    module = Application.get_env(:mavis, :inference, Type.NoInference)
+    module.infer(fun)
+  end
 
   defimpl Type.Properties do
     import Type, only: :macros
@@ -229,7 +229,6 @@ defmodule Type.Function do
           when p_c == p_t do
         Type.subtype?(challenge.return, target.return)
       end
-      def subtype?(_, _), do: false
     end
   end
 

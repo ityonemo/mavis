@@ -230,4 +230,32 @@ defmodule TypeTest.UnionTest do
       assert %List{type: @any} = (%List{type: @any} <|> %List{type: :foo, nonempty: true})
     end
   end
+
+  import Type
+
+  describe "for strings" do
+    test "fixed size strings are merged into general string" do
+      assert remote(String.t) == (remote(String.t) <|> remote(String.t(42)))
+    end
+
+    test "fixed size strings are merged" do
+      range = 2..3
+      assert remote(String.t(range)) == (remote(String.t(2)) <|> remote(String.t(3)))
+      union = 2 <|> 4
+      assert remote(String.t(union)) == (remote(String.t(2)) <|> remote(String.t(4)))
+    end
+
+    test "bitstrings merge strings" do
+      assert builtin(:bitstring) == remote(String.t) <|> builtin(:bitstring)
+      assert builtin(:binary) == remote(String.t) <|> builtin(:binary)
+    end
+
+    test "bitstrings can merge string/1 s" do
+      range = 2..4
+      assert %Type.Union{of: [
+        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]},
+        %Type.Bitstring{size: 8, unit: 16}
+      ]} = remote(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
+    end
+  end
 end

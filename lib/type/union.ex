@@ -49,6 +49,9 @@ defmodule Type.Union do
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
   end
+  def merge(union = %__MODULE__{of: list}, type = %Type{module: String, name: :t}) do
+    %{union | of: merge(list, type, [])}
+  end
   def merge(union = %__MODULE__{of: list}, type) when is_remote(type) do
     %{union | of: list ++ [type]}
   end
@@ -85,7 +88,7 @@ defmodule Type.Union do
     type_merge([top | rest], type)
   end
 
-  @spec type_merge(Type.t, [Type.t]) :: {Type.t, [Type.t]} | :nomerge
+  @spec type_merge([Type.t], Type.t) :: {Type.t, [Type.t]} | :nomerge
   @doc false
   # integers and ranges
   def type_merge([a | rest], b) when b == a + 1 do
@@ -259,7 +262,31 @@ defmodule Type.Union do
       :nomerge
     end
   end
+  def type_merge([%Type{module: String, name: :t} | rest], right = remote(String.t)) do
+    {right, rest}
+  end
+  def type_merge([%Type{module: String, name: :t, params: [left]} | rest],
+                  %Type{module: String, name: :t, params: [right]}) do
+    merge = Type.union(left, right)
+    {remote(String.t(merge)), rest}
+  end
+  def type_merge([%Type{module: String, name: :t, params: []} | rest],
+                 b = %Bitstring{size: 0, unit: unit})
+                 when unit in [1, 2, 4, 8], do: {b, rest}
+  def type_merge([%Type{module: String, name: :t, params: [p]} | rest],
+                 b = %Bitstring{size: size, unit: unit}) do
+    leftovers = p
+    |> case do
+      i when is_integer(i) -> [i]
+      range = _.._ -> range
+      %Type.Union{of: ints} -> ints
+    end
+    |> Enum.reject(&(rem(&1 * 8 - size, unit) == 0))
+    |> Enum.map(&%Type{module: String, name: :t, params: [&1]})
+    |> Enum.into(%Type.Union{})
 
+    {leftovers, [b | rest]}
+  end
   # any
   def type_merge([_ | rest], builtin(:any)) do
     {builtin(:any), rest}

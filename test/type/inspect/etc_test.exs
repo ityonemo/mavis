@@ -1,6 +1,7 @@
 defmodule TypeTest.Type.Inspect.EtcTest do
   use ExUnit.Case, async: true
 
+  import Type
   import TypeTest.InspectCase
   @moduletag :inspect
 
@@ -18,6 +19,9 @@ defmodule TypeTest.Type.Inspect.EtcTest do
     end
     test "with arity" do
       assert "Foo.bar(integer())" == inspect_type(@remote, :foobar)
+    end
+    test "String.t(integer) special case" do
+      assert "String.t()" == inspect remote(String.t(4))
     end
   end
 

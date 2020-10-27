@@ -92,26 +92,26 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: %{foo: remote(String.t)}} ==
+      assert %Type.Map{required: %{foo: remote(String.t(3))}} ==
         Type.of(%{foo: "foo"})
-      assert %Type.Map{required: %{bar: 1, foo: remote(String.t)}} ==
+      assert %Type.Map{required: %{bar: 1, foo: remote(String.t(3))}} ==
         Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: %{1 => remote(String.t)}} ==
+      assert %Type.Map{required: %{1 => remote(String.t(3))}} ==
         Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: %{remote(String.t) => remote(String.t)}} ==
+      assert %Type.Map{optional: %{remote(String.t(3)) => remote(String.t(3))}} ==
         Type.of(%{"foo" => "bar"})
 
-      assert %Type.Map{optional: %{remote(String.t) => :bar <|> :quux}} ==
+      assert %Type.Map{optional: %{remote(String.t(3)) => :bar <|> :quux}} ==
         Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
     test "assigns bitstrings correctly" do
       assert %Type.Bitstring{size: 0, unit: 0} == Type.of("")
       assert %Type.Bitstring{size: 7, unit: 0} == Type.of(<<123::7>>)
-      assert remote(String.t) == Type.of("foobar")
-      assert remote(String.t) == Type.of("東京")
-      assert remote(String.t) == Type.of("🇫🇲")
+      assert remote(String.t(6)) == Type.of("foobar")
+      assert remote(String.t(6)) == Type.of("東京")
+      assert remote(String.t(8)) == Type.of("🇫🇲")
       assert %Type.Bitstring{size: 56, unit: 0} == Type.of("foobar" <> <<0>>)
       assert %Type.Bitstring{size: 16, unit: 0} == Type.of(<<255, 255>>)
     end
@@ -127,6 +127,36 @@ defmodule TypeTest do
     test "for precompiled lambdas" do
       assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(&TypeTest.LambdaExamples.identity/1)
       assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(TypeTest.LambdaExamples.identity_fn)
+    end
+  end
+
+  describe "documentation equivalent test" do
+
+    test "regression" do
+      assert TypeTest.TestJson.valid_json?(["47", true])
+    end
+
+    test "works" do
+      assert TypeTest.TestJson.valid_json?(%{})
+      assert TypeTest.TestJson.valid_json?(nil)
+      assert TypeTest.TestJson.valid_json?(true)
+      assert TypeTest.TestJson.valid_json?(false)
+      assert TypeTest.TestJson.valid_json?(47)
+      assert TypeTest.TestJson.valid_json?(47.0)
+      assert TypeTest.TestJson.valid_json?("47")
+
+      refute TypeTest.TestJson.valid_json?(:foo)
+
+      assert TypeTest.TestJson.valid_json?(["47"])
+      assert TypeTest.TestJson.valid_json?(["47", true])
+
+      refute TypeTest.TestJson.valid_json?(["47", :foo])
+
+      assert TypeTest.TestJson.valid_json?(%{"foo" => "bar"})
+      assert TypeTest.TestJson.valid_json?(%{"foo" => ["bar", "baz"]})
+
+      refute TypeTest.TestJson.valid_json?(%{foo: "bar"})
+      refute TypeTest.TestJson.valid_json?(%{"foo" => ["bar", :baz]})
     end
   end
 end

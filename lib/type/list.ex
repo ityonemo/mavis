@@ -190,13 +190,12 @@ defmodule Type.List do
       def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
         when ne_c == ne_t or ne_c do
 
-        Type.subtype?(challenge.type, target.type) and
-          Type.subtype?(challenge.final, target.final)
+        (Type.subtype?(challenge.type, target.type) and
+          Type.subtype?(challenge.final, target.final))
       end
       def subtype?(challenge, %Union{of: types}) do
         Enum.any?(types, &Type.subtype?(challenge, &1))
       end
-      def subtype?(_, _), do: false
     end
   end
 
