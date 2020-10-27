@@ -13,7 +13,8 @@ defmodule Type do
   warnings if there appear to be conflicts.
 
   One key function enabling this is `fetch_type!/3`; you can use this function
-  to retrieve typing information on types in modules.any()
+  to retrieve typing information on typing information stored in modules that
+  have already been compiled.
 
   ```elixir
   iex> Type.fetch_type!(String, :t, [])
