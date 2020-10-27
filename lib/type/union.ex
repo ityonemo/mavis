@@ -49,6 +49,9 @@ defmodule Type.Union do
   def merge(union = %__MODULE__{}, %__MODULE__{of: list}) do
     Enum.reduce(list, union, &merge(&2, &1))
   end
+  def merge(union = %__MODULE__{of: list}, type = %Type{module: String, name: :t}) do
+    %{union | of: merge(list, type, [])}
+  end
   def merge(union = %__MODULE__{of: list}, type) when is_remote(type) do
     %{union | of: list ++ [type]}
   end
@@ -85,7 +88,7 @@ defmodule Type.Union do
     type_merge([top | rest], type)
   end
 
-  @spec type_merge(Type.t, [Type.t]) :: {Type.t, [Type.t]} | :nomerge
+  @spec type_merge([Type.t], Type.t) :: {Type.t, [Type.t]} | :nomerge
   @doc false
   # integers and ranges
   def type_merge([a | rest], b) when b == a + 1 do
@@ -258,6 +261,14 @@ defmodule Type.Union do
     else
       :nomerge
     end
+  end
+  def type_merge([%Type{module: String, name: :t} | rest], right = remote(String.t)) do
+    {right, rest}
+  end
+  def type_merge([%Type{module: String, name: :t, params: [left]} | rest],
+                  %Type{module: String, name: :t, params: [right]}) do
+    merge = Type.union(left, right)
+    {remote(String.t(merge)), rest}
   end
 
   # any

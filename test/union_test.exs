@@ -230,4 +230,19 @@ defmodule TypeTest.UnionTest do
       assert %List{type: @any} = (%List{type: @any} <|> %List{type: :foo, nonempty: true})
     end
   end
+
+  import Type
+
+  describe "for strings" do
+    test "fixed size strings are merged into general string" do
+      assert remote(String.t) == (remote(String.t) <|> remote(String.t(42)))
+    end
+
+    test "fixed size strings are merged" do
+      range = 2..3
+      assert remote(String.t(range)) == (remote(String.t(2)) <|> remote(String.t(3)))
+      union = 2 <|> 4
+      assert remote(String.t(union)) == (remote(String.t(2)) <|> remote(String.t(4)))
+    end
+  end
 end
