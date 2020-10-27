@@ -129,4 +129,34 @@ defmodule TypeTest do
       assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(TypeTest.LambdaExamples.identity_fn)
     end
   end
+
+  describe "documentation equivalent test" do
+
+    test "regression" do
+      assert TypeTest.TestJson.valid_json?(["47", true])
+    end
+
+    test "works" do
+      assert TypeTest.TestJson.valid_json?(%{})
+      assert TypeTest.TestJson.valid_json?(nil)
+      assert TypeTest.TestJson.valid_json?(true)
+      assert TypeTest.TestJson.valid_json?(false)
+      assert TypeTest.TestJson.valid_json?(47)
+      assert TypeTest.TestJson.valid_json?(47.0)
+      assert TypeTest.TestJson.valid_json?("47")
+
+      refute TypeTest.TestJson.valid_json?(:foo)
+
+      assert TypeTest.TestJson.valid_json?(["47"])
+      assert TypeTest.TestJson.valid_json?(["47", true])
+
+      refute TypeTest.TestJson.valid_json?(["47", :foo])
+
+      assert TypeTest.TestJson.valid_json?(%{"foo" => "bar"})
+      assert TypeTest.TestJson.valid_json?(%{"foo" => ["bar", "baz"]})
+
+      refute TypeTest.TestJson.valid_json?(%{foo: "bar"})
+      refute TypeTest.TestJson.valid_json?(%{"foo" => ["bar", :baz]})
+    end
+  end
 end

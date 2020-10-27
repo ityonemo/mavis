@@ -89,15 +89,7 @@ defmodule Type.Helpers do
       unquote(block)
 
       def usable_as(challenge, target, meta) when is_remote(target) do
-        case Type.usable_as(challenge, Type.fetch_type!(target)) do
-          :ok ->
-            msg = """
-            #{inspect challenge} is an equivalent type to #{inspect target} but it may fail because it is
-            a remote encapsulation which may require qualifications outside the type system.
-            """
-            {:maybe, [Type.Message.make(challenge, target, [message: msg])]}
-          maybe_or_error -> maybe_or_error
-        end
+        Type.usable_as(challenge, Type.fetch_type!(target))
       end
 
       # some integer types override the union analysis, so this must

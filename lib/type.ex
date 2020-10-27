@@ -3,8 +3,41 @@ defmodule Type do
   @moduledoc """
   Type analysis system for Elixir.
 
-  Mavis implements the `Type` module, which contains a type analysis system
-  suitable to be the foundation for a compile-time static type analysis engine.
+  Mavis implements the `Type` module, which contains a type analysis system.
+
+  ### Compile-Time Usage
+
+  The type analysis system is designed to be a backend for a compile-time
+  typechecker (see [Selectrix](https://github.com/ityonemo/selectrix)).  This
+  system will infer the types of functions in modules and emit errors and
+  warnings if there appear to be conflicts.
+
+  One key function enabling this is `fetch_type!/3`; you can use this function
+  to retrieve typing information on types in modules.any()
+
+  ```elixir
+  iex> Type.fetch_type!(String, :t, [])
+  %Type.Bitstring{unit: 8}
+  ```
+
+  ### Runtime Usage
+
+  There's no reason why you have to use the typing library exclusively at
+  compile-time.  Here is an example of using it at runtime:
+
+  ```
+  defmodule TestJson do
+    @type json :: String.t | number | boolean | nil | [json] | %{optional(String.t) => json}
+
+    def validate_json(data) do
+      json_type = Type.fetch_type!(__MODULE__, :json, [])
+
+      if Type.type_match?(json_type, data), do: :ok, else: raise "not json"
+    end
+  end
+  ```
+
+  Note that the above example is not particularly performant.
 
   ### Examples:
 
@@ -64,7 +97,7 @@ defmodule Type do
   - `Type.usable_as/3`
   - `Type.of/1`
 
-  The operation `Type.isa?/2` is also provided, which is a combination of
+  The operation `Type.type_match?/2` is also provided, which is a combination of
   `Type.of/1` and `Type.subtype?/2`.
 
   ## Where's my builtin?
@@ -915,7 +948,7 @@ defmodule Type do
     %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
-  @spec isa?(t, term) :: boolean
+  @spec type_match?(t, term) :: boolean
   @doc """
   true if the passed term is an element of the type.
 
@@ -926,26 +959,26 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type
-  iex> Type.isa?(builtin(:integer), 10)
+  iex> Type.type_match?(builtin(:integer), 10)
   true
-  iex> Type.isa?(builtin(:neg_integer), 10)
+  iex> Type.type_match?(builtin(:neg_integer), 10)
   false
-  iex> Type.isa?(builtin(:pos_integer), 10)
+  iex> Type.type_match?(builtin(:pos_integer), 10)
   true
-  iex> Type.isa?(1..9, 10)
+  iex> Type.type_match?(1..9, 10)
   false
-  iex> Type.isa?(-47..47, 10)
+  iex> Type.type_match?(-47..47, 10)
   true
-  iex> Type.isa?(42, 10)
+  iex> Type.type_match?(42, 10)
   false
-  iex> Type.isa?(10, 10)
+  iex> Type.type_match?(10, 10)
   true
   ```
   """
-  def isa?(type, term) do
-    term
-    |> of
-    |> subtype?(type)
+  def type_match?(type, term) do
+    term 
+    |> of 
+    |> subtype?(type) 
   end
 end
 
