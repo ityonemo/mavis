@@ -1,7 +1,7 @@
 defmodule Type.Function do
 
   @moduledoc """
-  represents a function type.
+  Represents a function type.
 
   There are two fields for the struct defined by this module.
 

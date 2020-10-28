@@ -1,7 +1,8 @@
 defmodule Type.Operators do
+  @moduledoc """
+  Convenience functions.  Should only be used in testing.
+  """
 
-  @moduledoc "convenience functions.  Should only be used in testing."
-  
   defmacro __using__(_opts) do
     quote do
       import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
@@ -12,22 +13,22 @@ defmodule Type.Operators do
   import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
 
   @doc """
-  shortcut for `Type.usable_as/2`
+  Shortcut for `Type.usable_as/2`
   """
   def a ~> b, do: Type.usable_as(a, b)
 
   @doc """
-  shortcut for `Type.union/2`
+  Shortcut for `Type.union/2`
   """
   defdelegate a <|> b, to: Type.Union, as: :of
 
   @doc """
-  shortcut for `Type.intersection/2`
+  Shortcut for `Type.intersection/2`
   """
   defdelegate a <~> b, to: Type, as: :intersection
 
   @doc """
-  shortcut for `Type.compare/2`
+  Shortcut for `Type.compare/2`
   """
   def a >= b, do: Type.compare(a, b) != :lt
   def a <= b, do: Type.compare(a, b) != :gt

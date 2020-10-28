@@ -1,11 +1,9 @@
 # The Mavis Typesystem
 
-The Mavis typesystem features two distinct and unique
-concepts which were conceived of as tool specialized for
-the BEAM virtual machine's type system, and can be
-considered a refinement built on top of the type specs
-that are used by `dialyzer`, the legacy erlang
-type-checking system.
+The Mavis typesystem features two distinct and unique concepts which were
+conceived of as tool specialized for the BEAM virtual machine's type system,
+and can be considered a refinement built on top of the type specs that are used
+by `dialyzer`, the legacy erlang type-checking system.
 
 - `subtype` roughly corresponds to what you might expect, `A subtype B`
   means that the all elements of type A are subtypes of element B
@@ -19,12 +17,12 @@ could emit a warning and an `error` result could halt compilation.
 In the Mavis Library,
 
 ```elixir
-  use Type.Operators
+use Type.Operators
 ```
 
 overloads `~>` as `usable_as` and `in` as `subtype_of`
 
-**Be exremely careful!** you should only use `Type.Operators` if you really
+**Be extremely careful!** you should only use `Type.Operators` if you really
 know what you're doing.  In the case of Mavis, this is used exclusively to
 make tests easier to read.
 

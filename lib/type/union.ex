@@ -1,11 +1,11 @@
 defmodule Type.Union do
   @moduledoc """
-  represents the Union of two or more types.
+  Represents the Union of two or more types.
 
-  the associated struct has one field:
+  The associated struct has one field:
   - `:of` which is a list of all types that are being unioned.
 
-  for performance purposes, Union keeps its subtypes in
+  For performance purposes, Union keeps its subtypes in
   reverse-type-order.
 
   Type.Union implements both the enumerable protocol and the

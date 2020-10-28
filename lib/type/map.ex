@@ -1,7 +1,7 @@
 defmodule Type.Map do
 
   @moduledoc """
-  represents map terms.  Note that some of the choices around how to handle
+  Represents map terms.  Note that some of the choices around how to handle
   maps may deviate from the expectations in the typesystem.
 
   The associated struct has two parameters:
@@ -17,7 +17,7 @@ defmodule Type.Map do
   - map types will not by default assume `optional(any()) => any()`
   - If multiple specifications exist for the same particular value (for example,
     overlapping ranges in optional keys, or a overlapping types in required vs
-    optional), all specfications are applied to that value group.  This may
+    optional), all specifications are applied to that value group.  This may
     result in the map being equivalent to `%Type{name: :none}` but that will
     not automatically be collapsed to that value.
 
@@ -289,7 +289,7 @@ defmodule Type.Map do
 
   # performs an apply operation on either the required part or the
   # optional part of a map type.  Returns a list of images.  You
-  # should perfrom the union operation *outside* this function
+  # should perform the union operation *outside* this function
   defp apply_partial(req_or_opt, preimage_subtype) do
     import Type, only: [builtin: 1]
     req_or_opt
@@ -425,7 +425,7 @@ defmodule Type.Map do
       |> Enum.uniq
 
       # check that all required keys exist in the preimage intersection, if
-      # it doesn't then we can do an early eiit.
+      # it doesn't then we can do an early edit.
       if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
         req_kv = all_req_keys
         |> Enum.map(fn rq_key ->
