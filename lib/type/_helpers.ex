@@ -113,7 +113,7 @@ defmodule Type.Helpers do
   Prologue function matches:
   - matches itself and returns itself
   - matches `t:any/0` and returns itself
-  - calcualates intersections for remote types
+  - calculates intersections for remote types
   - intersects union types
   - intersects function var types
   """

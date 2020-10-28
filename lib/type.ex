@@ -7,13 +7,13 @@ defmodule Type do
   specifically tailored for the BEAM VM.  The following considerations went
   into its design.
 
-  - Must be compatible with the exisiting dialyzer/typespec system
+  - Must be compatible with the existing dialyzer/typespec system
   - May extend the typespec system if it's unobtrusive and can be, at
     a minimum, *'opt-out'*.
   - Does not have to conform to existing theoretical typesystems (e.g.
     [H-M](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system))
   - Take maximum advantage of Elixir programming features to achieve
-    readibility and extensibility.
+    readability and extensibility.
   - Does not have to be easily usable from erlang, but must be able to
     handle modules produced in erlang.
 
@@ -65,14 +65,14 @@ defmodule Type do
   The `Type` module implements two things:
 
   1. Core functionality for all typesytem operations.
-  2. Support datastructure for generic builtin and remote types.
+  2. Support data structure for generic builtin and remote types.
 
   ## Type representation in Mavis
 
-  The `Type` datastructure is a struct with three parameters:
+  The `Type` data structure is a struct with three parameters:
   - `module`: The module in which the type is defined; `nil` for builtins.
   - `name`: (atom) of the type
-  - `params`: a list of type arguments to the type datastructure.  These
+  - `params`: a list of type arguments to the type data structure.  These
     must be types themselves "as applied" to the type definition if we
     consider it to be a function.
 
@@ -98,7 +98,7 @@ defmodule Type do
 
   ## Supported Type operations
 
-  The mavis typesystem provides five primary operations, which might not
+  The Mavis typesystem provides five primary operations, which might not
   necessarily be the set of operations that one expects from a typesystem.
   These operations are chosen specifically reflect the needs of Erlang and
   Elixir's dynamic types and the type specification system provided by
@@ -239,7 +239,7 @@ defmodule Type do
   @type maybe :: {:maybe, [Type.Message.t]}
 
   @typedoc """
-  No members of this type will suceed in the operation.
+  No members of this type will succeed in the operation.
 
   should typically result in a compile-time error.
 
@@ -1021,7 +1021,7 @@ defmodule Type do
 
   ## Important:
   Note the argument order for this function, it does not have the
-  same call order, as say, javascipt's `instanceof`, or ruby's `.is_a?`
+  same call order, as say, JavaScript's `instanceof`, or ruby's `.is_a?`
 
   ### Example:
   ```elixir

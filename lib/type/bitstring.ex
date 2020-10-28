@@ -47,7 +47,7 @@ defmodule Type.Bitstring do
 
   #### intersection
 
-  some binaries have no intersection, but mavis will find obscure intersections.
+  Some binaries have no intersection, but Mavis will find obscure intersections.
 
   ```elixir
   iex> Type.intersection(%Type.Bitstring{size: 15, unit: 0}, %Type.Bitstring{size: 3, unit: 0})
@@ -62,7 +62,7 @@ defmodule Type.Bitstring do
 
   #### union
 
-  most binary pairs won't have nontrivial unions, but mavis will find some obscure ones.
+  Most binary pairs won't have nontrivial unions, but Mavis will find some obscure ones.
 
   ```elixir
   iex> Type.union(%Type.Bitstring{size: 0, unit: 1}, %Type.Bitstring{size: 15, unit: 8})
@@ -73,7 +73,7 @@ defmodule Type.Bitstring do
 
   #### subtype?
 
-  a bitstring type is a subtype of another if its lattice is covered by the other's
+  A bitstring type is a subtype of another if its lattice is covered by the other's.
 
   ```elixir
   iex> Type.subtype?(%Type.Bitstring{size: 16, unit: 8}, %Type.Bitstring{size: 4, unit: 4})
@@ -84,7 +84,7 @@ defmodule Type.Bitstring do
 
   #### usable_as
 
-  most bitstrings are at least maybe usable as others, but there are cases where it's impossible
+  Most bitstrings are at least maybe usable as others, but there are cases where it's impossible.
 
   ```elixir
   iex> Type.usable_as(%Type.Bitstring{size: 8, unit: 16}, %Type.Bitstring{size: 4, unit: 4})
@@ -115,12 +115,12 @@ defmodule Type.Bitstring do
     use Type.Helpers
 
     group_compare do
-      def group_compare(%Bitstring{unit: 0}, %Bitstring{unit: b}) when b != 0, do: :lt 
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: 0}) when a != 0, do: :gt 
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b,  do: :gt 
-      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b,  do: :lt 
-      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b,  do: :gt 
-      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b,  do: :lt 
+      def group_compare(%Bitstring{unit: 0}, %Bitstring{unit: b}) when b != 0, do: :lt
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: 0}) when a != 0, do: :gt
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b,  do: :gt
+      def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a > b,  do: :lt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b,  do: :gt
+      def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b,  do: :lt
 
       def group_compare(left, %Type{module: String, name: :t}) do
         left

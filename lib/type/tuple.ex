@@ -1,7 +1,6 @@
 defmodule Type.Tuple do
-
   @moduledoc """
-  represents tuple types.
+  Represents tuple types.
 
   The associated struct has one parameter:
   - `:elements` which may be a list of types, corresponding to the ordered
@@ -27,7 +26,7 @@ defmodule Type.Tuple do
 
   #### comparison
 
-  longer tuples come after shorter tuples; tuples are then ordered using cartesian
+  Longer tuples come after shorter tuples; tuples are then ordered using Cartesian
   dictionary order along the elements list.
 
   ```
@@ -38,7 +37,7 @@ defmodule Type.Tuple do
 
   #### intersection
 
-  Tuples of different length do not intersect; the intersection is otherwise the cartesian
+  Tuples of different length do not intersect; the intersection is otherwise the Cartesian
   intersection of the elements.
 
   ```
@@ -65,7 +64,7 @@ defmodule Type.Tuple do
   #### subtype?
 
   A tuple type is the subtype of another if its types are subtypes of the other
-  across all cartesian dimensions.
+  across all Cartesian dimensions.
 
   ```
   iex> Type.subtype?(%Type.Tuple{elements: [:ok, 1..10]},
@@ -76,7 +75,7 @@ defmodule Type.Tuple do
   #### usable_as
 
   A tuple type is usable as another if it each of its elements are usable as
-  the other across all cartesian dimensions.  If any element is disjoint, then
+  the other across all Cartesian dimensions.  If any element is disjoint, then
   it is not usable.
 
   ```

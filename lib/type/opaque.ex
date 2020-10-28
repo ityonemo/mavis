@@ -1,6 +1,6 @@
 defmodule Type.Opaque do
   @moduledoc """
-  a wrapper for opaqueness.
+  A wrapper for opaqueness.
   """
 
   @enforce_keys [:module, :name, :params, :type]

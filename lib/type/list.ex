@@ -1,6 +1,6 @@
 defmodule Type.List do
   @moduledoc """
-  represents lists, except for the empty list, which is represented by
+  Represents lists, except for the empty list, which is represented by
   the empty list literal `[]`.
 
   There are three fields for the struct defined by this module.
@@ -8,12 +8,12 @@ defmodule Type.List do
   - `nonempty` if true, the list must have at least one element; if false, then
     it may be the empty list `[]`.
   - `type` the type for all elements of the list, except the final element
-  - `final` the type of the final elment.  Typically this is `[]`, but other
+  - `final` the type of the final element.  Typically this is `[]`, but other
     types may be used as the final element and these are called `improper` lists.
 
   ### Examples:
 
-  - the "any proper list" type is `%Type.List{}`.  Note this is distinct from `[]`
+  - The "any proper list" type is `%Type.List{}`.  Note this is distinct from `[]`
     ```
     iex> inspect %Type.List{}
     "list()"

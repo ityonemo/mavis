@@ -20,7 +20,7 @@ defmodule Type.NoInference do
 
   @impl true
   @doc """
-  function which assumes that any lambda passed to it takes any parameters and
+  Function which assumes that any lambda passed to it takes any parameters and
   outputs any.  Punts on inferring from MFA definitions.
 
   ```
