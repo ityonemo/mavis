@@ -16,7 +16,7 @@ Add `mavis` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:mavis, "~> 0.0.2"}
+    {:mavis, "~> 0.0.3"}
   ]
 end
 ```
