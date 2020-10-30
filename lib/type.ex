@@ -802,8 +802,10 @@ defmodule Type do
 
   defp find_spec(module, specs, fun, arity) do
     Enum.find_value(specs, fn
-      {{^fun, ^arity}, [spec]} ->
-        Spec.parse(spec, %{"$mfa": {module, fun, arity}})
+      {{^fun, ^arity}, specs_for_mfa} ->
+        specs_for_mfa
+        |> Enum.map(&Spec.parse(&1, %{"$mfa": {module, fun, arity}}))
+        |> union
       _ -> false
     end)
   end

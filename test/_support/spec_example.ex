@@ -253,6 +253,12 @@ defmodule TypeTest.SpecExample do
     def foobar(x), do: x
   end
 
+  defmodule Multi do
+    @spec multi(integer) :: integer
+    @spec multi(atom) :: atom
+    def multi(x), do: x
+  end
+
   def no_spec(x), do: x
 
   @spec with_annotation(foo :: any) :: any
