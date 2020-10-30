@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.3
+- support for types of multiply-specced functions
+
 ## 0.0.2
 
 some touchup:
