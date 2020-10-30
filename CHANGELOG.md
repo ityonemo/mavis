@@ -1,6 +1,7 @@
 # Changelog
 
-##
+## 0.0.4
+- make `Type.fetch_type/3` use a sane call pattern
 
 ## 0.0.3
 - support for types of multiply-specced functions
