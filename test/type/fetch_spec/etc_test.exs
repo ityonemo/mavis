@@ -39,15 +39,15 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   end
 
   test "spec not provided" do
-    assert :unknown = Type.fetch_spec(@example, :no_spec, 1)
+    assert {:error, _} = Type.fetch_spec(@example, :no_spec, 1)
   end
 
   test "nonexistent function" do
-    assert :unknown = Type.fetch_spec(@unions, :nonexistent, 1)
+    assert {:error, _} = Type.fetch_spec(@unions, :nonexistent, 1)
   end
 
   test "wrong arity" do
-    assert :unknown = Type.fetch_spec(@example, :valid_spec, 2)
+    assert {:error, _} = Type.fetch_spec(@example, :valid_spec, 2)
   end
 
   alias Type.Function.Var

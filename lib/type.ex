@@ -783,29 +783,11 @@ defmodule Type do
   ```
   """
   def fetch_spec(module, fun, arity) do
-    with {:module, _} <- Code.ensure_loaded(module),
-         {:ok, specs} <- Code.Typespec.fetch_specs(module),
-         spec when spec != nil <- find_spec(module, specs, fun, arity) do
-      {:ok, spec}
-    else
-      :error ->
-        {:error, "this module was not found"}
-      nil ->
-        # note that we might be trying to find information for
-        # a lambda, which won't necessarily be directly exported.
-        :unknown
-      error -> error
+    # punt to the Type.SpecInference module to DRY the code up.
+    case Type.SpecInference.infer(module, fun, arity) do
+      :unknown -> {:error, "spec for #{inspect module}.#{fun}/#{arity} not found"}
+      ok_or_error -> ok_or_error
     end
-  end
-
-  defp find_spec(module, specs, fun, arity) do
-    Enum.find_value(specs, fn
-      {{^fun, ^arity}, specs_for_mfa} ->
-        specs_for_mfa
-        |> Enum.map(&Spec.parse(&1, %{"$mfa": {module, fun, arity}}))
-        |> union
-      _ -> false
-    end)
   end
 
   @spec fetch_type!(Type.t()) :: Type.t() | no_return
