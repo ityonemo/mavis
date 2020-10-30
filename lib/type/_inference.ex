@@ -69,7 +69,10 @@ defmodule Type.SpecInference do
       {:ok, spec}
     else
      :error ->
-       {:error, "this module was not found"}
+      # for some types, which are coming from modules which aren't
+      # loaded from disk (e.g. .exs modules) fetch_specs won't work,
+      # so we need to punt to a different method.
+      :unknown
      nil ->
        # note that we might be trying to find information for
        # a lambda, which won't necessarily be directly exported.
