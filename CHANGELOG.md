@@ -2,6 +2,7 @@
 
 ## 0.0.3
 - support for types of multiply-specced functions
+- support for composed type module pipelines
 
 ## 0.0.2
 

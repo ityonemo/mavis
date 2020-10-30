@@ -981,10 +981,8 @@ defmodule Type do
     |> Keyword.values()
 
     case inference_module.infer(module, fun, arity) do
-      {:ok, function} -> function
-      :unknown -> struct(Type.Function,
-        params: Type.NoInference.any_params(arity),
-        return: builtin(:any))
+      {:ok, type} -> type
+      _ -> raise "error finding type"
     end
   end
   def of(bitstring) when is_bitstring(bitstring) do
