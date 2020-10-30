@@ -791,11 +791,9 @@ defmodule Type do
       :error ->
         {:error, "this module was not found"}
       nil ->
-        if function_exported?(module, fun, arity) do
-          :unknown
-        else
-          {:error, "this function was not found"}
-        end
+        # note that we might be trying to find information for
+        # a lambda, which won't necessarily be directly exported.
+        :unknown
       error -> error
     end
   end
