@@ -133,11 +133,6 @@ defmodule Type.Function do
 
   import Type, only: [builtin: 1]
 
-  def infer(fun) do
-    module = Application.get_env(:mavis, :inference, Type.NoInference)
-    module.infer(fun)
-  end
-
   defimpl Type.Properties do
     import Type, only: :macros
 

@@ -972,9 +972,19 @@ defmodule Type do
         %{acc | optional: Map.put(acc.optional, key_type, updated_val_type)}
     end)
   end
-  def of(function) when is_function(function) do
-    case Type.Function.infer(function) do
-      {:ok, type} -> type
+  def of(lambda) when is_function(lambda) do
+    inference_module = Application.get_env(:mavis, :inference, Type.NoInference)
+
+    [module, fun, arity, _env] = lambda
+    |> :erlang.fun_info
+    |> Keyword.take([:module, :name, :arity, :env])
+    |> Keyword.values()
+
+    case inference_module.infer(module, fun, arity) do
+      {:ok, function} -> function
+      :unknown -> struct(Type.Function,
+        params: Type.NoInference.any_params(arity),
+        return: builtin(:any))
     end
   end
   def of(bitstring) when is_bitstring(bitstring) do
