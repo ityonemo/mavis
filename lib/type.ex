@@ -470,6 +470,20 @@ defmodule Type do
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) == nil
 
+  @doc """
+  guard that tests if the selected type is a singleton type.  This is
+  a type that has only one value associated with it.
+
+  ### Example:
+  ```
+  iex> Type.is_singleton(:foo)
+  true
+  iex> Type.is_singleton(%Type{name: :any})
+  false
+  ```
+  """
+  defguard is_singleton(type) when is_atom(type) or is_integer(type) or type == []
+
   @spec usable_as(t, t, keyword) :: ternary
   @doc """
   Main utility function for determining type correctness.
