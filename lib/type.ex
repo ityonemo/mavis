@@ -471,8 +471,8 @@ defmodule Type do
 
   ```elixir
   iex> import Type
-  iex> list(foo: builtin(:integer))
-  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :integer}]}}
+  iex> list(foo: builtin(:pos_integer))
+  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
   """
   defmacro list({:..., _, _}) do
@@ -507,10 +507,10 @@ defmodule Type do
   iex> import Type
   iex> tuple {...}
   %Type.Tuple{elements: :any}
-  iex> tuple {:ok, builtin(:integer)}
-  %Type.Tuple{elements: [:ok, %Type{name: :integer}]}
-  iex> tuple {:error, builtin(:atom), builtin(:integer)}
-  %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :integer}]}
+  iex> tuple {:ok, builtin(:pos_integer)}
+  %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
+  iex> tuple {:error, builtin(:atom), builtin(:pos_integer)}
+  %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :pos_integer}]}
   ```
   """
   defmacro tuple({a, b}) do
@@ -529,8 +529,8 @@ defmodule Type do
 
   ```elixir
   iex> import Type
-  iex> map %{foo: builtin(:integer)}
-  %Type.Map{required: %{foo: %Type{name: :integer}}}
+  iex> map %{foo: builtin(:pos_integer)}
+  %Type.Map{required: %{foo: %Type{name: :pos_integer}}}
   iex> map %{required(1) => builtin(:atom)}
   %Type.Map{required: %{1 => %Type{name: :atom}}}
   iex> map %{optional(:bar) => builtin(:atom)}
@@ -566,12 +566,12 @@ defmodule Type do
 
   ```elixir
   iex> import Type
-  iex> function (builtin(:atom) -> builtin(:integer))
-  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :integer}}
-  iex> function (... -> builtin(:integer))
-  %Type.Function{params: :any, return: %Type{name: :integer}}
-  iex> function (_, _ -> builtin(:integer))
-  %Type.Function{params: 2, return: %Type{name: :integer}}
+  iex> function (builtin(:atom) -> builtin(:pos_integer))
+  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
+  iex> function (... -> builtin(:pos_integer))
+  %Type.Function{params: :any, return: %Type{name: :pos_integer}}
+  iex> function (_, _ -> builtin(:pos_integer))
+  %Type.Function{params: 2, return: %Type{name: :pos_integer}}
   ```
   """
   defmacro function([{:->, _, [[{:..., _, _}], return]}]) do

@@ -8,7 +8,23 @@ defmodule Type.Map do
   - `:required` a map of required key types and their associated value types.
   - `:optional` a map of optional key types and their associated value types.
 
-  ### Deviations:
+  ### Shortcut Form
+
+  The `Type` module lets you specify a function using "shortcut form" via the `Type.map/1` macro:
+
+  Note that the empty map is not the same as `t:map/0`
+
+  ```
+  iex> import Type
+  iex> map(%{optional(builtin(:atom)) => builtin(:pos_integer)})
+  %Type.Map{optional: %{builtin(:atom) => builtin(:pos_integer)}}
+  iex> map(%{})       # empty map
+  %Type.Map{optional: %{}, required: %{}}
+  iex> builtin(:map)  # t:map/0
+  %Type.Map{optional: %{builtin(:any) => builtin(:any)}}
+  ```
+
+  ### Deviations from standard Erlang/Elixir:
 
   - `Type.Map` only allows literal integers and literal atoms as
     `required` key types.  Typespecs that put other types in as required

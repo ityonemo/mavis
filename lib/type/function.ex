@@ -15,7 +15,7 @@ defmodule Type.Function do
   - `(... -> integer())` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
   - `(integer() -> integer())` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
 
-  ## Shortcut Form
+  ### Shortcut Form
 
   The `Type` module lets you specify a function using "shortcut form" via the `Type.function/1` macro:
 
@@ -25,7 +25,7 @@ defmodule Type.Function do
   %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
   ```
 
-  ## Inference
+  ### Inference
 
   By default, Mavis will not attempt to perform inference on function types.
 
