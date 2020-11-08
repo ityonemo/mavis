@@ -275,6 +275,9 @@ defmodule Type do
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
   end
+  defmacro builtin(:map) do
+    quote do %Type.Map{optional: %{builtin(:any) => builtin(:any)}} end
+  end
   defmacro builtin(:binary) do
     quote do %Type.Bitstring{size: 0, unit: 8} end
   end
@@ -425,6 +428,59 @@ defmodule Type do
   end
   defmacro remote(any) do
     quote do unquote(any) end
+  end
+
+  defp struct_of(module, atom, content) do
+    {:%, [], [
+      {:__aliases__, [alias: false], [module]},
+      {:%{}, [], [{atom, content}]}
+    ]}
+  end
+
+  @doc """
+  generates a list of a particular type.  A last parameter of `...`
+  indicates that the list should be nonempty
+
+  ### Example:
+  iex> import Type
+  iex> list(...)
+  %Type.List{type: %Type{name: :any}, nonempty: true}
+  iex> list(1..10)
+  %Type.List{type: 1..10}
+  iex> list(1..10, ...)
+  %Type.List{type: 1..10, nonempty: true}
+  ```
+
+  if it's passed a keyword list, it is interpreted as a keyword list.
+
+  ```
+  iex> import Type
+  iex> list(foo: builtin(:integer))
+  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :integer}]}}
+  ```
+  """
+  defmacro list({:..., _, _}) do
+    Macro.escape(%Type.List{type: builtin(:any), nonempty: true})
+  end
+  defmacro list([{k, v}]) when is_atom(k) do
+    quote do
+      %Type.List{type: unquote(struct_of(:"Type.Tuple", :elements, [k, v]))}
+    end
+  end
+  defmacro list(lst) when is_list(lst) do
+    tuples = lst
+    |> Enum.sort_by(fn {k, _} when is_atom(k) -> k end, :desc)
+    |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", :elements, [k, v]) end)
+
+    quote do
+      %Type.List{type: unquote(struct_of(:"Type.Union", :of, tuples))}
+    end
+  end
+  defmacro list(ast) do
+    quote do %Type.List{type: unquote(ast)} end
+  end
+  defmacro list(ast, {:..., _, _}) do
+    quote do %Type.List{type: unquote(ast), nonempty: true} end
   end
 
   @doc """
