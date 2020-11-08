@@ -430,10 +430,10 @@ defmodule Type do
     quote do unquote(any) end
   end
 
-  defp struct_of(module, atom, content) do
+  defp struct_of(module, kv) do
     {:%, [], [
       {:__aliases__, [alias: false], [module]},
-      {:%{}, [], [{atom, content}]}
+      {:%{}, [], kv}
     ]}
   end
 
@@ -441,7 +441,9 @@ defmodule Type do
   generates a list of a particular type.  A last parameter of `...`
   indicates that the list should be nonempty
 
-  ### Example:
+  ### Examples:
+
+  ```elixir
   iex> import Type
   iex> list(...)
   %Type.List{type: %Type{name: :any}, nonempty: true}
@@ -453,7 +455,7 @@ defmodule Type do
 
   if it's passed a keyword list, it is interpreted as a keyword list.
 
-  ```
+  ```elixir
   iex> import Type
   iex> list(foo: builtin(:integer))
   %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :integer}]}}
@@ -464,16 +466,16 @@ defmodule Type do
   end
   defmacro list([{k, v}]) when is_atom(k) do
     quote do
-      %Type.List{type: unquote(struct_of(:"Type.Tuple", :elements, [k, v]))}
+      %Type.List{type: unquote(struct_of(:"Type.Tuple", elements: [k, v]))}
     end
   end
   defmacro list(lst) when is_list(lst) do
     tuples = lst
     |> Enum.sort_by(fn {k, _} when is_atom(k) -> k end, :desc)
-    |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", :elements, [k, v]) end)
+    |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", elements: [k, v]) end)
 
     quote do
-      %Type.List{type: unquote(struct_of(:"Type.Union", :of, tuples))}
+      %Type.List{type: unquote(struct_of(:"Type.Union", of: tuples))}
     end
   end
   defmacro list(ast) do
@@ -481,6 +483,92 @@ defmodule Type do
   end
   defmacro list(ast, {:..., _, _}) do
     quote do %Type.List{type: unquote(ast), nonempty: true} end
+  end
+
+  @doc """
+  generates the tuple type from a tuple ast.  If the tuple contains
+  `...` it will generate the generic any tuple.
+
+  ```elixir
+  iex> import Type
+  iex> tuple {...}
+  %Type.Tuple{elements: :any}
+  iex> tuple {:ok, builtin(:integer)}
+  %Type.Tuple{elements: [:ok, %Type{name: :integer}]}
+  iex> tuple {:error, builtin(:atom), builtin(:integer)}
+  %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :integer}]}
+  ```
+  """
+  defmacro tuple({a, b}) do
+    struct_of(:"Type.Tuple", elements: [a, b])
+  end
+  defmacro tuple({:{}, _, [{:..., _, _}]}) do
+    Macro.escape(%Type.Tuple{elements: :any})
+  end
+  defmacro tuple({:{}, _, elements}) do
+    struct_of(:"Type.Tuple", elements: elements)
+  end
+
+  @doc """
+  generates the map type from a map ast.  Unspecified keys default to
+  required if singletons, and optional if non-singletons.
+
+  ```elixir
+  iex> import Type
+  iex> map %{foo: builtin(:integer)}
+  %Type.Map{required: %{foo: %Type{name: :integer}}}
+  iex> map %{required(1) => builtin(:atom)}
+  %Type.Map{required: %{1 => %Type{name: :atom}}}
+  iex> map %{optional(:bar) => builtin(:atom)}
+  %Type.Map{optional: %{bar: %Type{name: :atom}}}
+  ```
+  """
+
+  defmacro map({:%{}, _, map_ast}) do
+    map_list = map_ast
+    |> Enum.group_by(fn
+      {{:required, _, _}, _} -> :required
+      {{:optional, _, _}, _} -> :optional
+      {k, _} when is_atom(k) or is_integer(k) -> :required
+      _ -> :optional
+    end, fn
+      {{:required, _, [k]}, v} -> {k, v}
+      {{:optional, _, [k]}, v} -> {k, v}
+      kv -> kv
+    end)
+    |> Enum.map(&(&1))
+    |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
+
+    struct_of(:"Type.Map", map_list)
+  end
+
+  @doc """
+  generates the function type from a type-like ast.  Note that the AST
+  must be in a parentheses set.  If the parameters are `...`, it will
+  generate the any function; for the generic n-arity function use `_`
+  for each of the parameters.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type
+  iex> function (builtin(:atom) -> builtin(:integer))
+  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :integer}}
+  iex> function (... -> builtin(:integer))
+  %Type.Function{params: :any, return: %Type{name: :integer}}
+  iex> function (_, _ -> builtin(:integer))
+  %Type.Function{params: 2, return: %Type{name: :integer}}
+  ```
+  """
+  defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
+    quote do %Type.Function{params: :any, return: unquote(return)} end
+  end
+  defmacro function([{:->, _, [params, return]}]) do
+    if Enum.all?(params, &match?({:_, _, _}, &1)) do
+      quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end
+    else
+      quote do %Type.Function{params: unquote(params), return: unquote(return)} end
+    end
   end
 
   @doc """
