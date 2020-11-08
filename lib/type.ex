@@ -577,6 +577,10 @@ defmodule Type do
   defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
     quote do %Type.Function{params: :any, return: unquote(return)} end
   end
+  # special case zero-arity
+  defmacro function([{:->, _, [[], return]}]) do
+    quote do %Type.Function{params: [], return: unquote(return)} end
+  end
   defmacro function([{:->, _, [params, return]}]) do
     if Enum.all?(params, &match?({:_, _, _}, &1)) do
       quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end

@@ -14,14 +14,13 @@ defmodule TypeTest do
 
   use Type.Operators
 
-  import Type, only: [builtin: 1, remote: 1, list: 1, list: 2]
+  import Type, only: :macros
 
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
       assert 0 == Type.typegroup(builtin(:none))
       assert 1 == Type.typegroup(builtin(:integer))
       assert 1 == Type.typegroup(builtin(:neg_integer))
-      assert 1 == Type.typegroup(builtin(:non_neg_integer))
       assert 1 == Type.typegroup(builtin(:pos_integer))
       assert 1 == Type.typegroup(47)
       assert 1 == Type.typegroup(1..4)
@@ -251,6 +250,13 @@ defmodule TypeTest do
         %Type.Tuple{elements: [:bar, builtin(:integer)]}
       ]}} ==
         list(foo: builtin(:float), bar: builtin(:integer))
+    end
+  end
+
+  describe "function macro" do
+    test "works with a zero-arity function" do
+      assert %Type.Function{params: [], return: builtin(:any)} ==
+        function(( -> builtin(:any)))
     end
   end
 

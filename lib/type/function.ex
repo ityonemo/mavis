@@ -15,11 +15,19 @@ defmodule Type.Function do
   - `(... -> integer())` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
   - `(integer() -> integer())` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
 
+  ## Shortcut Form
+
+  The `Type` module lets you specify a function using "shortcut form" via the `Type.function/1` macro:
+
+  ```
+  iex> import Type
+  iex> function((builtin(:atom) -> builtin(:pos_integer)))
+  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
+  ```
 
   ## Inference
 
-  By default, Mavis will not attempt to perform inference on function
-  types.
+  By default, Mavis will not attempt to perform inference on function types.
 
   ```elixir
   iex> inspect Type.of(&(&1 + 1))
@@ -44,11 +52,11 @@ defmodule Type.Function do
   followed by type order on their parameters.
 
   ```elixir
-  iex> Type.compare(%Type.Function{params: [], return: %Type{name: :atom}},
-  ...>              %Type.Function{params: [], return: %Type{name: :integer}})
+  iex> import Type
+  iex> Type.compare(function(( -> builtin(:atom))), function(( -> builtin(:integer))))
   :gt
-  iex> Type.compare(%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}},
-  ...>              %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :integer}})
+  iex> Type.compare(function((builtin(:integer) -> builtin(:integer))),
+  ...>              function((builtin(:atom) -> builtin(:integer))))
   :lt
   ```
 
@@ -58,11 +66,11 @@ defmodule Type.Function do
   types overlap.  If they have the same parameters, then their return values are intersected.
 
   ```elixir
-  iex> Type.intersection(%Type.Function{params: [], return: 1..10},
-  ...>                   %Type.Function{params: [], return: %Type{name: :integer}})
+  iex> import Type
+  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:integer))))
   %Type.Function{params: [], return: 1..10}
-  iex> Type.intersection(%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}},
-  ...>                   %Type.Function{params: [1..10], return: %Type{name: :integer}})
+  iex> Type.intersection(function((builtin(:integer) -> builtin(:integer))),
+  ...>                   function((1..10 -> builtin(:integer))))
   %Type{name: :none}
   ```
 
@@ -70,9 +78,10 @@ defmodule Type.Function do
   will adopt the parameters of the intersected function.
 
   ```elixir
-  iex> Type.intersection(%Type.Function{params: :any, return: %Type{name: :integer}},
-  ...>                   %Type.Function{params: [1..10], return: %Type{name: :integer}})
-  %Type.Function{params: [1..10], return: %Type{name: :integer}}
+  iex> import Type
+  iex> Type.intersection(function((... -> builtin(:pos_integer))),
+  ...>                   function((1..10 -> builtin(:pos_integer))))
+  %Type.Function{params: [1..10], return: %Type{name: :pos_integer}}
   ```
 
   #### union
@@ -81,8 +90,8 @@ defmodule Type.Function do
   identical then their return types will be merged.
 
   ```elixir
-  iex> Type.union(%Type.Function{params: [], return: 1..10},
-  ...>            %Type.Function{params: [], return: 11..20})
+  iex> import Type
+  iex> Type.union(function(( -> 1..10)), function(( -> 11..20)))
   %Type.Function{params: [], return: 1..20}
   ```
 
@@ -92,8 +101,9 @@ defmodule Type.Function do
   value type is the subtype of the other's
 
   ```elixir
-  iex> Type.subtype?(%Type.Function{params: [%Type{name: :integer}], return: 1..10},
-  ...>               %Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}})
+  iex> import Type
+  iex> Type.subtype?(function((builtin(:integer) -> 1..10)),
+  ...>               function((builtin(:integer) -> builtin(:integer))))
   true
   ```
 
@@ -109,17 +119,16 @@ defmodule Type.Function do
   return type of the targeted function.
 
   ```elixir
-  iex> Type.usable_as(%Type.Function{params: [%Type{name: :integer}], return: 1..10},
-  ...>                %Type.Function{params: [1..10], return: %Type{name: :integer}})
+  iex> import Type
+  iex> Type.usable_as(function((builtin(:pos_integer) -> 1..10)), function((1..10 -> builtin(:pos_integer))))
   :ok
-  iex> Type.usable_as(%Type.Function{params: [1..10], return: 1..10},
-  ...>                %Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}})
+  iex> Type.usable_as(function((1..10 -> 1..10)), function((builtin(:pos_integer) -> builtin(:pos_integer))))
   {:maybe, [%Type.Message{type: %Type.Function{params: [1..10], return: 1..10},
-                          target: %Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}}]}
-  iex> Type.usable_as(%Type.Function{params: [], return: %Type{name: :atom}},
-  ...>                %Type.Function{params: [], return: %Type{name: :integer}})
+                          target: %Type.Function{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}}]}
+  iex> Type.usable_as(function(( -> builtin(:atom))), function(( -> builtin(:pos_integer))))
   {:error, %Type.Message{type: %Type.Function{params: [], return: %Type{name: :atom}},
-                         target: %Type.Function{params: [], return: %Type{name: :integer}}}}
+                         target: %Type.Function{params: [], return: %Type{name: :pos_integer}}}}
+  ```
   """
 
   @enforce_keys [:return]
