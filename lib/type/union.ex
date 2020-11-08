@@ -22,20 +22,12 @@ defmodule Type.Union do
   iex> Enum.into([1..10, 11..20], %Type.Union{})
   1..20
   ```
-
   """
 
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t, ...]}
 
   import Type, only: :macros
-
-  @doc """
-  special syntax for two-valued union
-  """
-  def of(left, right) do
-    Enum.into([left, right], %__MODULE__{})
-  end
 
   @spec collapse(t) :: Type.t
   @doc false
@@ -127,51 +119,11 @@ defmodule Type.Union do
   def type_merge([a.._ | rest], builtin(:pos_integer)) when a > 0 do
     {builtin(:pos_integer), rest}
   end
-  def type_merge([0 | rest], builtin(:pos_integer)) do
-    {builtin(:non_neg_integer), rest}
-  end
   def type_merge([0.._ | rest], builtin(:pos_integer)) do
-    {builtin(:non_neg_integer), rest}
+    {0, [builtin(:pos_integer) | rest]}
   end
-  def type_merge([-1.._ | rest], builtin(:pos_integer)) do
-    {builtin(:non_neg_integer), [-1 | rest]}
-  end
-  def type_merge([a..b | rest], builtin(:pos_integer)) when b >= 0 do
-    {builtin(:non_neg_integer), [a..-1 | rest]}
-  end
-
-  # non-negative integers
-  def type_merge([i | rest], builtin(:non_neg_integer)) when is_integer(i) and i >= 0 do
-    {builtin(:non_neg_integer), rest}
-  end
-  def type_merge([a.._ | rest], builtin(:non_neg_integer)) when a >= 0 do
-    {builtin(:non_neg_integer), rest}
-  end
-  def type_merge([-1.._ | rest], builtin(:non_neg_integer)) do
-    {builtin(:non_neg_integer), [-1 | rest]}
-  end
-  def type_merge([a..b | rest], builtin(:non_neg_integer)) when b >= 0 do
-    {builtin(:non_neg_integer), [a..-1 | rest]}
-  end
-  def type_merge([builtin(:neg_integer) | rest], builtin(:non_neg_integer)) do
-    {builtin(:integer), rest}
-  end
-
-  # integers
-  def type_merge([i | rest], builtin(:integer)) when is_integer(i) do
-    {builtin(:integer), rest}
-  end
-  def type_merge([_.._ | rest], builtin(:integer)) do
-    {builtin(:integer), rest}
-  end
-  def type_merge([builtin(:neg_integer) | rest], builtin(:integer)) do
-    {builtin(:integer), rest}
-  end
-  def type_merge([builtin(:pos_integer) | rest], builtin(:integer)) do
-    {builtin(:integer), rest}
-  end
-  def type_merge([builtin(:non_neg_integer) | rest], builtin(:integer)) do
-    {builtin(:integer), rest}
+  def type_merge([a..b | rest], builtin(:pos_integer)) when b > 0 do
+    {a..0, [builtin(:pos_integer) | rest]}
   end
 
   # atoms
@@ -190,7 +142,7 @@ defmodule Type.Union do
     |> Enum.map(fn
       {type, type} -> type
       {lh, rh} ->
-        union = Type.Union.of(lh, rh)
+        union = Type.union(lh, rh)
         match?(%Type.Union{}, union) and (union.of == [lh, rh]) and throw :nomerge
         union
     end)
@@ -205,7 +157,7 @@ defmodule Type.Union do
       [%List{type: tl, nonempty: nl, final: final} | rest],
        %List{type: tr, nonempty: nr, final: final}) do
 
-    {%List{type: Type.Union.of(tl, tr),
+    {%List{type: Type.union(tl, tr),
            nonempty: nl and nr,
            final: final}, rest}
   end
@@ -215,7 +167,7 @@ defmodule Type.Union do
 
     {%List{type: type,
            nonempty: nl and nr,
-           final: Type.Union.of(fl, fr)}, rest}
+           final: Type.union(fl, fr)}, rest}
   end
   def type_merge([[] | rest], %List{type: type, final: []}) do
     {%List{type: type}, rest}
@@ -403,17 +355,23 @@ defmodule Type.Union do
           |> Kernel.--([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
           |> override(:iodata, opts)
 
-        # override for number
-        type_has(types, [builtin(:float), builtin(:integer)]) ->
-          types
-          |> Kernel.--([builtin(:float), builtin(:integer)])
-          |> override(:number, opts)
-
         # override for timeout
-        type_has(types, [builtin(:non_neg_integer), :infinity]) ->
+        type_has(types, [0, builtin(:pos_integer), :infinity]) ->
           types
-          |> Kernel.--([builtin(:non_neg_integer), :infinity])
+          |> Kernel.--([0, builtin(:pos_integer), :infinity])
           |> override(:timeout, opts)
+
+        # override for integers
+        type_has(types, [builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
+          types
+          |> Kernel.--([builtin(:neg_integer), 0, builtin(:pos_integer)])
+          |> override(:integer, opts)
+
+        # override for non_neg_integer
+        type_has(types, [0, builtin(:pos_integer)]) ->
+          types
+          |> Kernel.--([0, builtin(:pos_integer)])
+          |> override(:non_neg_integer, opts)
 
         true -> normal_inspect(types, opts)
       end

@@ -61,10 +61,10 @@ defmodule Type.Spec do
   def parse({:type, _, :byte, []}, _), do: 0..255
   def parse({:type, _, :char, []}, _), do: 0..0x10FFFF
   def parse({:type, _, :number, []}, _) do
-    Type.Union.of(builtin(:integer), builtin(:float))
+    Type.union([builtin(:float), builtin(:pos_integer), 0, builtin(:neg_integer)])
   end
   def parse({:type, _, :timeout, []}, _) do
-    Type.Union.of(builtin(:non_neg_integer), :infinity)
+    Type.union([0, builtin(:pos_integer), :infinity])
   end
   def parse({:type, _, :identifier, []}, _) do
     ~w(port pid reference)a
@@ -72,7 +72,7 @@ defmodule Type.Spec do
     |> Enum.into(%Type.Union{})
   end
   def parse({:type, _, :boolean, []}, _) do
-    Type.Union.of(true, false)
+    Type.union(true, false)
   end
   def parse({:type, _, :fun, []}, _) do
     %Type.Function{params: :any, return: builtin(:any)}
@@ -100,7 +100,7 @@ defmodule Type.Spec do
     %Type.List{final: builtin(:any)}
   end
   def parse({:type, _, :maybe_improper_list, [type, final]}, assigns) do
-    %Type.List{ type: parse(type, assigns), final: Type.Union.of(parse(final, assigns), [])}
+    %Type.List{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
     %Type.List{
@@ -115,7 +115,7 @@ defmodule Type.Spec do
     %Type.List{
       type: parse(type, assigns),
       nonempty: true,
-      final: Type.Union.of(parse(final, assigns), [])}
+      final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :bitstring, []}, _) do
     %Type.Bitstring{size: 0, unit: 1}
@@ -127,7 +127,7 @@ defmodule Type.Spec do
     %Type.Bitstring{size: parse(size, assigns), unit: parse(unit, assigns)}
   end
   def parse({:type, _, :iodata, []}, _) do
-    Type.Union.of(%Type.Bitstring{size: 0, unit: 8}, builtin(:iolist))
+    Type.union(%Type.Bitstring{size: 0, unit: 8}, builtin(:iolist))
   end
   def parse({:type, _, :union, types}, assigns) do
     types

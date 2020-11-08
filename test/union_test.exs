@@ -10,11 +10,11 @@ defmodule TypeTest.UnionTest do
   import Type, only: [builtin: 1]
 
   test "unions keep terms in reverse order" do
-    assert %Union{of: [47, 0]} = Union.of(47, 0)
-    assert %Union{of: [47, 0]} = Union.of(0, 47)
+    assert %Union{of: [47, 0]} = Type.union(47, 0)
+    assert %Union{of: [47, 0]} = Type.union(0, 47)
 
-    assert %Union{of: [:foo, 47]} = Union.of(:foo, 47)
-    assert %Union{of: [:foo, 47]} = Union.of(47, :foo)
+    assert %Union{of: [:foo, 47]} = Type.union(:foo, 47)
+    assert %Union{of: [:foo, 47]} = Type.union(47, :foo)
   end
 
   describe "unions are collectibles" do
@@ -35,7 +35,7 @@ defmodule TypeTest.UnionTest do
     end
 
     test "you can into a unions and it will be ordered as epexected" do
-      assert %Union{of: [5, 3, 1]} = Union.of(3 <|> 5, 1)
+      assert %Union{of: [5, 3, 1]} = Type.union(3 <|> 5, 1)
     end
   end
 
@@ -95,34 +95,8 @@ defmodule TypeTest.UnionTest do
       assert builtin(:non_neg_integer) == (builtin(:pos_integer) <|> 0..10)
     end
     test "collects ranges ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -1..0)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -3..0)
-    end
-    test "collects ranges not ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -1..10)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -3..10)
-    end
-  end
-
-  describe "when collecting non_neg_integer in unions" do
-    test "collects non negative integers" do
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 0)
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 2)
-    end
-    test "collects non negative ranges" do
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 0..10)
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 2..10)
-    end
-    test "collects ranges ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -1..0)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -3..0)
-    end
-    test "collects ranges not ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -1..10)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -3..10)
-    end
-    test "fuses with neg_integer" do
-      assert builtin(:integer) == (builtin(:neg_integer) <|> builtin(:non_neg_integer))
+      assert (0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> 0..1)
+      assert (-3..0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> -3..1)
     end
   end
 

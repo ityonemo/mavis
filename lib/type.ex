@@ -144,6 +144,8 @@ defmodule Type do
   **NB in the future the name of `is_builtin` may change to prevent confusion.**
 
   - `t:term/0`
+  - `t:integer/0`
+  - `t:non_neg_integer/0`
   - `t:arity/0`
   - `t:as_boolean/1`
   - `t:binary/0`
@@ -171,7 +173,7 @@ defmodule Type do
   ```elixir
   iex> import Type
   iex> builtin(:timeout)
-  %Type.Union{of: [:infinity, %Type{name: :non_neg_integer}]}
+  %Type.Union{of: [:infinity, %Type{name: :pos_integer}, 0]}
   iex> Type.is_builtin(builtin(:timeout))
   false
   ```
@@ -253,9 +255,8 @@ defmodule Type do
   @type ternary :: :ok | maybe | error
 
   @primitive_builtins [
-    :none, :neg_integer, :pos_integer, :non_neg_integer, :integer,
-    :float, :node, :module, :atom, :reference, :port, :pid, :iolist,
-    :any]
+    :none, :neg_integer, :pos_integer, :integer, :float, :node, :module, :atom,
+    :reference, :port, :pid, :iolist, :any]
 
   @spec builtin(atom) :: Macro.t
   @doc """
@@ -263,14 +264,26 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> Type.builtin(:integer)
-  %Type{name: :integer}
+  iex> Type.builtin(:pos_integer)
+  %Type{name: :pos_integer}
   ```
 
   *Usable in guards*
   """
   defmacro builtin(:term) do
     quote do %Type{module: nil, name: :any, params: []} end
+  end
+  defmacro builtin(:integer) do
+    quote do
+      %Type.Union{of: [%Type{module: nil, name: :pos_integer, params: []},
+                       0,
+                       %Type{module: nil, name: :neg_integer, params: []}]}
+    end
+  end
+  defmacro builtin(:non_neg_integer) do
+    quote do
+      %Type.Union{of: [%Type{module: nil, name: :pos_integer, params: []}, 0]}
+    end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
@@ -374,7 +387,8 @@ defmodule Type do
     quote do
       %Type.Union{of: [
         :infinity,
-        %Type{module: nil, name: :non_neg_integer, params: []},
+        %Type{module: nil, name: :pos_integer, params: []},
+        0
       ]}
     end
   end
@@ -616,7 +630,7 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type
-  iex> inspect Type.union(builtin(:non_neg_integer), -10..10)
+  iex> inspect Type.union(builtin(:pos_integer), -10..10)
   "-10..-1 | non_neg_integer()"
   ```
   """
@@ -699,8 +713,6 @@ defmodule Type do
     - `t:neg_integer/0`
     - [nonnegative integer literal]
     - `t:pos_integer/0`
-    - `t:non_neg_integer/0`
-    - `t:integer/0`
   - group 2: `t:float/0`
   - group 3 (atoms):
     - [atom literal]
@@ -958,7 +970,7 @@ defmodule Type do
         updated_val_type = if is_map_key(acc.optional, key_type) do
           acc.optional
           |> Map.get(key_type)
-          |> Type.Union.of(val_type)
+          |> Type.union(val_type)
         else
           val_type
         end
@@ -984,7 +996,7 @@ defmodule Type do
   end
 
   defp of_list([head | rest], so_far) do
-    of_list(rest, Type.Union.of(Type.of(head), so_far))
+    of_list(rest, Type.union(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
     %Type.List{type: so_far, nonempty: true}
@@ -1056,7 +1068,7 @@ end
 defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
-    none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
+    none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
     float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
     iolist: 10, any: 12}
 
@@ -1081,8 +1093,6 @@ defimpl Type.Properties, for: Type do
     end
 
     # negative integer
-    def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
-
     def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
       {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
     end
@@ -1090,41 +1100,12 @@ defimpl Type.Properties, for: Type do
       {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
     end
 
-    # non negative integer
-    def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
-
-    def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
-      {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
-    end
-    def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
-      {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
-    end
-    def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
-      {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
-    end
-
     # positive integer
-    def usable_as(builtin(:pos_integer), builtin(target), _meta)
-      when target in [:non_neg_integer, :integer], do: :ok
-
     def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
       {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
     end
     def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
       {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
-    end
-
-    # integer
-    def usable_as(builtin(:integer), builtin(target), meta)
-      when target in [:neg_integer, :non_neg_integer, :pos_integer] do
-        {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
-    end
-
-    def usable_as(builtin(:integer), a, meta) when is_integer(a) do
-      {:maybe, [Message.make(builtin(:integer), a, meta)]}
-    end
-    def usable_as(builtin(:integer), a..b, meta) do
-      {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
     end
 
     # atom
@@ -1198,31 +1179,15 @@ defimpl Type.Properties, for: Type do
 
   intersection do
     # negative integer
-    def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
     def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
     def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
     def intersection(builtin(:neg_integer), -1.._), do: -1
     def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
     # positive integer
-    def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
     def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
     def intersection(builtin(:pos_integer), _..1), do: 1
     def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
-    # non negative integer
-    def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
-    def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
-    def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
-    def intersection(builtin(:non_neg_integer), _..0), do: 0
-    def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
-    # general integers
-    def intersection(builtin(:integer), a) when is_integer(a), do: a
-    def intersection(builtin(:integer), a..b), do: a..b
-    def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
-    def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
     def intersection(builtin(:node), atom) when is_atom(atom) do
       if valid_node?(atom), do: atom, else: builtin(:none)
@@ -1311,10 +1276,6 @@ defimpl Type.Properties, for: Type do
 
   group_compare do
     # group compare for the integer block.
-    def group_compare(builtin(:integer), _),               do: :gt
-    def group_compare(_, builtin(:integer)),               do: :lt
-    def group_compare(builtin(:non_neg_integer), _),       do: :gt
-    def group_compare(_, builtin(:non_neg_integer)),       do: :lt
     def group_compare(builtin(:pos_integer), _),           do: :gt
     def group_compare(_, builtin(:pos_integer)),           do: :lt
     def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt

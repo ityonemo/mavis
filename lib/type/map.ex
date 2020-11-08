@@ -210,10 +210,10 @@ defmodule Type.Map do
   iex> alias Type.Map
   iex> import Type
   iex> Map.preimage(Map.build(%{builtin(:integer) => builtin(:any)}))
-  %Type{name: :integer}
+  %Type{name: :pos_integer}
   iex> Map.preimage(Map.build(%{0 => builtin(:any)},
   ...>                        %{builtin(:pos_integer) => builtin(:any)}))
-  %Type{name: :non_neg_integer}
+  %Type.Union{of: [%Type{name: :pos_integer}, 0]}
   ```
   """
   def preimage(map) do

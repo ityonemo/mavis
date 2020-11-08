@@ -12,8 +12,8 @@ defmodule Type.Iolist do
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}
-  @ltype Enum.into([@char, @binary, builtin(:iolist)], %Union{})
-  @final Union.of([], @binary)
+  @ltype Type.union([@char, @binary, builtin(:iolist)])
+  @final Type.union([], @binary)
 
   # INTERSECTIONS
 
