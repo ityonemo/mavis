@@ -73,16 +73,15 @@ defmodule Type.Map do
   with a required key comes before an equivalent map type with the key optional.
 
   ```
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{foo: :quux}})
+  iex> import Type
+  iex> Type.compare(map(%{foo: :bar}), map(%{foo: :quux}))
   :lt
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
   :gt
-  iex> Type.compare(%Type.Map{required: %{foo: %Type{name: :integer}},
-  ...>                        optional: %{1 => %Type{name: :integer}}},
-  ...>              %Type.Map{required: %{foo: %Type{name: :integer}},
-  ...>                        optional: %{2 => %Type{name: :integer}}})
+  iex> Type.compare(map(%{foo: builtin(:integer), optional(1) => builtin(:integer)}),
+  ...>              map(%{foo: builtin(:integer), optional(2) => builtin(:integer)}))
   :lt
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar})
   :lt
   ```
 
@@ -96,12 +95,14 @@ defmodule Type.Map do
   of both types
 
   ```
-  iex> Type.intersection(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  iex> import Type
+  iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
   %Type{name: :none}
-
-  iex> Type.intersection(%Type.Map{required: %{foo: :bar}},
-  ...>                   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :atom}}})
+  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)})
   %Type.Map{required: %{foo: :bar}}
+
+  iex> :refactor
+  :this
 
   iex> Type.intersection(%Type.Map{required: %{1 => 1..10}}, %Type.Map{required: %{1 => 5..20}})
   %Type.Map{required: %{1 => 5..10}}
