@@ -17,11 +17,11 @@ defmodule Type.Map do
   ```
   iex> import Type
   iex> map(%{optional(builtin(:atom)) => builtin(:pos_integer)})
-  %Type.Map{optional: %{builtin(:atom) => builtin(:pos_integer)}}
+  %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :pos_integer}}}
   iex> map(%{})       # empty map
   %Type.Map{optional: %{}, required: %{}}
   iex> builtin(:map)  # t:map/0
-  %Type.Map{optional: %{builtin(:any) => builtin(:any)}}
+  %Type.Map{optional: %{%Type{name: :any} => %Type{name: :any}}}
   ```
 
   ### Deviations from standard Erlang/Elixir:
@@ -78,10 +78,10 @@ defmodule Type.Map do
   :lt
   iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
   :gt
-  iex> Type.compare(map(%{foo: builtin(:integer), optional(1) => builtin(:integer)}),
-  ...>              map(%{foo: builtin(:integer), optional(2) => builtin(:integer)}))
+  iex> Type.compare(map(%{optional(1) => builtin(:integer), foo: builtin(:integer)}),
+  ...>              map(%{optional(2) => builtin(:integer), foo: builtin(:integer)}))
   :lt
-  iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar})
+  iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
   :lt
   ```
 
@@ -98,11 +98,8 @@ defmodule Type.Map do
   iex> import Type
   iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
   %Type{name: :none}
-  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)})
+  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)}))
   %Type.Map{required: %{foo: :bar}}
-
-  iex> :refactor
-  :this
 
   iex> Type.intersection(%Type.Map{required: %{1 => 1..10}}, %Type.Map{required: %{1 => 5..20}})
   %Type.Map{required: %{1 => 5..10}}
@@ -226,7 +223,7 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type
-  iex> Map.preimage(Map.build(%{builtin(:integer) => builtin(:any)}))
+  iex> Map.preimage(Map.build(%{builtin(:pos_integer) => builtin(:any)}))
   %Type{name: :pos_integer}
   iex> Map.preimage(Map.build(%{0 => builtin(:any)},
   ...>                        %{builtin(:pos_integer) => builtin(:any)}))

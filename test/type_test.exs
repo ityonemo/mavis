@@ -10,6 +10,7 @@ defmodule TypeTest do
   doctest Type.List
   doctest Type.NoInference
   doctest Type.Tuple
+  doctest Type.Map
   doctest Type.Union
 
   use Type.Operators
@@ -257,6 +258,14 @@ defmodule TypeTest do
     test "works with a zero-arity function" do
       assert %Type.Function{params: [], return: builtin(:any)} ==
         function(( -> builtin(:any)))
+    end
+  end
+
+  describe "map macro" do
+    test "works with a hybrid system" do
+      assert %Type.Map{required: %{foo: builtin(:integer)},
+                       optional: %{1 => builtin(:integer)}} ==
+        map(%{optional(1) => builtin(:integer), foo: builtin(:integer)})
     end
   end
 

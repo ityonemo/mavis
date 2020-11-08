@@ -340,37 +340,39 @@ defmodule Type.Union do
     def inspect(%{of: types}, opts) do
       cond do
         # override for boolean
-        type_has(types, [true, false]) ->
-          override(types -- [true, false], :boolean, opts)
+        rest = type_has(types, [true, false]) ->
+          override(rest, :boolean, opts)
 
         # override for identifier
-        type_has(types, [builtin(:reference), builtin(:port), builtin(:pid)]) ->
-          types
-          |> Kernel.--([builtin(:reference), builtin(:port), builtin(:pid)])
-          |> override(:identifier, opts)
+        rest = type_has(types, [builtin(:reference), builtin(:port), builtin(:pid)]) ->
+          override(rest, :identifier, opts)
 
         # override for iodata
-        type_has(types, [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) ->
-          types
-          |> Kernel.--([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
-          |> override(:iodata, opts)
+        rest = type_has(types, [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) ->
+          override(rest, :iodata, opts)
 
-        # override for timeout
-        type_has(types, [0, builtin(:pos_integer), :infinity]) ->
-          types
-          |> Kernel.--([0, builtin(:pos_integer), :infinity])
-          |> override(:timeout, opts)
+        # override for number
+        rest = type_has(types, [builtin(:float), builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
+          override(rest, :number, opts)
 
         # override for integers
-        type_has(types, [builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
-          types
-          |> Kernel.--([builtin(:neg_integer), 0, builtin(:pos_integer)])
-          |> override(:integer, opts)
+        rest = type_has(types, [builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
+          override(rest, :integer, opts)
+
+        # override for timeout
+        rest = type_has(types, [0, builtin(:pos_integer), :infinity]) ->
+          override(rest, :timeout, opts)
 
         # override for non_neg_integer
-        type_has(types, [0, builtin(:pos_integer)]) ->
-          types
-          |> Kernel.--([0, builtin(:pos_integer)])
+        rest = type_has(types, [0, builtin(:pos_integer)]) ->
+          override(rest, :non_neg_integer, opts)
+
+        rest = type_has(types, [-1..0, builtin(:pos_integer)]) ->
+          override([-1 | rest], :non_neg_integer, opts)
+
+        (range = Enum.find(types, &match?(_..0, &1))) && builtin(:pos_integer) in types ->
+          [range.first..-1 | types]
+          |> Kernel.--([range, builtin(:pos_integer)])
           |> override(:non_neg_integer, opts)
 
         true -> normal_inspect(types, opts)
@@ -378,7 +380,7 @@ defmodule Type.Union do
     end
 
     defp type_has(types, query) do
-      Enum.all?(query, &(&1 in types))
+      if Enum.all?(query, &(&1 in types)), do: types -- query
     end
 
     defp override([], name, _opts) do

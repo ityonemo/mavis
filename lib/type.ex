@@ -254,13 +254,30 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
-  @primitive_builtins [
-    :none, :neg_integer, :pos_integer, :integer, :float, :node, :module, :atom,
-    :reference, :port, :pid, :iolist, :any]
+  @primitive_builtins ~w(none neg_integer pos_integer float node module
+  atom reference port pid iolist any)a
+
+  @doc false
+  def primitive_builtins, do: @primitive_builtins
+
+  @composite_builtins ~w(term integer non_neg_integer arity byte map
+  binary bitstring boolean char charlist nonempty_charlist fun
+  function identifier iodata keyword list nonempty_list
+  maybe_improper_list nonempty_maybe_improper_list mfa no_return number
+  struct timeout)a
+
+  @doc false
+  def composite_builtins, do: @composite_builtins
+
+  @builtins @primitive_builtins ++ @composite_builtins
+  @doc false
+  def builtins, do: @builtins
 
   @spec builtin(atom) :: Macro.t
   @doc """
-  helper macro to  match on builtin types.
+  helper macro to  match on builtin types.  The parameter must be
+  known at compile time.  For the equivalent runtime macro, use:
+  `Type.select_builtin/1`.
 
   ### Example:
   ```elixir
@@ -275,14 +292,12 @@ defmodule Type do
   end
   defmacro builtin(:integer) do
     quote do
-      %Type.Union{of: [%Type{module: nil, name: :pos_integer, params: []},
-                       0,
-                       %Type{module: nil, name: :neg_integer, params: []}]}
+      %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
     end
   end
   defmacro builtin(:non_neg_integer) do
     quote do
-      %Type.Union{of: [%Type{module: nil, name: :pos_integer, params: []}, 0]}
+      %Type.Union{of: [builtin(:pos_integer), 0]}
     end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
@@ -310,94 +325,83 @@ defmodule Type do
     quote do %Type.List{type: 0..0x10_FFFF, nonempty: true, final: []} end
   end
   defmacro builtin(fun) when fun in [:fun, :function] do
-    quote do %Type.Function{params: :any, return: %Type{module: nil, name: :any, params: []}} end
+    quote do %Type.Function{params: :any, return: builtin(:any)} end
   end
   defmacro builtin(:identifier) do
     quote do
-      %Type.Union{of:
-      [%Type{module: nil, name: :pid, params: []},
-       %Type{module: nil, name: :port, params: []},
-       %Type{module: nil, name: :reference, params: []}]}
+      %Type.Union{of: [builtin(:pid), builtin(:port), builtin(:reference)]}
     end
   end
   defmacro builtin(:iodata) do
     quote do
-      %Type.Union{of:
-      [%Type.Bitstring{size: 0, unit: 8},
-       %Type{module: nil, name: :iolist, params: []}]}
+      %Type.Union{of: [builtin(:binary), builtin(:iolist)]}
     end
   end
   defmacro builtin(:keyword) do
     quote do
       %Type.List{type:
-        %Type.Tuple{elements: [%Type{module: nil, name: :atom, params: []},
-                               %Type{module: nil, name: :any, params: []}]}}
+        %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
     end
   end
   defmacro builtin(:list) do
     quote do
-      %Type.List{type: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any)}
     end
   end
   defmacro builtin(:nonempty_list) do
     quote do
-      %Type.List{type: %Type{module: nil, name: :any, params: []}, nonempty: true}
+      %Type.List{type: builtin(:any), nonempty: true}
     end
   end
   defmacro builtin(:maybe_improper_list) do
     quote do
-      %Type.List{
-        type: %Type{module: nil, name: :any, params: []},
-        final: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any), final: builtin(:any)}
     end
   end
   defmacro builtin(:nonempty_maybe_improper_list) do
     quote do
-      %Type.List{
-        type: %Type{module: nil, name: :any, params: []},
-        nonempty: true,
-        final: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)}
     end
   end
   defmacro builtin(:mfa) do
     quote do
-      %Type.Tuple{elements: [
-        %Type{module: nil, name: :module, params: []},
-        %Type{module: nil, name: :atom, params: []},
-        0..255
-      ]}
+      %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]}
     end
   end
   defmacro builtin(:no_return) do
-    quote do %Type{module: nil, name: :none, params: []} end
+    quote do builtin(:none) end
   end
   defmacro builtin(:number) do
     quote do
-      %Type.Union{of: [
-        %Type{module: nil, name: :float, params: []},
-        %Type{module: nil, name: :integer, params: []},
+      %Type.Union{of: [builtin(:float), builtin(:pos_integer),
+        0, builtin(:neg_integer)
       ]}
     end
   end
   defmacro builtin(:struct) do
     quote do
-      %Type.Map{required: %{__struct__: %Type{module: nil, params: [], name: :atom}},
-                optional: %{%Type{module: nil, params: [], name: :atom} =>
-                            %Type{module: nil, params: [], name: :any}}}
+      %Type.Map{required: %{__struct__: builtin(:atom)},
+                optional: %{builtin(:atom) => builtin(:any)}}
     end
   end
   defmacro builtin(:timeout) do
     quote do
-      %Type.Union{of: [
-        :infinity,
-        %Type{module: nil, name: :pos_integer, params: []},
-        0
-      ]}
+      %Type.Union{of: [:infinity, builtin(:pos_integer), 0]}
     end
   end
-  defmacro builtin(type) when
-    not is_atom(type) or type in @primitive_builtins do
+  defmacro builtin(type) do
+    # NB ^^ this is kept generic so it can be used in matches.
     quote do %Type{module: nil, name: unquote(type), params: []} end
+  end
+
+  @doc """
+  like `builtin/1`, but usable at runtime for general variables.
+
+  Not usable in matches.
+  """
+  defmacro select_builtin(type) do
+    cases = Enum.map(@builtins, &{:->, [], [[&1], {:builtin, [], [&1]}]})
+    {:case, [], [type, [do: cases]]}
   end
 
   @spec remote(Macro.t) :: Macro.t
@@ -537,7 +541,6 @@ defmodule Type do
   %Type.Map{optional: %{bar: %Type{name: :atom}}}
   ```
   """
-
   defmacro map({:%{}, _, map_ast}) do
     map_list = map_ast
     |> Enum.group_by(fn
@@ -900,7 +903,6 @@ defmodule Type do
   iex> Type.compare(-5..5, 1..5)
   :gt
   ```
-
   """
   defdelegate compare(a, b), to: Type.Properties
 
