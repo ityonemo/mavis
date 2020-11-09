@@ -75,7 +75,7 @@ defmodule TypeTest.TypeMap.UsableAsTest do
     end
 
     test "is maybe usable if the key type is bigger" do
-      assert {:maybe, _} = map(%{builtin(:atom) => :foo}) ~> map(%{foo: :bar})
+      assert {:maybe, _} = map(%{builtin(:atom) => :bar}) ~> map(%{foo: :bar})
 
       # note that zero isn't in the target space
       assert {:maybe, _} = map(%{builtin(:integer) => :foo}) ~>
