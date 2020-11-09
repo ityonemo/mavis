@@ -35,7 +35,7 @@ defmodule TypeTest.TypeMap.UnionTest do
     end
 
     test "they have the same keys with one side having bigger values" do
-      assert map(%{foo: @any}) == map(%{foo: @any}) <|> map(%{foo: builtin(:integer)}))
+      assert map(%{foo: @any}) == map(%{foo: @any}) <|> map(%{foo: builtin(:integer)})
     end
 
     test "the side that has more keys also has more values" do
@@ -55,7 +55,7 @@ defmodule TypeTest.TypeMap.UnionTest do
       ## the union.
 
       assert %Type.Union{} = map(%{foo: @any, bar: builtin(:integer)}) <|>
-         map(%{foo: builtin(:integer), bar: @any)})
+         map(%{foo: builtin(:integer), bar: @any})
     end
     test "the side that has extra keys has even one value that's smaller" do
       assert %Type.Union{} =

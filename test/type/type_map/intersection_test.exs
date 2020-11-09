@@ -66,7 +66,7 @@ defmodule TypeTest.TypeMap.IntersectionTest do
   @foo_int map(%{foo: builtin(:integer)})
   describe "maps with required types" do
     test "intersect with the intersection of the values" do
-      assert map(%{foo: 3..5}, %{}) == map(%{foo: 1..5}, %{}) <~> map(%{foo: 3..8}, %{})
+      assert map(%{foo: 3..5}) == map(%{foo: 1..5}) <~> map(%{foo: 3..8})
     end
 
     test "intersect with none if they don't match" do

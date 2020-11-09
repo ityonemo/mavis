@@ -59,7 +59,7 @@ defmodule TypeTest.TypeMap.SubtypeTest do
     end
 
     test "are not subtypes when their types are disjoint" do
-      refute map(%{optional(:foo) => @any}) in map(bar: @any)
+      refute map(%{optional(:foo) => @any}) in map(%{optional(:bar) => @any})
     end
   end
 

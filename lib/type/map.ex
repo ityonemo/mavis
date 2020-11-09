@@ -344,7 +344,7 @@ defmodule Type.Map do
   takes all required terms and makes them optional
   """
   def optionalize(map) do
-    build(Map.merge(map.optional, map.required))
+    %Type.Map{optional: Map.merge(map.optional, map.required)}
   end
 
   defimpl Type.Properties do

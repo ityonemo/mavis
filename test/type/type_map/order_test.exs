@@ -29,8 +29,8 @@ defmodule TypeTest.TypeMap.OrderTest do
     end
 
     test "maps that have keys which are strict subtypes are smaller" do
-      assert map(optional(:foo) => @any) < map(%{bar: @any, foo: @any})
-      assert map(optional(:foo) => @any) < map(%{builtin(:atom) => @any})
+      assert map(%{optional(:foo) => @any}) < map(%{bar: @any, foo: @any})
+      assert map(%{optional(:foo) => @any}) < map(%{builtin(:atom) => @any})
       assert map(%{1 => @any}) < map(%{0..10 => @any})
       assert map(%{1 => @any}) < map(%{builtin(:pos_integer) => @any})
       assert map(%{builtin(:pos_integer) => @any}) < map(%{builtin(:integer) => @any})

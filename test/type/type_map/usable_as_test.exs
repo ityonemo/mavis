@@ -94,7 +94,7 @@ defmodule TypeTest.TypeMap.UsableAsTest do
 
     test "is maybe usable even if the whole thing is disjoint" do
       # note that here empty map is acceptable as both types.
-      assert {:maybe, _} = map(optional(:foo) => builtin(:atom)) ~> map(optional(:bar) => builtin(:atom))
+      assert {:maybe, _} = map(%{optional(:foo) => builtin(:atom)}) ~> map(%{optional(:bar) => builtin(:atom)})
     end
 
     test "is not usable if the target type has a required key" do
@@ -110,7 +110,7 @@ defmodule TypeTest.TypeMap.UsableAsTest do
     @dual_map map(%{optional(:foo) => builtin(:neg_integer) <|> nil,
                     builtin(:atom) => builtin(:pos_integer) <|> nil})
     @dual_req map(%{builtin(:atom) => builtin(:pos_integer) <|> nil,
-                    foo: builtin(:neg_integer) <|> nil}})
+                    foo: builtin(:neg_integer) <|> nil})
 
     test "if a map fulfills both it is usable" do
       assert :ok = map(%{optional(:foo) => nil}) ~> @dual_map
@@ -120,15 +120,15 @@ defmodule TypeTest.TypeMap.UsableAsTest do
     test "if a map does not fulfill both it is not usable" do
       ## when the target type has optional overlap
       # if it's optional, not having the parameter is valid.
-      assert {:maybe, _} = map(optional(:foo) => -1) ~> @dual_map
-      assert {:maybe, _} = map(optional(:foo) => 1) ~> @dual_map
+      assert {:maybe, _} = map(%{optional(:foo) => -1}) ~> @dual_map
+      assert {:maybe, _} = map(%{optional(:foo) => 1}) ~> @dual_map
       # if it's a required parameter we won't be happy.
       assert {:error, _} = map(%{foo: -1}) ~> @dual_map
       assert {:error, _} = map(%{foo: 1}) ~> @dual_map
 
       ## when the target type has an overlap in required, it's toast.
-      assert {:error, _} = map(optional(:foo) => -1) ~> @dual_req
-      assert {:error, _} = map(optional(:foo) => 1) ~> @dual_req
+      assert {:error, _} = map(%{optional(:foo) => -1}) ~> @dual_req
+      assert {:error, _} = map(%{optional(:foo) => 1}) ~> @dual_req
       assert {:error, _} = map(%{foo: -1}) ~> @dual_req
       assert {:error, _} = map(%{foo: 1}) ~> @dual_req
     end

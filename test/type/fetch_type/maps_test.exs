@@ -23,7 +23,7 @@ defmodule TypeTest.Type.FetchType.MapsTest do
   end
 
   test "optional literal type" do
-    assert {:ok, map(%{optional(:foo) => builtin(:integer)}) ==
+    assert {:ok, map(%{optional(:foo) => builtin(:integer)})} ==
       Type.fetch_type(@source, :optional_literal_type)
   end
 
