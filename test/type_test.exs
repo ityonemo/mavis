@@ -81,9 +81,9 @@ defmodule TypeTest do
     end
 
     test "assigns proper lists correctly, and makes them nonempty" do
-      assert %Type.List{type: 1, nonempty: true} == Type.of([1, 1, 1])
-      assert %Type.List{type: (1 <|> :foo), nonempty: true} == Type.of([1, :foo, :foo])
-      assert %Type.List{type: (1 <|> :foo <|> builtin(:pid)), nonempty: true} == Type.of([self(), 1, :foo])
+      assert list(1, ...) == Type.of([1, 1, 1])
+      assert list((1 <|> :foo), ...) == Type.of([1, :foo, :foo])
+      assert list((1 <|> :foo <|> builtin(:pid)), ...) == Type.of([self(), 1, :foo])
     end
 
     test "assigns improper lists correctly" do

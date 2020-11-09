@@ -15,44 +15,37 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "literal/1" do
-    assert {:ok, %List{type: builtin(:integer)}} ==
-      Type.fetch_type(@source, :literal_1)
+    assert {:ok, list(builtin(:integer))} == Type.fetch_type(@source, :literal_1)
   end
 
   test "nonempty any list" do
-    assert {:ok, %List{type: builtin(:any), nonempty: true}} ==
-      Type.fetch_type(@source, :nonempty_any)
+    assert {:ok, list(...)} == Type.fetch_type(@source, :nonempty_any)
   end
 
   test "nonempty typed list" do
-    assert {:ok, %List{type: builtin(:integer), nonempty: true}} ==
-      Type.fetch_type(@source, :nonempty_typed)
+    assert {:ok, list(builtin(:integer), ...)} == Type.fetch_type(@source, :nonempty_typed)
   end
 
   test "keyword/1 literal list" do
     foo_integer = tuple({:foo, builtin(:integer)})
-    assert {:ok, %List{type: foo_integer}} == Type.fetch_type(@source, :keyword_literal)
+    assert {:ok, list(foo_integer)} == Type.fetch_type(@source, :keyword_literal)
   end
 
   test "keyword/2 literal list" do
     keyword_type = tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)})
-    assert {:ok, %List{type: keyword_type}} ==
-      Type.fetch_type(@source, :keyword_2_literal)
+    assert {:ok, list(keyword_type)} == Type.fetch_type(@source, :keyword_2_literal)
   end
 
   test "list/0" do
-    assert {:ok, %List{type: builtin(:any)}} ==
-      Type.fetch_type(@source, :list_0)
+    assert {:ok, builtin(:list)} == Type.fetch_type(@source, :list_0)
   end
 
   test "list/1" do
-    assert {:ok, %List{type: builtin(:integer)}} ==
-      Type.fetch_type(@source, :list_1)
+    assert {:ok, list(builtin(:integer))} == Type.fetch_type(@source, :list_1)
   end
 
   test "nonempty_list/1" do
-    assert {:ok, %List{type: builtin(:integer), nonempty: true}} ==
-      Type.fetch_type(@source, :nonempty_list_1)
+    assert {:ok, list(builtin(:integer), ...)} == Type.fetch_type(@source, :nonempty_list_1)
   end
 
   test "maybe_improper_list/2" do
@@ -71,13 +64,11 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "charlist" do
-    assert {:ok, %List{type: 0..0x10_FFFF}} ==
-      Type.fetch_type(@source, :charlist_type)
+    assert {:ok, list(0..0x10_FFFF)} == Type.fetch_type(@source, :charlist_type)
   end
 
   test "nonempty charlist" do
-    assert {:ok, %List{type: 0..0x10_FFFF, nonempty: true}} ==
-      Type.fetch_type(@source, :nonempty_charlist_type)
+    assert {:ok, list(0..0x10_FFFF, ...)} == Type.fetch_type(@source, :nonempty_charlist_type)
   end
 
   test "keyword/0" do
@@ -91,7 +82,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "nonempty_list/0" do
-    assert {:ok, %List{nonempty: true}} ==
+    assert {:ok, list(...)} ==
       Type.fetch_type(@source, :nonempty_list_0)
   end
 

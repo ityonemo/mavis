@@ -23,11 +23,11 @@ defmodule TypeTest.TypeIolist.OrderTest do
     end
 
     test "is bigger than `less than complete` iolists" do
-      assert builtin(:iolist) > %List{type: builtin(:iolist) <|> @char}
-      assert builtin(:iolist) > %List{type: builtin(:iolist) <|> @binary}
-      assert builtin(:iolist) > %List{type: @char <|> @binary}
-      assert builtin(:iolist) > %List{type: @ltype}
-      assert builtin(:iolist) > %List{type: @ltype, final: @binary}
+      assert builtin(:iolist) > list(builtin(:iolist) <|> @char)
+      assert builtin(:iolist) > list(builtin(:iolist) <|> @binary)
+      assert builtin(:iolist) > list(@char <|> @binary)
+      assert builtin(:iolist) > list(@ltype)
+      assert builtin(:iolist) > list(@ltype, final: @binary)
     end
 
     test "is equal to manually defined iolists with recursion" do
@@ -48,7 +48,7 @@ defmodule TypeTest.TypeIolist.OrderTest do
     end
 
     test "is smaller than arbitrary lists, bitstrings or top" do
-      assert builtin(:iolist) < %List{}
+      assert builtin(:iolist) < builtin(:list)
       assert builtin(:iolist) < %Type.Bitstring{size: 0, unit: 0}
       assert builtin(:iolist) < @any
     end

@@ -10,63 +10,67 @@ defmodule TypeTest.TypeList.UsableAsTest do
 
   describe "the trivial list type" do
     test "is usable as itself and any" do
-      assert :ok = %List{} ~> %List{}
-      assert :ok = %List{} ~> builtin(:any)
+      assert :ok = builtin(:list) ~> builtin(:list)
+      assert :ok = builtin(:list) ~> builtin(:any)
     end
 
     test "is usable as a union with the list type" do
-      assert :ok = %List{} ~> (%List{} <|> builtin(:atom))
+      assert :ok = builtin(:list) ~> (builtin(:list) <|> builtin(:atom))
     end
 
     test "is not usable as a union with orthogonal type" do
-      assert {:error, _} = %List{} ~> (builtin(:integer) <|> builtin(:atom))
+      assert {:error, _} = builtin(:list) ~> (builtin(:integer) <|> builtin(:atom))
     end
 
     test "is not usable as any of the other types" do
-      targets = TypeTest.Targets.except([%List{}])
+      targets = TypeTest.Targets.except([builtin(:list)])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: %List{}, target: ^target}} =
-          (%List{} ~> target)
+        assert {:error, %Message{type: builtin(:list), target: ^target}} =
+          (builtin(:list) ~> target)
       end)
     end
   end
 
   describe "for lists with a specified type" do
     test "it is usable as any list" do
-      assert :ok = %List{type: 5} ~> %List{type: builtin(:integer)}
-      assert :ok = %List{type: builtin(:integer)} ~> %List{type: builtin(:any)}
+      assert :ok = list(47) ~> list(builtin(:integer))
+      assert :ok = list(builtin(:integer)) ~> list(builtin(:any))
     end
 
     test "it might be usable if the types might be usable" do
-      assert {:maybe, _} = %List{type: builtin(:integer)} ~> %List{type: 5}
+      assert {:maybe, _} = list(builtin(:integer)) ~> list(47)
     end
 
     test "it might be usable as a nonempty list" do
-      assert {:maybe, _} = %List{type: builtin(:integer)} ~> %List{type: builtin(:integer), nonempty: true}
+      assert {:maybe, _} = list(builtin(:integer)) ~> list(builtin(:integer), ...)
     end
 
-    test "it errors if the types are orthogonal" do
-      assert {:error, _} = %List{type: builtin(:integer)} ~> %List{type: builtin(:atom)}
+    test "it might be usable if the types are orthogonal" do
+      assert {:maybe, _} = list(builtin(:integer)) ~> list(builtin(:atom))
+    end
+
+    test "it won't be usable if the types are orthogonal and the target is nonempty" do
+      assert {:error, _} = list(builtin(:integer)) ~> list(builtin(:atom), ...)
     end
   end
 
   describe "for nonempty: true lists" do
     test "it is usable as similar lists, nonempty or otherwise" do
-      assert :ok = %List{type: 5, nonempty: true} ~> %List{type: builtin(:integer)}
-      assert :ok = %List{type: builtin(:integer), nonempty: true} ~> %List{type: builtin(:integer)}
+      assert :ok = list(47, ...) ~> list(builtin(:integer))
+      assert :ok = list(builtin(:integer), ...) ~> list(builtin(:integer))
 
-      assert :ok = %List{type: 5, nonempty: true} ~> %List{type: builtin(:integer), nonempty: true}
-      assert :ok = %List{type: builtin(:integer), nonempty: true} ~> %List{type: builtin(:integer), nonempty: true}
+      assert :ok = list(47, ...) ~> list(builtin(:integer), ...)
+      assert :ok = list(builtin(:integer), ...) ~> list(builtin(:integer), ...)
     end
 
     test "it might be usable if the types might be usable" do
-      assert {:maybe, _} = %List{type: builtin(:integer), nonempty: true} ~> %List{type: 5}
-      assert {:maybe, _} = %List{type: builtin(:integer), nonempty: true} ~> %List{type: 5, nonempty: true}
+      assert {:maybe, _} = list(builtin(:integer), ...) ~> list(47)
+      assert {:maybe, _} = list(builtin(:integer), ...) ~> list(47, ...)
     end
 
     test "if the inner types are hopeless, it won't be usable" do
-      assert {:error, _} = %List{type: builtin(:integer), nonempty: true} ~> %List{type: builtin(:atom)}
-      assert {:error, _} = %List{type: builtin(:integer), nonempty: true} ~> %List{type: builtin(:atom), nonempty: true}
+      assert {:error, _} = list(builtin(:integer), ...) ~> list(builtin(:atom))
+      assert {:error, _} = list(builtin(:integer), ...) ~> list(builtin(:atom), ...)
     end
   end
 

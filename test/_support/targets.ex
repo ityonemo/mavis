@@ -8,7 +8,7 @@ defmodule TypeTest.Targets do
   builtin(:pos_integer), builtin(:float), :foo, builtin(:atom),
   builtin(:reference), %Function{params: [], return: 0}, builtin(:port),
   builtin(:pid), tuple({}), builtin(:map),
-  [], %List{}, %Bitstring{size: 0, unit: 0}]
+  [], builtin(:list), %Bitstring{size: 0, unit: 0}]
 
   def except(list \\ []) do
     Enum.reject(@example_list, &(&1 in list))

@@ -11,59 +11,59 @@ defmodule TypeTest.TypeList.SubtypeTest do
 
   describe "the basic list" do
     test "is a subtype of itself and any" do
-      assert %List{} in %List{}
-      assert %List{} in builtin(:any)
+      assert builtin(:list) in builtin(:list)
+      assert builtin(:list) in builtin(:any)
     end
 
     test "if subtype if inner type is a subtype" do
-      assert %List{type: 5} in %List{type: builtin(:integer)}
+      assert list(47) in list(builtin(:integer))
     end
 
     test "is a subtype of correct unions" do
-      assert %List{type: 5} in (%List{type: builtin(:integer)} <|> builtin(:atom))
+      assert list(47) in (list(builtin(:integer)) <|> builtin(:atom))
     end
 
     test "is not a subtype of unions of orthogonal types" do
-      refute %List{type: builtin(:integer)} in (%List{type: builtin(:atom)} <|> builtin(:atom))
+      refute list(builtin(:integer)) in (list(builtin(:atom)) <|> builtin(:atom))
     end
 
     test "is not a subtype if the inner type is not a subtype" do
-      refute %List{type: builtin(:atom)} in %List{type: builtin(:integer)}
+      refute list(builtin(:atom)) in list(builtin(:integer))
     end
 
     test "is not a subtype if the inner type is the same but nonempty" do
-      refute %List{type: builtin(:atom)} in %List{type: builtin(:atom), nonempty: true}
+      refute list(builtin(:atom)) in list(builtin(:atom), ...)
     end
 
     test "is not a subtype if the inner type is the same but with a different final" do
-      refute %List{type: builtin(:atom)} in %List{type: builtin(:atom), final: builtin(:integer)}
+      refute list(builtin(:atom)) in %List{type: builtin(:atom), final: builtin(:integer)}
     end
 
     test "is not a subtype of other types" do
-      TypeTest.Targets.except([%List{}])
+      TypeTest.Targets.except([builtin(:list)])
       |> Enum.each(fn target ->
-        refute %List{} in target
+        refute builtin(:list) in target
       end)
     end
   end
 
   describe "the a nonempty list" do
     test "is a subtype of itself and any" do
-      assert %List{nonempty: true} in %List{nonempty: true}
-      assert %List{nonempty: true} in builtin(:any)
+      assert list(...) in list(...)
+      assert list(...) in builtin(:any)
     end
 
     test "is a subtype of nonempty false self" do
-      assert %List{nonempty: true} in %List{}
-      assert %List{type: builtin(:integer), nonempty: true} in %List{type: builtin(:integer)}
+      assert list(...) in builtin(:list)
+      assert list(builtin(:integer), ...) in list(builtin(:integer))
     end
 
     test "if subtype if inner type is a subtype" do
-      assert %List{type: 5, nonempty: true} in %List{type: builtin(:integer), nonempty: true}
+      assert list(47, ...) in list(builtin(:integer), ...)
     end
 
     test "is not a subtype if the inner type is not a subtype" do
-      refute %List{type: builtin(:atom), nonempty: true} in %List{type: builtin(:integer), nonempty: true}
+      refute list(builtin(:atom), ...) in list(builtin(:integer), ...)
     end
   end
 

@@ -10,41 +10,41 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "normal list" do
     test "intersects with any and self" do
-      assert %List{} == %List{} <~> builtin(:any)
-      assert %List{} == %List{} <~> %List{}
+      assert builtin(:list) == builtin(:list) <~> builtin(:any)
+      assert builtin(:list) == builtin(:list) <~> builtin(:list)
     end
 
     test "intersects with empty list as empty list" do
-      assert [] == %List{} <~> []
+      assert [] == builtin(:list) <~> []
     end
 
     test "intersects with another list with the intersection of types" do
-      assert %List{type: builtin(:integer)} == %List{} <~> %List{type: builtin(:integer)}
-      assert %List{type: 47} == %List{type: 47} <~> %List{type: builtin(:integer)}
+      assert list(builtin(:integer)) == builtin(:list) <~> list(builtin(:integer))
+      assert list(47) == list(47) <~> list(builtin(:integer))
     end
 
     test "with unions works as expected" do
-      assert [] == %List{} <~> ([] <|> builtin(:atom))
-      assert builtin(:none) == %List{} <~> (builtin(:atom) <|> builtin(:port))
+      assert [] == builtin(:list) <~> ([] <|> builtin(:atom))
+      assert builtin(:none) == builtin(:list) <~> (builtin(:atom) <|> builtin(:port))
     end
 
     test "doesn't intersect with anything else" do
-      TypeTest.Targets.except([%List{}, []])
+      TypeTest.Targets.except([builtin(:list), []])
       |> Enum.each(fn target ->
-        assert builtin(:none) == %List{} <~> target
+        assert builtin(:none) == builtin(:list) <~> target
       end)
     end
   end
 
   describe "nonempty list" do
     test "intersects with any and self" do
-      assert %List{nonempty: true} == %List{} <~> %List{nonempty: true}
-      assert %List{nonempty: true} == %List{nonempty: true} <~> %List{}
+      assert list(...) == builtin(:list) <~> list(...)
+      assert list(...) == list(...) <~> builtin(:list)
     end
 
     test "doesn't intersect with empty list" do
-      assert builtin(:none) == [] <~> %List{nonempty: true}
-      assert builtin(:none) == %List{nonempty: true} <~> []
+      assert builtin(:none) == [] <~> list(...)
+      assert builtin(:none) == list(...) <~> []
     end
   end
 

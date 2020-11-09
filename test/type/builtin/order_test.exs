@@ -24,13 +24,13 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:none) < :foo
       assert builtin(:none) < builtin(:atom)
       assert builtin(:none) < builtin(:reference)
-      assert builtin(:none) < %Function{return: 0}
+      assert builtin(:none) < function(( -> 0))
       assert builtin(:none) < builtin(:port)
       assert builtin(:none) < builtin(:pid)
       assert builtin(:none) < builtin(:tuple)
-      assert builtin(:none) < %Map{}
+      assert builtin(:none) < builtin(:map)
       assert builtin(:none) < []
-      assert builtin(:none) < %List{}
+      assert builtin(:none) < builtin(:list)
       assert builtin(:none) < %Bitstring{size: 0, unit: 0}
       assert builtin(:none) < builtin(:any)
     end
@@ -280,13 +280,13 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:any) > :foo
       assert builtin(:any) > builtin(:atom)
       assert builtin(:any) > builtin(:reference)
-      assert builtin(:any) > %Function{return: 0}
+      assert builtin(:any) > function(( -> 0))
       assert builtin(:any) > builtin(:port)
       assert builtin(:any) > builtin(:pid)
       assert builtin(:any) > builtin(:tuple)
-      assert builtin(:any) > %Map{}
+      assert builtin(:any) > builtin(:map)
       assert builtin(:any) > []
-      assert builtin(:any) > %List{}
+      assert builtin(:any) > builtin(:list)
       assert builtin(:any) > %Bitstring{size: 0, unit: 0}
     end
   end

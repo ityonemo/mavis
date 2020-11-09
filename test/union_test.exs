@@ -172,8 +172,8 @@ defmodule TypeTest.UnionTest do
   alias Type.List
   describe "for the list type" do
     test "lists with the same end type get merged" do
-      assert %List{type: (:foo <|> :bar)} == (%List{type: :foo} <|> %List{type: :bar})
-      assert %List{type: @any} == (%List{type: @any} <|> %List{type: :bar})
+      assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
+      assert list(@any) == list(@any) <|> list(:bar)
 
       assert %List{type: (:foo <|> :bar), final: :end} ==
         (%List{type: :foo, final: :end} <|> %List{type: :bar, final: :end})
@@ -182,19 +182,17 @@ defmodule TypeTest.UnionTest do
     end
 
     test "nonempty: true lists get merged into nonempty: true lists" do
-      assert %List{type: (:foo <|> :bar), nonempty: true} ==
-        (%List{type: :foo, nonempty: true} <|> %List{type: :bar, nonempty: true})
-      assert %List{type: @any, nonempty: true} ==
-        (%List{type: @any, nonempty: true} <|> %List{type: :bar, nonempty: true})
+      assert list(:foo <|> :bar, ...) == list(:foo, ...) <|> list(:bar, ...)
+      assert list(@any, ...) == list(@any, ...) <|> list(:bar, ...)
     end
 
     test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
-      assert %List{} = ([] <|> %List{nonempty: true})
+      assert builtin(:list) = [] <|> list(...)
     end
 
     test "nonempty: true lists get merged into nonempty: false lists" do
-      assert %List{type: :foo} = (%List{type: :foo} <|> %List{type: :foo, nonempty: true})
-      assert %List{type: @any} = (%List{type: @any} <|> %List{type: :foo, nonempty: true})
+      assert list(:foo) = list(:foo) <|> list(:foo, ...)
+      assert list(@any) = list(@any) <|> list(:foo, ...)
     end
   end
 

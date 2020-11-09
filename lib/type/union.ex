@@ -170,10 +170,10 @@ defmodule Type.Union do
            final: Type.union(fl, fr)}, rest}
   end
   def type_merge([[] | rest], %List{type: type, final: []}) do
-    {%List{type: type}, rest}
+    {list(type), rest}
   end
   def type_merge([%List{type: type, final: [], nonempty: true} | rest], []) do
-    {%List{type: type}, rest}
+    {list(type), rest}
   end
 
   # maps
