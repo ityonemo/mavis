@@ -52,7 +52,7 @@ defmodule Type.List do
   categories.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.compare(%Type.List{nonempty: true}, [])
   :lt
   iex> Type.compare(%Type.List{}, [])
@@ -105,7 +105,7 @@ defmodule Type.List do
   `nonempty: false` list types might be usable as `nonempty: true` types.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: builtin(:integer)})
   :ok
   iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: builtin(:atom)})

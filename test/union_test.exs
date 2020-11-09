@@ -205,7 +205,7 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  import Type
+  import Type, only: :macros
 
   describe "for strings" do
     test "fixed size strings are merged into general string" do

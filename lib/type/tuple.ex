@@ -41,7 +41,7 @@ defmodule Type.Tuple do
   intersection of the elements.
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:ok, %Type{name: :integer}]})
   %Type{name: :none}
   iex> Type.intersection(%Type.Tuple{elements: [:ok, builtin(:integer)]},
@@ -67,7 +67,7 @@ defmodule Type.Tuple do
   across all Cartesian dimensions.
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.subtype?(%Type.Tuple{elements: [:ok, 1..10]},
   ...>               %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
   true
@@ -80,7 +80,7 @@ defmodule Type.Tuple do
   it is not usable.
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.usable_as(%Type.Tuple{elements: [:ok, 1..10]},
   ...>                %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
   :ok

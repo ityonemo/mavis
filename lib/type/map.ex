@@ -15,7 +15,7 @@ defmodule Type.Map do
   Note that the empty map is not the same as `t:map/0`
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> map(%{optional(builtin(:atom)) => builtin(:pos_integer)})
   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :pos_integer}}}
   iex> map(%{})       # empty map
@@ -73,7 +73,7 @@ defmodule Type.Map do
   with a required key comes before an equivalent map type with the key optional.
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.compare(map(%{foo: :bar}), map(%{foo: :quux}))
   :lt
   iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
@@ -95,7 +95,7 @@ defmodule Type.Map do
   of both types
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
   %Type{name: :none}
   iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)}))
@@ -218,7 +218,7 @@ defmodule Type.Map do
 
   ```elixir
   iex> alias Type.Map
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Map.preimage(Map.build(%{builtin(:pos_integer) => builtin(:any)}))
   %Type{name: :pos_integer}
   iex> Map.preimage(Map.build(%{0 => builtin(:any)},
@@ -251,7 +251,7 @@ defmodule Type.Map do
 
   ```
   iex> alias Type.Map
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Map.apply(Map.build(%{builtin(:neg_integer) => :foo,
   ...>                       builtin(:pos_integer) => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
@@ -261,7 +261,7 @@ defmodule Type.Map do
 
   ```
   iex> alias Type.Map
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Map.apply(Map.build(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
   :foo
   ```
@@ -271,7 +271,7 @@ defmodule Type.Map do
 
   ```
   iex> alias Type.Map
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Map.apply(Map.build(%{0..3 => 1..10, builtin(:pos_integer) => 0..5}), 1..3)
   1..5
   ```
@@ -325,7 +325,7 @@ defmodule Type.Map do
 
   ```elixir
   iex> alias Type.Map
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg}), [-10..10])
   [-10..-1]
   iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg,

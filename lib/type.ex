@@ -171,7 +171,7 @@ defmodule Type do
   - `t:timeout/0`
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> builtin(:timeout)
   %Type.Union{of: [:infinity, %Type{name: :pos_integer}, 0]}
   iex> Type.is_builtin(builtin(:timeout))
@@ -187,7 +187,7 @@ defmodule Type do
   if unconfirmed.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.type_match?(builtin(:module), :foo)
   false
   iex> Type.type_match?(builtin(:module), Kernel)
@@ -204,7 +204,7 @@ defmodule Type do
   node.  `usable_as/3` does not check active node lists, however.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.type_match?(builtin(:node), :foo)
   false
   iex> Type.type_match?(builtin(:node), :nonode@nohost)
@@ -462,7 +462,7 @@ defmodule Type do
   ### Examples:
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> list(...)
   %Type.List{type: %Type{name: :any}, nonempty: true}
   iex> list(1..10)
@@ -474,7 +474,7 @@ defmodule Type do
   if it's passed a keyword list, it is interpreted as a keyword list.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> list(foo: builtin(:pos_integer))
   %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
@@ -508,7 +508,7 @@ defmodule Type do
   `...` it will generate the generic any tuple.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> tuple {...}
   %Type.Tuple{elements: :any}
   iex> tuple {:ok, builtin(:pos_integer)}
@@ -532,7 +532,7 @@ defmodule Type do
   required if singletons, and optional if non-singletons.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> map %{foo: builtin(:pos_integer)}
   %Type.Map{required: %{foo: %Type{name: :pos_integer}}}
   iex> map %{required(1) => builtin(:atom)}
@@ -568,7 +568,7 @@ defmodule Type do
   ### Examples:
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> function (builtin(:atom) -> builtin(:pos_integer))
   %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
   iex> function (... -> builtin(:pos_integer))
@@ -626,7 +626,7 @@ defmodule Type do
   function:
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.is_builtin(builtin(:mfa))
   false
   ```
@@ -692,7 +692,7 @@ defmodule Type do
 
   ### Examples:
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.usable_as(1, builtin(:integer))
   :ok
   iex> Type.usable_as(1, builtin(:neg_integer))
@@ -709,7 +709,7 @@ defmodule Type do
   going the other direction:
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> binary = %Type.Bitstring{size: 0, unit: 8}
   iex> Type.usable_as(remote(String.t()), binary)
   :ok
@@ -737,7 +737,7 @@ defmodule Type do
   ### Examples:
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.subtype?(10, 1..47)
   true
   iex> Type.subtype?(10, builtin(:integer))
@@ -758,7 +758,7 @@ defmodule Type do
   considered to be the subtype of its specification, but not vice versa:
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> binary = %Type.Bitstring{size: 0, unit: 8}
   iex> Type.subtype?(remote(String.t()), binary)
   true
@@ -780,7 +780,7 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> inspect Type.union(builtin(:pos_integer), -10..10)
   "-10..-1 | non_neg_integer()"
   ```
@@ -799,7 +799,7 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> inspect Type.union([builtin(:pos_integer), -10..10, 32, builtin(:neg_integer)])
   "integer()"
   ```
@@ -817,7 +817,7 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection(builtin(:non_neg_integer), -10..10)
   0..10
   ```
@@ -833,7 +833,7 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection([builtin(:pos_integer), -1..10, -6..6])
   1..6
   ```
@@ -1191,7 +1191,7 @@ defmodule Type do
 
   ### Example:
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.type_match?(builtin(:integer), 10)
   true
   iex> Type.type_match?(builtin(:neg_integer), 10)
