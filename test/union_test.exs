@@ -142,7 +142,7 @@ defmodule TypeTest.UnionTest do
     end
 
     test "a tuple that is a subtype of another tuple gets merged" do
-      outer = tuple({:ok, builtin(:integer) | :bar, builtin(:float) | builtin(:integer)})
+      outer = tuple({:ok, builtin(:integer) <|> :bar, builtin(:float) <|> builtin(:integer)})
       inner = tuple({:ok, builtin(:integer), builtin(:float)})
 
       assert outer == outer <|> inner
@@ -154,8 +154,9 @@ defmodule TypeTest.UnionTest do
       duple3 = tuple({:error, builtin(:integer)})
 
       assert duple1 == duple1 <|> duple1
-      assert duple({:ok, builtin(:integer) | builtin(:float)}) == duple1 <|> duple2
-      assert duple({:ok <|> :error, builtin(:integer)}) == duple1 <|> duple3
+
+      assert tuple({:ok, builtin(:number)}) == duple1 <|> duple2
+      assert tuple({:ok <|> :error, builtin(:integer)}) == duple1 <|> duple3
 
       triple1 = tuple({:ok, builtin(:integer), builtin(:float)})
       triple2 = tuple({:error, builtin(:integer), builtin(:float)})

@@ -111,6 +111,37 @@ defmodule Type.Tuple do
 
   @type t :: %__MODULE__{elements: [Type.t] | :any}
 
+  @doc """
+  a utility function which takes two type lists and ascertains if they
+  can be merged as tuples.
+
+  returns the merged list if the two lists are mergeable.  This follows
+  from one of two conditions:
+
+  - each type in the "smaller" type list is a subtype of the corresponding
+    "bigger" type list
+  - all types are equal except for one
+
+  returns nil if the two lists are not mergeable; returns the merged
+  list if the two lists are mergeable.
+
+  completes full analysis in a single pass of the function.
+
+  Used in common between tuples and function parameters.
+  """
+  def merge(bigger, smaller), do: merge_helper(bigger, smaller, {[], true, 0})
+
+  defp merge_helper(_, _, {_, false, disjoint}) when disjoint > 1, do: nil
+  defp merge_helper([b_hd | b_tl], [s_hd | s_tl], {so_far, subtype?, disjoint}) do
+    subtype? = subtype? and Type.subtype?(s_hd, b_hd)
+    disjoint = if s_hd == b_hd, do: disjoint, else: disjoint + 1
+    merged = Type.union(b_hd, s_hd)
+
+    merge_helper(b_tl, s_tl, {[merged | so_far], subtype?, disjoint})
+  end
+  defp merge_helper([], [], {list, _, _}), do: Enum.reverse(list)
+  defp merge_helper(_, _, _), do: nil # if the two lists are not of equal length.
+
   defimpl Type.Properties do
     import Type, only: :macros
 

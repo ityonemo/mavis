@@ -137,18 +137,11 @@ defmodule Type.Union do
     {builtin(:tuple), rest}
   end
   def type_merge([lhs = %Tuple{} | rest], rhs = %Tuple{}) do
-    merged_elements = lhs.elements
-    |> Enum.zip(rhs.elements)
-    |> Enum.map(fn
-      {type, type} -> type
-      {lh, rh} ->
-        union = Type.union(lh, rh) |> IO.inspect(label: "148", structs: false)
-        match?(%Type.Union{}, union) and (union.of == merge_parts(lh, rh)) and throw :nomerge
-        union
-    end)
-    {%Tuple{elements: merged_elements}, rest}
-  catch
-    :nomerge -> :nomerge
+    if merged_elements = Tuple.merge(rhs.elements, lhs.elements) do
+      {%Tuple{elements: merged_elements}, rest}
+    else
+      :nomerge
+    end
   end
 
   # lists
