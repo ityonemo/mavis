@@ -171,8 +171,8 @@ defmodule TypeTest.UnionTest do
     end
 
     test "orthogonal tuples don't merge" do
-      assert %Type.Union{} = (%Type.Tuple{elements: [:foo, builtin(:integer)]} <|>
-                              %Type.Tuple{elements: [:bar, builtin(:float)]})
+      assert %Type.Union{} =
+        (tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)}))
     end
   end
 

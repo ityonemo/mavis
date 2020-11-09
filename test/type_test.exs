@@ -71,9 +71,9 @@ defmodule TypeTest do
     end
 
     test "assigns tuples correctly" do
-      assert %Type.Tuple{elements: []} == Type.of({})
-      assert %Type.Tuple{elements: [1]} == Type.of({1})
-      assert %Type.Tuple{elements: [:ok, 1]} == Type.of({:ok, 1})
+      assert tuple({}) == Type.of({})
+      assert tuple({1}) == Type.of({1})
+      assert tuple({:ok, 1}) == Type.of({:ok, 1})
     end
 
     test "assigns empty list correctly" do
@@ -259,8 +259,8 @@ defmodule TypeTest do
 
     test "list macro that is a k/v" do
       assert %Type.List{type: %Type.Union{of: [
-        %Type.Tuple{elements: [:foo, builtin(:float)]},
-        %Type.Tuple{elements: [:bar, builtin(:integer)]}
+        tuple({:foo, builtin(:float)}),
+        tuple({:bar, builtin(:integer)})
       ]}} ==
         list(foo: builtin(:float), bar: builtin(:integer))
     end

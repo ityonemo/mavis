@@ -10,7 +10,8 @@ defmodule Type.Map do
 
   ### Shortcut Form
 
-  The `Type` module lets you specify a function using "shortcut form" via the `Type.map/1` macro:
+  The `Type` module lets you specify a function using "shortcut form" via the
+  `Type.map/1` macro:
 
   Note that the empty map is not the same as `t:map/0`
 

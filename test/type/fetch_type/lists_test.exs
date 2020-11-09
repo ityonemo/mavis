@@ -30,12 +30,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "keyword/1 literal list" do
-    foo_integer = %Type.Tuple{elements: [:foo, builtin(:integer)]}
+    foo_integer = tuple({:foo, builtin(:integer)})
     assert {:ok, %List{type: foo_integer}} == Type.fetch_type(@source, :keyword_literal)
   end
 
   test "keyword/2 literal list" do
-    keyword_type = (%Type.Tuple{elements: [:foo, builtin(:integer)]} <|> %Type.Tuple{elements: [:bar, builtin(:float)]})
+    keyword_type = tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)})
     assert {:ok, %List{type: keyword_type}} ==
       Type.fetch_type(@source, :keyword_2_literal)
   end
@@ -81,12 +81,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "keyword/0" do
-    assert {:ok, %List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}} ==
+    assert {:ok, list(tuple({builtin(:atom), builtin(:any)}))} ==
       Type.fetch_type(@source, :keyword_0)
   end
 
   test "keyword/1" do
-    assert {:ok, %List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]}}} ==
+    assert {:ok, list(tuple({builtin(:atom), builtin(:integer)}))} ==
       Type.fetch_type(@source, :keyword_1)
   end
 

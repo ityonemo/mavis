@@ -219,7 +219,7 @@ defmodule Type.List do
     def inspect(%{
         final: [],
         nonempty: false,
-        type: %Type.Tuple{elements: [k, v]}}, opts) when is_atom(k) do
+        type: tuple({k, v})}, opts) when is_atom(k) do
       to_doc([{k, v}], opts)
     end
     def inspect(list = %{
@@ -227,7 +227,7 @@ defmodule Type.List do
         nonempty: false,
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
-            %Type.Tuple{elements: [e, _]} when is_atom(e), &1)) do
+            tuple({e, _}) when is_atom(e), &1)) do
         type.of
         |> Enum.reverse
         |> Enum.map(&List.to_tuple(&1.elements))
@@ -237,16 +237,10 @@ defmodule Type.List do
       end
     end
     # keyword syntax
-    def inspect(%{final: [],
-                  nonempty: false,
-                  type: %Type.Tuple{elements: [builtin(:atom),
-                                               builtin(:any)]}}, _) do
+    def inspect(list(tuple({builtin(:atom), builtin(:any)})), _) do
       "keyword()"
     end
-    def inspect(%{final: [],
-                  nonempty: false,
-                  type: %Type.Tuple{elements: [builtin(:atom),
-                                               type]}}, opts) do
+    def inspect(list(tuple({builtin(:atom), type})), opts) do
       concat(["keyword(", to_doc(type, opts), ")"])
     end
 

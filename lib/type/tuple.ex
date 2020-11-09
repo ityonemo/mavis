@@ -22,6 +22,19 @@ defmodule Type.Tuple do
     "{:ok, integer()}"
     ```
 
+  ### Shortcut Form
+
+  The `Type` module lets you specify a tuple using "shortcut form" via the
+  `Type.tuple/1` macro:
+
+  ```
+  iex> import Type, only: :macros
+  iex> tuple {...}
+  %Type.Tuple{elements: :any}
+  iex> tuple {:ok, builtin(:integer)}
+  %Type.Tuple{elements: [:ok, builtin(:integer)]}
+  ```
+
   ### Key functions:
 
   #### comparison
@@ -30,9 +43,11 @@ defmodule Type.Tuple do
   dictionary order along the elements list.
 
   ```
-  iex> Type.compare(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:foo]})
+  iex> import Type, only: :macros
+  iex> Type.compare(tuple({}), tuple({:foo}))
   :lt
-  iex> Type.compare(%Type.Tuple{elements: [:foo, 1..10]}, %Type.Tuple{elements: [:bar, 10..20]})
+  iex> Type.compare(tuple({:foo, 1..10}), tuple({:bar, 10..20}))
+  :gt
   ```
 
   #### intersection
@@ -42,10 +57,9 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:ok, %Type{name: :integer}]})
+  iex> Type.intersection(tuple({}), tuple({:ok, builtin(:integer)}))
   %Type{name: :none}
-  iex> Type.intersection(%Type.Tuple{elements: [:ok, builtin(:integer)]},
-  ...>                   %Type.Tuple{elements: [builtin(:atom), 1..10]})
+  iex> Type.intersection(tuple({:ok, builtin(:integer)}), tuple({builtin(:atom), 1..10}))
   %Type.Tuple{elements: [:ok, 1..10]}
   ```
 
@@ -56,8 +70,8 @@ defmodule Type.Tuple do
   one dimension.
 
   ```
-  iex> Type.union(%Type.Tuple{elements: [:ok, 11..20]},
-  ...>           %Type.Tuple{elements: [:ok, 1..10]})
+  iex> import Type, only: :macros
+  iex> Type.union(tuple({:ok, 11..20}), tuple({:ok, 1..10}))
   %Type.Tuple{elements: [:ok, 1..20]}
   ```
 
@@ -68,8 +82,7 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.subtype?(%Type.Tuple{elements: [:ok, 1..10]},
-  ...>               %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({builtin(:atom), builtin(:integer)}))
   true
   ```
 
@@ -81,17 +94,14 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.usable_as(%Type.Tuple{elements: [:ok, 1..10]},
-  ...>                %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
+  iex> Type.usable_as(tuple({:ok, 1..10}), tuple({builtin(:atom), builtin(:integer)}))
   :ok
-  iex> Type.usable_as(%Type.Tuple{elements: [:ok, builtin(:integer)]},
-  ...>                %Type.Tuple{elements: [builtin(:atom), 1..10]})
-  {:maybe, [%Type.Message{type: %Type.Tuple{elements: [:ok, builtin(:integer)]},
-                          target: %Type.Tuple{elements: [builtin(:atom), 1..10]}}]}
-  iex> Type.usable_as(%Type.Tuple{elements: [:ok, builtin(:integer)]},
-  ...>                %Type.Tuple{elements: [:error, 1..10]})
-  {:error, %Type.Message{type: %Type.Tuple{elements: [:ok, builtin(:integer)]},
-                         target: %Type.Tuple{elements: [:error, 1..10]}}}
+  iex> Type.usable_as(tuple({:ok, builtin(:integer)}), tuple({builtin(:atom), 1..10}))
+  {:maybe, [%Type.Message{type: tuple({:ok, builtin(:integer)}),
+                          target: tuple({builtin(:atom), 1..10})}]}
+  iex> Type.usable_as(tuple({:ok, builtin(:integer)}), tuple({:error, 1..10}))
+  {:error, %Type.Message{type: tuple({:ok, builtin(:integer)}),
+                         target: tuple({:error, 1..10})}}
   ```
 
   """

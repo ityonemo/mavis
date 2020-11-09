@@ -339,8 +339,7 @@ defmodule Type do
   end
   defmacro builtin(:keyword) do
     quote do
-      %Type.List{type:
-        %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
+      list(tuple({builtin(:atom), builtin(:any)}))
     end
   end
   defmacro builtin(:list) do
@@ -365,7 +364,7 @@ defmodule Type do
   end
   defmacro builtin(:mfa) do
     quote do
-      %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]}
+      tuple({builtin(:module), builtin(:atom), builtin(:arity)})
     end
   end
   defmacro builtin(:no_return) do
