@@ -4,6 +4,8 @@ defmodule Type.Spec do
 
   import Type, only: :macros
 
+  @builtins Type.builtins()
+
   def parse(spec, assigns \\ %{})
   def parse({:type, _, :map, :any}, _assigns) do
     %Type.Map{optional: %{builtin(:any) => builtin(:any)}}
@@ -55,52 +57,15 @@ defmodule Type.Spec do
   # empty list
   def parse({:type, _, nil, []}, _), do: []
   # overrides
-  def parse({:type, _, :no_return, []}, _), do: builtin(:none)
-  def parse({:type, _, :term, []}, _), do: builtin(:any)
-  def parse({:type, _, :arity, []}, _), do: 0..255
-  def parse({:type, _, :byte, []}, _), do: 0..255
-  def parse({:type, _, :char, []}, _), do: 0..0x10FFFF
-  def parse({:type, _, :number, []}, _) do
-    Type.Union.of(builtin(:integer), builtin(:float))
-  end
-  def parse({:type, _, :timeout, []}, _) do
-    Type.Union.of(builtin(:non_neg_integer), :infinity)
-  end
-  def parse({:type, _, :identifier, []}, _) do
-    ~w(port pid reference)a
-    |> Enum.map(&builtin/1)
-    |> Enum.into(%Type.Union{})
-  end
-  def parse({:type, _, :boolean, []}, _) do
-    Type.Union.of(true, false)
-  end
-  def parse({:type, _, :fun, []}, _) do
-    %Type.Function{params: :any, return: builtin(:any)}
-  end
-  def parse({:type, _, :function, []}, _) do
-    %Type.Function{params: :any, return: builtin(:any)}
-  end
-  def parse({:type, _, :mfa, []}, _) do
-    %Type.Tuple{elements: [builtin(:module), builtin(:atom), 0..255]}
-  end
-  def parse({:type, _, :list, []}, _) do
-    %Type.List{type: builtin(:any)}
-  end
   def parse({:type, _, :list, [type]}, assigns) do
     %Type.List{type: parse(type, assigns)}
-  end
-  def parse({:type, _, :nonempty_list, []}, _) do
-    %Type.List{type: builtin(:any), nonempty: true}
   end
   def parse({:type, _, :nonempty_list, [type]}, assigns) do
     %Type.List{type: parse(type, assigns), nonempty: true}
   end
 
-  def parse({:type, _, :maybe_improper_list, []}, _) do
-    %Type.List{final: builtin(:any)}
-  end
   def parse({:type, _, :maybe_improper_list, [type, final]}, assigns) do
-    %Type.List{ type: parse(type, assigns), final: Type.Union.of(parse(final, assigns), [])}
+    %Type.List{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
     %Type.List{
@@ -108,26 +73,14 @@ defmodule Type.Spec do
       nonempty: true,
       final: parse(final, assigns)}
   end
-  def parse({:type, _, :nonempty_maybe_improper_list, []}, _) do
-    %Type.List{nonempty: true, final: builtin(:any)}
-  end
   def parse({:type, _, :nonempty_maybe_improper_list, [type, final]}, assigns) do
     %Type.List{
       type: parse(type, assigns),
       nonempty: true,
-      final: Type.Union.of(parse(final, assigns), [])}
-  end
-  def parse({:type, _, :bitstring, []}, _) do
-    %Type.Bitstring{size: 0, unit: 1}
-  end
-  def parse({:type, _, :binary, []}, _) do
-    %Type.Bitstring{size: 0, unit: 8}
+      final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :binary, [size, unit]}, assigns) do
     %Type.Bitstring{size: parse(size, assigns), unit: parse(unit, assigns)}
-  end
-  def parse({:type, _, :iodata, []}, _) do
-    Type.Union.of(%Type.Bitstring{size: 0, unit: 8}, builtin(:iolist))
   end
   def parse({:type, _, :union, types}, assigns) do
     types
@@ -164,7 +117,9 @@ defmodule Type.Spec do
     parse(type, assigns)
   end
   # default builtin
-  def parse({:type, _, type, []}, _), do: builtin(type)
+  def parse({:type, _, type, []}, _) when type in @builtins do
+    select_builtin(type)
+  end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment
     parse(fun, add_constraints(assigns, constraints))

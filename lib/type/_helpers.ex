@@ -81,7 +81,7 @@ defmodule Type.Helpers do
 
       def usable_as(challenge, target = %Type.Opaque{}, meta) do
         case Type.usable_as(challenge, target.type) do
-          :ok -> {:warn, Type.Message.make(challenge, target, meta)}
+          :ok -> {:maybe, [Type.Message.make(challenge, target, meta)]}
           usable -> usable
         end
       end

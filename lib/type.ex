@@ -144,6 +144,8 @@ defmodule Type do
   **NB in the future the name of `is_builtin` may change to prevent confusion.**
 
   - `t:term/0`
+  - `t:integer/0`
+  - `t:non_neg_integer/0`
   - `t:arity/0`
   - `t:as_boolean/1`
   - `t:binary/0`
@@ -171,7 +173,7 @@ defmodule Type do
   ```elixir
   iex> import Type
   iex> builtin(:timeout)
-  %Type.Union{of: [:infinity, %Type{name: :non_neg_integer}]}
+  %Type.Union{of: [:infinity, %Type{name: :pos_integer}, 0]}
   iex> Type.is_builtin(builtin(:timeout))
   false
   ```
@@ -252,19 +254,35 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
-  @primitive_builtins [
-    :none, :neg_integer, :pos_integer, :non_neg_integer, :integer,
-    :float, :node, :module, :atom, :reference, :port, :pid, :iolist,
-    :any]
+  @primitive_builtins ~w(none neg_integer pos_integer float node module
+  atom reference port pid iolist any)a
+
+  @doc false
+  def primitive_builtins, do: @primitive_builtins
+
+  @composite_builtins ~w(term integer non_neg_integer arity byte map
+  binary bitstring boolean char charlist nonempty_charlist fun
+  function identifier iodata keyword list nonempty_list
+  maybe_improper_list nonempty_maybe_improper_list mfa no_return number
+  struct timeout)a
+
+  @doc false
+  def composite_builtins, do: @composite_builtins
+
+  @builtins @primitive_builtins ++ @composite_builtins
+  @doc false
+  def builtins, do: @builtins
 
   @spec builtin(atom) :: Macro.t
   @doc """
-  helper macro to  match on builtin types.
+  helper macro to  match on builtin types.  The parameter must be
+  known at compile time.  For the equivalent runtime macro, use:
+  `Type.select_builtin/1`.
 
   ### Example:
   ```elixir
-  iex> Type.builtin(:integer)
-  %Type{name: :integer}
+  iex> Type.builtin(:pos_integer)
+  %Type{name: :pos_integer}
   ```
 
   *Usable in guards*
@@ -272,8 +290,21 @@ defmodule Type do
   defmacro builtin(:term) do
     quote do %Type{module: nil, name: :any, params: []} end
   end
+  defmacro builtin(:integer) do
+    quote do
+      %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
+    end
+  end
+  defmacro builtin(:non_neg_integer) do
+    quote do
+      %Type.Union{of: [builtin(:pos_integer), 0]}
+    end
+  end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
+  end
+  defmacro builtin(:map) do
+    quote do %Type.Map{optional: %{builtin(:any) => builtin(:any)}} end
   end
   defmacro builtin(:binary) do
     quote do %Type.Bitstring{size: 0, unit: 8} end
@@ -294,93 +325,83 @@ defmodule Type do
     quote do %Type.List{type: 0..0x10_FFFF, nonempty: true, final: []} end
   end
   defmacro builtin(fun) when fun in [:fun, :function] do
-    quote do %Type.Function{params: :any, return: %Type{module: nil, name: :any, params: []}} end
+    quote do %Type.Function{params: :any, return: builtin(:any)} end
   end
   defmacro builtin(:identifier) do
     quote do
-      %Type.Union{of:
-      [%Type{module: nil, name: :pid, params: []},
-       %Type{module: nil, name: :port, params: []},
-       %Type{module: nil, name: :reference, params: []}]}
+      %Type.Union{of: [builtin(:pid), builtin(:port), builtin(:reference)]}
     end
   end
   defmacro builtin(:iodata) do
     quote do
-      %Type.Union{of:
-      [%Type.Bitstring{size: 0, unit: 8},
-       %Type{module: nil, name: :iolist, params: []}]}
+      %Type.Union{of: [builtin(:binary), builtin(:iolist)]}
     end
   end
   defmacro builtin(:keyword) do
     quote do
       %Type.List{type:
-        %Type.Tuple{elements: [%Type{module: nil, name: :atom, params: []},
-                               %Type{module: nil, name: :any, params: []}]}}
+        %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
     end
   end
   defmacro builtin(:list) do
     quote do
-      %Type.List{type: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any)}
     end
   end
   defmacro builtin(:nonempty_list) do
     quote do
-      %Type.List{type: %Type{module: nil, name: :any, params: []}, nonempty: true}
+      %Type.List{type: builtin(:any), nonempty: true}
     end
   end
   defmacro builtin(:maybe_improper_list) do
     quote do
-      %Type.List{
-        type: %Type{module: nil, name: :any, params: []},
-        final: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any), final: builtin(:any)}
     end
   end
   defmacro builtin(:nonempty_maybe_improper_list) do
     quote do
-      %Type.List{
-        type: %Type{module: nil, name: :any, params: []},
-        nonempty: true,
-        final: %Type{module: nil, name: :any, params: []}}
+      %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)}
     end
   end
   defmacro builtin(:mfa) do
     quote do
-      %Type.Tuple{elements: [
-        %Type{module: nil, name: :module, params: []},
-        %Type{module: nil, name: :atom, params: []},
-        0..255
-      ]}
+      %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]}
     end
   end
   defmacro builtin(:no_return) do
-    quote do %Type{module: nil, name: :none, params: []} end
+    quote do builtin(:none) end
   end
   defmacro builtin(:number) do
     quote do
-      %Type.Union{of: [
-        %Type{module: nil, name: :float, params: []},
-        %Type{module: nil, name: :integer, params: []},
+      %Type.Union{of: [builtin(:float), builtin(:pos_integer),
+        0, builtin(:neg_integer)
       ]}
     end
   end
   defmacro builtin(:struct) do
     quote do
-      %Type.Map{required: %{__struct__: %Type{module: nil, params: [], name: :atom}},
-                optional: %{%Type{module: nil, params: [], name: :atom} =>
-                            %Type{module: nil, params: [], name: :any}}}
+      %Type.Map{required: %{__struct__: builtin(:atom)},
+                optional: %{builtin(:atom) => builtin(:any)}}
     end
   end
   defmacro builtin(:timeout) do
     quote do
-      %Type.Union{of: [
-        :infinity,
-        %Type{module: nil, name: :non_neg_integer, params: []},
-      ]}
+      %Type.Union{of: [:infinity, builtin(:pos_integer), 0]}
     end
   end
-  defmacro builtin(type) when
-    not is_atom(type) or type in @primitive_builtins do
+  defmacro builtin(type) do
+    # NB ^^ this is kept generic so it can be used in matches.
     quote do %Type{module: nil, name: unquote(type), params: []} end
+  end
+
+  @doc """
+  like `builtin/1`, but usable at runtime for general variables.
+
+  Not usable in matches.
+  """
+  defmacro select_builtin(type) do
+    cases = Enum.map(@builtins, &{:->, [], [[&1], {:builtin, [], [&1]}]})
+    {:case, [], [type, [do: cases]]}
   end
 
   @spec remote(Macro.t) :: Macro.t
@@ -425,6 +446,150 @@ defmodule Type do
   end
   defmacro remote(any) do
     quote do unquote(any) end
+  end
+
+  defp struct_of(module, kv) do
+    {:%, [], [
+      {:__aliases__, [alias: false], [module]},
+      {:%{}, [], kv}
+    ]}
+  end
+
+  @doc """
+  generates a list of a particular type.  A last parameter of `...`
+  indicates that the list should be nonempty
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type
+  iex> list(...)
+  %Type.List{type: %Type{name: :any}, nonempty: true}
+  iex> list(1..10)
+  %Type.List{type: 1..10}
+  iex> list(1..10, ...)
+  %Type.List{type: 1..10, nonempty: true}
+  ```
+
+  if it's passed a keyword list, it is interpreted as a keyword list.
+
+  ```elixir
+  iex> import Type
+  iex> list(foo: builtin(:pos_integer))
+  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
+  ```
+  """
+  defmacro list({:..., _, _}) do
+    Macro.escape(%Type.List{type: builtin(:any), nonempty: true})
+  end
+  defmacro list([{k, v}]) when is_atom(k) do
+    quote do
+      %Type.List{type: unquote(struct_of(:"Type.Tuple", elements: [k, v]))}
+    end
+  end
+  defmacro list(lst) when is_list(lst) do
+    tuples = lst
+    |> Enum.sort_by(fn {k, _} when is_atom(k) -> k end, :desc)
+    |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", elements: [k, v]) end)
+
+    quote do
+      %Type.List{type: unquote(struct_of(:"Type.Union", of: tuples))}
+    end
+  end
+  defmacro list(ast) do
+    quote do %Type.List{type: unquote(ast)} end
+  end
+  defmacro list(ast, {:..., _, _}) do
+    quote do %Type.List{type: unquote(ast), nonempty: true} end
+  end
+
+  @doc """
+  generates the tuple type from a tuple ast.  If the tuple contains
+  `...` it will generate the generic any tuple.
+
+  ```elixir
+  iex> import Type
+  iex> tuple {...}
+  %Type.Tuple{elements: :any}
+  iex> tuple {:ok, builtin(:pos_integer)}
+  %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
+  iex> tuple {:error, builtin(:atom), builtin(:pos_integer)}
+  %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :pos_integer}]}
+  ```
+  """
+  defmacro tuple({a, b}) do
+    struct_of(:"Type.Tuple", elements: [a, b])
+  end
+  defmacro tuple({:{}, _, [{:..., _, _}]}) do
+    Macro.escape(%Type.Tuple{elements: :any})
+  end
+  defmacro tuple({:{}, _, elements}) do
+    struct_of(:"Type.Tuple", elements: elements)
+  end
+
+  @doc """
+  generates the map type from a map ast.  Unspecified keys default to
+  required if singletons, and optional if non-singletons.
+
+  ```elixir
+  iex> import Type
+  iex> map %{foo: builtin(:pos_integer)}
+  %Type.Map{required: %{foo: %Type{name: :pos_integer}}}
+  iex> map %{required(1) => builtin(:atom)}
+  %Type.Map{required: %{1 => %Type{name: :atom}}}
+  iex> map %{optional(:bar) => builtin(:atom)}
+  %Type.Map{optional: %{bar: %Type{name: :atom}}}
+  ```
+  """
+  defmacro map({:%{}, _, map_ast}) do
+    map_list = map_ast
+    |> Enum.group_by(fn
+      {{:required, _, _}, _} -> :required
+      {{:optional, _, _}, _} -> :optional
+      {k, _} when is_atom(k) or is_integer(k) -> :required
+      _ -> :optional
+    end, fn
+      {{:required, _, [k]}, v} -> {k, v}
+      {{:optional, _, [k]}, v} -> {k, v}
+      kv -> kv
+    end)
+    |> Enum.map(&(&1))
+    |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
+
+    struct_of(:"Type.Map", map_list)
+  end
+
+  @doc """
+  generates the function type from a type-like ast.  Note that the AST
+  must be in a parentheses set.  If the parameters are `...`, it will
+  generate the any function; for the generic n-arity function use `_`
+  for each of the parameters.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type
+  iex> function (builtin(:atom) -> builtin(:pos_integer))
+  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
+  iex> function (... -> builtin(:pos_integer))
+  %Type.Function{params: :any, return: %Type{name: :pos_integer}}
+  iex> function (_, _ -> builtin(:pos_integer))
+  %Type.Function{params: 2, return: %Type{name: :pos_integer}}
+  ```
+  """
+  defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
+    quote do %Type.Function{params: :any, return: unquote(return)} end
+  end
+  # special case zero-arity
+  defmacro function([{:->, _, [[], return]}]) do
+    quote do %Type.Function{params: [], return: unquote(return)} end
+  end
+  defmacro function([{:->, _, [params, return]}]) do
+    if Enum.all?(params, &match?({:_, _, _}, &1)) do
+      quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end
+    else
+      quote do %Type.Function{params: unquote(params), return: unquote(return)} end
+    end
   end
 
   @doc """
@@ -616,7 +781,7 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type
-  iex> inspect Type.union(builtin(:non_neg_integer), -10..10)
+  iex> inspect Type.union(builtin(:pos_integer), -10..10)
   "-10..-1 | non_neg_integer()"
   ```
   """
@@ -699,8 +864,6 @@ defmodule Type do
     - `t:neg_integer/0`
     - [nonnegative integer literal]
     - `t:pos_integer/0`
-    - `t:non_neg_integer/0`
-    - `t:integer/0`
   - group 2: `t:float/0`
   - group 3 (atoms):
     - [atom literal]
@@ -740,7 +903,6 @@ defmodule Type do
   iex> Type.compare(-5..5, 1..5)
   :gt
   ```
-
   """
   defdelegate compare(a, b), to: Type.Properties
 
@@ -958,7 +1120,7 @@ defmodule Type do
         updated_val_type = if is_map_key(acc.optional, key_type) do
           acc.optional
           |> Map.get(key_type)
-          |> Type.Union.of(val_type)
+          |> Type.union(val_type)
         else
           val_type
         end
@@ -984,7 +1146,7 @@ defmodule Type do
   end
 
   defp of_list([head | rest], so_far) do
-    of_list(rest, Type.Union.of(Type.of(head), so_far))
+    of_list(rest, Type.union(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
     %Type.List{type: so_far, nonempty: true}
@@ -1056,7 +1218,7 @@ end
 defimpl Type.Properties, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
-    none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1, integer: 1,
+    none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
     float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
     iolist: 10, any: 12}
 
@@ -1081,8 +1243,6 @@ defimpl Type.Properties, for: Type do
     end
 
     # negative integer
-    def usable_as(builtin(:neg_integer), builtin(:integer), _meta), do: :ok
-
     def usable_as(builtin(:neg_integer), a, meta) when is_integer(a) and a < 0 do
       {:maybe, [Message.make(builtin(:neg_integer), a, meta)]}
     end
@@ -1090,41 +1250,12 @@ defimpl Type.Properties, for: Type do
       {:maybe, [Message.make(builtin(:neg_integer), a..b, meta)]}
     end
 
-    # non negative integer
-    def usable_as(builtin(:non_neg_integer), builtin(:integer), _meta), do: :ok
-
-    def usable_as(builtin(:non_neg_integer), builtin(:pos_integer), meta) do
-      {:maybe, [Message.make(builtin(:non_neg_integer), builtin(:pos_integer), meta)]}
-    end
-    def usable_as(builtin(:non_neg_integer), a, meta) when is_integer(a) and a >= 0 do
-      {:maybe, [Message.make(builtin(:non_neg_integer), a, meta)]}
-    end
-    def usable_as(builtin(:non_neg_integer), a..b, meta) when b >= 0 do
-      {:maybe, [Message.make(builtin(:non_neg_integer), a..b, meta)]}
-    end
-
     # positive integer
-    def usable_as(builtin(:pos_integer), builtin(target), _meta)
-      when target in [:non_neg_integer, :integer], do: :ok
-
     def usable_as(builtin(:pos_integer), a, meta) when is_integer(a) and a > 0 do
       {:maybe, [Message.make(builtin(:pos_integer), a, meta)]}
     end
     def usable_as(builtin(:pos_integer), a..b, meta) when b > 0 do
       {:maybe, [Message.make(builtin(:pos_integer), a..b, meta)]}
-    end
-
-    # integer
-    def usable_as(builtin(:integer), builtin(target), meta)
-      when target in [:neg_integer, :non_neg_integer, :pos_integer] do
-        {:maybe, [Message.make(builtin(:integer), builtin(target), meta)]}
-    end
-
-    def usable_as(builtin(:integer), a, meta) when is_integer(a) do
-      {:maybe, [Message.make(builtin(:integer), a, meta)]}
-    end
-    def usable_as(builtin(:integer), a..b, meta) do
-      {:maybe, [Message.make(builtin(:integer), a..b, meta)]}
     end
 
     # atom
@@ -1198,31 +1329,15 @@ defimpl Type.Properties, for: Type do
 
   intersection do
     # negative integer
-    def intersection(builtin(:neg_integer), builtin(:integer)), do: builtin(:neg_integer)
     def intersection(builtin(:neg_integer), a) when is_integer(a) and a < 0, do: a
     def intersection(builtin(:neg_integer), a..b) when b < 0, do: a..b
     def intersection(builtin(:neg_integer), -1.._), do: -1
     def intersection(builtin(:neg_integer), a.._) when a < 0, do: a..-1
     # positive integer
-    def intersection(builtin(:pos_integer), builtin(:integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:pos_integer), builtin(:non_neg_integer)), do: builtin(:pos_integer)
     def intersection(builtin(:pos_integer), a) when is_integer(a) and a > 0, do: a
     def intersection(builtin(:pos_integer), a..b) when a > 0, do: a..b
     def intersection(builtin(:pos_integer), _..1), do: 1
     def intersection(builtin(:pos_integer), _..b) when b > 0, do: 1..b
-    # non negative integer
-    def intersection(builtin(:non_neg_integer), builtin(:integer)), do: builtin(:non_neg_integer)
-    def intersection(builtin(:non_neg_integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:non_neg_integer), a) when is_integer(a) and a >= 0, do: a
-    def intersection(builtin(:non_neg_integer), a..b) when a >= 0, do: a..b
-    def intersection(builtin(:non_neg_integer), _..0), do: 0
-    def intersection(builtin(:non_neg_integer), _..b) when b >= 0, do: 0..b
-    # general integers
-    def intersection(builtin(:integer), a) when is_integer(a), do: a
-    def intersection(builtin(:integer), a..b), do: a..b
-    def intersection(builtin(:integer), builtin(:neg_integer)), do: builtin(:neg_integer)
-    def intersection(builtin(:integer), builtin(:pos_integer)), do: builtin(:pos_integer)
-    def intersection(builtin(:integer), builtin(:non_neg_integer)), do: builtin(:non_neg_integer)
     # atoms
     def intersection(builtin(:node), atom) when is_atom(atom) do
       if valid_node?(atom), do: atom, else: builtin(:none)
@@ -1311,10 +1426,6 @@ defimpl Type.Properties, for: Type do
 
   group_compare do
     # group compare for the integer block.
-    def group_compare(builtin(:integer), _),               do: :gt
-    def group_compare(_, builtin(:integer)),               do: :lt
-    def group_compare(builtin(:non_neg_integer), _),       do: :gt
-    def group_compare(_, builtin(:non_neg_integer)),       do: :lt
     def group_compare(builtin(:pos_integer), _),           do: :gt
     def group_compare(_, builtin(:pos_integer)),           do: :lt
     def group_compare(_, i) when is_integer(i) and i >= 0, do: :lt

@@ -52,13 +52,14 @@ defmodule Type.List do
   categories.
 
   ```elixir
+  iex> import Type
   iex> Type.compare(%Type.List{nonempty: true}, [])
   :lt
   iex> Type.compare(%Type.List{}, [])
   :gt
-  iex> Type.compare(%Type.List{type: %Type{name: :integer}}, %Type.List{type: %Type{name: :atom}})
+  iex> Type.compare(%Type.List{type: builtin(:integer)}, %Type.List{type: builtin(:atom)})
   :lt
-  iex> Type.compare(%Type.List{final: %Type{name: :integer}}, %Type.List{final: %Type{name: :atom}})
+  iex> Type.compare(%Type.List{final: builtin(:integer)}, %Type.List{final: builtin(:atom)})
   :lt
   ```
 
@@ -104,9 +105,10 @@ defmodule Type.List do
   `nonempty: false` list types might be usable as `nonempty: true` types.
 
   ```elixir
-  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :integer}})
+  iex> import Type
+  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: builtin(:integer)})
   :ok
-  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :atom}})
+  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: builtin(:atom)})
   {:error, %Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}}
   iex> Type.usable_as(%Type.List{}, %Type.List{nonempty: true})
   {:maybe, [%Type.Message{type: %Type.List{}, target: %Type.List{nonempty: true}}]}

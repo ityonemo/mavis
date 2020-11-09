@@ -61,7 +61,7 @@ defmodule Type.Opaque do
         case Type.usable_as(challenge.type, target, meta) do
           :ok ->
             # TODO: add opaqueness message here.
-            {:warn, [Message.make(challenge, target, meta)]}
+            {:maybe, [Message.make(challenge, target, meta)]}
           any -> any
         end
       end

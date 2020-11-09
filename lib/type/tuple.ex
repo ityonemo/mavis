@@ -41,11 +41,11 @@ defmodule Type.Tuple do
   intersection of the elements.
 
   ```
+  iex> import Type
   iex> Type.intersection(%Type.Tuple{elements: []}, %Type.Tuple{elements: [:ok, %Type{name: :integer}]})
   %Type{name: :none}
-
-  iex> Type.intersection(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
-  ...>                   %Type.Tuple{elements: [%Type{name: :atom}, 1..10]})
+  iex> Type.intersection(%Type.Tuple{elements: [:ok, builtin(:integer)]},
+  ...>                   %Type.Tuple{elements: [builtin(:atom), 1..10]})
   %Type.Tuple{elements: [:ok, 1..10]}
   ```
 
@@ -67,8 +67,9 @@ defmodule Type.Tuple do
   across all Cartesian dimensions.
 
   ```
+  iex> import Type
   iex> Type.subtype?(%Type.Tuple{elements: [:ok, 1..10]},
-  ...>               %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]})
+  ...>               %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
   true
   ```
 
@@ -79,16 +80,17 @@ defmodule Type.Tuple do
   it is not usable.
 
   ```
+  iex> import Type
   iex> Type.usable_as(%Type.Tuple{elements: [:ok, 1..10]},
-  ...>                %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]})
+  ...>                %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]})
   :ok
-  iex> Type.usable_as(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
-  ...>                %Type.Tuple{elements: [%Type{name: :atom}, 1..10]})
-  {:maybe, [%Type.Message{type: %Type.Tuple{elements: [:ok, %Type{name: :integer}]},
-                          target: %Type.Tuple{elements: [%Type{name: :atom}, 1..10]}}]}
-  iex> Type.usable_as(%Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+  iex> Type.usable_as(%Type.Tuple{elements: [:ok, builtin(:integer)]},
+  ...>                %Type.Tuple{elements: [builtin(:atom), 1..10]})
+  {:maybe, [%Type.Message{type: %Type.Tuple{elements: [:ok, builtin(:integer)]},
+                          target: %Type.Tuple{elements: [builtin(:atom), 1..10]}}]}
+  iex> Type.usable_as(%Type.Tuple{elements: [:ok, builtin(:integer)]},
   ...>                %Type.Tuple{elements: [:error, 1..10]})
-  {:error, %Type.Message{type: %Type.Tuple{elements: [:ok, %Type{name: :integer}]},
+  {:error, %Type.Message{type: %Type.Tuple{elements: [:ok, builtin(:integer)]},
                          target: %Type.Tuple{elements: [:error, 1..10]}}}
   ```
 

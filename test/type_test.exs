@@ -10,18 +10,18 @@ defmodule TypeTest do
   doctest Type.List
   doctest Type.NoInference
   doctest Type.Tuple
+  doctest Type.Map
   doctest Type.Union
 
   use Type.Operators
 
-  import Type, only: [builtin: 1, remote: 1]
+  import Type, only: :macros
 
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
       assert 0 == Type.typegroup(builtin(:none))
       assert 1 == Type.typegroup(builtin(:integer))
       assert 1 == Type.typegroup(builtin(:neg_integer))
-      assert 1 == Type.typegroup(builtin(:non_neg_integer))
       assert 1 == Type.typegroup(builtin(:pos_integer))
       assert 1 == Type.typegroup(47)
       assert 1 == Type.typegroup(1..4)
@@ -130,8 +130,158 @@ defmodule TypeTest do
     end
   end
 
-  describe "documentation equivalent test" do
+  describe "composite builtins" do
+    test "non_neg_integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0]}
+        == builtin(:non_neg_integer)
+    end
 
+    test "integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
+       == builtin(:integer)
+    end
+
+    test "term" do
+      assert builtin(:term) == builtin(:any)
+    end
+
+    test "arity" do
+      assert 0..255 == builtin(:arity)
+    end
+
+    test "binary" do
+      assert %Type.Bitstring{unit: 8} == builtin(:binary)
+    end
+
+    test "bitstring" do
+      assert %Type.Bitstring{unit: 1} == builtin(:bitstring)
+    end
+
+    test "boolean" do
+      assert true <|> false == builtin(:boolean)
+    end
+
+    test "byte" do
+      assert 0..255 == builtin(:byte)
+    end
+
+    test "char" do
+      assert 0..0x10_FFFF == builtin(:char)
+    end
+
+    test "charlist" do
+      assert %Type.List{type: builtin(:char)} == builtin(:charlist)
+    end
+
+    test "nonempty_charlist" do
+      assert %Type.List{type: builtin(:char), nonempty: true} ==
+        builtin(:nonempty_charlist)
+    end
+
+    test "fun" do
+      assert %Type.Function{params: :any, return: builtin(:any)} ==
+        builtin(:fun)
+    end
+
+    test "function" do
+      assert %Type.Function{params: :any, return: builtin(:any)} ==
+        builtin(:function)
+    end
+
+    test "identifier" do
+      assert builtin(:pid) <|> builtin(:port) <|> builtin(:reference) ==
+        builtin(:identifier)
+    end
+
+    test "iolist" do
+      assert builtin(:iolist) <|> builtin(:binary) == builtin(:iodata)
+    end
+
+    test "keyword" do
+      assert %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
+        == builtin(:keyword)
+    end
+
+    test "list" do
+      assert %Type.List{type: builtin(:any)} == builtin(:list)
+    end
+
+    test "nonempty_list" do
+      assert %Type.List{type: builtin(:any), nonempty: true} == builtin(:nonempty_list)
+    end
+
+    test "maybe_improper_list" do
+      assert %Type.List{type: builtin(:any), final: builtin(:any)} ==
+        builtin(:maybe_improper_list)
+    end
+
+    test "nonempty_maybe_improper_list" do
+      assert %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)} ==
+        builtin(:nonempty_maybe_improper_list)
+    end
+
+    test "mfa" do
+      assert %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]} ==
+        builtin(:mfa)
+    end
+
+    test "number" do
+      assert builtin(:integer) <|> builtin(:float)
+    end
+
+    test "struct" do
+      assert map(%{
+        optional(builtin(:atom)) => builtin(:any),
+        __struct__: builtin(:atom)}) == builtin(:struct)
+    end
+
+    test "timeout" do
+      assert builtin(:non_neg_integer) <|> :infinity == builtin(:timeout)
+    end
+  end
+
+  describe "list macro" do
+    test "list macro with a single type" do
+      assert %Type.List{type: :foo} = list(:foo)
+      assert %Type.List{type: %Type.Union{of: [:foo, :bar]}} =
+        list(%Type.Union{of: [:foo, :bar]})
+    end
+
+    test "list macro with a single ..." do
+      assert %Type.List{nonempty: true} = list(...)
+    end
+
+    test "list macro with a type and ..." do
+      assert %Type.List{type: :foo, nonempty: true} = list(:foo, ...)
+      assert %Type.List{type: %Type.Union{of: [:foo, :bar]}, nonempty: true} =
+        list(%Type.Union{of: [:foo, :bar]}, ...)
+    end
+
+    test "list macro that is a k/v" do
+      assert %Type.List{type: %Type.Union{of: [
+        %Type.Tuple{elements: [:foo, builtin(:float)]},
+        %Type.Tuple{elements: [:bar, builtin(:integer)]}
+      ]}} ==
+        list(foo: builtin(:float), bar: builtin(:integer))
+    end
+  end
+
+  describe "function macro" do
+    test "works with a zero-arity function" do
+      assert %Type.Function{params: [], return: builtin(:any)} ==
+        function(( -> builtin(:any)))
+    end
+  end
+
+  describe "map macro" do
+    test "works with a hybrid system" do
+      assert %Type.Map{required: %{foo: builtin(:integer)},
+                       optional: %{1 => builtin(:integer)}} ==
+        map(%{optional(1) => builtin(:integer), foo: builtin(:integer)})
+    end
+  end
+
+  describe "documentation equivalent test" do
     test "regression" do
       assert TypeTest.TestJson.valid_json?(["47", true])
     end

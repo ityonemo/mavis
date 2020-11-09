@@ -8,7 +8,23 @@ defmodule Type.Map do
   - `:required` a map of required key types and their associated value types.
   - `:optional` a map of optional key types and their associated value types.
 
-  ### Deviations:
+  ### Shortcut Form
+
+  The `Type` module lets you specify a function using "shortcut form" via the `Type.map/1` macro:
+
+  Note that the empty map is not the same as `t:map/0`
+
+  ```
+  iex> import Type
+  iex> map(%{optional(builtin(:atom)) => builtin(:pos_integer)})
+  %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :pos_integer}}}
+  iex> map(%{})       # empty map
+  %Type.Map{optional: %{}, required: %{}}
+  iex> builtin(:map)  # t:map/0
+  %Type.Map{optional: %{%Type{name: :any} => %Type{name: :any}}}
+  ```
+
+  ### Deviations from standard Erlang/Elixir:
 
   - `Type.Map` only allows literal integers and literal atoms as
     `required` key types.  Typespecs that put other types in as required
@@ -57,16 +73,15 @@ defmodule Type.Map do
   with a required key comes before an equivalent map type with the key optional.
 
   ```
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{foo: :quux}})
+  iex> import Type
+  iex> Type.compare(map(%{foo: :bar}), map(%{foo: :quux}))
   :lt
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
   :gt
-  iex> Type.compare(%Type.Map{required: %{foo: %Type{name: :integer}},
-  ...>                        optional: %{1 => %Type{name: :integer}}},
-  ...>              %Type.Map{required: %{foo: %Type{name: :integer}},
-  ...>                        optional: %{2 => %Type{name: :integer}}})
+  iex> Type.compare(map(%{optional(1) => builtin(:integer), foo: builtin(:integer)}),
+  ...>              map(%{optional(2) => builtin(:integer), foo: builtin(:integer)}))
   :lt
-  iex> Type.compare(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
   :lt
   ```
 
@@ -80,26 +95,21 @@ defmodule Type.Map do
   of both types
 
   ```
-  iex> Type.intersection(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{bar: :baz}})
+  iex> import Type
+  iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
   %Type{name: :none}
-
-  iex> Type.intersection(%Type.Map{required: %{foo: :bar}},
-  ...>                   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :atom}}})
+  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)}))
   %Type.Map{required: %{foo: :bar}}
-
   iex> Type.intersection(%Type.Map{required: %{1 => 1..10}}, %Type.Map{required: %{1 => 5..20}})
   %Type.Map{required: %{1 => 5..10}}
-
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
-  ...>                   %Type.Map{optional: %{%Type{name: :integer} => 1..10}})
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
+  ...>                   %Type.Map{optional: %{builtin(:integer) => 1..10}})
   %Type.Map{optional: %{1..10 => 1..10}}
-
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
-  ...>                   %Type.Map{optional: %{1..10 => %Type{name: :atom}}})
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
+  ...>                   %Type.Map{optional: %{1..10 => builtin(:atom)}})
   %Type.Map{}
-
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => %Type{name: :integer}}},
-  ...>                   %Type.Map{optional: %{11..20 => %Type{name: :integer}}})
+  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
+  ...>                   %Type.Map{optional: %{11..20 => builtin(:integer)}})
   %Type.Map{}
   ```
 
@@ -209,11 +219,11 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type
-  iex> Map.preimage(Map.build(%{builtin(:integer) => builtin(:any)}))
-  %Type{name: :integer}
+  iex> Map.preimage(Map.build(%{builtin(:pos_integer) => builtin(:any)}))
+  %Type{name: :pos_integer}
   iex> Map.preimage(Map.build(%{0 => builtin(:any)},
   ...>                        %{builtin(:pos_integer) => builtin(:any)}))
-  %Type{name: :non_neg_integer}
+  %Type.Union{of: [%Type{name: :pos_integer}, 0]}
   ```
   """
   def preimage(map) do
