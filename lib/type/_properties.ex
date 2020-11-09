@@ -99,14 +99,17 @@ defimpl Type.Properties, for: Range do
       end
     end
     # strange stitched ranges
-    def usable_as(a..b, union = %Type.Union{}, meta) when a <= -1 and b >= 0 do
-      pos_leftovers = if b == 0,  do: 0,  else: 0..b
-      neg_leftovers = if a == -1, do: -1, else: a..-1
-
-      if leftover_check(union, :neg_integer, pos_leftovers) do
-        :ok
-      else
-        usable_as_union_fallback(a..b, union, meta)
+    def usable_as(range, union = %Type.Union{of: list}, meta) do
+      # take the intersections and make sure they reassemble to the
+      # range.
+      list
+      |> Enum.map(&Type.intersection(&1, range))
+      |> Enum.reject(&(&1 == builtin(:none)))
+      |> Enum.into(%Type.Union{})
+      |> case do
+        builtin(:none) -> {:error, Type.Message.make(range, union, meta)}
+        ^range -> :ok
+        _ -> {:maybe, [Type.Message.make(range, union, meta)]}
       end
     end
   end
@@ -130,16 +133,6 @@ defimpl Type.Properties, for: Range do
     def intersection(a..b,  builtin(:pos_integer)) when a > 0, do: a..b
     def intersection(_..1,  builtin(:pos_integer)), do: 1
     def intersection(_..a,  builtin(:pos_integer)) when a > 1, do: 1..a
-  end
-
-  defp leftover_check(union = %{of: types}, int_class, leftover) do
-    (builtin(int_class) in types) and Type.subtype?(leftover, union)
-  end
-
-  defp usable_as_union_fallback(challenge, target, meta) do
-    target.of
-    |> Enum.map(&Type.usable_as(challenge, &1, meta))
-    |> Enum.reduce(&Type.ternary_or/2)
   end
 
   subtype :usable_as
