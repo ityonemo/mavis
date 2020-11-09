@@ -141,7 +141,34 @@ defmodule TypeTest.UnionTest do
       assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
     end
 
-    test "tuples are merged if their elements can merge" do
+    test "a tuple that is a subtype of another tuple gets merged" do
+      outer = tuple({:ok, builtin(:integer) | :bar, builtin(:float) | builtin(:integer)})
+      inner = tuple({:ok, builtin(:integer), builtin(:float)})
+
+      assert outer == outer <|> inner
+    end
+
+    test "a tuple that is identical or has one difference gets merged" do
+      duple1 = tuple({:ok, builtin(:integer)})
+      duple2 = tuple({:ok, builtin(:float)})
+      duple3 = tuple({:error, builtin(:integer)})
+
+      assert duple1 == duple1 <|> duple1
+      assert duple({:ok, builtin(:integer) | builtin(:float)}) == duple1 <|> duple2
+      assert duple({:ok <|> :error, builtin(:integer)}) == duple1 <|> duple3
+
+      triple1 = tuple({:ok, builtin(:integer), builtin(:float)})
+      triple2 = tuple({:error, builtin(:integer), builtin(:float)})
+      triple3 = tuple({:ok, builtin(:pid), builtin(:atom)})
+
+      assert tuple({:ok <|> :error, builtin(:integer), builtin(:float)}) ==
+        triple1 <|> triple2
+
+      # if there is more than one difference it doesn't get merged.
+      assert %Type.Union{} = triple1 <|> triple3
+    end
+
+    test "tuples are merged if their elements can transitively merge" do
       assert tuple({@any, :bar}) == (tuple({@any, :bar}) <|> tuple({:foo, :bar}))
 
       assert tuple({:bar, @any}) == (tuple({:bar, @any}) <|> tuple({:bar, :foo}))

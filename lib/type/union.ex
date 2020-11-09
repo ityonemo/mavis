@@ -142,8 +142,8 @@ defmodule Type.Union do
     |> Enum.map(fn
       {type, type} -> type
       {lh, rh} ->
-        union = Type.union(lh, rh)
-        match?(%Type.Union{}, union) and (union.of == [lh, rh]) and throw :nomerge
+        union = Type.union(lh, rh) |> IO.inspect(label: "148", structs: false)
+        match?(%Type.Union{}, union) and (union.of == merge_parts(lh, rh)) and throw :nomerge
         union
     end)
     {%Tuple{elements: merged_elements}, rest}

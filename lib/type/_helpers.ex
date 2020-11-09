@@ -94,10 +94,14 @@ defmodule Type.Helpers do
 
       # some integer types override the union analysis, so this must
       # come at the end.
-      def usable_as(challenge, %Type.Union{of: types}, meta) do
+      def usable_as(challenge, target = %Type.Union{of: types}, meta) do
         types
         |> Enum.map(&Type.usable_as(challenge, &1, meta))
         |> Enum.reduce(&Type.ternary_or/2)
+        |> case do
+          {:error, msg} -> {:error, %{msg | type: challenge, target: target}}
+          any -> any
+        end
       end
 
       def usable_as(challenge, union, meta) do
