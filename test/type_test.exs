@@ -130,8 +130,16 @@ defmodule TypeTest do
     end
   end
 
-  describe "builtins" do
-    test "pos_integer"
+  describe "composite builtins" do
+    test "non_neg_integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0]}
+        == builtin(:non_neg_integer)
+    end
+
+    test "integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
+       == builtin(:integer)
+    end
 
     test "term" do
       assert builtin(:term) == builtin(:any)
@@ -221,7 +229,11 @@ defmodule TypeTest do
       assert builtin(:integer) <|> builtin(:float)
     end
 
-    test "struct"
+    test "struct" do
+      assert map(%{
+        optional(builtin(:atom)) => builtin(:any),
+        __struct__: builtin(:atom)}) == builtin(:struct)
+    end
 
     test "timeout" do
       assert builtin(:non_neg_integer) <|> :infinity == builtin(:timeout)
