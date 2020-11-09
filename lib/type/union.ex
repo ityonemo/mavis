@@ -368,14 +368,16 @@ defmodule Type.Union do
           override(rest, :non_neg_integer, opts)
 
         rest = type_has(types, [-1..0, builtin(:pos_integer)]) ->
-          override([-1 | rest], :non_neg_integer, opts)
+          type = override(rest, :non_neg_integer, opts)
+          concat(["-1", " | ", type])
 
         (range = Enum.find(types, &match?(_..0, &1))) && builtin(:pos_integer) in types ->
-          rest = types
+          type = types
           |> Kernel.--([range, builtin(:pos_integer)])
           |> override(:non_neg_integer, opts)
+          
+          concat(["#{range.first}..-1", " | ", type])
 
-          concat(["#{range.first}..-1", " | ", rest])
         true -> normal_inspect(types, opts)
       end
     end

@@ -37,11 +37,11 @@ defmodule TypeTest.Type.Inspect.BasicsTest do
   describe "corner cases" do
     import Type, only: :macros
     test "non_neg_integer from pos_integer with short range" do
-      assert "non_neg_integer() | -1" == inspect Type.union(-1..0, builtin(:pos_integer))
+      assert "-1 | non_neg_integer()" == inspect Type.union(-1..0, builtin(:pos_integer))
     end
 
     test "non_neg_integer from pos_integer with long range" do
-      assert "non_neg_integer() | -10..-1" == inspect Type.union(-10..0, builtin(:pos_integer))
+      assert "-10..-1 | non_neg_integer()" == inspect Type.union(-10..0, builtin(:pos_integer))
     end
   end
 
