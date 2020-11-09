@@ -260,8 +260,8 @@ defmodule Type do
   @doc false
   def primitive_builtins, do: @primitive_builtins
 
-  @composite_builtins ~w(term integer non_neg_integer arity byte map
-  binary bitstring boolean char charlist nonempty_charlist fun
+  @composite_builtins ~w(term integer non_neg_integer tuple arity byte
+  map binary bitstring boolean char charlist nonempty_charlist fun
   function identifier iodata keyword list nonempty_list
   maybe_improper_list nonempty_maybe_improper_list mfa no_return number
   struct timeout)a
@@ -299,6 +299,9 @@ defmodule Type do
     quote do
       %Type.Union{of: [builtin(:pos_integer), 0]}
     end
+  end
+  defmacro builtin(:tuple) do
+    quote do %Type.Tuple{elements: :any} end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
