@@ -3,7 +3,7 @@ defmodule TypeTest.Builtin.OrderTest do
 
   @moduletag :compare
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 
@@ -27,7 +27,7 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:none) < %Function{return: 0}
       assert builtin(:none) < builtin(:port)
       assert builtin(:none) < builtin(:pid)
-      assert builtin(:none) < %Tuple{elements: []}
+      assert builtin(:none) < builtin(:tuple)
       assert builtin(:none) < %Map{}
       assert builtin(:none) < []
       assert builtin(:none) < %List{}
@@ -261,7 +261,7 @@ defmodule TypeTest.Builtin.OrderTest do
     end
 
     test "is smaller than tuple and top" do
-      assert builtin(:pid) < builtin(%Tuple{elements: []}) # outside of group
+      assert builtin(:pid) < builtin(:tuple) # outside of group
       assert builtin(:pid) < builtin(:any) # top
     end
   end
@@ -283,7 +283,7 @@ defmodule TypeTest.Builtin.OrderTest do
       assert builtin(:any) > %Function{return: 0}
       assert builtin(:any) > builtin(:port)
       assert builtin(:any) > builtin(:pid)
-      assert builtin(:any) > %Tuple{elements: []}
+      assert builtin(:any) > builtin(:tuple)
       assert builtin(:any) > %Map{}
       assert builtin(:any) > []
       assert builtin(:any) > %List{}

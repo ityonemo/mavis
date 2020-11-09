@@ -200,30 +200,15 @@ defmodule Type.Map do
     optional: optional
   }
 
-  @spec build(required :: required, optional :: optional) :: t
-  @doc """
-  helper function to help you build map types for testing.
-  """
-  def build(required \\ %{}, optional) do
-    %__MODULE__{
-      required: required,
-      optional: to_map(optional)
-    }
-  end
-
-  defp to_map(lst) when is_list(lst), do: Enum.into(lst, %{})
-  defp to_map(map), do: map
-
   @doc """
   the full union of all possible key values for the passed map.
 
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.preimage(Map.build(%{builtin(:pos_integer) => builtin(:any)}))
+  iex> Map.preimage(map(%{builtin(:pos_integer) => builtin(:any)}))
   %Type{name: :pos_integer}
-  iex> Map.preimage(Map.build(%{0 => builtin(:any)},
-  ...>                        %{builtin(:pos_integer) => builtin(:any)}))
+  iex> Map.preimage(map(%{0 => builtin(:any), builtin(:pos_integer) => builtin(:any)}))
   %Type.Union{of: [%Type{name: :pos_integer}, 0]}
   ```
   """
@@ -253,8 +238,8 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(Map.build(%{builtin(:neg_integer) => :foo,
-  ...>                       builtin(:pos_integer) => :bar}), -5..5)
+  iex> Map.apply(map(%{builtin(:neg_integer) => :foo,
+  ...>                 builtin(:pos_integer) => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
   ```
 
@@ -263,7 +248,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(Map.build(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
+  iex> Map.apply(map(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
   :foo
   ```
 
@@ -273,7 +258,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(Map.build(%{0..3 => 1..10, builtin(:pos_integer) => 0..5}), 1..3)
+  iex> Map.apply(map(%{0..3 => 1..10, builtin(:pos_integer) => 0..5}), 1..3)
   1..5
   ```
   """
@@ -302,7 +287,7 @@ defmodule Type.Map do
   # optional part of a map type.  Returns a list of images.  You
   # should perform the union operation *outside* this function
   defp apply_partial(req_or_opt, preimage_subtype) do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
     req_or_opt
     |> Enum.flat_map(fn {keytype, valtype} ->
       if Type.intersection(keytype, preimage_subtype) == builtin(:none) do
@@ -327,10 +312,10 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg}), [-10..10])
+  iex> Map.resegment(map(%{builtin(:neg_integer) => :neg}), [-10..10])
   [-10..-1]
-  iex> Map.resegment(Map.build(%{builtin(:neg_integer) => :neg,
-  ...>                           builtin(:pos_integer) => :pos}), [-10..10])
+  iex> Map.resegment(map(%{builtin(:neg_integer) => :neg,
+  ...>                     builtin(:pos_integer) => :pos}), [-10..10])
   [-10..-1, 1..10]
   ```
   """
@@ -340,7 +325,7 @@ defmodule Type.Map do
   end
   def resegment(_map, []), do: []
   def resegment(map, [preimage_segment | rest]) do
-    import Type, only: [builtin: 1]
+    import Type, only: :macros
 
     map
     |> keytypes
@@ -418,10 +403,8 @@ defmodule Type.Map do
             optionals = map
             |> evaluate_optionals(tgt)
             |> Elixir.Map.drop(Elixir.Map.keys(requireds))
-            # TODO: ^^ remove the above line when Map.build does this
-            # step for you.
 
-            Map.build(requireds, optionals)
+            %Type.Map{required: requireds, optional: optionals}
           :empty ->
             builtin(:none)
         end

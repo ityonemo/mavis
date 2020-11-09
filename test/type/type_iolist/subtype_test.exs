@@ -3,7 +3,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
 
   @moduletag :subtype
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.{Bitstring, List}
 

@@ -3,7 +3,7 @@ defmodule TypeTest.TypeList.UsableAsTest do
 
   @moduletag :usable_as
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
   use Type.Operators
 
   alias Type.{List, Message}

@@ -5,7 +5,7 @@ defmodule TypeTest.TypeMap.SubtypeTest do
   @moduletag :subtype
 
   alias Type.Map
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   @any builtin(:any)
   @any_map Map.build(%{@any => @any})

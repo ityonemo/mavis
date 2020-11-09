@@ -14,7 +14,7 @@ defmodule Type.Opaque do
     type: Type.t
   }
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   defimpl Type.Properties do
     import Type, only: :macros

@@ -5,7 +5,7 @@ defmodule TypeTest.TypeMap.UnionTest do
   @moduletag :union
 
   alias Type.Map
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   @any builtin(:any)
   @empty_map %Map{}

@@ -3,13 +3,13 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
 
   @moduletag :subtype
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 
   alias Type.Tuple
 
-  @any_tuple %Tuple{elements: :any}
+  @any_tuple builtin(:tuple)
 
   describe "any tuples" do
     test "are subtypes of themselves and any" do
@@ -25,7 +25,7 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except([%Tuple{elements: []}])
+      TypeTest.Targets.except([tuple({})])
       |> Enum.each(fn target ->
         refute @any_tuple in target
       end)
@@ -34,55 +34,55 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
 
   describe "defined tuples" do
     test "are subtypes of any tuple and any" do
-      assert %Tuple{elements: []} in @any_tuple
-      assert %Tuple{elements: [builtin(:integer)]} in @any_tuple
-      assert %Tuple{elements: [builtin(:atom), builtin(:integer)]} in @any_tuple
+      assert tuple({}) in @any_tuple
+      assert tuple({builtin(:integer)}) in @any_tuple
+      assert tuple({builtin(:atom), builtin(:integer)}) in @any_tuple
 
-      assert %Tuple{elements: []} in builtin(:any)
-      assert %Tuple{elements: [builtin(:integer)]} in builtin(:any)
-      assert %Tuple{elements: [builtin(:atom), builtin(:integer)]} in builtin(:any)
+      assert tuple({}) in builtin(:any)
+      assert tuple({builtin(:integer)}) in builtin(:any)
+      assert tuple({builtin(:atom), builtin(:integer)}) in builtin(:any)
     end
 
     test "are subtypes of themselves" do
-      assert %Tuple{elements: []} in %Tuple{elements: []}
+      assert tuple({}) in tuple({})
 
-      assert %Tuple{elements: [builtin(:integer)]} in
-        %Tuple{elements: [builtin(:integer)]}
-      assert %Tuple{elements: [builtin(:atom), builtin(:integer)]} in
-        %Tuple{elements: [builtin(:atom), builtin(:integer)]}
+      assert tuple({builtin(:integer)}) in
+        tuple({builtin(:integer)})
+      assert tuple({builtin(:atom), builtin(:integer)}) in
+        tuple({builtin(:atom), builtin(:integer)})
     end
 
     test "are subtypes of unions with themselves, supertuples, or any tuple" do
-      assert %Tuple{elements: [builtin(:integer)]} in (%Tuple{elements: [builtin(:integer)]} <|> builtin(:integer))
-      assert %Tuple{elements: [builtin(:integer)]} in (%Tuple{elements: [builtin(:any)]} <|> builtin(:integer))
-      assert %Tuple{elements: [builtin(:integer)]} in (@any_tuple<|> builtin(:integer))
+      assert tuple({builtin(:integer)}) in (tuple({builtin(:integer)}) <|> builtin(:integer))
+      assert tuple({builtin(:integer)}) in (tuple({builtin(:any)}) <|> builtin(:integer))
+      assert tuple({builtin(:integer)}) in (@any_tuple <|> builtin(:integer))
     end
 
     test "are subtypes when their elements are subtypes" do
-      assert %Tuple{elements: [47]} in %Tuple{elements: [builtin(:integer)]}
-      assert %Tuple{elements: [47, :foo]} in %Tuple{elements: [builtin(:integer), builtin(:atom)]}
+      assert tuple({47}) in tuple({builtin(:integer)})
+      assert tuple({47, :foo}) in tuple({builtin(:integer), builtin(:atom)})
     end
 
     test "are not subtypes of orthogonal unions" do
-      refute %Tuple{elements: [builtin(:integer)]} in
-        (%Tuple{elements: [builtin(:integer), builtin(:integer)]} <|> builtin(:integer))
+      refute tuple({builtin(:integer)}) in
+        (tuple({builtin(:integer), builtin(:integer)}) <|> builtin(:integer))
     end
 
     test "is not a subtype on partial match" do
-      refute %Tuple{elements: [47, :foo]} in %Tuple{elements: [builtin(:atom), builtin(:atom)]}
-      refute %Tuple{elements: [47, :foo]} in %Tuple{elements: [builtin(:integer), builtin(:integer)]}
+      refute tuple({47, :foo}) in tuple({builtin(:atom), builtin(:atom)})
+      refute tuple({47, :foo}) in tuple({builtin(:integer), builtin(:integer)})
     end
 
     test "is not a subtype if the lengths don't agree" do
-      refute %Tuple{elements: [builtin(:integer)]} in %Tuple{elements: [builtin(:integer), builtin(:integer)]}
+      refute tuple({builtin(:integer)}) in tuple({builtin(:integer), builtin(:integer)})
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except([%Tuple{elements: []}])
+      TypeTest.Targets.except([tuple({})])
       |> Enum.each(fn target ->
-        refute %Tuple{elements: []} in target
-        refute %Tuple{elements: [builtin(:integer)]} in target
-        refute %Tuple{elements: [builtin(:atom), builtin(:integer)]} in target
+        refute tuple({}) in target
+        refute tuple({builtin(:integer)}) in target
+        refute tuple({builtin(:atom), builtin(:integer)}) in target
       end)
     end
   end

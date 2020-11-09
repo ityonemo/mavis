@@ -3,7 +3,7 @@ defmodule TypeTest.LiteralRange.OrderTest do
 
   @moduletag :compare
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 

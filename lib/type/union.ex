@@ -133,8 +133,8 @@ defmodule Type.Union do
 
   # tuples
   alias Type.Tuple
-  def type_merge([%Tuple{} | rest], %Tuple{elements: :any}) do
-    {%Tuple{elements: :any}, rest}
+  def type_merge([%Tuple{} | rest], builtin(:tuple)) do
+    {builtin(:tuple), rest}
   end
   def type_merge([lhs = %Tuple{} | rest], rhs = %Tuple{}) do
     merged_elements = lhs.elements
@@ -375,7 +375,7 @@ defmodule Type.Union do
           type = types
           |> Kernel.--([range, builtin(:pos_integer)])
           |> override(:non_neg_integer, opts)
-          
+
           concat(["#{range.first}..-1", " | ", type])
 
         true -> normal_inspect(types, opts)

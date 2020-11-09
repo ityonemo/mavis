@@ -7,7 +7,7 @@ defmodule TypeTest.UnionTest do
 
   use Type.Operators
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   test "unions keep terms in reverse order" do
     assert %Union{of: [47, 0]} = Type.union(47, 0)
@@ -132,39 +132,32 @@ defmodule TypeTest.UnionTest do
 
   alias Type.Tuple
   @any builtin(:any)
-  @anytuple %Tuple{elements: :any}
-
-  def tuple(list), do: %Tuple{elements: list}
+  @anytuple builtin(:tuple)
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
-      assert @anytuple == (@anytuple <|> %Tuple{elements: []})
-      assert @anytuple == (@anytuple <|> %Tuple{elements: [@any]})
-      assert @anytuple == (@anytuple <|> %Tuple{elements: [:foo]} <|> %Tuple{elements: [:bar]})
+      assert @anytuple == (@anytuple <|> tuple({}))
+      assert @anytuple == (@anytuple <|> tuple({@any}))
+      assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
     end
 
     test "tuples are merged if their elements can merge" do
-      assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, :bar]})
+      assert tuple({@any, :bar}) == (tuple({@any, :bar}) <|> tuple({:foo, :bar}))
 
-      assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} <|> %Tuple{elements: [:bar, :foo]})
+      assert tuple({:bar, @any}) == (tuple({:bar, @any}) <|> tuple({:bar, :foo}))
 
-      assert (%Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [@any, :bar]}) ==
-        (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [:foo, :bar]})
+      assert (tuple({:foo, @any}) <|> tuple({@any, :bar})) ==
+        (tuple({@any, :bar}) <|> tuple({:foo, @any}) <|> tuple({:foo, :bar}))
 
-      assert %Tuple{elements: [1..2, 1..2]} == (
-        %Tuple{elements: [1, 2]} <|>
-        %Tuple{elements: [2, 1]} <|>
-        %Tuple{elements: [1, 1]} <|>
-        %Tuple{elements: [2, 2]}
-      )
+      assert tuple({1..2, 1..2}) == (tuple({1, 2}) <|> tuple({2, 1}) <|> tuple({1, 1}) <|> tuple({2, 2}))
     end
 
     test "complicated tuples can be merged" do
       # This should not be able to be solved without a more complicated SAT solver.
-      unless %Tuple{elements: [1..3, 1..3, 1..3]} == (
-        %Tuple{elements: [1 <|> 2, 2 <|> 3, 1 <|> 3]} <|>
-        %Tuple{elements: [2 <|> 3, 1 <|> 3, 1 <|> 2]} <|>
-        %Tuple{elements: [1 <|> 3, 1 <|> 2, 2 <|> 3]}
+      unless tuple({1..3, 1..3, 1..3}) == (
+        tuple({1 <|> 2, 2 <|> 3, 1 <|> 3}) <|>
+        tuple({2 <|> 3, 1 <|> 3, 1 <|> 2}) <|>
+        tuple({1 <|> 3, 1 <|> 2, 2 <|> 3})
       ) do
         IO.warn("this test can't be solved without a SAT solver")
       end

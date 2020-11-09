@@ -140,7 +140,7 @@ defmodule Type.Function do
     inferred: boolean
   }
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   defimpl Type.Properties do
     import Type, only: :macros
