@@ -215,11 +215,15 @@ defmodule Type.Helpers do
   equivalent to an `:ok` response from `Type.usable_as/3`.
   """
   defmacro subtype(do: block) do
-    # TODO: figure out how to DRY this.
+
+    might_be_union = Enum.map(
+      [Union, Function.Var],
+      &Module.concat(Type.Properties.Type, &1))
+
     quote do
       def subtype?(a, a), do: true
 
-      unless __MODULE__ in [Type.Properties.Type.Union] do
+      unless __MODULE__ in unquote(might_be_union) do
         def subtype?(a, %Type.Union{of: types}) do
           Enum.any?(types, &Type.subtype?(a, &1))
         end
