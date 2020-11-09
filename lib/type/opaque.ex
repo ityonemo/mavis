@@ -18,8 +18,8 @@ defmodule Type.Opaque do
 
   defimpl Type.Properties do
     import Type, only: :macros
-    import Type.Helpers
 
+    import Type.Helpers
     alias Type.{Message, Opaque}
 
     def compare(left = %{type: this}, right = %Opaque{type: this}) do
@@ -39,6 +39,7 @@ defmodule Type.Opaque do
           |> Kernel.||(:eq)
       end
     end
+
     def compare(this, other) do
       case Type.compare(this.type, other) do
         :eq -> :lt

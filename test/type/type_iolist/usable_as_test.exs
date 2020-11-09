@@ -46,8 +46,13 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
       assert {:maybe, _} = builtin(:iolist) ~> []
     end
 
-    test "is not usable as a list with totally different types" do
-      assert {:error, _} = builtin(:iolist) ~> list(builtin(:atom))
+    test "is maybe usable as a list with totally different types" do
+      assert {:maybe, _} = builtin(:iolist) ~> list(builtin(:atom))
+    end
+
+    test "is not usable as a nonempty list with totally different types, or final" do
+      assert {:error, _} = builtin(:iolist) ~> list(builtin(:atom), ...)
+      assert {:error, _} = builtin(:iolist) ~> %List{type: builtin(:atom), final: builtin(:atom)}
     end
 
     test "are not usable as other types" do
@@ -87,8 +92,12 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
       assert {:maybe, _} = builtin(:any) ~> builtin(:iolist)
     end
 
-    test "with nothing in common are not usable as iolists" do
-      assert {:error, _} = list(builtin(:atom)) ~> builtin(:iolist)
+    test "with nothing in common are maybe usable as iolists" do
+      assert {:maybe, _} = list(builtin(:atom)) ~> builtin(:iolist)
+    end
+
+    test "with either incompatible final terms or nonempty are not usable as iolists" do
+      assert {:error, _} = list(builtin(:atom), ...) ~> builtin(:iolist)
       assert {:error, _} = %List{type: builtin(:any), final: builtin(:atom)} ~>
         builtin(:iolist)
     end

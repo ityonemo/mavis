@@ -174,24 +174,26 @@ defmodule Type.Helpers do
     quote do
       def group_compare(type, type), do: :eq
 
-      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
-        case group_compare(type1, type2) do
-          :gt -> :gt
-          _ -> :lt
-        end
-      end
-
-      def group_compare(type1, %Type.Opaque{type: type2}) do
-        case group_compare(type1, type2) do
-          :eq -> :gt
-          cmp -> cmp
-        end
-      end
-
       def group_compare(type, var = %Type.Function.Var{}) do
         case group_compare(type, var.constraint) do
           :eq -> :gt
           cmp -> cmp
+        end
+      end
+
+      def group_compare(type1, %Type.Opaque{type: type2}) do
+        type1 |> IO.inspect(label: "185")
+        type2 |> IO.inspect(label: "186")
+        case group_compare(type1, type2) do
+          :eq -> :gt
+          cmp -> cmp
+        end
+      end
+
+      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
+        case group_compare(type1, type2) do
+          :gt -> :gt
+          _ -> :lt
         end
       end
 

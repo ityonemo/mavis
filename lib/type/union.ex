@@ -172,9 +172,9 @@ defmodule Type.Union do
   # maps
   alias Type.Map
   def type_merge([left = %Map{} | rest], right = %Map{}) do
-    # for maps, it's the subset relationship, but possibly
-    # optionalized
-    optionalized_right = Map.optionalize(right)
+    # for maps, it's the subset relationship, but it might need to admit
+    # that some keys have to be turned into optional.
+    optionalized_right = Map.optionalize(right, keep: Elixir.Map.keys(left.required))
     cond do
       Type.subtype?(left, right) ->
         {right, rest}
@@ -244,6 +244,18 @@ defmodule Type.Union do
 
     alias Type.Union
 
+    def compare(union, %Type.Function.Var{constraint: type}) do
+      case Type.compare(union, type) do
+        :eq -> :gt
+        order -> order
+      end
+    end
+    def compare(union, %Type.Opaque{type: type}) do
+      case Type.compare(union, type) do
+        :eq -> :gt
+        order -> order
+      end
+    end
     def compare(%{of: llist}, %Union{of: rlist}) do
       union_list_compare(llist, rlist)
     end

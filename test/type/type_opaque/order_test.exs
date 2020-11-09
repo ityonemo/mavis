@@ -17,7 +17,14 @@ defmodule TypeTest.TypeOpaque.OrderTest do
   }
 
   describe "the opaque type" do
-    test "is ordered just less than its internal type" do
+    test "is ordered with its internal type's typegroup" do
+      # for a simple type
+      assert Type.typegroup(builtin(:atom)) == Type.typegroup(builtin(:atom))
+      # for a union type
+      assert Type.typegroup(@opaque_int) == Type.typegroup(builtin(:integer))
+    end
+
+    test "is ordered less than its internal type" do
       assert builtin(:integer) > @opaque_int
       assert @opaque_int < builtin(:integer)
 

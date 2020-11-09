@@ -127,7 +127,7 @@ defmodule Type.List do
   iex> Type.usable_as(list(1..10), list(builtin(:integer)))
   :ok
   iex> Type.usable_as(list(1..10), list(builtin(:atom))) # note it might be the empty list
-  {:maybe, %Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}}
+  {:maybe, [%Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}]}
   iex> Type.usable_as(builtin(:list), list(...))
   {:maybe, [%Type.Message{type: %Type.List{}, target: %Type.List{nonempty: true}}]}
   ```
@@ -166,24 +166,34 @@ defmodule Type.List do
     end
 
     usable_as do
-      def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
-        case usable_as(challenge, %{target | nonempty: false}, meta) do
-          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
-          maybe_or_error -> maybe_or_error
-        end
-      end
-
       def usable_as(challenge, builtin(:iolist), meta) do
         Type.Iolist.usable_as_iolist(challenge, meta)
       end
 
-      def usable_as(challenge, target = %List{}, meta) do
+      def usable_as(challenge = %{nonempty: c_ne},
+                    target = %List{nonempty: t_ne}, meta)
+          when (c_ne or t_ne) do
         u1 = Type.usable_as(challenge.type, target.type, meta)
         u2 = Type.usable_as(challenge.final, target.final, meta)
 
         case Type.ternary_and(u1, u2) do
+          :ok when t_ne and not c_ne ->
+            {:maybe, [Message.make(challenge, target, meta)]}
           :ok -> :ok
           # TODO: make this report the internal error as well.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
+      end
+
+      def usable_as(challenge, target = %List{}, meta) do
+        case Type.usable_as(challenge.type, target.type, meta) do
+          {:error, _} -> {:maybe, [Message.make(challenge.type, target.type, meta)]}
+          any -> any
+        end
+        |> Type.ternary_and(Type.usable_as(challenge.final, target.final, meta))
+        |> case do
+          :ok -> :ok
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
         end

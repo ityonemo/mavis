@@ -343,8 +343,12 @@ defmodule Type.Map do
   @doc """
   takes all required terms and makes them optional
   """
-  def optionalize(map) do
-    %Type.Map{optional: Map.merge(map.optional, map.required)}
+  def optionalize(map, opts \\ []) do
+    {still_requireds, new_optionals} =
+      Map.split(map.required, Keyword.get(opts, :keep, []))
+
+    %Type.Map{optional: Map.merge(map.optional, new_optionals),
+              required: still_requireds}
   end
 
   defimpl Type.Properties do
