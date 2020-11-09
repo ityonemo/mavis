@@ -339,7 +339,7 @@ defmodule Type do
   end
   defmacro builtin(:keyword) do
     quote do
-      list(tuple({builtin(:atom), builtin(:any)}))
+      %Type.List{type: tuple({builtin(:atom), builtin(:any)})}
     end
   end
   defmacro builtin(:list) do
@@ -394,13 +394,13 @@ defmodule Type do
   end
 
   @doc """
-  like `builtin/1`, but usable at runtime for general variables.
+  use this for when you must use a runtime value to obtain a builtin type struct
 
-  Not usable in matches.
+  not usable in guards
   """
-  defmacro select_builtin(type) do
+  defmacro select_builtin(type_ast) do
     cases = Enum.map(@builtins, &{:->, [], [[&1], {:builtin, [], [&1]}]})
-    {:case, [], [type, [do: cases]]}
+    {:case, [], [type_ast, [do: cases]]}
   end
 
   @spec remote(Macro.t) :: Macro.t

@@ -27,7 +27,7 @@ defmodule TypeTest.TypeIolist.OrderTest do
       assert builtin(:iolist) > list(builtin(:iolist) <|> @binary)
       assert builtin(:iolist) > list(@char <|> @binary)
       assert builtin(:iolist) > list(@ltype)
-      assert builtin(:iolist) > list(@ltype, final: @binary)
+      assert builtin(:iolist) > %List{type: @ltype, nonempty: true, final: @binary}
     end
 
     test "is equal to manually defined iolists with recursion" do

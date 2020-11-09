@@ -45,7 +45,7 @@ defmodule TypeTest.TypeList.OrderTest do
     end
 
     test "is bigger than a list which is nonempty: true" do
-      assert list(builtin(:integer)) > nonempty(type: builtin(:any))
+      assert list(builtin(:integer)) > list(builtin(:any), ...)
     end
 
     test "is bigger than a list which is a subclass" do
@@ -65,8 +65,8 @@ defmodule TypeTest.TypeList.OrderTest do
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do
-      assert builtin(:list)) < %Type.Bitstring{size: 0, unit: 0}
-      assert builtin(:list)) < builtin(:any)
+      assert builtin(:list) < %Type.Bitstring{size: 0, unit: 0}
+      assert builtin(:list) < builtin(:any)
     end
   end
 

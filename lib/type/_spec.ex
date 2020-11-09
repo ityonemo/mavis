@@ -118,7 +118,7 @@ defmodule Type.Spec do
   end
   # default builtin
   def parse({:type, _, type, []}, _) when type in @builtins do
-    select_builtin(type)
+    Type.select_builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment

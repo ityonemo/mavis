@@ -84,6 +84,7 @@ defmodule Type.List do
   `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: true`
 
   ```elixir
+  iex> import Type, only: :macros
   iex> Type.intersection(list(...), builtin(:list))
   %Type.List{nonempty: true}
   iex> Type.intersection(list(1..20), list(10..30))
@@ -96,6 +97,7 @@ defmodule Type.List do
   `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: false`
 
   ```elixir
+  iex> import Type, only: :macros
   iex> Type.union(list(...), builtin(:list))
   %Type.List{}
   iex> Type.union(list(1..10), list(10..20))
@@ -108,6 +110,7 @@ defmodule Type.List do
   a `nonempty: true` list type is subtype of its `nonempty: false` counterpart.
 
   ```elixir
+  iex> import Type, only: :macros
   iex> Type.subtype?(list(...), builtin(:list))
   true
   iex> Type.subtype?(list(1..10), list(2..30))

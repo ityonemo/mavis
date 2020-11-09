@@ -54,7 +54,7 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "nonempty_list/1" do
-    assert {:ok, identity_for(list(type: builtin(:integer), ...})} ==
+    assert {:ok, identity_for(list(builtin(:integer), ...))} ==
       Type.fetch_spec(@source, :nonempty_list_1_spec, 1)
   end
 

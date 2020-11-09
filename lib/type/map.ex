@@ -104,7 +104,7 @@ defmodule Type.Map do
   iex> Type.intersection(map(%{1 => 1..10}), map(%{1 => 5..20}))
   %Type.Map{required: %{1 => 5..10}}
   iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
-  ...>                   map(%{optional(builtin(:integer)) => 1..10}})
+  ...>                   map(%{optional(builtin(:integer)) => 1..10}))
   %Type.Map{optional: %{1..10 => 1..10}}
   iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
   ...>                   map(%{optional(1..10) => builtin(:atom)}))
