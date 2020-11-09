@@ -101,16 +101,16 @@ defmodule Type.Map do
   %Type{name: :none}
   iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)}))
   %Type.Map{required: %{foo: :bar}}
-  iex> Type.intersection(%Type.Map{required: %{1 => 1..10}}, %Type.Map{required: %{1 => 5..20}})
+  iex> Type.intersection(map(%{1 => 1..10}), map(%{1 => 5..20}))
   %Type.Map{required: %{1 => 5..10}}
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
-  ...>                   %Type.Map{optional: %{builtin(:integer) => 1..10}})
+  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
+  ...>                   map(%{optional(builtin(:integer)) => 1..10}})
   %Type.Map{optional: %{1..10 => 1..10}}
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
-  ...>                   %Type.Map{optional: %{1..10 => builtin(:atom)}})
+  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
+  ...>                   map(%{optional(1..10) => builtin(:atom)}))
   %Type.Map{}
-  iex> Type.intersection(%Type.Map{optional: %{1..10 => builtin(:integer)}},
-  ...>                   %Type.Map{optional: %{11..20 => builtin(:integer)}})
+  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
+  ...>                   map(%{optional(11..20) => builtin(:integer)}))
   %Type.Map{}
   ```
 
@@ -122,16 +122,14 @@ defmodule Type.Map do
   is a strict subtype of the other.
 
   ```
-  iex> Type.union(%Type.Map{required: %{foo: :bar}}, %Type.Map{})
+  iex> import Type, only: :macros
+  iex> Type.union(map(%{foo: :bar}), map(%{}))
   %Type.Map{optional: %{foo: :bar}}
-
-  iex> Type.union(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  iex> Type.union(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
   %Type.Map{optional: %{foo: :bar}}
-
-  iex> Type.union(%Type.Map{required: %{foo: 1..10}}, %Type.Map{required: %{foo: 1..20}})
+  iex> Type.union(map(%{foo: 1..10}), map(%{foo: 1..20}))
   %Type.Map{required: %{foo: 1..20}}
-
-  iex> Type.union(%Type.Map{optional: %{1..10 => 1..10}}, %Type.Map{optional: %{1..20 => 1..10}})
+  iex> Type.union(map(%{optional(1..10) => 1..10}), map(%{optional(1..20) => 1..10}))
   %Type.Map{optional: %{1..20 => 1..10}}
   ```
 
@@ -141,16 +139,14 @@ defmodule Type.Map do
   of the other.
 
   ```
-  iex> Type.subtype?(%Type.Map{required: %{foo: :bar}}, %Type.Map{required: %{foo: %Type{name: :atom}}})
+  iex> import Type, only: :macros
+  iex> Type.subtype?(map(%{foo: :bar}), map(%{foo: builtin(:atom)}))
   true
-
-  iex> Type.subtype?(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: %Type{name: :atom}}})
+  iex> Type.subtype?(map(%{foo: :bar}), map(%{optional(:foo) => builtin(:atom)}))
   true
-
-  iex> Type.subtype?(%Type.Map{optional: %{foo: :bar}}, %Type.Map{optional: %{foo: %Type{name: :atom}}})
+  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{optional(:foo) => builtin(:atom)}))
   true
-
-  iex> Type.subtype?(%Type.Map{optional: %{foo: :bar}}, %Type.Map{required: %{foo: %Type{name: :atom}}})
+  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{foo: builtin(:atom)}))
   false
   ```
 
@@ -166,14 +162,13 @@ defmodule Type.Map do
   have conflicting value types, then it is `:maybe` because keys must be
 
   ```
-  iex> Type.usable_as(%Type.Map{required: %{foo: :bar}}, %Type.Map{optional: %{foo: :bar}})
+  iex> import Type, only: :macros
+  iex> Type.usable_as(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
   :ok
-
-  iex> Type.usable_as(%Type.Map{optional: %{foo: :bar}}, %Type.Map{required: %{foo: :bar}})
+  iex> Type.usable_as(map(%{optional(:foo) => :bar}), map(%{foo: :bar}))
   {:maybe, [%Type.Message{type: %Type.Map{optional: %{foo: :bar}},
                           target: %Type.Map{required: %{foo: :bar}}}]}
-
-  iex> Type.usable_as(%Type.Map{optional: %{1..10 => 1..10}}, %Type.Map{optional: %{1..20 => 11..20}})
+  iex> Type.usable_as(map(%{optional(1..10) => 1..10}), map(%{optional(1..20) => 11..20}))
   {:maybe, [%Type.Message{type: %Type.Map{optional: %{1..10 => 1..10}},
                           target: %Type.Map{optional: %{1..20 => 11..20}}}]}
   ```

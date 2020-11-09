@@ -8,18 +8,18 @@ defmodule TypeTest.TypeMap.SubtypeTest do
   import Type, only: :macros
 
   @any builtin(:any)
-  @any_map Map.build(%{@any => @any})
+  @any_map builtin(:map)
   @empty_map %Map{}
 
   describe "the empty map" do
     test "is a subtype of itself and maps with optional types" do
-      assert @empty_map in Map.build(foo: @any)
-      assert @empty_map in Map.build(%{builtin(:integer) => @any})
-      assert @empty_map in Map.build(%{builtin(:atom) => builtin(:integer)})
+      assert @empty_map in map(%{optional(:foo) => @any})
+      assert @empty_map in map(%{builtin(:integer) => @any})
+      assert @empty_map in map(%{builtin(:atom) => builtin(:integer)})
     end
 
     test "is not a subtype of a map with a required type" do
-      refute @empty_map in Map.build(%{foo: @any}, %{})
+      refute @empty_map in map(%{foo: @any})
     end
 
     test "is a subtype of the any map" do
@@ -29,40 +29,37 @@ defmodule TypeTest.TypeMap.SubtypeTest do
 
   describe "for a map with a required type" do
     test "are subtypes for a broader value type" do
-      assert Map.build(%{foo: 1..10}, %{}) in
-        Map.build(%{foo: builtin(:integer)}, %{})
+      assert map(%{foo: 1..10}) in map(%{foo: builtin(:integer)})
     end
 
     test "is a subtype of the same map except optional" do
-      assert Map.build(%{foo: @any}, %{}) in Map.build(%{foo: @any})
+      assert map(%{foo: @any}) in map(%{optional(:foo) => @any})
     end
 
     test "is a subtype when the the optional version is broader" do
-      assert Map.build(%{foo: @any}, %{}) in
-        Map.build(%{builtin(:atom) => @any})
+      assert map(%{foo: @any}) in map(%{builtin(:atom) => @any})
     end
 
     test "is not a subtype when the target is narrower" do
-      refute Map.build(%{foo: @any}, %{}) in
-        Map.build(%{builtin(:atom) => builtin(:integer)}, %{})
+      refute map(%{foo: @any}) in map(%{builtin(:atom) => builtin(:integer)})
     end
 
     test "is a subtype of the any map" do
-      assert Map.build(%{foo: @any}, %{}) in @any_map
+      assert map(%{foo: @any}) in @any_map
     end
   end
 
   describe "maps with optional types" do
     test "are not subtypes of the same map except required" do
-      refute Map.build(foo: @any) in Map.build(%{foo: @any}, %{})
+      refute map(%{optional(:foo) => @any}) in map(%{foo: @any})
     end
 
     test "is a subtype of the any map" do
-      assert Map.build(foo: @any) in @any_map
+      assert map(%{optional(:foo) => @any}) in @any_map
     end
 
     test "are not subtypes when their types are disjoint" do
-      refute Map.build(foo: @any) in Map.build(bar: @any)
+      refute map(%{optional(:foo) => @any}) in map(bar: @any)
     end
   end
 

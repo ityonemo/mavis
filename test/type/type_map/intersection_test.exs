@@ -9,7 +9,7 @@ defmodule TypeTest.TypeMap.IntersectionTest do
   alias Type.Map
 
   @any builtin(:any)
-  @any_map Map.build(%{@any => @any})
+  @any_map builtin(:map)
 
   describe "the empty map" do
     test "intersects with any and self" do
@@ -34,7 +34,7 @@ defmodule TypeTest.TypeMap.IntersectionTest do
 
   describe "a map with a single optional type" do
     test "intersects with empty map" do
-      int_any_map = Map.build(%{builtin(:integer) => @any})
+      int_any_map = map(%{builtin(:integer) => @any})
 
       assert int_any_map == int_any_map <~> @any_map
       assert int_any_map == int_any_map <~> int_any_map
@@ -53,50 +53,47 @@ defmodule TypeTest.TypeMap.IntersectionTest do
       #
       # intersection should be 0..2 => atom, 6..7 => atom
 
-      map1 = Map.build(%{-10..2 => builtin(:atom),
-                         3..5 => builtin(:integer),
-                         6..7 => builtin(:atom)})
-      map2 = Map.build(%{builtin(:pos_integer) => builtin(:atom)})
+      map1 = map(%{-10..2 => builtin(:atom),
+                     3..5 => builtin(:integer),
+                     6..7 => builtin(:atom)})
+      map2 = map(%{builtin(:pos_integer) => builtin(:atom)})
 
-      assert Map.build(%{1..2 => builtin(:atom),
-                         6..7 => builtin(:atom)}) == map1 <~> map2
+      assert map(%{1..2 => builtin(:atom),
+                   6..7 => builtin(:atom)}) == map1 <~> map2
     end
   end
 
-  @foo_int Map.build(%{foo: builtin(:integer)}, %{})
+  @foo_int map(%{foo: builtin(:integer)})
   describe "maps with required types" do
     test "intersect with the intersection of the values" do
-      assert Map.build(%{foo: 3..5}, %{}) ==
-        Map.build(%{foo: 1..5}, %{}) <~>
-        Map.build(%{foo: 3..8}, %{})
+      assert map(%{foo: 3..5}, %{}) == map(%{foo: 1..5}, %{}) <~> map(%{foo: 3..8}, %{})
     end
 
     test "intersect with none if they don't match" do
-      assert builtin(:none) == @foo_int <~> Map.build(%{bar: builtin(:integer)}, %{})
+      assert builtin(:none) == @foo_int <~> map(%{bar: builtin(:integer)})
     end
 
     test "intersect with none if their value types don't match" do
-      assert builtin(:none) == @foo_int <~> Map.build(%{foo: builtin(:atom)}, %{})
+      assert builtin(:none) == @foo_int <~> map(%{foo: builtin(:atom)})
     end
   end
 
   describe "maps with matching required and optional types" do
     test "convert optionals to required" do
-      assert @foo_int == @foo_int <~> Map.build(foo: builtin(:integer))
+      assert @foo_int == @foo_int <~> map(%{optional(:foo) => builtin(:integer)})
     end
 
     test "intersect optional key types, if necessary" do
-      assert @foo_int == @foo_int <~> Map.build(%{builtin(:atom) => builtin(:integer)})
+      assert @foo_int == @foo_int <~> map(%{builtin(:atom) => builtin(:integer)})
     end
 
     test "intersect value types" do
-      assert Map.build(%{foo: 1..10}, %{}) ==
-        @foo_int <~> Map.build(%{builtin(:atom) => 1..10})
+      assert map(%{foo: 1..10}) == @foo_int <~> map(%{builtin(:atom) => 1..10})
     end
 
     test "intersect with none if it's impossible to construct the required" do
       assert builtin(:none) ==
-        @foo_int <~> Map.build(%{builtin(:integer) => builtin(:integer)})
+        @foo_int <~> map(%{builtin(:integer) => builtin(:integer)})
     end
   end
 end

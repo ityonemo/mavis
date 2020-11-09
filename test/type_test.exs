@@ -92,17 +92,17 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: %{foo: remote(String.t(3))}} ==
+      assert map(%{foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo"})
-      assert %Type.Map{required: %{bar: 1, foo: remote(String.t(3))}} ==
+      assert map(%{bar: 1, foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: %{1 => remote(String.t(3))}} ==
+      assert map(%{1 => remote(String.t(3))}) ==
         Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => remote(String.t(3))}} ==
+      assert map(%{optional(remote(String.t(3))) => remote(String.t(3))}) ==
         Type.of(%{"foo" => "bar"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => :bar <|> :quux}} ==
+      assert map(%{optional(remote(String.t(3))) => :bar <|> :quux}) ==
         Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
