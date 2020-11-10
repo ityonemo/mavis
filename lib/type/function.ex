@@ -10,30 +10,10 @@ defmodule Type.Function do
     which corresponds to "a function of any arity".
   - `return` the type of the returned value.
 
-  ### Deviations from standard Erlang/Elixir:
-
-  Mavis introduces a new type (that is not expressible via dialyzer).  This
-  type should be referred to as `top-arity-n`.  All functions
-  of arity/n are subtypes of said type.  It's represented with this form:
-
-  `(_, _ -> any())` in the case of arity-2.  Note this is distinct
-  from `(any(), any() -> any())`:  A member of `any-arity-2` is required
-  to take any value without crashing.  This effectively functions as the
-  bottom type for arity-2 functions.  A member of `top-arity-2` can have
-  any requirements on the parameters.
-
-  Concretely, the success type for the input of `&is_function(&1, n)`
-  is `top-arity-n`.  Moreover, `(... -> any())` is the top type for all
-  `top-arity` types.
-
-  You may create top-arity functions with different return types, but
-  you may not mix and match parameter types.
-
   ### Examples:
 
   - `(... -> integer())` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
   - `(integer() -> integer())` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
-  - `(_ -> integer())` is represented as `%Type.Function{params: 1, return: %Type{name: :integer}}`
 
   ### Shortcut Form
 
@@ -82,16 +62,16 @@ defmodule Type.Function do
 
   #### intersection
 
-  Functions with distinct parameter types intersect in the *union* of the parameter types.
-  Their return values are always intersected.
+  Functions with distinct parameter types are nonoverlapping, even if their parameter
+  types overlap.  If they have the same parameters, then their return values are intersected.
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:pos_integer))))
+  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:integer))))
   %Type.Function{params: [], return: 1..10}
-  iex> Type.intersection(function((builtin(:pos_integer) -> 1..10)),
-  ...>                   function((1..10 -> builtin(:pos_integer))))
-  %Type.Function{params: [%Type{name: :pos_integer}], return: 1..10}
+  iex> Type.intersection(function((builtin(:integer) -> builtin(:integer))),
+  ...>                   function((1..10 -> builtin(:integer))))
+  %Type{name: :none}
   ```
 
   functions with `:any` parameters intersected with a function with specified parameters
@@ -155,7 +135,7 @@ defmodule Type.Function do
   defstruct @enforce_keys ++ [params: :any, inferred: false]
 
   @type t :: %__MODULE__{
-    params: [Type.t] | :any | arity,
+    params: [Type.t] | :any,
     return: Type.t,
     inferred: boolean
   }
@@ -168,15 +148,11 @@ defmodule Type.Function do
     use Type.Helpers
 
     group_compare do
-      def group_compare(%{params: p, return: r1}, %{params: p, return: r2}) do
+      def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
         Type.compare(r1, r2)
       end
       def group_compare(%{params: :any}, _),           do: :gt
       def group_compare(_, %{params: :any}),           do: :lt
-      def group_compare(%{params: p1}, %{params: p2})
-          when p1 == length(p2),                       do: :gt
-      def group_compare(%{params: p1}, %{params: p2})
-          when p2 == length(p1),                       do: :lt
       def group_compare(%{params: p1}, %{params: p2})
           when length(p1) < length(p2),                do: :gt
       def group_compare(%{params: p1}, %{params: p2})
@@ -200,20 +176,12 @@ defmodule Type.Function do
 
     usable_as do
       def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-          when (cparam == tparam) or (tparam == :any) or (is_list(cparam) and length(cparam) == tparam) do
+          when cparam == :any or tparam == :any do
         case Type.usable_as(challenge.return, target.return, meta) do
           :ok -> :ok
           # TODO: add meta-information here.
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
-        end
-      end
-
-      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-          when cparam == :any or (is_list(tparam) and length(tparam) == cparam) do
-        case Type.usable_as(challenge.return, target.return, meta) do
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-          _ -> {:maybe, [Message.make(challenge, target, meta)]}
         end
       end
 
@@ -245,32 +213,14 @@ defmodule Type.Function do
       def intersection(a, b = %Function{params: :any}) do
         intersection(b, a)
       end
-      def intersection(%{params: n, return: lr},
-                       %Function{params: p, return: rr}) when length(p) == n do
-        case Type.intersection(lr, rr) do
-          builtin(:none) -> builtin(:none)
-          return -> %Function{params: p, return: return}
-        end
-      end
-      def intersection(a = %{params: p}, b = %Function{params: n}) when length(p) == n do
-        intersection(b, a)
-      end
       def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
-        case Type.intersection(lr, rr) do
-          builtin(:none) -> builtin(:none)
-          return -> %Function{params: p, return: return}
-        end
-      end
-      def intersection(%{params: lp, return: lr}, %Function{params: rp, return: rr})
-        when length(lp) == length(rp) do
 
-        params = lp
-        |> Enum.zip(rp)
-        |> Enum.map(fn {l, r} -> Type.union(l, r) end)
+        return = Type.intersection(lr, rr)
 
-        case Type.intersection(lr, rr) do
-          builtin(:none) -> builtin(:none)
-          return -> %Function{params: params, return: return}
+        if return == builtin(:none) do
+          builtin(:none)
+        else
+          %Function{params: p, return: return}
         end
       end
     end
@@ -279,16 +229,9 @@ defmodule Type.Function do
       def subtype?(challenge, target = %Function{params: :any}) do
         Type.subtype?(challenge.return, target.return)
       end
-      def subtype?(challenge = %{params: p}, target = %Function{params: i})
-          when (p == i) or (length(p) == i) do
-        Type.subtype?(challenge.return, target.return)
-      end
       def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
-          when length(p_c) == length(p_t) do
-        Type.subtype?(challenge.return, target.return) and
-        (p_c
-         |> Enum.zip(p_t)
-         |> Enum.all?(fn {c, t} -> Type.subtype?(t, c) end))
+          when p_c == p_t do
+        Type.subtype?(challenge.return, target.return)
       end
     end
   end
@@ -299,12 +242,6 @@ defmodule Type.Function do
     def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
     def inspect(%{params: :any, return: return}, opts) do
       concat(basic_inspect(:any, return, opts) ++ [")"])
-    end
-    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
-      arity
-      |> basic_inspect(return, opts)
-      |> Kernel.++([")"])
-      |> concat
     end
     def inspect(%{params: params, return: return}, opts) do
 
@@ -335,12 +272,6 @@ defmodule Type.Function do
     end
 
     defp render_params(:any, _), do: "..."
-    defp render_params(arity, _) when is_integer(arity) do
-      "_"
-      |> List.duplicate(arity)
-      |> Enum.intersperse(", ")
-      |> concat
-    end
     defp render_params(lst, opts) do
       lst
       |> Enum.map(&to_doc(&1, opts))
