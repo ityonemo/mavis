@@ -2,7 +2,7 @@ defmodule TypeTest.Targets do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, Function, List, Map, Tuple}
+  alias Type.{Bitstring, Function}
 
   @example_list [-47, builtin(:neg_integer), 0, 47, -10..10,
   builtin(:pos_integer), builtin(:float), :foo, builtin(:atom),

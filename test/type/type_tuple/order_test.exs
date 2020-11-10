@@ -7,8 +7,6 @@ defmodule TypeTest.TypeTuple.OrderTest do
 
   use Type.Operators
 
-  alias Type.Tuple
-
   describe "a tuple" do
     test "is bigger than bottom and pid" do
       assert tuple({}) > builtin(:none)

@@ -6,8 +6,6 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.Tuple
-
   @anytuple builtin(:tuple)
 
   describe "any tuple" do

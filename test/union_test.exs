@@ -130,7 +130,6 @@ defmodule TypeTest.UnionTest do
     assert builtin(:atom) = (builtin(:atom) <|> :bar)
   end
 
-  alias Type.Tuple
   @any builtin(:any)
   @anytuple builtin(:tuple)
 

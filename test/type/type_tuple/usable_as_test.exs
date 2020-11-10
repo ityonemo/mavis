@@ -6,7 +6,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
   import Type, only: :macros
   use Type.Operators
 
-  alias Type.{Message, Tuple}
+  alias Type.Message
 
   @any_tuple builtin(:tuple)
 

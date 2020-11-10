@@ -8,8 +8,6 @@ defmodule TypeTest.Type.FetchSpec.TuplesTest do
 
   @source TypeTest.SpecExample.Tuples
 
-  alias Type.Tuple
-
   test "empty tuple" do
     assert {:ok, identity_for(tuple({}))}
       == Type.fetch_spec(@source, :empty_literal_spec, 1)

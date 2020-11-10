@@ -7,8 +7,6 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
 
   use Type.Operators
 
-  alias Type.Tuple
-
   @any_tuple builtin(:tuple)
 
   describe "any tuples" do

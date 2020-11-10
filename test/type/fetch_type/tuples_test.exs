@@ -6,8 +6,6 @@ defmodule TypeTest.Type.FetchType.TuplesTest do
 
   @source TypeTest.TypeExample.Tuples
 
-  alias Type.Tuple
-
   test "empty tuple" do
     assert {:ok, tuple({})}
       == Type.fetch_type(@source, :empty_literal)

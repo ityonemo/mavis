@@ -7,7 +7,7 @@ defmodule TypeTest.Builtin.OrderTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, Function, List, Map, Tuple}
+  alias Type.Bitstring
 
   # types in this document are tested in type compare.
 
