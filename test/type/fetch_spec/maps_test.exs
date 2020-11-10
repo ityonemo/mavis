@@ -15,27 +15,27 @@ defmodule TypeTest.Type.FetchSpec.MapsTest do
   end
 
   test "atom key map literal" do
-    assert {:ok, identity_for(Map.build(%{atom: builtin(:integer)}, %{}))} ==
+    assert {:ok, identity_for(map(%{atom: builtin(:integer)}))} ==
       Type.fetch_spec(@source, :atom_key_spec, 1)
   end
 
   test "required literal type" do
-    assert {:ok, identity_for(Map.build(%{foo: builtin(:integer)}, %{}))} ==
+    assert {:ok, identity_for(map(%{foo: builtin(:integer)}))} ==
       Type.fetch_spec(@source, :required_literal_spec, 1)
   end
 
   test "optional literal type" do
-    assert {:ok, identity_for(Map.build(foo: builtin(:integer)))} ==
+    assert {:ok, identity_for(map(%{optional(:foo) => builtin(:integer)}))} ==
       Type.fetch_spec(@source, :optional_literal_spec, 1)
   end
 
   test "struct literal type" do
-    assert {:ok, identity_for(Map.build(%{__struct__: @source, foo: builtin(:any)}, %{}))} ==
+    assert {:ok, identity_for(map(%{__struct__: @source, foo: builtin(:any)}))} ==
       Type.fetch_spec(@source, :struct_literal_spec, 1)
   end
 
   test "struct defined literal type" do
-    assert {:ok, identity_for(Map.build(%{__struct__: @source, foo: builtin(:integer)}, %{}))} ==
+    assert {:ok, identity_for(map(%{__struct__: @source, foo: builtin(:integer)}))} ==
       Type.fetch_spec(@source, :struct_defined_literal_spec, 1)
   end
 end

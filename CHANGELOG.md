@@ -6,6 +6,7 @@
 - change `builtin(:integer)` from a true builtin to an aliased builtin
 - adds `Type.map/1`, `Type.tuple/1`, and `Type.function/1` macros
 - adds `Type.is_singleton/1` guard
+- fixes tuple union merging rules and makes function union merging rules
 
 ## 0.0.4
 - make `Type.fetch_type/3` use a sane call pattern

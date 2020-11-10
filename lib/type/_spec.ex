@@ -95,10 +95,10 @@ defmodule Type.Spec do
     %Type.List{type: 0..0x10FFFF, nonempty: true}
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
-    %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
+    list(tuple({builtin(:atom), builtin(:any)}))
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
-    %Type.List{type: %Type.Tuple{elements: [builtin(:atom), parse(type, assigns)]}}
+    list(tuple({builtin(:atom), parse(type, assigns)}))
   end
   # general remote type
   def parse({:remote_type, _, [module, name, args]}, assigns) do
@@ -118,7 +118,7 @@ defmodule Type.Spec do
   end
   # default builtin
   def parse({:type, _, type, []}, _) when type in @builtins do
-    select_builtin(type)
+    Type.select_builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment

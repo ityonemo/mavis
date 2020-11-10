@@ -71,9 +71,9 @@ defmodule TypeTest do
     end
 
     test "assigns tuples correctly" do
-      assert %Type.Tuple{elements: []} == Type.of({})
-      assert %Type.Tuple{elements: [1]} == Type.of({1})
-      assert %Type.Tuple{elements: [:ok, 1]} == Type.of({:ok, 1})
+      assert tuple({}) == Type.of({})
+      assert tuple({1}) == Type.of({1})
+      assert tuple({:ok, 1}) == Type.of({:ok, 1})
     end
 
     test "assigns empty list correctly" do
@@ -81,9 +81,9 @@ defmodule TypeTest do
     end
 
     test "assigns proper lists correctly, and makes them nonempty" do
-      assert %Type.List{type: 1, nonempty: true} == Type.of([1, 1, 1])
-      assert %Type.List{type: (1 <|> :foo), nonempty: true} == Type.of([1, :foo, :foo])
-      assert %Type.List{type: (1 <|> :foo <|> builtin(:pid)), nonempty: true} == Type.of([self(), 1, :foo])
+      assert list(1, ...) == Type.of([1, 1, 1])
+      assert list((1 <|> :foo), ...) == Type.of([1, :foo, :foo])
+      assert list((1 <|> :foo <|> builtin(:pid)), ...) == Type.of([self(), 1, :foo])
     end
 
     test "assigns improper lists correctly" do
@@ -92,17 +92,17 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: %{foo: remote(String.t(3))}} ==
+      assert map(%{foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo"})
-      assert %Type.Map{required: %{bar: 1, foo: remote(String.t(3))}} ==
+      assert map(%{bar: 1, foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: %{1 => remote(String.t(3))}} ==
+      assert map(%{1 => remote(String.t(3))}) ==
         Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => remote(String.t(3))}} ==
+      assert map(%{optional(remote(String.t(3))) => remote(String.t(3))}) ==
         Type.of(%{"foo" => "bar"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => :bar <|> :quux}} ==
+      assert map(%{optional(remote(String.t(3))) => :bar <|> :quux}) ==
         Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
@@ -259,8 +259,8 @@ defmodule TypeTest do
 
     test "list macro that is a k/v" do
       assert %Type.List{type: %Type.Union{of: [
-        %Type.Tuple{elements: [:foo, builtin(:float)]},
-        %Type.Tuple{elements: [:bar, builtin(:integer)]}
+        tuple({:foo, builtin(:float)}),
+        tuple({:bar, builtin(:integer)})
       ]}} ==
         list(foo: builtin(:float), bar: builtin(:integer))
     end

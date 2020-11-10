@@ -4,7 +4,7 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   describe "the intersection of a literal range" do
     test "with itself, integer and any is itself" do

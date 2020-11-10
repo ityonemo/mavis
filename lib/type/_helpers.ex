@@ -94,10 +94,14 @@ defmodule Type.Helpers do
 
       # some integer types override the union analysis, so this must
       # come at the end.
-      def usable_as(challenge, %Type.Union{of: types}, meta) do
+      def usable_as(challenge, target = %Type.Union{of: types}, meta) do
         types
         |> Enum.map(&Type.usable_as(challenge, &1, meta))
         |> Enum.reduce(&Type.ternary_or/2)
+        |> case do
+          {:error, msg} -> {:error, %{msg | type: challenge, target: target}}
+          any -> any
+        end
       end
 
       def usable_as(challenge, union, meta) do
@@ -170,24 +174,26 @@ defmodule Type.Helpers do
     quote do
       def group_compare(type, type), do: :eq
 
-      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
-        case group_compare(type1, type2) do
-          :gt -> :gt
-          _ -> :lt
-        end
-      end
-
-      def group_compare(type1, %Type.Opaque{type: type2}) do
-        case group_compare(type1, type2) do
-          :eq -> :gt
-          cmp -> cmp
-        end
-      end
-
       def group_compare(type, var = %Type.Function.Var{}) do
         case group_compare(type, var.constraint) do
           :eq -> :gt
           cmp -> cmp
+        end
+      end
+
+      def group_compare(type1, %Type.Opaque{type: type2}) do
+        type1 |> IO.inspect(label: "185")
+        type2 |> IO.inspect(label: "186")
+        case group_compare(type1, type2) do
+          :eq -> :gt
+          cmp -> cmp
+        end
+      end
+
+      def group_compare(type1, %Type.Union{of: [type2 | _]}) do
+        case group_compare(type1, type2) do
+          :gt -> :gt
+          _ -> :lt
         end
       end
 
@@ -211,11 +217,15 @@ defmodule Type.Helpers do
   equivalent to an `:ok` response from `Type.usable_as/3`.
   """
   defmacro subtype(do: block) do
-    # TODO: figure out how to DRY this.
+
+    might_be_union = Enum.map(
+      [Union, Function.Var],
+      &Module.concat(Type.Properties.Type, &1))
+
     quote do
       def subtype?(a, a), do: true
 
-      unless __MODULE__ in [Type.Properties.Type.Union] do
+      unless __MODULE__ in unquote(might_be_union) do
         def subtype?(a, %Type.Union{of: types}) do
           Enum.any?(types, &Type.subtype?(a, &1))
         end

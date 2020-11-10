@@ -2,7 +2,6 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
   use ExUnit.Case, async: true
 
   import Type, only: :macros
-  import Type.Operators
 
   import TypeTest.SpecCase
 

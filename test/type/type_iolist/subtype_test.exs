@@ -3,7 +3,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
 
   @moduletag :subtype
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.{Bitstring, List}
 
@@ -40,7 +40,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "is not a subtype of a list missing a final component are subtypes of iolists" do
-      refute builtin(:iolist) in %List{type: @ltype}
+      refute builtin(:iolist) in list(@ltype)
       refute builtin(:iolist) in %List{type: @ltype, final: @binary}
     end
 
@@ -49,7 +49,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except([%List{}])
+      TypeTest.Targets.except([builtin(:list)])
       |> Enum.each(fn target ->
         refute builtin(:iolist) in target
       end)
@@ -64,7 +64,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "missing a final component are subtypes of iolists" do
-      assert %List{type: @ltype} in builtin(:iolist)
+      assert list(@ltype) in builtin(:iolist)
       assert %List{type: @ltype, final: @binary} in builtin(:iolist)
     end
 

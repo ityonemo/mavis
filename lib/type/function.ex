@@ -40,7 +40,7 @@ defmodule Type.Function do
   The `Type` module lets you specify a function using "shortcut form" via the `Type.function/1` macro:
 
   ```
-  iex> import Type
+  iex> import Type, only: :macros
   iex> function((builtin(:atom) -> builtin(:pos_integer)))
   %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
   ```
@@ -72,7 +72,7 @@ defmodule Type.Function do
   followed by type order on their parameters.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.compare(function(( -> builtin(:atom))), function(( -> builtin(:integer))))
   :gt
   iex> Type.compare(function((builtin(:integer) -> builtin(:integer))),
@@ -86,7 +86,7 @@ defmodule Type.Function do
   types overlap.  If they have the same parameters, then their return values are intersected.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:integer))))
   %Type.Function{params: [], return: 1..10}
   iex> Type.intersection(function((builtin(:integer) -> builtin(:integer))),
@@ -98,7 +98,7 @@ defmodule Type.Function do
   will adopt the parameters of the intersected function.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.intersection(function((... -> builtin(:pos_integer))),
   ...>                   function((1..10 -> builtin(:pos_integer))))
   %Type.Function{params: [1..10], return: %Type{name: :pos_integer}}
@@ -110,7 +110,7 @@ defmodule Type.Function do
   identical then their return types will be merged.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.union(function(( -> 1..10)), function(( -> 11..20)))
   %Type.Function{params: [], return: 1..20}
   ```
@@ -121,7 +121,7 @@ defmodule Type.Function do
   value type is the subtype of the other's
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.subtype?(function((builtin(:integer) -> 1..10)),
   ...>               function((builtin(:integer) -> builtin(:integer))))
   true
@@ -139,7 +139,7 @@ defmodule Type.Function do
   return type of the targeted function.
 
   ```elixir
-  iex> import Type
+  iex> import Type, only: :macros
   iex> Type.usable_as(function((builtin(:pos_integer) -> 1..10)), function((1..10 -> builtin(:pos_integer))))
   :ok
   iex> Type.usable_as(function((1..10 -> 1..10)), function((builtin(:pos_integer) -> builtin(:pos_integer))))
@@ -160,7 +160,7 @@ defmodule Type.Function do
     inferred: boolean
   }
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   defimpl Type.Properties do
     import Type, only: :macros

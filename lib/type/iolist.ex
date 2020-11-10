@@ -66,32 +66,39 @@ defmodule Type.Iolist do
   alias Type.Message
 
   # USABLE_AS
-  # TODO: consider abstracting this out from the LIST module
   def usable_as_list(target = %List{nonempty: true}, meta) do
-    case usable_as_list(%{target | nonempty: false}, meta) do
-      :ok -> {:maybe, Message.make(builtin(:iolist), target, meta)}
-      maybe_or_error -> maybe_or_error
-    end
-  end
-  def usable_as_list(target, meta) do
     u1 = Type.usable_as(@ltype, target.type, meta)
     u2 = Type.usable_as(@final, target.final, meta)
 
     case Type.ternary_and(u1, u2) do
-      :ok -> :ok
+      :ok -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
       # TODO: make this report the internal error as well.
       {:maybe, _} -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
       {:error, _} -> {:error, Message.make(builtin(:iolist), target, meta)}
     end
   end
-
-  def usable_as_iolist(challenge, meta) do
-    u1 = Type.usable_as(challenge.type, @ltype, meta)
-    u2 = Type.usable_as(challenge.final, @final, meta)
-
-    case Type.ternary_and(u1, u2) do
+  def usable_as_list(target, meta) do
+    case Type.usable_as(@ltype, target.type, meta) do
+      {:error, _} -> {:maybe, [Message.make(@ltype, target.type, meta)]}
+      any -> any
+    end
+    |> Type.ternary_and(Type.usable_as(@final, target.final, meta))
+    |> case do
       :ok -> :ok
-      # TODO: make this report the internal error as well.
+      {:maybe, _} -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
+      {:error, _} -> {:error, Message.make(builtin(:iolist), target, meta)}
+    end
+  end
+
+  def usable_as_iolist(challenge = %{nonempty: nonempty}, meta) do
+    case Type.usable_as(challenge.type, @ltype, meta) do
+      {:error, _} when not nonempty ->
+        {:maybe, [Message.make(challenge.type, @ltype, meta)]}
+      any -> any
+    end
+    |> Type.ternary_and(Type.usable_as(challenge.final, @final, meta))
+    |> case do
+      :ok -> :ok
       {:maybe, _} -> {:maybe, [Message.make(challenge, builtin(:iolist), meta)]}
       {:error, _} -> {:error, Message.make(challenge, builtin(:iolist), meta)}
     end
