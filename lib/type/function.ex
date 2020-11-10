@@ -263,6 +263,12 @@ defmodule Type.Function do
     def inspect(%{params: :any, return: return}, opts) do
       concat(basic_inspect(:any, return, opts) ++ [")"])
     end
+    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
+      arity
+      |> basic_inspect(return, opts)
+      |> Kernel.++([")"])
+      |> concat
+    end
     def inspect(%{params: params, return: return}, opts) do
 
       # check if any of the params or the returns have *when* statements
@@ -292,6 +298,12 @@ defmodule Type.Function do
     end
 
     defp render_params(:any, _), do: "..."
+    defp render_params(arity, _) when is_integer(arity) do
+      "_"
+      |> List.duplicate(arity)
+      |> Enum.intersperse(", ")
+      |> concat
+    end
     defp render_params(lst, opts) do
       lst
       |> Enum.map(&to_doc(&1, opts))
