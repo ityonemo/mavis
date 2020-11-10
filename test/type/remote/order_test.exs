@@ -27,9 +27,9 @@ defmodule TypeTest.Remote.OrderTest do
   end
 
   describe "String.t/1" do
-    test "is smaller than general String.t and bigger String.t's" do
+    test "is smaller than general String.t and bigger than bigger String.t's" do
       assert remote(String.t(3)) < remote(String.t())
-      assert remote(String.t(3)) < remote(String.t(4))
+      assert remote(String.t(3)) > remote(String.t(4))
     end
   end
 end

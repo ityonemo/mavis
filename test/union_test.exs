@@ -246,8 +246,8 @@ defmodule TypeTest.UnionTest do
     test "bitstrings can merge string/1 s" do
       range = 2..4
       assert %Type.Union{of: [
-        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]},
-        %Type.Bitstring{size: 8, unit: 16}
+        %Type.Bitstring{size: 8, unit: 16},
+        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]}
       ]} = remote(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
     end
   end
