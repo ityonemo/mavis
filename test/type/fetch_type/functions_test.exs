@@ -7,8 +7,6 @@ defmodule TypeTest.Type.FetchType.FunctionsTest do
 
   @source TypeTest.TypeExample.Functions
 
-  alias Type.Function
-
   test "zero arity" do
     assert {:ok, function(( -> builtin(:any)))} ==
       Type.fetch_type(@source, :zero_arity)

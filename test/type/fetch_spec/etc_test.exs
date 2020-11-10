@@ -5,8 +5,6 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   import Type.Operators
   import TypeTest.SpecCase
 
-  alias Type.Function
-
   @moduletag :fetch
 
   @unions TypeTest.SpecExample.Unions

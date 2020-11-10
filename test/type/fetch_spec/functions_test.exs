@@ -9,8 +9,6 @@ defmodule TypeTest.Type.FetchSpec.FunctionsTest do
 
   import TypeTest.SpecCase
 
-  alias Type.Function
-
   test "zero arity" do
     assert {:ok, identity_for(function(( -> builtin(:any))))} ==
       Type.fetch_spec(@source, :zero_arity_spec, 1)

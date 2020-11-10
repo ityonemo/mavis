@@ -6,7 +6,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
   import Type, only: :macros
   use Type.Operators
 
-  alias Type.{Function, Message}
+  alias Type.Message
 
   @any builtin(:any)
   @any_fn function((... -> @any))

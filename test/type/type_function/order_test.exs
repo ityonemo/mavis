@@ -7,8 +7,6 @@ defmodule TypeTest.TypeFunction.OrderTest do
 
   use Type.Operators
 
-  alias Type.Function
-
   describe "a parameterized function" do
     test "is bigger than bottom and reference" do
       assert function(( -> builtin(:any))) > builtin(:none)

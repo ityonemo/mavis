@@ -5,7 +5,6 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
   @moduletag :intersection
 
   import Type, only: :macros
-  alias Type.Function
 
   @any builtin(:any)
   @any_function function((... -> @any))

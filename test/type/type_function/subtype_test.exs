@@ -7,8 +7,6 @@ defmodule TypeTest.TypeFunction.SubtypeTest do
 
   use Type.Operators
 
-  alias Type.Function
-
   @any_function function((... -> builtin(:any)))
 
   describe "the any function" do
