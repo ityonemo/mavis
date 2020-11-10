@@ -3,7 +3,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   @moduletag :usable_as
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 
@@ -15,13 +15,13 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "lists" do
-      assert ([] ~> %List{type: builtin(:any)}) == :ok
-      assert ([] ~> %List{type: :foo}) == :ok
+      assert ([] ~> builtin(:list)) == :ok
+      assert ([] ~> list(:foo)) == :ok
     end
 
     test "a union with list" do
       assert ([] ~> ([] <|> builtin(:atom))) == :ok
-      assert ([] ~> (%List{} <|> builtin(:atom))) == :ok
+      assert ([] ~> (builtin(:list) <|> builtin(:atom))) == :ok
     end
 
     test "any" do
@@ -31,8 +31,8 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   describe "empty list not usable as" do
     test "a nonempty list" do
-      assert {:error, %Message{type: [], target: %List{nonempty: true}}} =
-        ([] ~> %List{nonempty: true})
+      assert {:error, %Message{type: [], target: list(...)}} =
+        ([] ~> list(...))
     end
 
     test "a list with a different final" do
@@ -46,7 +46,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "any other type" do
-      targets = TypeTest.Targets.except([[], %Type.List{}])
+      targets = TypeTest.Targets.except([[], builtin(:list)])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: [], target: ^target}} =
           ([] ~> target)

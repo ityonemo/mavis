@@ -4,7 +4,7 @@ defmodule TypeTest.Builtin.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   describe "the intersection of none" do
     test "with all other types is none" do

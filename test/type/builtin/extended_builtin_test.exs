@@ -1,7 +1,7 @@
 defmodule TypeTest.ExtendedBuiltinTest do
   use ExUnit.Case, async: true
 
-  import Type
+  import Type, only: :macros
 
   describe "term/0 type" do
     test "works in use" do

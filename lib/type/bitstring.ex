@@ -122,9 +122,25 @@ defmodule Type.Bitstring do
       def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a < b,  do: :gt
       def group_compare(%Bitstring{size: a}, %Bitstring{size: b}) when a > b,  do: :lt
 
-      def group_compare(left, %Type{module: String, name: :t}) do
+      def group_compare(left, %Type{module: String, name: :t, params: []}) do
         left
         |> group_compare(%Type.Bitstring{size: 0, unit: 8})
+        |> case do
+          :eq -> :gt
+          order -> order
+        end
+      end
+
+      def group_compare(left, %Type{module: String, name: :t, params: [p]}) do
+        lowest_idx = case p do
+          i when is_integer(i) -> [i]
+          range = _.._ -> range
+          %Type.Union{of: ints} -> ints
+        end
+        |> Enum.min
+
+        left
+        |> Type.compare(%Type.Bitstring{size: lowest_idx * 8})
         |> case do
           :eq -> :gt
           order -> order

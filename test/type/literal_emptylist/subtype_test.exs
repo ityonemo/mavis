@@ -3,7 +3,7 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
 
   @moduletag :subtype
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.List
 
@@ -15,7 +15,7 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
     end
 
     test "is a subtype of generic Type.List" do
-      assert [] in %List{}
+      assert [] in builtin(:list)
     end
 
     test "is a subtype of builtin any()" do
@@ -24,20 +24,20 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
 
     test "is a subtype of a union with itself or generic list type" do
       assert [] in ([] <|> builtin(:atom))
-      assert [] in (%List{} <|> builtin(:integer))
+      assert [] in (builtin(:list) <|> builtin(:integer))
     end
 
     test "is not a subtype of a union with orthogonal types" do
-      refute [] in (%List{nonempty: true} <|> :infinity)
+      refute [] in (list(...) <|> :infinity)
     end
 
     test "is not a subtype of nonempty lists or list with different finals" do
-      refute [] in %List{nonempty: true}
+      refute [] in list(...)
       refute [] in %List{final: :foo}
     end
 
     test "is not a subtype of other types" do
-      TypeTest.Targets.except([[], %List{}])
+      TypeTest.Targets.except([[], builtin(:list)])
       |> Enum.each(fn target ->
         refute [] in target
       end)

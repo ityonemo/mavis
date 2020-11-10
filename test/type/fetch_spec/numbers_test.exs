@@ -2,7 +2,6 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
   use ExUnit.Case, async: true
 
   import Type, only: :macros
-  import Type.Operators
 
   import TypeTest.SpecCase
 
@@ -50,12 +49,10 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
   end
 
   test "number" do
-    assert {:ok, identity_for(builtin(:float) <|> builtin(:integer))} ==
-      Type.fetch_spec(@source, :number_spec, 1)
+    assert {:ok, identity_for(builtin(:number))} == Type.fetch_spec(@source, :number_spec, 1)
   end
 
   test "timeout" do
-    assert {:ok, identity_for(builtin(:non_neg_integer) <|> :infinity)} ==
-      Type.fetch_spec(@source, :timeout_spec, 1)
+    assert {:ok, identity_for(builtin(:timeout))} == Type.fetch_spec(@source, :timeout_spec, 1)
   end
 end

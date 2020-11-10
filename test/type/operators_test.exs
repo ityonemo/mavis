@@ -2,7 +2,7 @@ defmodule TypeTest.OperatorsTest do
   use ExUnit.Case, async: true
   use Type.Operators
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   @moduletag :operators
 

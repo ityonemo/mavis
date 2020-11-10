@@ -4,7 +4,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.Bitstring
 

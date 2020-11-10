@@ -5,7 +5,7 @@ defmodule TypeTest.TypeUnion.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   describe "unions" do
     test "are all part of any" do

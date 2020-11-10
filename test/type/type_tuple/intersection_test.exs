@@ -4,11 +4,9 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
-  alias Type.Tuple
-
-  @anytuple %Tuple{elements: :any}
+  @anytuple builtin(:tuple)
 
   describe "any tuple" do
     test "intersects with any and self" do
@@ -17,19 +15,19 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     end
 
     test "turns into its counterparty" do
-      assert %Tuple{elements: []} == @anytuple <~> %Tuple{elements: []}
-      assert %Tuple{elements: [:foo]} == @anytuple <~> %Tuple{elements: [:foo]}
-      assert %Tuple{elements: [:foo, builtin(:integer)]} ==
-        @anytuple <~> %Tuple{elements: [:foo, builtin(:integer)]}
+      assert tuple({}) == @anytuple <~> tuple({})
+      assert tuple({:foo}) == @anytuple <~> tuple({:foo})
+      assert tuple({:foo, builtin(:integer)}) ==
+        @anytuple <~> tuple({:foo, builtin(:integer)})
     end
 
     test "with unions works as expected" do
-      assert %Tuple{elements: []} == @anytuple <~> (%Tuple{elements: []} <|> 1..10)
+      assert tuple({}) == @anytuple <~> (tuple({}) <|> 1..10)
       assert builtin(:none) == @anytuple <~> (builtin(:atom) <|> builtin(:port))
     end
 
     test "doesn't intersect with anything else" do
-      TypeTest.Targets.except([@anytuple, %Tuple{elements: []}])
+      TypeTest.Targets.except([@anytuple, tuple({})])
       |> Enum.each(fn target ->
         assert builtin(:none) == @anytuple <~> target
       end)
@@ -38,28 +36,24 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
   describe "tuples with defined elements" do
     test "intersect with the cartesian intersection" do
-      assert %Tuple{elements: [:foo]} ==
-        %Tuple{elements: [:foo]} <~>
-        %Tuple{elements: [builtin(:atom)]}
-      assert %Tuple{elements: [:foo]} ==
-        %Tuple{elements: [builtin(:atom)]} <~>
-        %Tuple{elements: [:foo]}
+      assert tuple({:foo}) == tuple({:foo}) <~> tuple({builtin(:atom)})
+      assert tuple({:foo}) == tuple({builtin(:atom)}) <~> tuple({:foo})
 
-      assert %Tuple{elements: [:foo, 47]} ==
-        %Tuple{elements: [:foo, builtin(:integer)]} <~>
-        %Tuple{elements: [builtin(:atom), 47]}
-      assert %Tuple{elements: [:foo, 47]} ==
-        %Tuple{elements: [builtin(:atom), builtin(:integer)]} <~>
-        %Tuple{elements: [:foo, 47]}
-      assert %Tuple{elements: [:foo, 47]} ==
-        %Tuple{elements: [:foo, 47]} <~>
-        %Tuple{elements: [builtin(:atom), builtin(:integer)]}
+      assert tuple({:foo, 47}) ==
+        tuple({:foo, builtin(:integer)}) <~>
+        tuple({builtin(:atom), 47})
+      assert tuple({:foo, 47}) ==
+        tuple({builtin(:atom), builtin(:integer)}) <~>
+        tuple({:foo, 47})
+      assert tuple({:foo, 47}) ==
+        tuple({:foo, 47}) <~>
+        tuple({builtin(:atom), builtin(:integer)})
     end
 
     test "a single mismatch yields none" do
-      assert builtin(:none) == %Tuple{elements: [:foo]} <~> %Tuple{elements: [:bar]}
-      assert builtin(:none) == %Tuple{elements: [:foo, :bar]} <~> %Tuple{elements: [:bar, :bar]}
-      assert builtin(:none) == %Tuple{elements: [:bar, :bar]} <~> %Tuple{elements: [:bar, :foo]}
+      assert builtin(:none) == tuple({:foo}) <~> tuple({:bar})
+      assert builtin(:none) == tuple({:foo, :bar}) <~> tuple({:bar, :bar})
+      assert builtin(:none) == tuple({:bar, :bar}) <~> tuple({:bar, :foo})
     end
   end
 end

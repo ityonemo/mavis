@@ -14,12 +14,12 @@ defmodule Type.Opaque do
     type: Type.t
   }
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   defimpl Type.Properties do
     import Type, only: :macros
-    import Type.Helpers
 
+    import Type.Helpers
     alias Type.{Message, Opaque}
 
     def compare(left = %{type: this}, right = %Opaque{type: this}) do
@@ -39,6 +39,7 @@ defmodule Type.Opaque do
           |> Kernel.||(:eq)
       end
     end
+
     def compare(this, other) do
       case Type.compare(this.type, other) do
         :eq -> :lt
@@ -61,7 +62,7 @@ defmodule Type.Opaque do
         case Type.usable_as(challenge.type, target, meta) do
           :ok ->
             # TODO: add opaqueness message here.
-            {:warn, [Message.make(challenge, target, meta)]}
+            {:maybe, [Message.make(challenge, target, meta)]}
           any -> any
         end
       end

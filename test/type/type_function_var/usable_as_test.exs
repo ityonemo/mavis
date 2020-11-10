@@ -6,7 +6,7 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
   # warning: I'm not entirely sure this is the right way to handle
   # this, but it's hard to tell until more code is built around it.
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
   use Type.Operators
 
   alias Type.Function.Var

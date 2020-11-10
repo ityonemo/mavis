@@ -10,18 +10,18 @@ defmodule TypeTest do
   doctest Type.List
   doctest Type.NoInference
   doctest Type.Tuple
+  doctest Type.Map
   doctest Type.Union
 
   use Type.Operators
 
-  import Type, only: [builtin: 1, remote: 1, list: 1, list: 2]
+  import Type, only: :macros
 
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
       assert 0 == Type.typegroup(builtin(:none))
       assert 1 == Type.typegroup(builtin(:integer))
       assert 1 == Type.typegroup(builtin(:neg_integer))
-      assert 1 == Type.typegroup(builtin(:non_neg_integer))
       assert 1 == Type.typegroup(builtin(:pos_integer))
       assert 1 == Type.typegroup(47)
       assert 1 == Type.typegroup(1..4)
@@ -71,9 +71,9 @@ defmodule TypeTest do
     end
 
     test "assigns tuples correctly" do
-      assert %Type.Tuple{elements: []} == Type.of({})
-      assert %Type.Tuple{elements: [1]} == Type.of({1})
-      assert %Type.Tuple{elements: [:ok, 1]} == Type.of({:ok, 1})
+      assert tuple({}) == Type.of({})
+      assert tuple({1}) == Type.of({1})
+      assert tuple({:ok, 1}) == Type.of({:ok, 1})
     end
 
     test "assigns empty list correctly" do
@@ -81,9 +81,9 @@ defmodule TypeTest do
     end
 
     test "assigns proper lists correctly, and makes them nonempty" do
-      assert %Type.List{type: 1, nonempty: true} == Type.of([1, 1, 1])
-      assert %Type.List{type: (1 <|> :foo), nonempty: true} == Type.of([1, :foo, :foo])
-      assert %Type.List{type: (1 <|> :foo <|> builtin(:pid)), nonempty: true} == Type.of([self(), 1, :foo])
+      assert list(1, ...) == Type.of([1, 1, 1])
+      assert list((1 <|> :foo), ...) == Type.of([1, :foo, :foo])
+      assert list((1 <|> :foo <|> builtin(:pid)), ...) == Type.of([self(), 1, :foo])
     end
 
     test "assigns improper lists correctly" do
@@ -92,17 +92,17 @@ defmodule TypeTest do
 
     test "assigns maps correctly" do
       assert %Type.Map{} == Type.of(%{})
-      assert %Type.Map{required: %{foo: remote(String.t(3))}} ==
+      assert map(%{foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo"})
-      assert %Type.Map{required: %{bar: 1, foo: remote(String.t(3))}} ==
+      assert map(%{bar: 1, foo: remote(String.t(3))}) ==
         Type.of(%{foo: "foo", bar: 1})
-      assert %Type.Map{required: %{1 => remote(String.t(3))}} ==
+      assert map(%{1 => remote(String.t(3))}) ==
         Type.of(%{1 => "foo"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => remote(String.t(3))}} ==
+      assert map(%{optional(remote(String.t(3))) => remote(String.t(3))}) ==
         Type.of(%{"foo" => "bar"})
 
-      assert %Type.Map{optional: %{remote(String.t(3)) => :bar <|> :quux}} ==
+      assert map(%{optional(remote(String.t(3))) => :bar <|> :quux}) ==
         Type.of(%{"foo" => :bar, "baz" => :quux})
     end
 
@@ -130,8 +130,16 @@ defmodule TypeTest do
     end
   end
 
-  describe "builtins" do
-    test "pos_integer"
+  describe "composite builtins" do
+    test "non_neg_integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0]}
+        == builtin(:non_neg_integer)
+    end
+
+    test "integer" do
+      assert %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
+       == builtin(:integer)
+    end
 
     test "term" do
       assert builtin(:term) == builtin(:any)
@@ -221,7 +229,11 @@ defmodule TypeTest do
       assert builtin(:integer) <|> builtin(:float)
     end
 
-    test "struct"
+    test "struct" do
+      assert map(%{
+        optional(builtin(:atom)) => builtin(:any),
+        __struct__: builtin(:atom)}) == builtin(:struct)
+    end
 
     test "timeout" do
       assert builtin(:non_neg_integer) <|> :infinity == builtin(:timeout)
@@ -247,10 +259,25 @@ defmodule TypeTest do
 
     test "list macro that is a k/v" do
       assert %Type.List{type: %Type.Union{of: [
-        %Type.Tuple{elements: [:foo, builtin(:float)]},
-        %Type.Tuple{elements: [:bar, builtin(:integer)]}
+        tuple({:foo, builtin(:float)}),
+        tuple({:bar, builtin(:integer)})
       ]}} ==
         list(foo: builtin(:float), bar: builtin(:integer))
+    end
+  end
+
+  describe "function macro" do
+    test "works with a zero-arity function" do
+      assert %Type.Function{params: [], return: builtin(:any)} ==
+        function(( -> builtin(:any)))
+    end
+  end
+
+  describe "map macro" do
+    test "works with a hybrid system" do
+      assert %Type.Map{required: %{foo: builtin(:integer)},
+                       optional: %{1 => builtin(:integer)}} ==
+        map(%{optional(1) => builtin(:integer), foo: builtin(:integer)})
     end
   end
 

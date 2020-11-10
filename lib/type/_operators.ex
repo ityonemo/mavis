@@ -20,7 +20,7 @@ defmodule Type.Operators do
   @doc """
   Shortcut for `Type.union/2`
   """
-  defdelegate a <|> b, to: Type.Union, as: :of
+  defdelegate a <|> b, to: Type, as: :union
 
   @doc """
   Shortcut for `Type.intersection/2`

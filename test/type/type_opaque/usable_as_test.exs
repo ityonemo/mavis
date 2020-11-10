@@ -3,7 +3,7 @@ defmodule TypeTest.TypeOpaque.UsableAsTest do
 
   @moduletag :usable_as
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
   use Type.Operators
 
   alias Type.Opaque
@@ -22,8 +22,8 @@ defmodule TypeTest.TypeOpaque.UsableAsTest do
     end
 
     test "warns when usable_as is transferred" do
-      assert {:warn, _} = @opaque_int ~> builtin(:integer)
-      assert {:warn, _} = builtin(:integer) ~> @opaque_int
+      assert {:maybe, _} = @opaque_int ~> builtin(:integer)
+      assert {:maybe, _} = builtin(:integer) ~> @opaque_int
     end
   end
 end

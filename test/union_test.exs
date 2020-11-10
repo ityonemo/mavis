@@ -7,14 +7,14 @@ defmodule TypeTest.UnionTest do
 
   use Type.Operators
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   test "unions keep terms in reverse order" do
-    assert %Union{of: [47, 0]} = Union.of(47, 0)
-    assert %Union{of: [47, 0]} = Union.of(0, 47)
+    assert %Union{of: [47, 0]} = Type.union(47, 0)
+    assert %Union{of: [47, 0]} = Type.union(0, 47)
 
-    assert %Union{of: [:foo, 47]} = Union.of(:foo, 47)
-    assert %Union{of: [:foo, 47]} = Union.of(47, :foo)
+    assert %Union{of: [:foo, 47]} = Type.union(:foo, 47)
+    assert %Union{of: [:foo, 47]} = Type.union(47, :foo)
   end
 
   describe "unions are collectibles" do
@@ -35,7 +35,7 @@ defmodule TypeTest.UnionTest do
     end
 
     test "you can into a unions and it will be ordered as epexected" do
-      assert %Union{of: [5, 3, 1]} = Union.of(3 <|> 5, 1)
+      assert %Union{of: [5, 3, 1]} = Type.union(3 <|> 5, 1)
     end
   end
 
@@ -95,34 +95,8 @@ defmodule TypeTest.UnionTest do
       assert builtin(:non_neg_integer) == (builtin(:pos_integer) <|> 0..10)
     end
     test "collects ranges ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -1..0)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -3..0)
-    end
-    test "collects ranges not ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -1..10)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:pos_integer) <|> -3..10)
-    end
-  end
-
-  describe "when collecting non_neg_integer in unions" do
-    test "collects non negative integers" do
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 0)
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 2)
-    end
-    test "collects non negative ranges" do
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 0..10)
-      assert builtin(:non_neg_integer) == (builtin(:non_neg_integer) <|> 2..10)
-    end
-    test "collects ranges ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -1..0)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -3..0)
-    end
-    test "collects ranges not ending in zero" do
-      assert (-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -1..10)
-      assert (-3..-1 <|> builtin(:non_neg_integer)) == (builtin(:non_neg_integer) <|> -3..10)
-    end
-    test "fuses with neg_integer" do
-      assert builtin(:integer) == (builtin(:neg_integer) <|> builtin(:non_neg_integer))
+      assert (0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> 0..1)
+      assert (-3..0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> -3..1)
     end
   end
 
@@ -156,57 +130,77 @@ defmodule TypeTest.UnionTest do
     assert builtin(:atom) = (builtin(:atom) <|> :bar)
   end
 
-  alias Type.Tuple
   @any builtin(:any)
-  @anytuple %Tuple{elements: :any}
-
-  def tuple(list), do: %Tuple{elements: list}
+  @anytuple builtin(:tuple)
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
-      assert @anytuple == (@anytuple <|> %Tuple{elements: []})
-      assert @anytuple == (@anytuple <|> %Tuple{elements: [@any]})
-      assert @anytuple == (@anytuple <|> %Tuple{elements: [:foo]} <|> %Tuple{elements: [:bar]})
+      assert @anytuple == (@anytuple <|> tuple({}))
+      assert @anytuple == (@anytuple <|> tuple({@any}))
+      assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
     end
 
-    test "tuples are merged if their elements can merge" do
-      assert %Tuple{elements: [@any, :bar]} == (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, :bar]})
+    test "a tuple that is a subtype of another tuple gets merged" do
+      outer = tuple({:ok, builtin(:integer) <|> :bar, builtin(:float) <|> builtin(:integer)})
+      inner = tuple({:ok, builtin(:integer), builtin(:float)})
 
-      assert %Tuple{elements: [:bar, @any]} == (%Tuple{elements: [:bar, @any]} <|> %Tuple{elements: [:bar, :foo]})
+      assert outer == outer <|> inner
+    end
 
-      assert (%Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [@any, :bar]}) ==
-        (%Tuple{elements: [@any, :bar]} <|> %Tuple{elements: [:foo, @any]} <|> %Tuple{elements: [:foo, :bar]})
+    test "a tuple that is identical or has one difference gets merged" do
+      duple1 = tuple({:ok, builtin(:integer)})
+      duple2 = tuple({:ok, builtin(:float)})
+      duple3 = tuple({:error, builtin(:integer)})
 
-      assert %Tuple{elements: [1..2, 1..2]} == (
-        %Tuple{elements: [1, 2]} <|>
-        %Tuple{elements: [2, 1]} <|>
-        %Tuple{elements: [1, 1]} <|>
-        %Tuple{elements: [2, 2]}
-      )
+      assert duple1 == duple1 <|> duple1
+
+      assert tuple({:ok, builtin(:number)}) == duple1 <|> duple2
+      assert tuple({:ok <|> :error, builtin(:integer)}) == duple1 <|> duple3
+
+      triple1 = tuple({:ok, builtin(:integer), builtin(:float)})
+      triple2 = tuple({:error, builtin(:integer), builtin(:float)})
+      triple3 = tuple({:ok, builtin(:pid), builtin(:atom)})
+
+      assert tuple({:ok <|> :error, builtin(:integer), builtin(:float)}) ==
+        triple1 <|> triple2
+
+      # if there is more than one difference it doesn't get merged.
+      assert %Type.Union{} = triple1 <|> triple3
+    end
+
+    test "tuples are merged if their elements can transitively merge" do
+      assert tuple({@any, :bar}) == (tuple({@any, :bar}) <|> tuple({:foo, :bar}))
+
+      assert tuple({:bar, @any}) == (tuple({:bar, @any}) <|> tuple({:bar, :foo}))
+
+      assert (tuple({:foo, @any}) <|> tuple({@any, :bar})) ==
+        (tuple({@any, :bar}) <|> tuple({:foo, @any}) <|> tuple({:foo, :bar}))
+
+      assert tuple({1..2, 1..2}) == (tuple({1, 2}) <|> tuple({2, 1}) <|> tuple({1, 1}) <|> tuple({2, 2}))
     end
 
     test "complicated tuples can be merged" do
       # This should not be able to be solved without a more complicated SAT solver.
-      unless %Tuple{elements: [1..3, 1..3, 1..3]} == (
-        %Tuple{elements: [1 <|> 2, 2 <|> 3, 1 <|> 3]} <|>
-        %Tuple{elements: [2 <|> 3, 1 <|> 3, 1 <|> 2]} <|>
-        %Tuple{elements: [1 <|> 3, 1 <|> 2, 2 <|> 3]}
+      unless tuple({1..3, 1..3, 1..3}) == (
+        tuple({1 <|> 2, 2 <|> 3, 1 <|> 3}) <|>
+        tuple({2 <|> 3, 1 <|> 3, 1 <|> 2}) <|>
+        tuple({1 <|> 3, 1 <|> 2, 2 <|> 3})
       ) do
         IO.warn("this test can't be solved without a SAT solver")
       end
     end
 
     test "orthogonal tuples don't merge" do
-      assert %Type.Union{} = (%Type.Tuple{elements: [:foo, builtin(:integer)]} <|>
-                              %Type.Tuple{elements: [:bar, builtin(:float)]})
+      assert %Type.Union{} =
+        (tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)}))
     end
   end
 
   alias Type.List
   describe "for the list type" do
     test "lists with the same end type get merged" do
-      assert %List{type: (:foo <|> :bar)} == (%List{type: :foo} <|> %List{type: :bar})
-      assert %List{type: @any} == (%List{type: @any} <|> %List{type: :bar})
+      assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
+      assert list(@any) == list(@any) <|> list(:bar)
 
       assert %List{type: (:foo <|> :bar), final: :end} ==
         (%List{type: :foo, final: :end} <|> %List{type: :bar, final: :end})
@@ -215,23 +209,21 @@ defmodule TypeTest.UnionTest do
     end
 
     test "nonempty: true lists get merged into nonempty: true lists" do
-      assert %List{type: (:foo <|> :bar), nonempty: true} ==
-        (%List{type: :foo, nonempty: true} <|> %List{type: :bar, nonempty: true})
-      assert %List{type: @any, nonempty: true} ==
-        (%List{type: @any, nonempty: true} <|> %List{type: :bar, nonempty: true})
+      assert list(:foo <|> :bar, ...) == list(:foo, ...) <|> list(:bar, ...)
+      assert list(@any, ...) == list(@any, ...) <|> list(:bar, ...)
     end
 
     test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
-      assert %List{} = ([] <|> %List{nonempty: true})
+      assert builtin(:list) = [] <|> list(...)
     end
 
     test "nonempty: true lists get merged into nonempty: false lists" do
-      assert %List{type: :foo} = (%List{type: :foo} <|> %List{type: :foo, nonempty: true})
-      assert %List{type: @any} = (%List{type: @any} <|> %List{type: :foo, nonempty: true})
+      assert list(:foo) = list(:foo) <|> list(:foo, ...)
+      assert list(@any) = list(@any) <|> list(:foo, ...)
     end
   end
 
-  import Type
+  import Type, only: :macros
 
   describe "for strings" do
     test "fixed size strings are merged into general string" do
@@ -253,8 +245,8 @@ defmodule TypeTest.UnionTest do
     test "bitstrings can merge string/1 s" do
       range = 2..4
       assert %Type.Union{of: [
-        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]},
-        %Type.Bitstring{size: 8, unit: 16}
+        %Type.Bitstring{size: 8, unit: 16},
+        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]}
       ]} = remote(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
     end
   end

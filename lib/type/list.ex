@@ -11,6 +11,21 @@ defmodule Type.List do
   - `final` the type of the final element.  Typically this is `[]`, but other
     types may be used as the final element and these are called `improper` lists.
 
+  ### Shortcut Form
+
+  The `Type` module lets you specify a list using "shortcut form" via the
+  `Type.list/1` and `Type.list/2` macros:
+
+  ```
+  iex> import Type, only: :macros
+  iex> list(builtin(:pos_integer))
+  %Type.List{type: %Type{name: :pos_integer}}
+  iex> list(...)
+  %Type.List{type: %Type{name: :any}, nonempty: true}
+  iex> list(builtin(:pos_integer), ...)
+  %Type.List{type: %Type{name: :pos_integer}, nonempty: true}
+  ```
+
   ### Examples:
 
   - The "any proper list" type is `%Type.List{}`.  Note this is distinct from `[]`
@@ -52,13 +67,14 @@ defmodule Type.List do
   categories.
 
   ```elixir
-  iex> Type.compare(%Type.List{nonempty: true}, [])
+  iex> import Type, only: :macros
+  iex> Type.compare(list(...), [])
   :lt
-  iex> Type.compare(%Type.List{}, [])
+  iex> Type.compare(builtin(:list), [])
   :gt
-  iex> Type.compare(%Type.List{type: %Type{name: :integer}}, %Type.List{type: %Type{name: :atom}})
+  iex> Type.compare(list(builtin(:integer)), list(builtin(:atom)))
   :lt
-  iex> Type.compare(%Type.List{final: %Type{name: :integer}}, %Type.List{final: %Type{name: :atom}})
+  iex> Type.compare(%Type.List{final: builtin(:integer)}, %Type.List{final: builtin(:atom)})
   :lt
   ```
 
@@ -68,9 +84,10 @@ defmodule Type.List do
   `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: true`
 
   ```elixir
-  iex> Type.intersection(%Type.List{nonempty: true}, %Type.List{})
+  iex> import Type, only: :macros
+  iex> Type.intersection(list(...), builtin(:list))
   %Type.List{nonempty: true}
-  iex> Type.intersection(%Type.List{type: 1..20}, %Type.List{type: 10..30})
+  iex> Type.intersection(list(1..20), list(10..30))
   %Type.List{type: 10..20}
   ```
 
@@ -80,9 +97,10 @@ defmodule Type.List do
   `nonempty: true` list type intersected with a `nonempty: false` list type is `nonempty: false`
 
   ```elixir
-  iex> Type.union(%Type.List{nonempty: true}, %Type.List{})
+  iex> import Type, only: :macros
+  iex> Type.union(list(...), builtin(:list))
   %Type.List{}
-  iex> Type.union(%Type.List{type: 1..10}, %Type.List{type: 10..20})
+  iex> Type.union(list(1..10), list(10..20))
   %Type.List{type: 1..20}
   ```
 
@@ -92,9 +110,10 @@ defmodule Type.List do
   a `nonempty: true` list type is subtype of its `nonempty: false` counterpart.
 
   ```elixir
-  iex> Type.subtype?(%Type.List{nonempty: true}, %Type.List{})
+  iex> import Type, only: :macros
+  iex> Type.subtype?(list(...), builtin(:list))
   true
-  iex> Type.subtype?(%Type.List{type: 1..10}, %Type.List{type: 2..30})
+  iex> Type.subtype?(list(1..10), list(2..30))
   false
   ```
 
@@ -104,11 +123,12 @@ defmodule Type.List do
   `nonempty: false` list types might be usable as `nonempty: true` types.
 
   ```elixir
-  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :integer}})
+  iex> import Type, only: :macros
+  iex> Type.usable_as(list(1..10), list(builtin(:integer)))
   :ok
-  iex> Type.usable_as(%Type.List{type: 1..10}, %Type.List{type: %Type{name: :atom}})
-  {:error, %Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}}
-  iex> Type.usable_as(%Type.List{}, %Type.List{nonempty: true})
+  iex> Type.usable_as(list(1..10), list(builtin(:atom))) # note it might be the empty list
+  {:maybe, [%Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}]}
+  iex> Type.usable_as(builtin(:list), list(...))
   {:maybe, [%Type.Message{type: %Type.List{}, target: %Type.List{nonempty: true}}]}
   ```
 
@@ -146,24 +166,34 @@ defmodule Type.List do
     end
 
     usable_as do
-      def usable_as(challenge = %{nonempty: false}, target = %List{nonempty: true}, meta) do
-        case usable_as(challenge, %{target | nonempty: false}, meta) do
-          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
-          maybe_or_error -> maybe_or_error
-        end
-      end
-
       def usable_as(challenge, builtin(:iolist), meta) do
         Type.Iolist.usable_as_iolist(challenge, meta)
       end
 
-      def usable_as(challenge, target = %List{}, meta) do
+      def usable_as(challenge = %{nonempty: c_ne},
+                    target = %List{nonempty: t_ne}, meta)
+          when (c_ne or t_ne) do
         u1 = Type.usable_as(challenge.type, target.type, meta)
         u2 = Type.usable_as(challenge.final, target.final, meta)
 
         case Type.ternary_and(u1, u2) do
+          :ok when t_ne and not c_ne ->
+            {:maybe, [Message.make(challenge, target, meta)]}
           :ok -> :ok
           # TODO: make this report the internal error as well.
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
+      end
+
+      def usable_as(challenge, target = %List{}, meta) do
+        case Type.usable_as(challenge.type, target.type, meta) do
+          {:error, _} -> {:maybe, [Message.make(challenge.type, target.type, meta)]}
+          any -> any
+        end
+        |> Type.ternary_and(Type.usable_as(challenge.final, target.final, meta))
+        |> case do
+          :ok -> :ok
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
         end
@@ -217,7 +247,7 @@ defmodule Type.List do
     def inspect(%{
         final: [],
         nonempty: false,
-        type: %Type.Tuple{elements: [k, v]}}, opts) when is_atom(k) do
+        type: tuple({k, v})}, opts) when is_atom(k) do
       to_doc([{k, v}], opts)
     end
     def inspect(list = %{
@@ -225,7 +255,7 @@ defmodule Type.List do
         nonempty: false,
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
-            %Type.Tuple{elements: [e, _]} when is_atom(e), &1)) do
+            tuple({e, _}) when is_atom(e), &1)) do
         type.of
         |> Enum.reverse
         |> Enum.map(&List.to_tuple(&1.elements))
@@ -235,16 +265,10 @@ defmodule Type.List do
       end
     end
     # keyword syntax
-    def inspect(%{final: [],
-                  nonempty: false,
-                  type: %Type.Tuple{elements: [builtin(:atom),
-                                               builtin(:any)]}}, _) do
+    def inspect(list(tuple({builtin(:atom), builtin(:any)})), _) do
       "keyword()"
     end
-    def inspect(%{final: [],
-                  nonempty: false,
-                  type: %Type.Tuple{elements: [builtin(:atom),
-                                               type]}}, opts) do
+    def inspect(list(tuple({builtin(:atom), type})), opts) do
       concat(["keyword(", to_doc(type, opts), ")"])
     end
 
