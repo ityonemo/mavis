@@ -82,16 +82,16 @@ defmodule Type.Function do
 
   #### intersection
 
-  Functions with distinct parameter types are nonoverlapping, even if their parameter
-  types overlap.  If they have the same parameters, then their return values are intersected.
+  Functions with distinct parameter types intersect in the *union* of the parameter types.
+  Their return values are always intersected.
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:integer))))
+  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:pos_integer))))
   %Type.Function{params: [], return: 1..10}
-  iex> Type.intersection(function((builtin(:integer) -> builtin(:integer))),
-  ...>                   function((1..10 -> builtin(:integer))))
-  %Type{name: :none}
+  iex> Type.intersection(function((builtin(:pos_integer) -> 1..10)),
+  ...>                   function((1..10 -> builtin(:pos_integer))))
+  %Type.Function{params: [%Type{name: :pos_integer}], return: 1..10}
   ```
 
   functions with `:any` parameters intersected with a function with specified parameters
@@ -233,14 +233,32 @@ defmodule Type.Function do
       def intersection(a, b = %Function{params: :any}) do
         intersection(b, a)
       end
+      def intersection(%{params: n, return: lr},
+                       %Function{params: p, return: rr}) when length(p) == n do
+        case Type.intersection(lr, rr) do
+          builtin(:none) -> builtin(:none)
+          return -> %Function{params: p, return: return}
+        end
+      end
+      def intersection(a = %{params: p}, b = %Function{params: n}) when length(p) == n do
+        intersection(b, a)
+      end
       def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
+        case Type.intersection(lr, rr) do
+          builtin(:none) -> builtin(:none)
+          return -> %Function{params: p, return: return}
+        end
+      end
+      def intersection(%{params: lp, return: lr}, %Function{params: rp, return: rr})
+        when length(lp) == length(rp) do
 
-        return = Type.intersection(lr, rr)
+        params = lp
+        |> Enum.zip(rp)
+        |> Enum.map(fn {l, r} -> Type.union(l, r) end)
 
-        if return == builtin(:none) do
-          builtin(:none)
-        else
-          %Function{params: p, return: return}
+        case Type.intersection(lr, rr) do
+          builtin(:none) -> builtin(:none)
+          return -> %Function{params: params, return: return}
         end
       end
     end

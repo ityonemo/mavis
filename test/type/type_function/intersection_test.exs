@@ -123,15 +123,12 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
         @two_arity_any <~> function((@any, @any -> builtin(:integer)))
     end
 
-    test "is invalid if any parameter types mismatches" do
-      assert builtin(:none) ==
-        @one_arity_any <~> function((builtin(:integer) -> @any))
+    test "expands to the biggest parameters" do
+      assert @one_arity_any == @one_arity_any <~> function((builtin(:integer) -> @any))
 
-      assert builtin(:none) ==
-        @two_arity_any <~> function((builtin(:integer), @any -> @any))
+      assert @two_arity_any == @two_arity_any <~> function((builtin(:integer), @any -> @any))
 
-      assert builtin(:none) ==
-        @two_arity_any <~> function((@any, builtin(:atom) -> @any))
+      assert @two_arity_any == @two_arity_any <~> function((@any, builtin(:atom) -> @any))
     end
 
     test "is invalid if return mismatches" do
@@ -140,18 +137,52 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
         function((@any -> builtin(:atom)))
     end
 
-    test "is invalid if any parameter mismatches" do
-      assert builtin(:none) ==
+    test "expands to parameter unions on mismatches" do
+      assert function((builtin(:integer) <|> builtin(:atom) -> @any))  ==
         function((builtin(:integer) -> @any)) <~>
         function((builtin(:atom) -> @any))
 
-      assert builtin(:none) ==
+      assert function((builtin(:integer) <|> builtin(:atom), @any -> @any)) ==
         function((builtin(:integer), @any -> @any)) <~>
         function((builtin(:atom), @any -> @any))
 
-      assert builtin(:none) ==
+      assert function((@any, builtin(:integer) <|> builtin(:atom) -> @any)) ==
         function((@any, builtin(:integer) -> @any)) <~>
         function((@any, builtin(:atom) -> @any))
+    end
+  end
+
+  describe "the arity-n top type" do
+    @one_arity_top function((_ -> builtin(:any)))
+    @two_arity_top function((_, _ -> builtin(:any)))
+    test "intersects with self and the any function" do
+      # one arity
+      assert @one_arity_top == @one_arity_top <~> @any_function
+      assert @one_arity_top == @one_arity_top <~> @one_arity_top
+
+      # two arity
+      assert @two_arity_top == @two_arity_top <~> @any_function
+      assert @two_arity_top == @two_arity_top <~> @two_arity_top
+    end
+
+    test "must match arities" do
+      assert builtin(:none) == @one_arity_top <~> @two_arity_top
+      assert builtin(:none) == @one_arity_top <~> @two_arity_any
+      assert builtin(:none) == @one_arity_any <~> @two_arity_top
+    end
+
+    test "reduces the return type" do
+      assert function((_ -> builtin(:integer))) ==
+        @one_arity_top <~> function((_ -> builtin(:integer)))
+
+      assert function((@any -> builtin(:integer))) ==
+        @one_arity_any <~> function((_ -> builtin(:integer)))
+    end
+
+    test "is invalid if return mismatches" do
+      assert builtin(:none) ==
+        function((_ -> builtin(:integer))) <~>
+        function((_ -> builtin(:atom)))
     end
   end
 
