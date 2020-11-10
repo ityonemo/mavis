@@ -10,16 +10,17 @@ defmodule TypeTest.Type.FetchType.FunctionsTest do
   alias Type.Function
 
   test "zero arity" do
-    assert {:ok, %Function{params: [], return: builtin(:any)}} ==
+    assert {:ok, function(( -> builtin(:any)))} ==
       Type.fetch_type(@source, :zero_arity)
   end
 
   test "two arity" do
-    assert {:ok, %Function{params: [builtin(:integer), builtin(:atom)], return: builtin(:float)}} ==
+    assert {:ok,
+      function((builtin(:integer), builtin(:atom) -> builtin(:float)))} ==
       Type.fetch_type(@source, :two_arity)
   end
 
-  @any_fn %Function{params: :any, return: builtin(:any)}
+  @any_fn function((... -> builtin(:any)))
 
   test "any arity" do
     assert {:ok, @any_fn} == Type.fetch_type(@source, :any_arity)

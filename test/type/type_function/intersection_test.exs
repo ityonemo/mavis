@@ -8,10 +8,10 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
   alias Type.Function
 
   @any builtin(:any)
-  @any_function %Function{params: :any, return: @any}
-  @zero_arity_any %Function{params: [], return: @any}
-  @one_arity_any %Function{params: [@any], return: @any}
-  @two_arity_any %Function{params: [@any, @any], return: @any}
+  @any_function function((... -> @any))
+  @zero_arity_any function(( -> @any))
+  @one_arity_any function((@any -> @any))
+  @two_arity_any function((@any, @any -> @any))
 
   describe "the any function" do
     test "intersects with any and self" do
@@ -30,22 +30,22 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
       assert @two_arity_any == @any_function <~> @two_arity_any
 
       # arbitrary params
-      assert %Function{params: [builtin(:integer)], return: @any} ==
-        @any_function <~> %Function{params: [builtin(:integer)], return: @any}
+      assert function((builtin(:integer) -> @any)) ==
+        @any_function <~> function((builtin(:integer) -> @any))
     end
 
     test "reduces return" do
-      assert %Function{params: :any, return: builtin(:integer)} ==
-        @any_function <~> %Function{params: :any, return: builtin(:integer)}
+      assert function((... -> builtin(:integer))) ==
+        @any_function <~> function((... -> builtin(:integer)))
     end
 
     test "reduces both" do
-      assert %Function{params: [builtin(:integer)], return: builtin(:integer)} ==
-        @any_function <~> %Function{params: [builtin(:integer)], return: builtin(:integer)}
+      assert function((builtin(:integer) -> builtin(:integer))) ==
+        @any_function <~> function((builtin(:integer) -> builtin(:integer)))
     end
 
     test "intersects with nothing else" do
-      TypeTest.Targets.except([%Function{params: [], return: 0}])
+      TypeTest.Targets.except([function(( -> 0))])
       |> Enum.each(fn target ->
         assert builtin(:none) == @any_function <~> target
       end)
@@ -53,7 +53,7 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
   end
 
   describe "a function with any parameters" do
-    @any_with_integer %Function{params: :any, return: builtin(:integer)}
+    @any_with_integer function((... -> builtin(:integer)))
     test "intersects with self and the any function" do
       assert @any_with_integer == @any_with_integer <~> @any_with_integer
       assert @any_with_integer == @any_with_integer <~> @any_function
@@ -61,32 +61,33 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
 
     test "matches the arity of parameters" do
       # zero arity
-      assert %Function{params: [], return: builtin(:integer)} ==
+      assert function(( -> builtin(:integer))) ==
           @any_with_integer <~> @zero_arity_any
       # one arity
-      assert %Function{params: [@any], return: builtin(:integer)} ==
+      assert function((@any -> builtin(:integer))) ==
           @any_with_integer <~> @one_arity_any
       # two arity
-      assert %Function{params: [@any, @any], return: builtin(:integer)} ==
+      assert function((@any, @any -> builtin(:integer))) ==
           @any_with_integer <~> @two_arity_any
 
       # arbitrary params
-      assert %Function{params: [builtin(:integer)], return: builtin(:integer)} ==
-        @any_with_integer <~> %Function{params: [builtin(:integer)], return: @any}
+      assert function((builtin(:integer) -> builtin(:integer))) ==
+        @any_with_integer <~> function((builtin(:integer) -> @any))
     end
 
     test "reduces return" do
-      assert %Function{params: :any, return: 1..10} ==
-        @any_with_integer <~> %Function{params: :any, return: 1..10}
+      assert function((... -> 1..10)) ==
+        @any_with_integer <~> function((... -> 1..10))
     end
 
     test "reduces both" do
-      assert %Function{params: [builtin(:integer)], return: 1..10} ==
-        @any_with_integer <~> %Function{params: [builtin(:integer)], return: 1..10}
+      assert function((builtin(:integer) -> 1..10)) ==
+        @any_with_integer <~> function((builtin(:integer) -> 1..10))
     end
 
     test "is none if the returns don't match" do
-      assert builtin(:none) == @any_with_integer <~> %Function{params: :any, return: builtin(:atom)}
+      assert builtin(:none) == @any_with_integer <~>
+        function((... -> builtin(:atom)))
     end
   end
 
@@ -112,45 +113,45 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
     end
 
     test "reduces the return type" do
-      assert %Function{params: [], return: builtin(:integer)} ==
-        @zero_arity_any <~> %Function{params: [], return: builtin(:integer)}
+      assert function(( -> builtin(:integer))) ==
+        @zero_arity_any <~> function(( -> builtin(:integer)))
 
-      assert %Function{params: [@any], return: builtin(:integer)} ==
-        @one_arity_any <~> %Function{params: [@any], return: builtin(:integer)}
+      assert function((@any -> builtin(:integer))) ==
+        @one_arity_any <~> function((@any -> builtin(:integer)))
 
-      assert %Function{params: [@any, @any], return: builtin(:integer)} ==
-        @two_arity_any <~> %Function{params: [@any, @any], return: builtin(:integer)}
+      assert function((@any, @any -> builtin(:integer))) ==
+        @two_arity_any <~> function((@any, @any -> builtin(:integer)))
     end
 
     test "is invalid if any parameter types mismatches" do
       assert builtin(:none) ==
-        @one_arity_any <~> %Function{params: [builtin(:integer)], return: @any}
+        @one_arity_any <~> function((builtin(:integer) -> @any))
 
       assert builtin(:none) ==
-        @two_arity_any <~> %Function{params: [builtin(:integer), @any], return: @any}
+        @two_arity_any <~> function((builtin(:integer), @any -> @any))
 
       assert builtin(:none) ==
-        @two_arity_any <~> %Function{params: [@any, builtin(:atom)], return: @any}
+        @two_arity_any <~> function((@any, builtin(:atom) -> @any))
     end
 
     test "is invalid if return mismatches" do
       assert builtin(:none) ==
-        %Function{params: [@any], return: builtin(:integer)} <~>
-        %Function{params: [@any], return: builtin(:atom)}
+        function((@any -> builtin(:integer))) <~>
+        function((@any -> builtin(:atom)))
     end
 
     test "is invalid if any parameter mismatches" do
       assert builtin(:none) ==
-        %Function{params: [builtin(:integer)], return: @any} <~>
-        %Function{params: [builtin(:atom)], return: @any}
+        function((builtin(:integer) -> @any)) <~>
+        function((builtin(:atom) -> @any))
 
       assert builtin(:none) ==
-        %Function{params: [builtin(:integer), @any], return: @any} <~>
-        %Function{params: [builtin(:atom), @any], return: @any}
+        function((builtin(:integer), @any -> @any)) <~>
+        function((builtin(:atom), @any -> @any))
 
       assert builtin(:none) ==
-        %Function{params: [@any, builtin(:integer)], return: @any} <~>
-        %Function{params: [@any, builtin(:atom)], return: @any}
+        function((@any, builtin(:integer) -> @any)) <~>
+        function((@any, builtin(:atom) -> @any))
     end
   end
 

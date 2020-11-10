@@ -9,7 +9,7 @@ defmodule TypeTest.TypeFunction.SubtypeTest do
 
   alias Type.Function
 
-  @any_function %Function{params: :any, return: builtin(:any)}
+  @any_function function((... -> builtin(:any)))
 
   describe "the any function" do
     test "is a subtype of itself and any" do
@@ -27,38 +27,38 @@ defmodule TypeTest.TypeFunction.SubtypeTest do
 
   describe "for a defined return function" do
     test "is a subtype when the return is a subtype" do
-      assert %Function{params: :any, return: :foo} in
-        %Function{params: :any, return: builtin(:atom)}
+      assert function((... -> :foo)) in
+        function((... -> builtin(:atom)))
     end
 
     test "is not a subtype when the return is not a subtype" do
-      refute %Function{params: :any, return: :foo} in
-        %Function{params: :any, return: builtin(:integer)}
+      refute function((... -> :foo)) in
+        function((... -> builtin(:integer)))
     end
   end
 
   describe "when the parameters are defined" do
     test "they are subtypes when the parameters match and the return matches" do
-      assert %Function{params: [builtin(:integer)], return: builtin(:integer)} in
-        %Function{params: [builtin(:integer)], return: builtin(:any)}
+      assert function((builtin(:integer) -> builtin(:integer))) in
+        function((builtin(:integer) -> builtin(:any)))
     end
 
     test "they are not subtypes when the returns don't match" do
-      refute %Function{params: [builtin(:integer)], return: builtin(:any)} in
-        %Function{params: [builtin(:integer)], return: builtin(:integer)}
+      refute function((builtin(:integer) -> builtin(:any))) in
+        function((builtin(:integer) -> builtin(:integer)))
     end
 
     test "they are not subtypes when the params are not equal" do
-      refute %Function{params: [builtin(:integer)], return: builtin(:any)} in
-        %Function{params: [builtin(:pos_integer)], return: builtin(:any)}
+      refute function((builtin(:integer) -> builtin(:any))) in
+        function((builtin(:pos_integer) -> builtin(:any)))
 
-      refute %Function{params: [builtin(:pos_integer)], return: builtin(:any)} in
-        %Function{params: [builtin(:integer)], return: builtin(:any)}
+      refute function((builtin(:pos_integer) -> builtin(:any))) in
+        function((builtin(:integer) -> builtin(:any)))
     end
 
     test "they are not subtypes when the param lengths are not equal" do
-      refute %Function{params: [builtin(:integer)], return: builtin(:any)} in
-        %Function{params: [builtin(:integer), builtin(:integer)], return: builtin(:any)}
+      refute function((builtin(:integer) -> builtin(:any))) in
+        function((builtin(:integer), builtin(:integer) -> builtin(:any)))
     end
   end
 end

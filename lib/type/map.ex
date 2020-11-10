@@ -314,7 +314,7 @@ defmodule Type.Map do
   [-10..-1, 1..10]
   ```
   """
-  def resegment(map, preimages \\ [%Type{name: :any}])
+  def resegment(map, preimages \\ [builtin(:any)])
   def resegment(map, [%Type{module: nil, name: :any, params: []}]) do
     Map.keys(map.required) ++ Map.keys(map.optional)
   end
@@ -579,7 +579,7 @@ defmodule Type.Map do
     import Inspect.Algebra
     import Type, only: :macros
 
-    @any %{%Type{name: :any} => %Type{name: :any}}
+    @any %{builtin(:any) => builtin(:any)}
 
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
