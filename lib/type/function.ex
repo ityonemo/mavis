@@ -10,10 +10,30 @@ defmodule Type.Function do
     which corresponds to "a function of any arity".
   - `return` the type of the returned value.
 
+  ### Deviations from standard Erlang/Elixir:
+
+  Mavis introduces a new type (that is not expressible via dialyzer).  This
+  type should be referred to as `top-arity-n`.  All functions
+  of arity/n are subtypes of said type.  It's represented with this form:
+
+  `(_, _ -> any())` in the case of arity-2.  Note this is distinct
+  from `(any(), any() -> any())`:  A member of `any-arity-2` is required
+  to take any value without crashing.  This effectively functions as the
+  bottom type for arity-2 functions.  A member of `top-arity-2` can have
+  any requirements on the parameters.
+
+  Concretely, the success type for the input of `&is_function(&1, n)`
+  is `top-arity-n`.  Moreover, `(... -> any())` is the top type for all
+  `top-arity` types.
+
+  You may create top-arity functions with different return types, but
+  you may not mix and match parameter types.
+
   ### Examples:
 
   - `(... -> integer())` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
   - `(integer() -> integer())` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
+  - `(_ -> integer())` is represented as `%Type.Function{params: 1, return: %Type{name: :integer}}`
 
   ### Shortcut Form
 
@@ -135,7 +155,7 @@ defmodule Type.Function do
   defstruct @enforce_keys ++ [params: :any, inferred: false]
 
   @type t :: %__MODULE__{
-    params: [Type.t] | :any,
+    params: [Type.t] | :any | arity,
     return: Type.t,
     inferred: boolean
   }
