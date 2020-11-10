@@ -51,6 +51,20 @@ defmodule TypeTest.TypeFunction.OrderTest do
     end
   end
 
+  describe "a top only function" do
+    test "is bigger than functions of its same arity" do
+      assert function((_ -> builtin(:any))) >
+        function((builtin(:any) -> builtin(:any)))
+      assert function((_, _ -> builtin(:any))) >
+        function((builtin(:any), builtin(:any) -> builtin(:any)))
+    end
+
+    test "is smaller than any function" do
+      assert function((_ -> builtin(:any))) < function((... -> builtin(:any)))
+      assert function((_, _ -> builtin(:any))) < function((... -> builtin(:any)))
+    end
+  end
+
   describe "a params any function" do
     test "is bigger than bottom and reference" do
       assert function((... -> builtin(:any))) > builtin(:none)
@@ -74,5 +88,4 @@ defmodule TypeTest.TypeFunction.OrderTest do
       assert function((... -> builtin(:any))) < builtin(:any)
     end
   end
-
 end

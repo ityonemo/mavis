@@ -168,11 +168,15 @@ defmodule Type.Function do
     use Type.Helpers
 
     group_compare do
-      def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
+      def group_compare(%{params: p, return: r1}, %{params: p, return: r2}) do
         Type.compare(r1, r2)
       end
       def group_compare(%{params: :any}, _),           do: :gt
       def group_compare(_, %{params: :any}),           do: :lt
+      def group_compare(%{params: p1}, %{params: p2})
+          when p1 == length(p2),                       do: :gt
+      def group_compare(%{params: p1}, %{params: p2})
+          when p2 == length(p1),                       do: :lt
       def group_compare(%{params: p1}, %{params: p2})
           when length(p1) < length(p2),                do: :gt
       def group_compare(%{params: p1}, %{params: p2})
