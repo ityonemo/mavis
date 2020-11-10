@@ -53,7 +53,7 @@ defmodule Type.Map do
   - A map with a required integer key might look as follows:
     ```
     iex> inspect %Type.Map{required: %{1 => %Type{name: :integer}}}
-    "%{required(1) => integer()}"
+    "%{1 => integer()}"
     ```
   - A map with an optional key type might look as follows:
     ```
