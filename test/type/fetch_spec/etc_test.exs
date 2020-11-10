@@ -5,8 +5,6 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
   import Type.Operators
   import TypeTest.SpecCase
 
-  alias Type.Function
-
   @moduletag :fetch
 
   @unions TypeTest.SpecExample.Unions
@@ -54,45 +52,37 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
 
   test "with annotation" do
     assert {:ok, fun} = Type.fetch_spec(@example, :with_annotation, 1)
-    assert %Function{params: [builtin(:any)], return: builtin(:any)} = fun
+    assert function((builtin(:any) -> builtin(:any))) = fun
   end
 
   test "function with basic when statement" do
     assert {:ok, fun} = Type.fetch_spec(@example, :when_var_1, 1)
 
-    assert %Function{
-      params: [%Var{name: :t}],
-      return: %Var{name: :t}
-    } = fun
+    assert function((%Var{name: :t} -> %Var{name: :t})) = fun
   end
 
   test "function with multiple when statement" do
     assert {:ok, fun} = Type.fetch_spec(@example, :when_var_2, 2)
 
-    return_union = %Var{name: :t1} <|> %Var{name: :t2}
+    return = %Var{name: :t1} <|> %Var{name: :t2}
 
-    assert %Function{
-      params: [%Var{name: :t1}, %Var{name: :t2}],
-      return: ^return_union
-    } = fun
+    assert function((%Var{name: :t1}, %Var{name: :t2} -> ^return)) = fun
   end
 
   test "basic constrained function" do
     assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_any, 1)
 
-    assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:any)}],
-      return: %Var{name: :t, constraint: builtin(:any)}
-    } = fun
+    assert function((
+      %Var{name: :t, constraint: builtin(:any)} ->
+      %Var{name: :t, constraint: builtin(:any)})) = fun
   end
 
   test "type constrained function" do
     assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_int, 1)
 
-    assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:integer)}],
-      return: %Var{name: :t, constraint: builtin(:integer)}
-    } = fun
+    assert function((
+      %Var{name: :t, constraint: builtin(:integer)} ->
+      %Var{name: :t, constraint: builtin(:integer)})) = fun
   end
 
   test "type constrained result" do
@@ -100,10 +90,9 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
 
     type_union = %Var{name: :t, constraint: builtin(:integer)} <|> builtin(:atom)
 
-    assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:integer)}],
-      return: ^type_union
-    } = fun
+    assert function((
+      %Var{name: :t, constraint: builtin(:integer)} ->
+      ^type_union)) = fun
   end
 
   test "referring to a recursive type" do
@@ -111,6 +100,6 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
 
     json = %Type{module: @example, name: :json}
 
-    assert %Function{params: [^json], return: ^json} = spec
+    assert function((^json -> ^json)) = spec
   end
 end

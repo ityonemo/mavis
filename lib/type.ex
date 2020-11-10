@@ -1078,7 +1078,7 @@ defmodule Type do
   iex> inspect Type.of(%{foo: :bar})
   "%{foo: :bar}"
   iex> inspect Type.of(%{1 => :one})
-  "%{required(1) => :one}"
+  "%{1 => :one}"
   iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
   "%{optional(String.t()) => :bar | String.t()}"
   iex> inspect Type.of(1..10)

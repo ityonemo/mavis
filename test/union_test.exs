@@ -19,7 +19,7 @@ defmodule TypeTest.UnionTest do
 
   describe "unions are collectibles" do
     test "putting nothing into the union creates nonetype" do
-      assert %Type{name: :none} = Enum.into([], %Union{})
+      assert builtin(:none) = Enum.into([], %Union{})
     end
 
     test "a single element into the union returns the same type" do

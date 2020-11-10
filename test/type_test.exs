@@ -271,6 +271,13 @@ defmodule TypeTest do
       assert %Type.Function{params: [], return: builtin(:any)} ==
         function(( -> builtin(:any)))
     end
+
+    test "works with top-arity functions" do
+      assert %Type.Function{params: 1, return: builtin(:any)} ==
+        function((_ -> builtin(:any)))
+      assert %Type.Function{params: 2, return: builtin(:integer)} ==
+        function((_, _ -> builtin(:integer)))
+    end
   end
 
   describe "map macro" do
