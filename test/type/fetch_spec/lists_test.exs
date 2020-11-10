@@ -16,44 +16,45 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "literal/1" do
-    assert {:ok, identity_for(%List{type: builtin(:integer)})} ==
+    assert {:ok, identity_for(list(builtin(:integer)))} ==
       Type.fetch_spec(@source, :literal_1_spec, 1)
   end
 
   test "nonempty any list" do
-    assert {:ok, identity_for(%List{type: builtin(:any), nonempty: true})} ==
+    assert {:ok, identity_for(list(...))} ==
       Type.fetch_spec(@source, :nonempty_any_spec, 1)
   end
 
   test "nonempty typed list" do
-    assert {:ok, identity_for(%List{type: builtin(:integer), nonempty: true})} ==
+    assert {:ok, identity_for(list(builtin(:integer), ...))} ==
       Type.fetch_spec(@source, :nonempty_typed_spec, 1)
   end
 
   test "keyword/1 literal list" do
-    foo_integer = %Type.Tuple{elements: [:foo, builtin(:integer)]}
-    assert {:ok, identity_for(%List{type: foo_integer})} ==
+    foo_integer = tuple({:foo, builtin(:integer)})
+
+    assert {:ok, identity_for(list(foo_integer))} ==
       Type.fetch_spec(@source, :keyword_literal_spec, 1)
   end
 
   test "keyword/2 literal list" do
-    keyword_type = (%Type.Tuple{elements: [:foo, builtin(:integer)]} <|> %Type.Tuple{elements: [:bar, builtin(:float)]})
-    assert {:ok, identity_for(%List{type: keyword_type})} ==
+    keyword_type = tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)})
+    assert {:ok, identity_for(list(keyword_type))} ==
       Type.fetch_spec(@source, :keyword_2_literal_spec, 1)
   end
 
   test "list/0" do
-    assert {:ok, identity_for(%List{type: builtin(:any)})} ==
+    assert {:ok, identity_for(builtin(:list))} ==
       Type.fetch_spec(@source, :list_0_spec, 1)
   end
 
   test "list/1" do
-    assert {:ok, identity_for(%List{type: builtin(:integer)})} ==
+    assert {:ok, identity_for(list(builtin(:integer)))} ==
       Type.fetch_spec(@source, :list_1_spec, 1)
   end
 
   test "nonempty_list/1" do
-    assert {:ok, identity_for(%List{type: builtin(:integer), nonempty: true})} ==
+    assert {:ok, identity_for(list(builtin(:integer), ...))} ==
       Type.fetch_spec(@source, :nonempty_list_1_spec, 1)
   end
 
@@ -73,27 +74,27 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "charlist" do
-    assert {:ok, identity_for(%List{type: 0..0x10_FFFF})} ==
+    assert {:ok, identity_for(list(0..0x10_FFFF))} ==
       Type.fetch_spec(@source, :charlist_spec, 1)
   end
 
   test "nonempty charlist" do
-    assert {:ok, identity_for(%List{type: 0..0x10_FFFF, nonempty: true})} ==
+    assert {:ok, identity_for(list(0..0x10_FFFF, ...))} ==
       Type.fetch_spec(@source, :nonempty_charlist_spec, 1)
   end
 
   test "keyword/0" do
-    assert {:ok, identity_for(%List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}})} ==
+    assert {:ok, identity_for(list(tuple({builtin(:atom), builtin(:any)})))} ==
       Type.fetch_spec(@source, :keyword_0_spec, 1)
   end
 
   test "keyword/1" do
-    assert {:ok, identity_for(%List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:integer)]}})} ==
+    assert {:ok, identity_for(list(tuple({builtin(:atom), builtin(:integer)})))} ==
       Type.fetch_spec(@source, :keyword_1_spec, 1)
   end
 
   test "nonempty_list/0" do
-    assert {:ok, identity_for(%List{nonempty: true})} ==
+    assert {:ok, identity_for(list(...))} ==
       Type.fetch_spec(@source, :nonempty_list_0_spec, 1)
   end
 

@@ -3,7 +3,7 @@ defmodule TypeTest.TypeBitstring.SubtypeTest do
 
   @moduletag :subtype
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 

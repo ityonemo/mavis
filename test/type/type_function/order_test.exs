@@ -3,86 +3,89 @@ defmodule TypeTest.TypeFunction.OrderTest do
 
   @moduletag :compare
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 
-  alias Type.Function
-
-  defp param_fn(params, return) do
-    %Function{params: params, return: return}
-  end
-
   describe "a parameterized function" do
     test "is bigger than bottom and reference" do
-      assert param_fn([], builtin(:any)) > builtin(:none)
-      assert param_fn([], builtin(:any)) > builtin(:reference)
+      assert function(( -> builtin(:any))) > builtin(:none)
+      assert function(( -> builtin(:any))) > builtin(:reference)
     end
 
     test "is bigger than a function with a less general return" do
-      assert param_fn([], builtin(:any)) > param_fn([], builtin(:integer))
+      assert function(( -> builtin(:any))) > function(( -> builtin(:integer)))
     end
 
     test "is bigger than a function with more parameters" do
-      assert param_fn([], builtin(:any)) > param_fn([:foo], builtin(:any))
-      assert param_fn([:foo], builtin(:any)) > param_fn([:bar, :baz], builtin(:any))
+      assert function(( -> builtin(:any))) > function((:foo -> builtin(:any)))
+      assert function((:foo -> builtin(:any))) > function((:bar, :baz -> builtin(:any)))
     end
 
     test "is bigger than a function with a less general parameter" do
-      assert param_fn([builtin(:any)], builtin(:any)) >
-        param_fn([builtin(:integer)], builtin(:any))
-      assert param_fn([:foo, builtin(:any)], builtin(:any)) >
-        param_fn([:foo, builtin(:integer)], builtin(:any))
+      assert function((builtin(:any) -> builtin(:any))) >
+        function((builtin(:integer) -> builtin(:any)))
+      assert function((:foo, builtin(:any) -> builtin(:any))) >
+        function((:foo, builtin(:integer) -> builtin(:any)))
     end
 
     test "is smaller than a function with a more general return" do
-      assert param_fn([], builtin(:integer)) < param_fn([], builtin(:any))
+      assert function(( -> builtin(:integer))) < function(( -> builtin(:any)))
     end
 
     test "is smaller than a function with fewer parameters" do
-      assert param_fn([:foo], builtin(:any)) < param_fn([], builtin(:any))
-      assert param_fn([:bar, :baz], builtin(:any)) < param_fn([:foo], builtin(:any))
+      assert function((:foo -> builtin(:any))) < function(( -> builtin(:any)))
+      assert function((:bar, :baz -> builtin(:any))) < function((:foo -> builtin(:any)))
     end
 
     test "is smaller than a function with a more general parameter" do
-      assert param_fn([builtin(:integer)], builtin(:any)) <
-        param_fn([builtin(:any)], builtin(:any))
-      assert param_fn([:foo, builtin(:integer)], builtin(:any)) <
-        param_fn([:foo, builtin(:any)], builtin(:any))
+      assert function((builtin(:integer) -> builtin(:any))) <
+        function((builtin(:any) -> builtin(:any)))
+      assert function((:foo, builtin(:integer) -> builtin(:any))) <
+        function((:foo, builtin(:any) -> builtin(:any)))
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do
-      assert param_fn([], builtin(:any)) < builtin(:port)
-      assert param_fn([], builtin(:any)) < builtin(:any)
+      assert function(( -> builtin(:any))) < builtin(:port)
+      assert function(( -> builtin(:any))) < builtin(:any)
     end
   end
 
-  defp param_any_fn(return) do
-    %Function{return: return, params: :any}
+  describe "a top only function" do
+    test "is bigger than functions of its same arity" do
+      assert function((_ -> builtin(:any))) >
+        function((builtin(:any) -> builtin(:any)))
+      assert function((_, _ -> builtin(:any))) >
+        function((builtin(:any), builtin(:any) -> builtin(:any)))
+    end
+
+    test "is smaller than any function" do
+      assert function((_ -> builtin(:any))) < function((... -> builtin(:any)))
+      assert function((_, _ -> builtin(:any))) < function((... -> builtin(:any)))
+    end
   end
 
   describe "a params any function" do
     test "is bigger than bottom and reference" do
-      assert param_any_fn(builtin(:any)) > builtin(:none)
-      assert param_any_fn(builtin(:any)) > builtin(:reference)
+      assert function((... -> builtin(:any))) > builtin(:none)
+      assert function((... -> builtin(:any))) > builtin(:reference)
     end
 
     test "is bigger than a function with a less general return" do
-      assert param_any_fn(builtin(:any)) > param_any_fn(builtin(:integer))
+      assert function((... -> builtin(:any))) > function((... -> builtin(:integer)))
     end
 
     test "is smaller than a union containing it" do
-      assert param_any_fn(builtin(:any)) < 0 <|> param_any_fn(builtin(:any))
+      assert function((... -> builtin(:any))) < 0 <|> function((... -> builtin(:any)))
     end
 
     test "is smaller than a function with a more general return" do
-      assert param_any_fn(builtin(:integer)) < param_any_fn(builtin(:any))
+      assert function((... -> builtin(:integer))) < function((... -> builtin(:any)))
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do
-      assert param_any_fn(builtin(:any)) < builtin(:port)
-      assert param_any_fn(builtin(:any)) < builtin(:any)
+      assert function((... -> builtin(:any))) < builtin(:port)
+      assert function((... -> builtin(:any))) < builtin(:any)
     end
   end
-
 end

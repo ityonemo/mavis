@@ -3,7 +3,7 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
 
   @moduletag :compare
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   use Type.Operators
 
@@ -14,7 +14,7 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
     end
 
     test "is bigger than any nonempty: true list" do
-      assert [] > %Type.List{nonempty: true}
+      assert [] > list(...)
     end
 
     test "is smaller than a union containing it" do
@@ -22,7 +22,7 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
     end
 
     test "is smaller than any nonempty: false list" do
-      assert [] < %Type.List{nonempty: false}
+      assert [] < builtin(:list)
     end
 
     test "is smaller than bitstring and top" do

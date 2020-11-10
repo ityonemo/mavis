@@ -7,6 +7,8 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
 
   @source TypeTest.TypeExample.Functions
 
+  alias Type.Function
+
   test "zero arity" do
     assert "( -> any())" == inspect_type(@source, :zero_arity)
   end
@@ -21,6 +23,12 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
 
   test "function" do
     assert "function()" == inspect_type(@source, :function_type)
+  end
+
+  test "top-arity functions" do
+    import Type
+    assert "(_ -> any())" = inspect %Function{params: 1, return: builtin(:any)}
+    assert "(_, _ -> any())" = inspect %Function{params: 2, return: builtin(:any)}
   end
 
   defp inspect_spec(name) do

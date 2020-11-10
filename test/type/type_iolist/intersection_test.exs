@@ -4,7 +4,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   alias Type.{Bitstring, List}
 
@@ -26,17 +26,17 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "intersects with a charlist" do
-      assert %List{type: @char} == builtin(:iolist) <~> %List{type: @char}
-      assert %List{type: @char} == %List{type: @char} <~> builtin(:iolist)
+      assert list(@char) == builtin(:iolist) <~> list(@char)
+      assert list(@char) == list(@char) <~> builtin(:iolist)
     end
 
     test "intersects with a binary list" do
-      assert %List{type: @binary} == builtin(:iolist) <~> %List{type: @binary}
-      assert %List{type: @binary} == %List{type: @binary} <~> builtin(:iolist)
+      assert list(@binary) == builtin(:iolist) <~> list(@binary)
+      assert list(@binary) == list(@binary) <~> builtin(:iolist)
     end
 
     test "acts as if it is a maybe_empty list" do
-      nonempty = %List{type: @binary, nonempty: true}
+      nonempty = list(@binary, ...)
       assert nonempty == builtin(:iolist) <~> nonempty
       assert nonempty = nonempty <~> builtin(:iolist)
     end
@@ -48,25 +48,25 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "intersects to arbitrary depth" do
-      two_in = %List{type: %List{type: @binary}}
+      two_in = list(list(@binary))
       assert two_in == builtin(:iolist) <~> two_in
       assert two_in == two_in <~> builtin(:iolist)
 
-      three_in = %List{type: %List{type: %List{type: @binary}}}
+      three_in = list(list(list(@binary)))
       assert three_in == builtin(:iolist) <~> three_in
       assert three_in == three_in <~> builtin(:iolist)
     end
 
     test "if the list is different, there's no intersection" do
-      assert builtin(:none) == builtin(:iolist) <~> %List{type: builtin(:atom)}
+      assert builtin(:none) == builtin(:iolist) <~> list(builtin(:atom))
     end
 
     test "if the final is different, there's no interesction" do
-      assert builtin(:none) == builtin(:iolist) <~> %List{final: builtin(:atom)}
+      assert builtin(:none) == builtin(:iolist) <~> list(builtin(:atom))
     end
 
     test "intersects with nothing else" do
-      TypeTest.Targets.except([[], %List{}])
+      TypeTest.Targets.except([[], builtin(:list)])
       |> Enum.each(fn target ->
         assert builtin(:none) == builtin(:iolist) <~> target
       end)

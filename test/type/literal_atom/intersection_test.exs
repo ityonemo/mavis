@@ -4,7 +4,7 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
 
   @moduletag :intersection
 
-  import Type, only: [builtin: 1]
+  import Type, only: :macros
 
   describe "the intersection of a literal atom" do
     test "with itself, atoms, and any is itself" do

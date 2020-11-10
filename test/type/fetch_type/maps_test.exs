@@ -13,29 +13,32 @@ defmodule TypeTest.Type.FetchType.MapsTest do
   end
 
   test "atom key map literal" do
-    assert {:ok, Map.build(%{atom: builtin(:integer)}, %{})} == Type.fetch_type(@source, :atom_key_type)
+    assert {:ok, map(%{atom: builtin(:integer)})} ==
+      Type.fetch_type(@source, :atom_key_type)
   end
 
   test "required literal type" do
-    assert {:ok, Map.build(%{foo: builtin(:integer)}, %{})} == Type.fetch_type(@source, :required_literal_type)
+    assert {:ok, map(%{foo: builtin(:integer)})} ==
+      Type.fetch_type(@source, :required_literal_type)
   end
 
   test "optional literal type" do
-    assert {:ok, Map.build(foo: builtin(:integer))} == Type.fetch_type(@source, :optional_literal_type)
+    assert {:ok, map(%{optional(:foo) => builtin(:integer)})} ==
+      Type.fetch_type(@source, :optional_literal_type)
   end
 
   test "struct literal type" do
-    assert {:ok, Map.build(%{__struct__: @source, foo: builtin(:any)}, %{})} ==
+    assert {:ok, map(%{__struct__: @source, foo: builtin(:any)})} ==
       Type.fetch_type(@source, :struct_literal_type)
   end
 
   test "struct defined literal type" do
-    assert {:ok, Map.build(%{__struct__: @source, foo: builtin(:integer)}, %{})} ==
+    assert {:ok, map(%{__struct__: @source, foo: builtin(:integer)})} ==
       Type.fetch_type(@source, :struct_defined_literal_type)
   end
 
   test "downgraded nonliteral type" do
-    assert {:ok, Map.build(%{builtin(:integer) => builtin(:integer)})} ==
+    assert {:ok, map(%{optional(builtin(:integer)) => builtin(:integer)})} ==
       Type.fetch_type(@source, :downgraded_key_type)
   end
 end

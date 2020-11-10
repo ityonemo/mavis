@@ -23,7 +23,7 @@ defmodule TypeTest.Type.Inspect.MapsTest do
   end
 
   test "required integer literal type" do
-    assert "%{required(0) => integer()}" == inspect %Map{required: %{0 => builtin(:integer)}}
+    assert "%{0 => integer()}" == inspect %Map{required: %{0 => builtin(:integer)}}
   end
 
   test "optional literal type" do
@@ -38,5 +38,10 @@ defmodule TypeTest.Type.Inspect.MapsTest do
   test "struct defined literal type" do
     assert "%#{inspect @source}{foo: integer()}" ==
       inspect_type(@source, :struct_defined_literal_type)
+  end
+
+  test "ordering is optionals, then numbers, then atoms" do
+    assert "%{optional(:foo) => :bar, 0 => :bar, baz: :bar}" ==
+      inspect map(%{:baz => :bar, 0 => :bar, optional(:foo) => :bar})
   end
 end
