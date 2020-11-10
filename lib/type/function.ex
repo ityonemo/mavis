@@ -196,12 +196,20 @@ defmodule Type.Function do
 
     usable_as do
       def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-          when cparam == :any or tparam == :any do
+          when (cparam == tparam) or (tparam == :any) or (is_list(cparam) and length(cparam) == tparam) do
         case Type.usable_as(challenge.return, target.return, meta) do
           :ok -> :ok
           # TODO: add meta-information here.
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
+      end
+
+      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+          when cparam == :any or (is_list(tparam) and length(tparam) == cparam) do
+        case Type.usable_as(challenge.return, target.return, meta) do
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+          _ -> {:maybe, [Message.make(challenge, target, meta)]}
         end
       end
 

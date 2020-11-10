@@ -25,12 +25,21 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       assert :ok = @any_fn ~> @any_fn
       assert :ok = @any_fn ~> @any
     end
-
     test "is maybe usable with an any param'd function" do
       any_integer_fn = function((... -> builtin(:integer)))
 
       assert {:maybe, [%Message{type: @any_fn, target: ^any_integer_fn}]} =
         @any_fn ~> any_integer_fn
+    end
+
+    test "is maybe usable as a top function" do
+      assert {:maybe, _} = @any_fn ~> function((_ -> @any))
+      assert {:maybe, _} = @any_fn ~> function((_, _ -> @any))
+    end
+
+    test "is maybe usable as a generic function" do
+      assert {:maybe, _} = @any_fn ~> function((@any -> @any))
+      assert {:maybe, _} = @any_fn ~> function((builtin(:integer) -> @any))
     end
   end
 
@@ -45,12 +54,17 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       assert {:maybe, [%Message{type: @any_atom_fn,
                                 target: function((... -> :ok))}]} =
         @any_atom_fn ~> function((... -> :ok))
+
+      assert {:maybe, _} = @any_atom_fn ~> function((_ -> :ok))
+      assert {:maybe, _} = @any_atom_fn ~> function((_, _ -> :ok))
     end
 
     test "is not usable if the return types don't match" do
       assert {:error, %Message{type: @any_atom_fn,
                                target: function((... -> builtin(:integer)))}} =
         @any_atom_fn ~> function((... -> builtin(:integer)))
+
+      assert {:error, _} = @any_atom_fn ~> function((_ -> builtin(:integer)))
     end
   end
 
@@ -60,9 +74,12 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       assert :ok = function(( -> :ok)) ~> @any_atom_fn
       assert :ok = function(( -> :ok)) ~> function(( -> :ok))
       assert :ok = function(( -> :ok)) ~> function(( -> builtin(:atom)))
+
+      # one arity
       assert :ok = function((builtin(:atom) -> :ok)) ~> @any_atom_fn
       assert :ok = function((builtin(:atom) -> :ok)) ~> function((builtin(:atom) -> :ok))
       assert :ok = function((builtin(:atom) -> :ok)) ~> function((:ok -> :ok))
+      assert :ok = function((builtin(:atom) -> :ok)) ~> function((_ -> :ok))
 
       # arity two
       assert :ok = function((builtin(:atom), builtin(:integer) -> :ok)) ~> @any_atom_fn
@@ -74,6 +91,8 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
         function((builtin(:atom), 47 -> :ok))
       assert :ok = function((builtin(:atom), builtin(:integer) -> :ok)) ~>
         function((:ok, 47 -> :ok))
+      assert :ok = function((builtin(:atom), builtin(:integer) -> :ok)) ~>
+        function((_, _ -> :ok))
     end
 
     test "the function is maybe usable if the return is maybe usable" do
@@ -82,20 +101,28 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       # one arity
       assert {:maybe, _} = function((builtin(:atom) -> builtin(:atom))) ~>
         function((builtin(:atom) -> :ok))
+      assert {:maybe, _} = function((builtin(:atom) -> builtin(:atom))) ~>
+        function((_ -> :ok))
       # two arity
       assert {:maybe, _} = function((builtin(:atom), builtin(:integer) -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> :ok))
+      assert {:maybe, _} = function((builtin(:atom), builtin(:integer) -> builtin(:atom))) ~>
+        function((_, _ -> :ok))
     end
 
     test "the function is maybe usable if any of the parameters are maybe usable" do
       # one arity
       assert {:maybe, _} = function((:ok -> builtin(:atom))) ~>
         function((builtin(:atom) -> builtin(:atom)))
+      assert {:maybe, _} = function((_ -> builtin(:atom))) ~>
+        function((builtin(:atom) -> builtin(:atom)))
 
       # two arity}
       assert {:maybe, _} = function((:ok, builtin(:integer) -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> builtin(:atom)))
       assert {:maybe, _} = function((builtin(:atom), 47 -> builtin(:atom))) ~>
+        function((builtin(:atom), builtin(:integer) -> builtin(:atom)))
+      assert {:maybe, _} = function((_, _ -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> builtin(:atom)))
     end
 
@@ -119,6 +146,8 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
         function((builtin(:atom) -> builtin(:integer)))
       assert {:error, _} = function((:ok -> builtin(:atom))) ~>
         function((builtin(:atom) -> builtin(:integer)))
+      assert {:error, _} = function((:ok -> builtin(:atom))) ~>
+        function((_ -> builtin(:integer)))
       # arity two
       assert {:error, _} = function((builtin(:atom), builtin(:integer) -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> builtin(:integer)))
@@ -127,6 +156,8 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       assert {:error, _} = function((builtin(:atom), 47 -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> builtin(:integer)))
       assert {:error, _} = function((:ok, 47 -> builtin(:atom))) ~>
+        function((builtin(:atom), builtin(:integer) -> builtin(:integer)))
+      assert {:error, _} = function((_, _ -> builtin(:atom))) ~>
         function((builtin(:atom), builtin(:integer) -> builtin(:integer)))
     end
 
