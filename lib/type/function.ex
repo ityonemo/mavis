@@ -275,9 +275,16 @@ defmodule Type.Function do
       def subtype?(challenge, target = %Function{params: :any}) do
         Type.subtype?(challenge.return, target.return)
       end
-      def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
-          when p_c == p_t do
+      def subtype?(challenge = %{params: p}, target = %Function{params: i})
+          when (p == i) or (length(p) == i) do
         Type.subtype?(challenge.return, target.return)
+      end
+      def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
+          when length(p_c) == length(p_t) do
+        Type.subtype?(challenge.return, target.return) and
+        (p_c
+         |> Enum.zip(p_t)
+         |> Enum.all?(fn {c, t} -> Type.subtype?(t, c) end))
       end
     end
   end
