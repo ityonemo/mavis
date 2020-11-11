@@ -526,7 +526,7 @@ defmodule Type do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
   defmacro tuple({:{}, _, [{:..., _, [[min: n]]}]}) do
-    Macro.escape(%Type.Tuple{elements: {:min, n}})
+    quote do %Type.Tuple{elements: {:min, unquote(n)}} end
   end
   defmacro tuple({:{}, _, [{:..., _, atom}]}) when is_atom(atom) do
     Macro.escape(%Type.Tuple{elements: {:min, 0}})
