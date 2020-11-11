@@ -39,7 +39,7 @@ defmodule TypeTest.Type.Inspect.MapsTest do
     assert "map(%#{inspect @source}{foo: integer()})" ==
       inspect_type(@source, :struct_defined_literal_type)
   end
-
+  
   test "ordering is optionals, then numbers, then atoms" do
     assert "map(%{optional(:foo) => :bar, 0 => :bar, baz: :bar})" ==
       inspect map(%{:baz => :bar, 0 => :bar, optional(:foo) => :bar})
