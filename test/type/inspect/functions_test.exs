@@ -1,6 +1,5 @@
 defmodule TypeTest.Type.Inspect.FunctionsTest do
   use ExUnit.Case, async: true
-
   import TypeTest.InspectCase
 
   @moduletag :inspect

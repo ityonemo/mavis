@@ -1027,7 +1027,6 @@ defmodule Type do
   end
 
   @prefixes ~w(type typep opaque)a
-
   defp find_type(module, specs, name, params) do
     arity = length(params)
 
@@ -1214,6 +1213,38 @@ defmodule Type do
     term
     |> of
     |> subtype?(type)
+  end
+
+  @spec partition(t, [t]) :: t
+  @doc """
+  partitions a type across a list of types
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> Type.slice(-5..5, builtin(:integer).of)
+  [1..5, 0, -5..-1]
+  ```
+  """
+  def partition(type, type_list) when is_list(type_list) do
+    Enum.map(type_list, &Type.intersection(type, &1))
+  end
+
+  @spec covered?(t, [t]) :: boolean
+  @doc """
+  true if the list of types constitutes a complete cover of the
+  provided type.
+
+  see https://en.wikipedia.org/wiki/Cover_(topology)
+
+  ```elixir
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-1])
+  true
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-2])
+  false
+  ```
+  """
+  def covered?(type, type_list) when is_list(type_list) do
+    Type.subtype?(type, Type.union(type_list))
   end
 end
 

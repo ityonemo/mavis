@@ -162,6 +162,141 @@ defmodule Type.Function do
 
   import Type, only: :macros
 
+  @spec apply_types(t | Type.Union.t(t), [Type.t], keyword) ::
+    {:ok, Type.t} |
+    {:maybe, Type.t} |
+    :error
+  @doc """
+  applies types to a function definition.
+
+  Raises with `Type.FunctionError` if one of the following is true:
+  - an :any function is attempted to be applied
+  - a `top-arity` function is attempted to be applied
+  - a non-function (or union of functions) is attempted to be applied
+
+  Examples:
+
+  ```
+  iex> import Type, only: :macros
+  iex> func = function ((builtin(:pos_integer) -> builtin(:float)))
+  iex> Type.Function.apply_types(func, [builtin(:pos_integer)])
+  {:ok, %Type{name: :float}}
+  iex> Type.Function.apply_types(func, [builtin(:non_neg_integer)])
+  {:maybe, %Type{name: :float}, [
+    %Type.Message{
+      type: %Type.Union{of: [%Type{name: :pos_integer}, 0]},
+      target: %Type{name: :pos_integer},
+      meta: [message: "argument 1 of (pos_integer() -> float())"]
+    }]}
+  iex> Type.Function.apply_types(func, [builtin(:float)])
+  {:error,
+    %Type.Message{
+      type: %Type{name: :float},
+      target: %Type{name: :pos_integer},
+      meta: [message: "argument 1 of (pos_integer() -> float())"]
+    }}
+  ```
+  """
+  def apply_types(fun, vars, meta \\ [])
+  def apply_types(fun = %__MODULE__{params: plst}, vlst, meta) when
+    length(plst) == length(vlst) do
+
+    vlst
+    |> Enum.zip(plst)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{v, p}, idx} ->
+      Type.usable_as(v, p, meta ++ [message: "argument #{idx} of #{inspect fun}"])
+    end)
+    |> Enum.reduce({:ok, fun.return}, &apply_reduce/2)
+  end
+  def apply_types(fun = %__MODULE__{params: arity}, params, _) when length(params) == arity do
+    {:ok, fun.return}
+  end
+  def apply_types(union = %Type.Union{of: funs}, vars, _) do
+    # double check that everything is okay.
+    segregated_vars = funs
+    |> Enum.reduce(Enum.map(vars, &[&1]), fn
+      %__MODULE__{params: p}, acc when length(p) == length(vars) ->
+        p
+        |> Enum.zip(acc)
+        |> Enum.map(fn {a, b} -> [a | b] end)
+      type, _ ->
+        varp = length(vars)
+        raise Type.FunctionError, "type #{inspect type} in union #{inspect union} is not a function with #{varp} parameter#{p varp}"
+    end)
+    |> Enum.map(&Enum.reverse/1)
+
+    # partition the variables based on how they work with the
+    evaluated_type = segregated_vars
+    |> Enum.map(fn [var | segments] ->
+      Type.partition(var, segments)
+    end)
+    |> transpose
+    |> Enum.zip(funs)
+    |> Enum.map(fn {part, fun} -> apply_types(fun, part) end)
+    |> Enum.flat_map(fn
+      # throw away most of this information.  We figure out whether it's okay by checking
+      # out the preimage map.
+      {:ok, type} -> [type]
+      :error -> []
+      # this should be unreachable because by definition everything should be proper
+      # subtypes.
+      {:maybe, _type} -> raise "unreachable"
+    end)
+    |> Type.union()
+
+    if evaluated_type == builtin(:none) do
+      :error
+    else
+      segregated_vars
+      |> Enum.map(fn [var | segments] ->
+        if Type.covered?(var, segments) do
+          :ok
+        else
+          {:maybe, []}
+        end
+      end)
+      |> Enum.reduce({:ok, evaluated_type}, &apply_reduce/2)
+    end
+  end
+
+  ## error raising
+  def apply_types(%__MODULE__{params: :any}, _, _) do
+    raise Type.FunctionError, "cannot apply a function with ... parameters"
+  end
+  def apply_types(fun = %__MODULE__{params: params}, vars, _) do
+    funp = if is_integer(params), do: params, else: length(fun.params)
+    varp = length(vars)
+    raise Type.FunctionError, "mismatched arity; #{inspect fun} expects #{funp} parameter#{p funp}, got #{varp} parameter#{p varp} #{inspect vars}"
+  end
+  def apply_types(any, _, _) do
+    raise Type.FunctionError, "cannot apply a function to the type #{inspect any}"
+  end
+
+  defp apply_reduce(:ok,         {:ok, term}),    do: {:ok, term}
+  defp apply_reduce({:maybe, _}, {:ok, term}),    do: {:maybe, term}
+  defp apply_reduce({:error, _}, {:ok, _}),       do: :error
+  defp apply_reduce(:ok,         {:maybe, term}), do: {:maybe, term}
+  defp apply_reduce({:maybe, _}, {:maybe, term}), do: {:maybe, term}
+  defp apply_reduce({:error, _}, {:maybe, _}),    do: :error
+  defp apply_reduce(_,           :error),         do: :error
+
+  # pluralization
+  defp p(1), do: ""
+  defp p(_), do: "s"
+
+  @spec transpose([[Type.t]]) :: [[Type.t]]
+  defp transpose(lst) do
+    lst
+    |> Enum.reduce(List.duplicate([], length(hd(lst))),
+      fn vec, acc ->
+        vec
+        |> Enum.zip(acc)
+        |> Enum.map(fn {a, b} -> [a | b] end)
+      end)
+    |> Enum.map(&Enum.reverse/1)
+  end
+
   defimpl Type.Properties do
     import Type, only: :macros
 
@@ -348,4 +483,8 @@ defmodule Type.Function do
       |> concat
     end
   end
+end
+
+defmodule Type.FunctionError do
+  defexception [:message]
 end
