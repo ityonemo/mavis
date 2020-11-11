@@ -7,6 +7,11 @@
 - adds `Type.map/1`, `Type.tuple/1`, and `Type.function/1` macros
 - adds `Type.is_singleton/1` guard
 - fixes tuple union merging rules and makes function union merging rules
+- adds `top-arity function` for `t:Type.Function.t`
+- changes how `t:Type.Tuple.t/1` works, by introducing minimum arity tuples
+- makes inspecting types that could be confused as native terms less precarious
+  by prepending `::` onto the front.
+- overhaul of how union merging works
 
 ## 0.0.4
 - make `Type.fetch_type/3` use a sane call pattern
