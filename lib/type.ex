@@ -509,10 +509,13 @@ defmodule Type do
   generates the tuple type from a tuple ast.  If the tuple contains
   `...` it will generate the generic any tuple.
 
+  See `Type.Tuple` for an explanation of deviations from dialyzer in the
+  implementation of this type.
+
   ```elixir
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: :any}
+  %Type.Tuple{elements: {:min, 0}}
   iex> tuple {:ok, builtin(:pos_integer)}
   %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
   iex> tuple {:error, builtin(:atom), builtin(:pos_integer)}
@@ -522,8 +525,11 @@ defmodule Type do
   defmacro tuple({a, b}) do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
-  defmacro tuple({:{}, _, [{:..., _, _}]}) do
-    Macro.escape(%Type.Tuple{elements: :any})
+  defmacro tuple({:{}, _, [{:..., _, [[min: n]]}]}) do
+    Macro.escape(%Type.Tuple{elements: {:min, n}})
+  end
+  defmacro tuple({:{}, _, [{:..., _, atom}]}) when is_atom(atom) do
+    Macro.escape(%Type.Tuple{elements: {:min, 0}})
   end
   defmacro tuple({:{}, _, elements}) do
     struct_of(:"Type.Tuple", elements: elements)

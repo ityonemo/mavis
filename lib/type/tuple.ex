@@ -186,8 +186,13 @@ defmodule Type.Tuple do
     alias Type.{Message, Tuple, Union}
 
     group_compare do
-      def group_compare(%{elements: :any}, %Tuple{}), do: :gt
-      def group_compare(_, %Tuple{elements: :any}), do:   :lt
+      def group_compare(%{elements: {:min, m}}, %{elements: {:min, n}})
+        when n > m,                                 do: :gt
+      def group_compare(%{elements: {:min, m}}, %{elements: {:min, n}})
+        when m > n,                                 do: :lt
+      def group_compare(%{elements: {:min, _}}, _), do: :gt
+      def group_compare(_, %{elements: {:min, _}}), do: :lt
+
       def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
       def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
       def group_compare(tuple1, tuple2) do
@@ -250,9 +255,14 @@ defmodule Type.Tuple do
     end
 
     subtype do
-      # can't simply forward to usable_as, because any of the encapsulated
-      # types might have a usable_as rule that isn't strictly subtype?
-      def subtype?(_tuple_type, %Tuple{elements: :any}), do: true
+      # bigger minimums are more restrictive, so subtyping is >=
+      def subtype?(%{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
+        m >= n
+      end
+      def subtype?(%{elements: {:min, _}}, %Tuple{}), do: false
+      def subtype?(%{elements: el}, %Tuple{elements: {:min, m}}) do
+        length(el) >= m
+      end
       # same nonempty is okay
       def subtype?(%{elements: el_c}, %Tuple{elements: el_t})
         when length(el_c) == length(el_t) do
