@@ -10,7 +10,7 @@
 - adds `top-arity function` for `t:Type.Function.t`
 - changes how `t:Type.Tuple.t/1` works, by introducing minimum arity tuples
 - makes inspecting types that could be confused as native terms less precarious
-  by prepending `::` onto the front.
+  by using parallelism with `Type` module macros.
 - overhaul of how union merging works
 
 ## 0.0.4
