@@ -928,14 +928,15 @@ defmodule Type do
     - `t:module/0`
     - `t:atom/0`
   - group 4: `t:reference/0`
-  - group 5 (`t:Type.List.t/0`):
+  - group 5 (`t:Type.Function.t/0`):
     - `params: list` functions (ordered by `retval`, then `params` in dictionary order)
     - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
   - group 6: `t:port/0`
   - group 7: `t:pid/0`
   - group 8 (`t:Type.Tuple.t/0`):
-    - defined arity tuple
-    - any tuple
+    - defined tuples, in ascending order of arity, with cartesian
+      dictionary ordering intrenally within an arity group.
+    - minimum size tuples, in descending order of size.
   - group 9 (`t:Type.Map.t/0`): maps
   - group 10 (`t:Type.List.t/0`):
     - `nonempty: true` list
