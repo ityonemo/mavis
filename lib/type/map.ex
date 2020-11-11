@@ -587,7 +587,7 @@ defmodule Type.Map do
       |> Enum.reject(&(elem(&1, 1) == builtin(:any)))
       |> inner_content(opts)
 
-      concat(["%#{inspect struct}{", inner, "}"])
+      concat(["::%#{inspect struct}{", inner, "}"])
     end
     def inspect(%{optional: @any}, _opts) do
       "map()"

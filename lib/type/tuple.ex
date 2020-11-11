@@ -303,6 +303,7 @@ defmodule Type.Tuple do
 
   defimpl Inspect do
     import Type, only: :macros
+    import Inspect.Algebra
     def inspect(%{elements: {:min, 0}}, _opts) do
       "tuple()"
     end
@@ -313,9 +314,11 @@ defmodule Type.Tuple do
       "mfa()"
     end
     def inspect(%{elements: elements}, opts) do
-      elements
-      |> List.to_tuple()
-      |> Inspect.inspect(opts)
+      inner_contents = elements
+      |> Enum.map(&to_doc(&1, opts))
+      |> Enum.intersperse(", ")
+
+      concat(["::{" | inner_contents] ++ ["}"])
     end
   end
 

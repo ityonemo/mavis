@@ -248,7 +248,7 @@ defmodule Type.List do
         final: [],
         nonempty: false,
         type: tuple({k, v})}, opts) when is_atom(k) do
-      to_doc([{k, v}], opts)
+      concat(["::", to_doc([{k, v}], opts)])
     end
     def inspect(list = %{
         final: [],
@@ -296,7 +296,7 @@ defmodule Type.List do
         ""
       end
 
-      concat(["[", to_doc(list.type, opts), nonempty_suffix, "]"])
+      concat(["::[", to_doc(list.type, opts), nonempty_suffix, "]"])
     end
 
     defp render_maybe_improper(list, opts) do
