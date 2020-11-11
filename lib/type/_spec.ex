@@ -49,7 +49,7 @@ defmodule Type.Spec do
     %Type.Function{params: param_types, return: parse(return, assigns)}
   end
   def parse({:type, _, :tuple, :any}, _) do
-    %Type.Tuple{elements: :any}
+    %Type.Tuple{elements: {:min, 0}}
   end
   def parse({:type, _, :tuple, elements}, assigns) do
     %Type.Tuple{elements: Enum.map(elements, &parse(&1, assigns))}

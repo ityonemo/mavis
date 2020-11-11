@@ -8,18 +8,28 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
   use Type.Operators
 
   @any_tuple builtin(:tuple)
+  @min_2_tuple tuple({...(min: 2)})
 
-  describe "any tuples" do
+  describe "minimum tuples" do
     test "are subtypes of themselves and any" do
       assert @any_tuple in builtin(:any)
+      assert @any_tuple in @any_tuple
+      assert @min_2_tuple in @any_tuple
+      assert @min_2_tuple in @min_2_tuple
     end
 
     test "are subtypes of tuples containing any tuples" do
       assert @any_tuple in (builtin(:atom) <|> @any_tuple)
+      assert @min_2_tuple in (builtin(:atom) <|> @min_2_tuple)
     end
 
     test "are not subtypes of orthogonal unions" do
       refute @any_tuple in (builtin(:atom) <|> builtin(:integer))
+      refute @min_2_tuple in (builtin(:atom) <|> builtin(:integer))
+    end
+
+    test "are not subtypes of more stringent minimum tuples" do
+      refute @any_tuple in @min_2_tuple
     end
 
     test "are not subtypes of other types" do
@@ -39,6 +49,10 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
       assert tuple({}) in builtin(:any)
       assert tuple({builtin(:integer)}) in builtin(:any)
       assert tuple({builtin(:atom), builtin(:integer)}) in builtin(:any)
+    end
+
+    test "are subtypes of qualified minimum tuples" do
+      assert tuple({:ok, builtin(:integer)}) in @min_2_tuple
     end
 
     test "are subtypes of themselves" do
@@ -64,6 +78,10 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
     test "are not subtypes of orthogonal unions" do
       refute tuple({builtin(:integer)}) in
         (tuple({builtin(:integer), builtin(:integer)}) <|> builtin(:integer))
+    end
+
+    test "are not subtypes when their length is insufficient" do
+      refute tuple({builtin(:integer)}) in @min_2_tuple
     end
 
     test "is not a subtype on partial match" do

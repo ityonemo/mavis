@@ -9,11 +9,18 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
   alias Type.Message
 
   @any_tuple builtin(:tuple)
+  @min_2_tuple tuple({...(min: 2)})
 
-  describe "for the any tuple types" do
+  describe "for the minimum size tuple types" do
     test "you can use it for itself and the builtin any" do
       assert :ok = @any_tuple ~> @any_tuple
       assert :ok = @any_tuple ~> builtin(:any)
+
+      assert :ok = @min_2_tuple ~> @min_2_tuple
+    end
+
+    test "you can use it as a less restrictive tuple" do
+      assert :ok = @min_2_tuple ~> @any_tuple
     end
 
     test "you can use it in a union type" do
@@ -27,10 +34,20 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
       assert {:maybe, _} = @any_tuple ~> tuple({:foo})
       # two arity
       assert {:maybe, _} = @any_tuple ~> tuple({builtin(:integer), builtin(:atom)})
+      assert {:maybe, _} = @min_2_tuple ~> tuple({:ok, builtin(:integer)})
+    end
+
+    test "you can maybe use it as a more restrictive tuple" do
+      assert {:maybe, _} = @any_tuple ~> @min_2_tuple
     end
 
     test "you can't use it in a union type of orthogonal types" do
       assert {:error, _} = @any_tuple ~> (builtin(:integer) <|> :infinity)
+    end
+
+    test "you can't use it as a tuple that's too small" do
+      assert {:error, _} = tuple({...(min: 3)}) ~>
+        tuple({:ok, builtin(:binary)})
     end
 
     test "you can't use it for anything else" do
@@ -47,6 +64,11 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
       assert :ok = tuple({}) ~> @any_tuple
       assert :ok = tuple({:foo}) ~> @any_tuple
       assert :ok = tuple({builtin(:integer), builtin(:atom)}) ~> @any_tuple
+    end
+
+    test "they are usable as mininum arity tuples" do
+      assert :ok = tuple({:ok, builtin(:integer)}) ~> @min_2_tuple
+      assert :ok = tuple({:ok, builtin(:binary), builtin(:integer)}) ~> @min_2_tuple
     end
 
     test "they are usable as tuples with the same length and transitive usable_as" do
@@ -75,6 +97,10 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     test "for a one-tuple it's the expected match of the single element" do
       assert {:maybe, _} = tuple({builtin(:integer)}) ~> tuple({1..10})
       assert {:error, _} = tuple({builtin(:integer)}) ~> tuple({builtin(:atom)})
+    end
+
+    test "you can't use it as a tuple for which it doesn't have enough" do
+      assert {:error, _} = tuple({:ok, builtin(:integer)}) ~> tuple({...(min: 3)})
     end
 
     test "for a two-tuple it's the ternary logic match of all elements" do

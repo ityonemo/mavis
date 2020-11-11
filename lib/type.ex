@@ -301,7 +301,7 @@ defmodule Type do
     end
   end
   defmacro builtin(:tuple) do
-    quote do %Type.Tuple{elements: :any} end
+    quote do %Type.Tuple{elements: {:min, 0}} end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
@@ -509,10 +509,13 @@ defmodule Type do
   generates the tuple type from a tuple ast.  If the tuple contains
   `...` it will generate the generic any tuple.
 
+  See `Type.Tuple` for an explanation of deviations from dialyzer in the
+  implementation of this type.
+
   ```elixir
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: :any}
+  %Type.Tuple{elements: {:min, 0}}
   iex> tuple {:ok, builtin(:pos_integer)}
   %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
   iex> tuple {:error, builtin(:atom), builtin(:pos_integer)}
@@ -522,8 +525,11 @@ defmodule Type do
   defmacro tuple({a, b}) do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
-  defmacro tuple({:{}, _, [{:..., _, _}]}) do
-    Macro.escape(%Type.Tuple{elements: :any})
+  defmacro tuple({:{}, _, [{:..., _, [[min: n]]}]}) do
+    quote do %Type.Tuple{elements: {:min, unquote(n)}} end
+  end
+  defmacro tuple({:{}, _, [{:..., _, atom}]}) when is_atom(atom) do
+    Macro.escape(%Type.Tuple{elements: {:min, 0}})
   end
   defmacro tuple({:{}, _, elements}) do
     struct_of(:"Type.Tuple", elements: elements)
@@ -922,14 +928,15 @@ defmodule Type do
     - `t:module/0`
     - `t:atom/0`
   - group 4: `t:reference/0`
-  - group 5 (`t:Type.List.t/0`):
+  - group 5 (`t:Type.Function.t/0`):
     - `params: list` functions (ordered by `retval`, then `params` in dictionary order)
     - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
   - group 6: `t:port/0`
   - group 7: `t:pid/0`
   - group 8 (`t:Type.Tuple.t/0`):
-    - defined arity tuple
-    - any tuple
+    - defined tuples, in ascending order of arity, with cartesian
+      dictionary ordering intrenally within an arity group.
+    - minimum size tuples, in descending order of size.
   - group 9 (`t:Type.Map.t/0`): maps
   - group 10 (`t:Type.List.t/0`):
     - `nonempty: true` list

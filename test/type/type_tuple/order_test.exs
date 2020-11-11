@@ -51,4 +51,14 @@ defmodule TypeTest.TypeTuple.OrderTest do
     end
   end
 
+  describe "a tuple with minimum arity" do
+    test "is bigger than a tuple with a bigger minimum arity" do
+      assert tuple({...(min: 2)}) > tuple({...(min: 3)})
+    end
+
+    test "is bigger than any corresponding defined tuple" do
+      assert tuple({...(min: 2)}) > tuple({:ok, builtin(:integer)})
+    end
+  end
+
 end
