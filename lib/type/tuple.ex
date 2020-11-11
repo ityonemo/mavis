@@ -142,6 +142,19 @@ defmodule Type.Tuple do
   defp merge_helper([], [], {list, _, _}), do: Enum.reverse(list)
   defp merge_helper(_, _, _), do: nil # if the two lists are not of equal length.
 
+  @doc """
+  returns the tuple type at the (0-indexed) tuple slot.
+
+  ```
+  iex> import Type, only: :macros
+  iex> Type.Tuple.elem(tuple({:ok, builtin(:pos_integer)}), 1)
+  %Type{name: :pos_integer}
+  ```
+  """
+  def elem(%__MODULE__{elements: elements}, index) when index < length(elements) do
+    Enum.at(elements, index)
+  end
+
   defimpl Type.Properties do
     import Type, only: :macros
 
