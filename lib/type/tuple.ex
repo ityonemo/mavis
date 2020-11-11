@@ -270,8 +270,11 @@ defmodule Type.Tuple do
 
   defimpl Inspect do
     import Type, only: :macros
-    def inspect(%{elements: :any}, _opts) do
+    def inspect(%{elements: {:min, 0}}, _opts) do
       "tuple()"
+    end
+    def inspect(%{elements: {:min, n}}, _opts) do
+      "{...(min: #{n})}"
     end
     def inspect(%{elements: [builtin(:module), builtin(:atom), 0..255]}, _opts) do
       "mfa()"
