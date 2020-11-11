@@ -7,19 +7,19 @@ defmodule TypeTest.Type.Inspect.BitstringsTest do
   @source TypeTest.TypeExample.Bitstrings
 
   test "empty bitstring literal" do
-    assert "<<>>" == inspect_type(@source, :empty_bitstring)
+    assert "::<<>>" == inspect_type(@source, :empty_bitstring)
   end
 
   test "sized bitstring literal" do
-    assert "<<_::47>>" == inspect_type(@source, :size_bitstring)
+    assert "::<<_::47>>" == inspect_type(@source, :size_bitstring)
   end
 
   test "unit bitstring literal" do
-    assert "<<_::_*16>>" == inspect_type(@source, :unit_bitstring)
+    assert "::<<_::_*16>>" == inspect_type(@source, :unit_bitstring)
   end
 
   test "unit and sized bitstring literal" do
-    assert "<<_::12, _::_*8>>" == inspect_type(@source, :size_unit_bitstring)
+    assert "::<<_::12, _::_*8>>" == inspect_type(@source, :size_unit_bitstring)
   end
 
   test "bitstring/0" do

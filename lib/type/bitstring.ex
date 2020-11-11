@@ -308,7 +308,7 @@ defmodule Type.Bitstring do
   end
 
   defimpl Inspect do
-    def inspect(%{size: 0, unit: 0}, _opts), do: "<<>>"
+    def inspect(%{size: 0, unit: 0}, _opts), do: "::<<>>"
     def inspect(%{size: 0, unit: 1}, _opts) do
       "bitstring()"
     end

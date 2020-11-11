@@ -27,15 +27,15 @@ defmodule Type.Tuple do
 
     ```
     iex> inspect %Type.Tuple{elements: {:min, 2}}
-    "{...(min: 2)}"
+    "tuple({...(min: 2)})"
     ```
 
   - generic tuples have their types as lists.
     ```
     iex> inspect %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]}
-    "{atom(), integer()}"
+    "tuple({atom(), integer()})"
     iex> inspect %Type.Tuple{elements: [:ok, %Type{name: :integer}]}
-    "{:ok, integer()}"
+    "tuple({:ok, integer()})"
     ```
 
   ### Shortcut Form
@@ -308,7 +308,7 @@ defmodule Type.Tuple do
       "tuple()"
     end
     def inspect(%{elements: {:min, n}}, _opts) do
-      "{...(min: #{n})}"
+      "tuple({...(min: #{n})})"
     end
     def inspect(%{elements: [builtin(:module), builtin(:atom), 0..255]}, _opts) do
       "mfa()"
@@ -318,7 +318,7 @@ defmodule Type.Tuple do
       |> Enum.map(&to_doc(&1, opts))
       |> Enum.intersperse(", ")
 
-      concat(["::{" | inner_contents] ++ ["}"])
+      concat(["tuple({" | inner_contents] ++ ["})"])
     end
   end
 

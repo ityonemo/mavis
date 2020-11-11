@@ -1013,7 +1013,7 @@ defmodule Type do
   ```elixir
   iex> {:ok, spec} = Type.fetch_spec(String, :split, 1)
   iex> inspect spec
-  "(String.t() -> [String.t()])"
+  "(String.t() -> list(String.t()))"
   ```
   """
   def fetch_spec(module, fun, arity) do
@@ -1029,6 +1029,9 @@ defmodule Type do
   resolves a remote type into its constitutent type.  raises if the type
   is not found.
   """
+  def fetch_type!(type = %Type{module: String, name: :t, params: [size]}) do
+    struct(Type.Bitstring, size: 8 * size)
+  end
   def fetch_type!(type = %Type{module: module, name: name, params: params})
       when is_remote(type) do
     fetch_type!(module, name, params)
@@ -1112,7 +1115,7 @@ defmodule Type do
   iex> inspect Type.of(47.0)
   "float()"
   iex> inspect Type.of([:foo, :bar])
-  "[:bar | :foo, ...]"
+  "list(:bar | :foo, ...)"
   iex> inspect Type.of([:foo | :bar])
   "nonempty_improper_list(:foo, :bar)"
   ```
@@ -1131,13 +1134,13 @@ defmodule Type do
 
   ```
   iex> inspect Type.of(%{foo: :bar})
-  "%{foo: :bar}"
+  "map(%{foo: :bar})"
   iex> inspect Type.of(%{1 => :one})
-  "%{1 => :one}"
+  "map(%{1 => :one})"
   iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
-  "%{optional(String.t()) => :bar | String.t()}"
+  "map(%{optional(String.t()) => :bar | String.t()})"
   iex> inspect Type.of(1..10)
-  "%Range{first: 1, last: 10}"
+  "map(%Range{first: 1, last: 10})"
   ```
   """
   def of(value)

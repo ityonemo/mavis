@@ -36,12 +36,12 @@ defmodule Type.List do
   - a list of a given type
     ```elixir
     iex> inspect %Type.List{type: %Type{name: :integer}}
-    "[integer()]"
+    "list(integer())"
     ```
   - a nonempty list of a given type
     ```elixir
     iex> inspect %Type.List{type: %Type{name: :integer}, nonempty: true}
-    "[integer(), ...]"
+    "list(integer(), ...)"
     ```
   - an improper list must be nonempty, and looks like the following:
     ```elixir
@@ -241,14 +241,14 @@ defmodule Type.List do
     def inspect(list = %{final: [], type: 0..1114111}, _) do
       "#{nonempty_prefix list}charlist()"
     end
-    def inspect(%{final: [], type: builtin(:any), nonempty: true}, _), do: "[...]"
+    def inspect(%{final: [], type: builtin(:any), nonempty: true}, _), do: "list(...)"
     def inspect(%{final: [], type: builtin(:any)}, _), do: "list()"
     # keyword list literal syntax
     def inspect(%{
         final: [],
         nonempty: false,
         type: tuple({k, v})}, opts) when is_atom(k) do
-      concat(["::", to_doc([{k, v}], opts)])
+      concat(["list(", "#{k}: ", to_doc(v, opts), ")"])
     end
     def inspect(list = %{
         final: [],
@@ -256,10 +256,16 @@ defmodule Type.List do
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
             tuple({e, _}) when is_atom(e), &1)) do
-        type.of
-        |> Enum.reverse
-        |> Enum.map(&List.to_tuple(&1.elements))
-        |> to_doc(opts)
+        ["list(",
+          type.of
+          |> Enum.reverse
+          |> Enum.map(fn %{elements: [atom, type]} ->
+            ["#{atom}: ", to_doc(type, opts)]
+          end)
+          |> Enum.intersperse(", "),
+          ")"]
+        |> List.flatten
+        |> concat
       else
         render_basic(list, opts)
       end
@@ -296,7 +302,7 @@ defmodule Type.List do
         ""
       end
 
-      concat(["::[", to_doc(list.type, opts), nonempty_suffix, "]"])
+      concat(["list(", to_doc(list.type, opts), nonempty_suffix, ")"])
     end
 
     defp render_maybe_improper(list, opts) do
