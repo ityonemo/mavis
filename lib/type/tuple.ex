@@ -211,12 +211,28 @@ defmodule Type.Tuple do
     end
 
     usable_as do
-      # any tuple can be used as an any tuple
-      def usable_as(_, %Tuple{elements: :any}, _meta), do: :ok
+      # lesser minimum sized tuples are maybes.
+      def usable_as(challenge = %{elements: {:min, m}},
+                    target = %Tuple{elements: {:min, n}},
+                    meta) do
+        if m >= n, do: :ok, else: {:maybe, [Message.make(challenge, target, meta)]}
+      end
 
-      # the any tuple maybe can be used as any tuple
-      def usable_as(challenge = %{elements: :any}, target = %Tuple{}, meta) do
-        {:maybe, [Message.make(challenge, target, meta)]}
+      # a minimum tuple maybe can be used as a tuple if the sizes are okay
+      def usable_as(challenge = %{elements: {:min, m}}, target = %Tuple{}, meta) do
+        if m <= length(target.elements) do
+          {:maybe, [Message.make(challenge, target, meta)]}
+        else
+          {:error, Message.make(challenge, target, meta)}
+        end
+      end
+
+      def usable_as(target, challenge = %Tuple{elements: {:min, m}}, meta) do
+        if m <= length(target.elements) do
+          :ok
+        else
+          {:error, Message.make(challenge, target, meta)}
+        end
       end
 
       def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)

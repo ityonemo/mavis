@@ -29,6 +29,9 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
       assert tuple({:ok, builtin(:integer)}) ==
         @min_2_tuple <~> tuple({:ok, builtin(:integer)})
+
+      assert tuple({:ok, builtin(:binary), builtin(:integer)}) ==
+        @min_2_tuple <~> tuple({:ok, builtin(:binary), builtin(:integer)})
     end
 
     test "is none when the tuple is too small" do
