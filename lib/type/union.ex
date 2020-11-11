@@ -26,7 +26,8 @@ defmodule Type.Union do
 
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t, ...]}
-
+  @type t(type) :: %__MODULE__{of: [type, ...]}
+  
   import Type, only: :macros
 
   @spec collapse(t) :: Type.t

@@ -43,9 +43,43 @@ defmodule Type.Function.Var do
     name: atom,
     constraint: Type.t
   }
+
+  @spec resolve(Type.t, %{t => Type.t}) :: Type.t
+  @doc false
+  def resolve(type, map) when is_map_key(map, type) do
+    Type.intersection(type.constraint, map[type])
+  end
+  def resolve(t = %Type.Map{required: rmap, optional: omap}, map) do
+    %{t | required: Enum.map(rmap, &resolve(&1, map)),
+          optional: Enum.map(omap, &resolve(&1, map))}
+  end
+  def resolve(t = %Type.List{type: type, final: final}, map) do
+    %{t | type: Enum.map(type, &resolve(&1, map)), final: resolve(final, map)}
+  end
+  def resolve(t = %Type.Union{of: types}, map) do
+    %{t | of: Enum.map(types, &resolve(&1, map))}
+  end
+  def resolve(t = %Type.Tuple{elements: elements}, map) do
+    %{t | elements: Enum.map(elements, &resolve(&1, map))}
+  end
+  def resolve({k, v}, map) do
+    {resolve(k, map), resolve(v, map)}
+  end
+  def resolve(type, _map), do: type
 end
 
 defimpl Inspect, for: Type.Function.Var do
+  import Type, only: :macros
+  import Inspect.Algebra
+
+  def inspect(var, opts = %{custom_options: [show_constraints: true]}) do
+    case var.constraint do
+      builtin(:any) -> "#{var.name}: var"
+      _ ->
+        clean_opts = %{opts | custom_options: []}
+        concat("#{var.name}: ", to_doc(var.constraint, clean_opts))
+    end
+  end
   def inspect(var, _opts) do
     "#{var.name}"
   end

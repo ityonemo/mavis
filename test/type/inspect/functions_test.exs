@@ -1,6 +1,5 @@
 defmodule TypeTest.Type.Inspect.FunctionsTest do
   use ExUnit.Case, async: true
-
   import TypeTest.InspectCase
 
   @moduletag :inspect
@@ -45,7 +44,11 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
   end
 
   test "function with when statement" do
-    assert "(t -> t when t)" == inspect_spec(:when_var_1)
-    assert "(t1, t2 -> t1 | t2 when t1, t2)" == inspect_spec(:when_var_2)
+    assert "(t -> t when t: var)" == inspect_spec(:when_var_1)
+    assert "(t1, t2 -> t1 | t2 when t1: var, t2: var)" == inspect_spec(:when_var_2)
+  end
+
+  test "function with when statement and consntraint" do
+    assert "(t -> t when t: integer())" == inspect_spec(:when_var_3)
   end
 end

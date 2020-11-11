@@ -578,6 +578,20 @@ defmodule Type do
   iex> function (_, _ -> builtin(:pos_integer))
   %Type.Function{params: 2, return: %Type{name: :pos_integer}}
   ```
+
+  If you want to tag function variables or constrain them, you can
+  pass a keyword or atom list to the second parameter.  These variables
+  must appear in the return.
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> function (i -> i when i: var)
+  %Type.Function{params: [%Type.Function.Var{name: :i}],
+                return: %Type.Function.Var{name: :i}}
+  iex> function (i -> i when i: builtin(:pos_integer))
+  %Type.Function{params: [%Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}],
+                 return: %Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}}
+  ```
   """
   defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
     quote do %Type.Function{params: :any, return: unquote(return)} end
@@ -586,11 +600,46 @@ defmodule Type do
   defmacro function([{:->, _, [[], return]}]) do
     quote do %Type.Function{params: [], return: unquote(return)} end
   end
+  defmacro function([{:->, _, [params, {:when, _, [return, constraints]}]}]) do
+    # TODO: fail if any constraint is not in the param or in the return.
+    c_f = constraints_to_lambda(constraints)
+    parsed_params = c_f.(params, c_f)
+    parsed_return = c_f.(return, c_f)
+    quote do
+      %Type.Function{params: unquote(parsed_params), return: unquote(parsed_return)}
+    end
+  end
   defmacro function([{:->, _, [params, return]}]) do
+    # TODO: fail if there's a partial underscore match
     if Enum.all?(params, &match?({:_, _, _}, &1)) do
       quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end
     else
       quote do %Type.Function{params: unquote(params), return: unquote(return)} end
+    end
+  end
+
+  # generates a y-combinator that aggressively converts ASTs which are single
+  # variables into var variables.
+  defp constraints_to_lambda(constraints) do
+    cmap = constraints
+    |> Enum.map(fn
+      {id, {:var, _, _}} -> {id, quote do builtin(:any) end}
+      any -> any
+    end)
+    |> Enum.into(%{})
+
+    fn
+      {id, meta, atom}, _ when is_atom(atom) and is_map_key(cmap, id) ->
+        {:%, meta,
+        [
+          {:__aliases__, [alias: false], [:"Type.Function.Var"]},
+          {:%{}, meta, [name: id, constraint: cmap[id]]}
+        ]}
+      {id, meta, list}, f when is_list(list) ->
+        {id, meta, f.(list, f)}
+      list, f when is_list(list) ->
+        Enum.map(list, &(f.(&1, f)))
+      any, _ -> any
     end
   end
 
@@ -1027,7 +1076,6 @@ defmodule Type do
   end
 
   @prefixes ~w(type typep opaque)a
-
   defp find_type(module, specs, name, params) do
     arity = length(params)
 
@@ -1214,6 +1262,43 @@ defmodule Type do
     term
     |> of
     |> subtype?(type)
+  end
+
+  @spec partition(t, [t]) :: [t]
+  @doc """
+  partitions a type across a list of types
+
+  see https://en.wikipedia.org/wiki/Partition_of_a_set
+
+  note however, that if some part of your type is not represented
+  in the type list that is provided, those members will be discarded.
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> Type.partition(-5..5, builtin(:integer).of)
+  [1..5, 0, -5..-1]
+  ```
+  """
+  def partition(type, type_list) when is_list(type_list) do
+    Enum.map(type_list, &Type.intersection(type, &1))
+  end
+
+  @spec covered?(t, [t]) :: boolean
+  @doc """
+  true if the list of types constitutes a complete cover of the
+  provided type.
+
+  see https://en.wikipedia.org/wiki/Cover_(topology)
+
+  ```elixir
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-1])
+  true
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-2])
+  false
+  ```
+  """
+  def covered?(type, type_list) when is_list(type_list) do
+    Type.subtype?(type, Type.union(type_list))
   end
 end
 
