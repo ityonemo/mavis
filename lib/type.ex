@@ -301,7 +301,7 @@ defmodule Type do
     end
   end
   defmacro builtin(:tuple) do
-    quote do %Type.Tuple{elements: :any} end
+    quote do %Type.Tuple{elements: {:min, 0}} end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
