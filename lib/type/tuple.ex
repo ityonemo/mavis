@@ -235,8 +235,15 @@ defmodule Type.Tuple do
     end
 
     intersection do
-      def intersection(%{elements: :any}, b = %Tuple{}), do: b
-      def intersection(a, %Tuple{elements: :any}), do: a
+      def intersection(%{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
+        %Tuple{elements: {:min, max(m, n)}}
+      end
+      def intersection(%{elements: {:min, m}}, tup = %Tuple{elements: e}) do
+        if length(e) >= m, do: tup, else: builtin(:none)
+      end
+      def intersection(tup = %{elements: e}, %Tuple{elements: {:min, m}}) do
+        if length(e) >= m, do: tup, else: builtin(:none)
+      end
       def intersection(%{elements: e1}, %Tuple{elements: e2}) when length(e1) == length(e2) do
         elements = e1
         |> Enum.zip(e2)

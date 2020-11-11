@@ -32,7 +32,7 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     end
 
     test "is none when the tuple is too small" do
-      assert builtin(:none) == tuple({...(min: 3)}) <|> {:ok, builtin(:integer)}
+      assert builtin(:none) == tuple({...(min: 3)}) <~> tuple({:ok, builtin(:integer)})
     end
 
     test "with unions works as expected" do
