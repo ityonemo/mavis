@@ -4,16 +4,32 @@ defmodule Type.Tuple do
 
   The associated struct has one parameter:
   - `:elements` which may be a list of types, corresponding to the ordered
-    list of tuple element types.  May also be the atom `:any` which
-    corresponds to the any tuple.
+    list of tuple element types.
+
+  ### Deviations from standard Erlang/Elixir:
+
+  Mavis introduces a new type (that is not expressible via dialyzer).
+  This is a tuple with minimum arity (`n`), this is represented by putting
+  the tuple `{:min, n}` in the `:elements` field.  The properties of
+  this type should be self-explanatory.  The `{:min, 0}` tuple is
+  equvalent to the standard Erlang type `{...}`, aka `any tuple`
 
   ### Examples:
 
-  - the any tuple is `%Type.Tuple{elements: :any}`
+  - the any tuple is `%Type.Tuple{elements: {:min, 0}}`
+
     ```
-    iex> inspect %Type.Tuple{elements: :any}
+    iex> inspect %Type.Tuple{elements: {:min, 0}}
     "tuple()"
     ```
+
+  - A tuple of minimum size is represented as follows:
+
+    ```
+    iex> inspect %Type.Tuple{elements: {:min, 2}}
+    "{...(min: 2)}"
+    ```
+
   - generic tuples have their types as lists.
     ```
     iex> inspect %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]}
@@ -30,7 +46,9 @@ defmodule Type.Tuple do
   ```
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: :any}
+  %Type.Tuple{elements: {:min, 0}}
+  iex> tuple {...(min: 2)}
+  %Type.Tuple{elements: {:min, 2}}
   iex> tuple {:ok, builtin(:integer)}
   %Type.Tuple{elements: [:ok, builtin(:integer)]}
   ```
@@ -78,12 +96,17 @@ defmodule Type.Tuple do
   #### subtype?
 
   A tuple type is the subtype of another if its types are subtypes of the other
-  across all Cartesian dimensions.
+  across all Cartesian dimensions, but is not the subtype of a tuple that
+  requires more minimum values.
 
   ```
   iex> import Type, only: :macros
   iex> Type.subtype?(tuple({:ok, 1..10}), tuple({builtin(:atom), builtin(:integer)}))
   true
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({...(min: 2)}))
+  true
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({...(min: 3)}))
+  false
   ```
 
   #### usable_as
@@ -109,7 +132,7 @@ defmodule Type.Tuple do
   @enforce_keys [:elements]
   defstruct @enforce_keys
 
-  @type t :: %__MODULE__{elements: [Type.t] | :any}
+  @type t :: %__MODULE__{elements: [Type.t] | {:min, non_neg_integer}}
 
   @doc """
   a utility function which takes two type lists and ascertains if they
@@ -118,8 +141,8 @@ defmodule Type.Tuple do
   returns the merged list if the two lists are mergeable.  This follows
   from one of two conditions:
 
-  - each type in the "smaller" type list is a subtype of the corresponding
-    "bigger" type list
+  - each type in the "narrower" type list is a subtype of the corresponding
+    "broader" type list
   - all types are equal except for one
 
   returns nil if the two lists are not mergeable; returns the merged
