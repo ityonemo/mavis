@@ -600,16 +600,18 @@ defmodule Type.Map do
     end
 
     def inner_content(required, optional \\ %{}, opts) do
-      requireds = Enum.map(required, fn
+      requireds = required
+      |> Enum.sort
+      |> Enum.map(fn
         {src, dst} when is_atom(src) ->
           concat(["#{src}: ", to_doc(dst, opts)])
         {src, dst} ->
-          concat(["required(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+          concat([to_doc(src, opts), " => ", to_doc(dst, opts)])
       end)
       optionals = Enum.map(optional, fn {src, dst} ->
         concat(["optional(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
       end)
-      concat(Enum.intersperse(requireds ++ optionals, ", "))
+      concat(Enum.intersperse(optionals ++ requireds, ", "))
     end
   end
 end
