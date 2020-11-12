@@ -301,7 +301,7 @@ defmodule Type do
     end
   end
   defmacro builtin(:tuple) do
-    quote do %Type.Tuple{elements: :any} end
+    quote do %Type.Tuple{elements: {:min, 0}} end
   end
   defmacro builtin(arity_or_byte) when arity_or_byte in [:arity, :byte] do
     quote do 0..255 end
@@ -509,10 +509,13 @@ defmodule Type do
   generates the tuple type from a tuple ast.  If the tuple contains
   `...` it will generate the generic any tuple.
 
+  See `Type.Tuple` for an explanation of deviations from dialyzer in the
+  implementation of this type.
+
   ```elixir
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: :any}
+  %Type.Tuple{elements: {:min, 0}}
   iex> tuple {:ok, builtin(:pos_integer)}
   %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
   iex> tuple {:error, builtin(:atom), builtin(:pos_integer)}
@@ -522,8 +525,11 @@ defmodule Type do
   defmacro tuple({a, b}) do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
-  defmacro tuple({:{}, _, [{:..., _, _}]}) do
-    Macro.escape(%Type.Tuple{elements: :any})
+  defmacro tuple({:{}, _, [{:..., _, [[min: n]]}]}) do
+    quote do %Type.Tuple{elements: {:min, unquote(n)}} end
+  end
+  defmacro tuple({:{}, _, [{:..., _, atom}]}) when is_atom(atom) do
+    Macro.escape(%Type.Tuple{elements: {:min, 0}})
   end
   defmacro tuple({:{}, _, elements}) do
     struct_of(:"Type.Tuple", elements: elements)
@@ -578,6 +584,20 @@ defmodule Type do
   iex> function (_, _ -> builtin(:pos_integer))
   %Type.Function{params: 2, return: %Type{name: :pos_integer}}
   ```
+
+  If you want to tag function variables or constrain them, you can
+  pass a keyword or atom list to the second parameter.  These variables
+  must appear in the return.
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> function (i -> i when i: var)
+  %Type.Function{params: [%Type.Function.Var{name: :i}],
+                return: %Type.Function.Var{name: :i}}
+  iex> function (i -> i when i: builtin(:pos_integer))
+  %Type.Function{params: [%Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}],
+                 return: %Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}}
+  ```
   """
   defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
     quote do %Type.Function{params: :any, return: unquote(return)} end
@@ -586,11 +606,46 @@ defmodule Type do
   defmacro function([{:->, _, [[], return]}]) do
     quote do %Type.Function{params: [], return: unquote(return)} end
   end
+  defmacro function([{:->, _, [params, {:when, _, [return, constraints]}]}]) do
+    # TODO: fail if any constraint is not in the param or in the return.
+    c_f = constraints_to_lambda(constraints)
+    parsed_params = c_f.(params, c_f)
+    parsed_return = c_f.(return, c_f)
+    quote do
+      %Type.Function{params: unquote(parsed_params), return: unquote(parsed_return)}
+    end
+  end
   defmacro function([{:->, _, [params, return]}]) do
+    # TODO: fail if there's a partial underscore match
     if Enum.all?(params, &match?({:_, _, _}, &1)) do
       quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end
     else
       quote do %Type.Function{params: unquote(params), return: unquote(return)} end
+    end
+  end
+
+  # generates a y-combinator that aggressively converts ASTs which are single
+  # variables into var variables.
+  defp constraints_to_lambda(constraints) do
+    cmap = constraints
+    |> Enum.map(fn
+      {id, {:var, _, _}} -> {id, quote do builtin(:any) end}
+      any -> any
+    end)
+    |> Enum.into(%{})
+
+    fn
+      {id, meta, atom}, _ when is_atom(atom) and is_map_key(cmap, id) ->
+        {:%, meta,
+        [
+          {:__aliases__, [alias: false], [:"Type.Function.Var"]},
+          {:%{}, meta, [name: id, constraint: cmap[id]]}
+        ]}
+      {id, meta, list}, f when is_list(list) ->
+        {id, meta, f.(list, f)}
+      list, f when is_list(list) ->
+        Enum.map(list, &(f.(&1, f)))
+      any, _ -> any
     end
   end
 
@@ -873,14 +928,15 @@ defmodule Type do
     - `t:module/0`
     - `t:atom/0`
   - group 4: `t:reference/0`
-  - group 5 (`t:Type.List.t/0`):
+  - group 5 (`t:Type.Function.t/0`):
     - `params: list` functions (ordered by `retval`, then `params` in dictionary order)
     - `params: :any` functions (ordered by `retval`, then `params` in dictionary order)
   - group 6: `t:port/0`
   - group 7: `t:pid/0`
   - group 8 (`t:Type.Tuple.t/0`):
-    - defined arity tuple
-    - any tuple
+    - defined tuples, in ascending order of arity, with cartesian
+      dictionary ordering intrenally within an arity group.
+    - minimum size tuples, in descending order of size.
   - group 9 (`t:Type.Map.t/0`): maps
   - group 10 (`t:Type.List.t/0`):
     - `nonempty: true` list
@@ -957,7 +1013,7 @@ defmodule Type do
   ```elixir
   iex> {:ok, spec} = Type.fetch_spec(String, :split, 1)
   iex> inspect spec
-  "(String.t() -> [String.t()])"
+  "(String.t() -> list(String.t()))"
   ```
   """
   def fetch_spec(module, fun, arity) do
@@ -973,6 +1029,9 @@ defmodule Type do
   resolves a remote type into its constitutent type.  raises if the type
   is not found.
   """
+  def fetch_type!(type = %Type{module: String, name: :t, params: [size]}) do
+    struct(Type.Bitstring, size: 8 * size)
+  end
   def fetch_type!(type = %Type{module: module, name: name, params: params})
       when is_remote(type) do
     fetch_type!(module, name, params)
@@ -1027,7 +1086,6 @@ defmodule Type do
   end
 
   @prefixes ~w(type typep opaque)a
-
   defp find_type(module, specs, name, params) do
     arity = length(params)
 
@@ -1057,7 +1115,7 @@ defmodule Type do
   iex> inspect Type.of(47.0)
   "float()"
   iex> inspect Type.of([:foo, :bar])
-  "[:bar | :foo, ...]"
+  "list(:bar | :foo, ...)"
   iex> inspect Type.of([:foo | :bar])
   "nonempty_improper_list(:foo, :bar)"
   ```
@@ -1076,13 +1134,13 @@ defmodule Type do
 
   ```
   iex> inspect Type.of(%{foo: :bar})
-  "%{foo: :bar}"
+  "map(%{foo: :bar})"
   iex> inspect Type.of(%{1 => :one})
-  "%{required(1) => :one}"
+  "map(%{1 => :one})"
   iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
-  "%{optional(String.t()) => :bar | String.t()}"
+  "map(%{optional(String.t()) => :bar | String.t()})"
   iex> inspect Type.of(1..10)
-  "%Range{first: 1, last: 10}"
+  "map(%Range{first: 1, last: 10})"
   ```
   """
   def of(value)
@@ -1214,6 +1272,43 @@ defmodule Type do
     term
     |> of
     |> subtype?(type)
+  end
+
+  @spec partition(t, [t]) :: [t]
+  @doc """
+  partitions a type across a list of types
+
+  see https://en.wikipedia.org/wiki/Partition_of_a_set
+
+  note however, that if some part of your type is not represented
+  in the type list that is provided, those members will be discarded.
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> Type.partition(-5..5, builtin(:integer).of)
+  [1..5, 0, -5..-1]
+  ```
+  """
+  def partition(type, type_list) when is_list(type_list) do
+    Enum.map(type_list, &Type.intersection(type, &1))
+  end
+
+  @spec covered?(t, [t]) :: boolean
+  @doc """
+  true if the list of types constitutes a complete cover of the
+  provided type.
+
+  see https://en.wikipedia.org/wiki/Cover_(topology)
+
+  ```elixir
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-1])
+  true
+  iex> Type.covered?(-5..5, [1..5, 0, -5..-2])
+  false
+  ```
+  """
+  def covered?(type, type_list) when is_list(type_list) do
+    Type.subtype?(type, Type.union(type_list))
   end
 end
 

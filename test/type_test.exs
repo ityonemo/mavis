@@ -17,6 +17,11 @@ defmodule TypeTest do
 
   import Type, only: :macros
 
+  test "foo" do
+    var_func = function((i -> i when i: builtin(:integer)))
+    assert {:ok, 1..10} == Type.Function.apply_types(var_func, [1..10])
+  end
+
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
       assert 0 == Type.typegroup(builtin(:none))
@@ -270,6 +275,19 @@ defmodule TypeTest do
     test "works with a zero-arity function" do
       assert %Type.Function{params: [], return: builtin(:any)} ==
         function(( -> builtin(:any)))
+    end
+
+    test "works with top-arity functions" do
+      assert %Type.Function{params: 1, return: builtin(:any)} ==
+        function((_ -> builtin(:any)))
+      assert %Type.Function{params: 2, return: builtin(:integer)} ==
+        function((_, _ -> builtin(:integer)))
+    end
+
+    test "works with generic var constraints" do
+      assert %Type.Function{params: [%Type.Function.Var{name: :i}],
+                            return: %Type.Function.Var{name: :i}} ==
+        function((i -> i when i: var))
     end
   end
 

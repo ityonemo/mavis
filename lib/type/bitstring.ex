@@ -308,7 +308,7 @@ defmodule Type.Bitstring do
   end
 
   defimpl Inspect do
-    def inspect(%{size: 0, unit: 0}, _opts), do: "<<>>"
+    def inspect(%{size: 0, unit: 0}, _opts), do: "::<<>>"
     def inspect(%{size: 0, unit: 1}, _opts) do
       "bitstring()"
     end
@@ -316,13 +316,13 @@ defmodule Type.Bitstring do
       "binary()"
     end
     def inspect(%{size: 0, unit: unit}, _opts) do
-      "<<_::_*#{unit}>>"
+      "::<<_::_*#{unit}>>"
     end
     def inspect(%{size: size, unit: 0}, _opts) do
-      "<<_::#{size}>>"
+      "::<<_::#{size}>>"
     end
     def inspect(%{size: size, unit: unit}, _opts) do
-      "<<_::#{size}, _::_*#{unit}>>"
+      "::<<_::#{size}, _::_*#{unit}>>"
     end
   end
 end

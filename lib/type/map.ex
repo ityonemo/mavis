@@ -43,22 +43,23 @@ defmodule Type.Map do
   - The empty map is `%Type.Map{}`.  This is not allowed to have any k/v pairs.
     ```
     iex> inspect %Type.Map{}
-    "%{}"
+    "map(%{})"
     ```
   - A map with a required atom key might look as follows:
     ```
     iex> inspect %Type.Map{required: %{foo: %Type{name: :integer}}}
-    "%{foo: integer()}"
+    "map(%{foo: integer()})"
     ```
   - A map with a required integer key might look as follows:
     ```
     iex> inspect %Type.Map{required: %{1 => %Type{name: :integer}}}
-    "%{required(1) => integer()}"
+    ```
+    "map(%{1 => integer()})"
     ```
   - A map with an optional key type might look as follows:
     ```
     iex> inspect %Type.Map{optional: %{%Type{name: :integer} => %Type{name: :integer}}}
-    "%{optional(integer()) => integer()}"
+    "map(%{optional(integer()) => integer()})"
     ```
   - The "any" map has optional any mapping to any (note this is distinct from empty map `%{}`)
     ```
@@ -339,6 +340,7 @@ defmodule Type.Map do
   def required_key?(map, key) when is_atom(key) or is_integer(key) do
     :erlang.is_map_key(key, map.required)
   end
+  def required_key?(_, _), do: false
 
   @doc """
   takes all required terms and makes them optional
@@ -587,27 +589,29 @@ defmodule Type.Map do
       |> Enum.reject(&(elem(&1, 1) == builtin(:any)))
       |> inner_content(opts)
 
-      concat(["%#{inspect struct}{", inner, "}"])
+      concat(["map(%#{inspect struct}{", inner, "})"])
     end
     def inspect(%{optional: @any}, _opts) do
       "map()"
     end
 
     def inspect(%{required: required, optional: optional}, opts) do
-      concat(["%{", inner_content(required, optional, opts), "}"])
+      concat(["map(%{", inner_content(required, optional, opts), "})"])
     end
 
     def inner_content(required, optional \\ %{}, opts) do
-      requireds = Enum.map(required, fn
+      requireds = required
+      |> Enum.sort
+      |> Enum.map(fn
         {src, dst} when is_atom(src) ->
           concat(["#{src}: ", to_doc(dst, opts)])
         {src, dst} ->
-          concat(["required(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
+          concat([to_doc(src, opts), " => ", to_doc(dst, opts)])
       end)
       optionals = Enum.map(optional, fn {src, dst} ->
         concat(["optional(", to_doc(src, opts), ") => ", to_doc(dst, opts)])
       end)
-      concat(Enum.intersperse(requireds ++ optionals, ", "))
+      concat(Enum.intersperse(optionals ++ requireds, ", "))
     end
   end
 end

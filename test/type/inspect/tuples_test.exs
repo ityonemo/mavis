@@ -7,11 +7,11 @@ defmodule TypeTest.Type.Inspect.TuplesTest do
   @source TypeTest.TypeExample.Tuples
 
   test "empty tuple" do
-    assert "{}" == inspect_type(@source, :empty_literal)
+    assert "tuple({})" == inspect_type(@source, :empty_literal)
   end
 
   test "ok tuple literal" do
-    assert "{:ok, any()}" == inspect_type(@source, :ok_literal)
+    assert "tuple({:ok, any()})" == inspect_type(@source, :ok_literal)
   end
 
   test "tuple type" do

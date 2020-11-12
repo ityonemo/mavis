@@ -26,6 +26,7 @@ defmodule Type.Union do
 
   defstruct [of: []]
   @type t :: %__MODULE__{of: [Type.t, ...]}
+  @type t(type) :: %__MODULE__{of: [type, ...]}
 
   import Type, only: :macros
 
@@ -133,6 +134,16 @@ defmodule Type.Union do
   alias Type.Tuple
   defp type_merge(%Tuple{}, builtin(:tuple)) do
     [builtin(:tuple)]
+  end
+  defp type_merge(%Tuple{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
+    [tuple({...(min: min(m, n))})]
+  end
+  defp type_merge(%Tuple{elements: els}, %Tuple{elements: {:min, n}}) do
+    if length(els) >= n do
+      [tuple({...(min: n)})]
+    else
+      :nomerge
+    end
   end
   defp type_merge(lhs = %Tuple{}, rhs = %Tuple{}) do
     if merged_elements = Tuple.merge(rhs.elements, lhs.elements) do

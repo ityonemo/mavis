@@ -11,23 +11,23 @@ defmodule TypeTest.Type.Inspect.ListsTest do
   end
 
   test "literal/1" do
-    assert "[integer()]" == inspect_type(@source, :literal_1)
+    assert "list(integer())" == inspect_type(@source, :literal_1)
   end
 
   test "nonempty any list" do
-    assert "[...]" == inspect_type(@source, :nonempty_any)
+    assert "list(...)" == inspect_type(@source, :nonempty_any)
   end
 
   test "nonempty typed list" do
-    assert "[integer(), ...]" == inspect_type(@source, :nonempty_typed)
+    assert "list(integer(), ...)" == inspect_type(@source, :nonempty_typed)
   end
 
   test "keyword/1 literal list" do
-    assert "[foo: integer()]" == inspect_type(@source, :keyword_literal)
+    assert "list(foo: integer())" == inspect_type(@source, :keyword_literal)
   end
 
   test "keyword/2 literal list" do
-    assert "[bar: float(), foo: integer()]" ==
+    assert "list(bar: float(), foo: integer())" ==
       inspect_type(@source, :keyword_2_literal)
   end
 

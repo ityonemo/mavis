@@ -273,6 +273,9 @@ defmodule TypeTest.SpecExample do
   @spec when_var_2(t1, t2) :: t1 | t2 when t1: var, t2: var
   def when_var_2(x, y), do: max(x, y)
 
+  @spec when_var_3(t) :: t when t: integer
+  def when_var_3(x), do: x
+
   @spec basic_when_any(t) :: t when t: any
   def basic_when_any(x), do: x
 

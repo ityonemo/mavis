@@ -132,6 +132,7 @@ defmodule TypeTest.UnionTest do
 
   @any builtin(:any)
   @anytuple builtin(:tuple)
+  @min_2_tuple tuple({...(min: 2)})
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
@@ -140,11 +141,20 @@ defmodule TypeTest.UnionTest do
       assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
     end
 
+    test "two minimum-arity tuples get merged" do
+      assert @min_2_tuple = tuple({...(min: 3)}) <|> @min_2_tuple
+    end
+
     test "a tuple that is a subtype of another tuple gets merged" do
       outer = tuple({:ok, builtin(:integer) <|> :bar, builtin(:float) <|> builtin(:integer)})
       inner = tuple({:ok, builtin(:integer), builtin(:float)})
 
       assert outer == outer <|> inner
+    end
+
+    test "a defined tuple merges into an minimum-arity tuple" do
+      assert @min_2_tuple = tuple({:ok, builtin(:integer)}) <|> @min_2_tuple
+      assert @min_2_tuple = tuple({:ok, builtin(:binary), builtin(:integer)}) <|> @min_2_tuple
     end
 
     test "a tuple that is identical or has one difference gets merged" do
@@ -193,6 +203,11 @@ defmodule TypeTest.UnionTest do
     test "orthogonal tuples don't merge" do
       assert %Type.Union{} =
         (tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)}))
+    end
+
+    test "tuples that are too small for a minimum don't merge" do
+      assert %Type.Union{} =
+        (tuple({...(min: 3)}) <|> tuple({:ok, builtin(:integer)}))
     end
   end
 
