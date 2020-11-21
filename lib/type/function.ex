@@ -135,7 +135,7 @@ defmodule Type.Function do
   defstruct @enforce_keys ++ [params: :any, inferred: false]
 
   @type t :: %__MODULE__{
-    params: [Type.t] | :any,
+    params: [Type.t] | :any | pos_integer,
     return: Type.t,
     inferred: boolean
   }
