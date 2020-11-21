@@ -389,6 +389,7 @@ defmodule Type do
   %Type{module: String, name: :t}
   ```
   """
+  @doc type: true
   defmacro remote({{:., _, [module_ast, name]}, _, atom}) when is_atom(atom) do
     Macro.escape(%Type{module: module_ast, name: name})
   end
@@ -453,7 +454,10 @@ defmodule Type do
   iex> list(foo: pos_integer())
   %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
+
+  * usable in guards *
   """
+  @doc type: true
   defmacro list({:..., _, _}) do
     Macro.escape(%Type.List{type: any(), nonempty: true})
   end
@@ -494,7 +498,10 @@ defmodule Type do
   iex> tuple {:error, atom(), pos_integer()}
   %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :pos_integer}]}
   ```
+
+  * usable in guards *
   """
+  @doc type: true
   defmacro tuple({a, b}) do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
@@ -521,7 +528,9 @@ defmodule Type do
   iex> map %{optional(:bar) => atom()}
   %Type.Map{optional: %{bar: %Type{name: :atom}}}
   ```
+
   """
+  @doc type: true
   defmacro map({:%{}, _, map_ast}) do
     map_list = map_ast
     |> Enum.group_by(fn
@@ -571,7 +580,10 @@ defmodule Type do
   %Type.Function{params: [%Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}],
                  return: %Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}}
   ```
+
+  *usable in guards*
   """
+  @doc type: true
   defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
     quote do %Type.Function{params: :any, return: unquote(return)} end
   end
@@ -635,6 +647,7 @@ defmodule Type do
   true
   ```
   """
+  @doc guard: true
   defguard is_remote(type) when is_struct(type) and
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) != nil
@@ -661,6 +674,7 @@ defmodule Type do
   false
   ```
   """
+  @doc guard: true
   defguard is_primitive(type) when is_struct(type) and
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) == nil
@@ -677,6 +691,7 @@ defmodule Type do
   false
   ```
   """
+  @doc guard: true
   defguard is_singleton(type) when is_atom(type) or is_integer(type) or type == []
 
   @spec usable_as(t, t, keyword) :: ternary

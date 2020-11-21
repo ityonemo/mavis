@@ -72,6 +72,10 @@ defmodule Mavis.MixProject do
           Type.Union
         ]
       ],
+      groups_for_functions: [
+        Guards: &(&1[:guards]),
+        "Type Macros": &(&1[:type])
+      ],
       extras: [
         "CHANGELOG.md"
       ]
