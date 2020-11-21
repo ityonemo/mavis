@@ -15,17 +15,17 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "lists" do
-      assert ([] ~> builtin(:list)) == :ok
+      assert ([] ~> list()) == :ok
       assert ([] ~> list(:foo)) == :ok
     end
 
     test "a union with list" do
-      assert ([] ~> ([] <|> builtin(:atom))) == :ok
-      assert ([] ~> (builtin(:list) <|> builtin(:atom))) == :ok
+      assert ([] ~> ([] <|> atom())) == :ok
+      assert ([] ~> (list() <|> atom())) == :ok
     end
 
     test "any" do
-      assert ([] ~> builtin(:any)) == :ok
+      assert ([] ~> any()) == :ok
     end
   end
 
@@ -42,11 +42,11 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "a union without list" do
-      assert {:error, _} = ([] ~> (builtin(:integer) <|> builtin(:float)))
+      assert {:error, _} = ([] ~> (integer() <|> float()))
     end
 
     test "any other type" do
-      targets = TypeTest.Targets.except([[], builtin(:list)])
+      targets = TypeTest.Targets.except([[], list()])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: [], target: ^target}} =
           ([] ~> target)

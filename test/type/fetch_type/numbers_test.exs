@@ -18,14 +18,14 @@ defmodule TypeTest.Type.FetchType.NumbersTest do
   end
 
   test "builtin float" do
-    assert {:ok, builtin(:float)} == Type.fetch_type(@source, :float_type)
+    assert {:ok, float()} == Type.fetch_type(@source, :float_type)
   end
 
   test "builtin integers" do
-    assert {:ok, builtin(:integer)} == Type.fetch_type(@source, :integer_type)
-    assert {:ok, builtin(:neg_integer)} == Type.fetch_type(@source, :neg_integer_type)
-    assert {:ok, builtin(:non_neg_integer)} == Type.fetch_type(@source, :non_neg_integer_type)
-    assert {:ok, builtin(:pos_integer)} == Type.fetch_type(@source, :pos_integer_type)
+    assert {:ok, integer()} == Type.fetch_type(@source, :integer_type)
+    assert {:ok, neg_integer()} == Type.fetch_type(@source, :neg_integer_type)
+    assert {:ok, non_neg_integer()} == Type.fetch_type(@source, :non_neg_integer_type)
+    assert {:ok, pos_integer()} == Type.fetch_type(@source, :pos_integer_type)
   end
 
   test "special classes of integers" do
@@ -35,10 +35,10 @@ defmodule TypeTest.Type.FetchType.NumbersTest do
   end
 
   test "number" do
-    assert {:ok, (builtin(:number))} == Type.fetch_type(@source, :number_type)
+    assert {:ok, (number())} == Type.fetch_type(@source, :number_type)
   end
 
   test "timeout" do
-    assert {:ok, (builtin(:timeout))} == Type.fetch_type(@source, :timeout_type)
+    assert {:ok, (timeout())} == Type.fetch_type(@source, :timeout_type)
   end
 end

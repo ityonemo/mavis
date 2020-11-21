@@ -2,6 +2,10 @@ defmodule TypeTest do
 
   # tests on the Type module
   use ExUnit.Case, async: true
+
+  # allows us to use these in doctests
+  import Type, only: :macros
+
   doctest Type
 
   # tests on types
@@ -15,33 +19,31 @@ defmodule TypeTest do
 
   use Type.Operators
 
-  import Type, only: :macros
-
   test "foo" do
-    var_func = function((i -> i when i: builtin(:integer)))
+    var_func = function((i -> i when i: integer()))
     assert {:ok, 1..10} == Type.Function.apply_types(var_func, [1..10])
   end
 
   describe "Type.group/1 function" do
     test "assigns typegroups correctly" do
-      assert 0 == Type.typegroup(builtin(:none))
-      assert 1 == Type.typegroup(builtin(:integer))
-      assert 1 == Type.typegroup(builtin(:neg_integer))
-      assert 1 == Type.typegroup(builtin(:pos_integer))
+      assert 0 == Type.typegroup(none())
+      assert 1 == Type.typegroup(integer())
+      assert 1 == Type.typegroup(neg_integer())
+      assert 1 == Type.typegroup(pos_integer())
       assert 1 == Type.typegroup(47)
       assert 1 == Type.typegroup(1..4)
-      assert 2 == Type.typegroup(builtin(:float))
-      assert 3 == Type.typegroup(builtin(:atom))
+      assert 2 == Type.typegroup(float())
+      assert 3 == Type.typegroup(atom())
       assert 3 == Type.typegroup(:foo)
-      assert 4 == Type.typegroup(builtin(:reference))
+      assert 4 == Type.typegroup(reference())
       assert 5 == Type.typegroup(%Type.Function{params: :any, return: 0})
-      assert 6 == Type.typegroup(builtin(:port))
-      assert 7 == Type.typegroup(builtin(:pid))
+      assert 6 == Type.typegroup(port())
+      assert 7 == Type.typegroup(pid())
       assert 8 == Type.typegroup(%Type.Tuple{elements: :any})
       assert 9 == Type.typegroup(%Type.Map{})
       assert 10 == Type.typegroup(%Type.List{})
       assert 11 == Type.typegroup(%Type.Bitstring{size: 0, unit: 0})
-      assert 12 == Type.typegroup(builtin(:any))
+      assert 12 == Type.typegroup(any())
     end
   end
 
@@ -54,7 +56,7 @@ defmodule TypeTest do
     end
 
     test "assigns floats correctly" do
-      assert builtin(:float) == Type.of(3.14)
+      assert float() == Type.of(3.14)
     end
 
     test "assigns atoms correctly" do
@@ -63,16 +65,16 @@ defmodule TypeTest do
     end
 
     test "assigns refs correctly" do
-      assert builtin(:reference) == Type.of(make_ref())
+      assert reference() == Type.of(make_ref())
     end
 
     test "assigns ports correctly" do
       {:ok, port} = :gen_udp.open(0)
-      assert builtin(:port) == Type.of(port)
+      assert port() == Type.of(port)
     end
 
     test "assigns pids correctly" do
-      assert builtin(:pid) == Type.of(self())
+      assert pid() == Type.of(self())
     end
 
     test "assigns tuples correctly" do
@@ -88,7 +90,7 @@ defmodule TypeTest do
     test "assigns proper lists correctly, and makes them nonempty" do
       assert list(1, ...) == Type.of([1, 1, 1])
       assert list((1 <|> :foo), ...) == Type.of([1, :foo, :foo])
-      assert list((1 <|> :foo <|> builtin(:pid)), ...) == Type.of([self(), 1, :foo])
+      assert list((1 <|> :foo <|> pid()), ...) == Type.of([self(), 1, :foo])
     end
 
     test "assigns improper lists correctly" do
@@ -125,123 +127,123 @@ defmodule TypeTest do
   describe "type.of/1 assigns lambdas" do
     @describetag :of
     test "for a fun that isn't precompiled" do
-      assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(&(&1))
-      assert %Type.Function{params: [builtin(:any), builtin(:any)], return: builtin(:any)} == Type.of(&(&1 + &2))
+      assert %Type.Function{params: [any()], return: any()} == Type.of(&(&1))
+      assert %Type.Function{params: [any(), any()], return: any()} == Type.of(&(&1 + &2))
     end
 
     test "for precompiled lambdas" do
-      assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(&TypeTest.LambdaExamples.identity/1)
-      assert %Type.Function{params: [builtin(:any)], return: builtin(:any)} == Type.of(TypeTest.LambdaExamples.identity_fn)
+      assert %Type.Function{params: [any()], return: any()} == Type.of(&TypeTest.LambdaExamples.identity/1)
+      assert %Type.Function{params: [any()], return: any()} == Type.of(TypeTest.LambdaExamples.identity_fn)
     end
   end
 
   describe "composite builtins" do
     test "non_neg_integer" do
-      assert %Type.Union{of: [builtin(:pos_integer), 0]}
-        == builtin(:non_neg_integer)
+      assert %Type.Union{of: [pos_integer(), 0]}
+        == non_neg_integer()
     end
 
     test "integer" do
-      assert %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}
-       == builtin(:integer)
+      assert %Type.Union{of: [pos_integer(), 0, neg_integer()]}
+       == integer()
     end
 
     test "term" do
-      assert builtin(:term) == builtin(:any)
+      assert term() == any()
     end
 
     test "arity" do
-      assert 0..255 == builtin(:arity)
+      assert 0..255 == arity()
     end
 
     test "binary" do
-      assert %Type.Bitstring{unit: 8} == builtin(:binary)
+      assert %Type.Bitstring{unit: 8} == binary()
     end
 
     test "bitstring" do
-      assert %Type.Bitstring{unit: 1} == builtin(:bitstring)
+      assert %Type.Bitstring{unit: 1} == bitstring()
     end
 
     test "boolean" do
-      assert true <|> false == builtin(:boolean)
+      assert true <|> false == boolean()
     end
 
     test "byte" do
-      assert 0..255 == builtin(:byte)
+      assert 0..255 == byte()
     end
 
     test "char" do
-      assert 0..0x10_FFFF == builtin(:char)
+      assert 0..0x10_FFFF == char()
     end
 
     test "charlist" do
-      assert %Type.List{type: builtin(:char)} == builtin(:charlist)
+      assert %Type.List{type: char()} == charlist()
     end
 
     test "nonempty_charlist" do
-      assert %Type.List{type: builtin(:char), nonempty: true} ==
-        builtin(:nonempty_charlist)
+      assert %Type.List{type: char(), nonempty: true} ==
+        nonempty_charlist()
     end
 
     test "fun" do
-      assert %Type.Function{params: :any, return: builtin(:any)} ==
+      assert %Type.Function{params: :any, return: any()} ==
         builtin(:fun)
     end
 
     test "function" do
-      assert %Type.Function{params: :any, return: builtin(:any)} ==
-        builtin(:function)
+      assert %Type.Function{params: :any, return: any()} ==
+        function()
     end
 
     test "identifier" do
-      assert builtin(:pid) <|> builtin(:port) <|> builtin(:reference) ==
-        builtin(:identifier)
+      assert pid() <|> port() <|> reference() ==
+        identifier()
     end
 
     test "iolist" do
-      assert builtin(:iolist) <|> builtin(:binary) == builtin(:iodata)
+      assert iolist() <|> binary() == iodata()
     end
 
     test "keyword" do
-      assert %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
-        == builtin(:keyword)
+      assert %Type.List{type: %Type.Tuple{elements: [atom(), any()]}}
+        == keyword()
     end
 
     test "list" do
-      assert %Type.List{type: builtin(:any)} == builtin(:list)
+      assert %Type.List{type: any()} == list()
     end
 
     test "nonempty_list" do
-      assert %Type.List{type: builtin(:any), nonempty: true} == builtin(:nonempty_list)
+      assert %Type.List{type: any(), nonempty: true} == nonempty_list()
     end
 
     test "maybe_improper_list" do
-      assert %Type.List{type: builtin(:any), final: builtin(:any)} ==
-        builtin(:maybe_improper_list)
+      assert %Type.List{type: any(), final: any()} ==
+        maybe_improper_list()
     end
 
     test "nonempty_maybe_improper_list" do
-      assert %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)} ==
+      assert %Type.List{type: any(), nonempty: true, final: any()} ==
         builtin(:nonempty_maybe_improper_list)
     end
 
     test "mfa" do
-      assert %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]} ==
-        builtin(:mfa)
+      assert %Type.Tuple{elements: [module(), atom(), arity()]} ==
+        mfa()
     end
 
     test "number" do
-      assert builtin(:integer) <|> builtin(:float)
+      assert integer() <|> float()
     end
 
     test "struct" do
       assert map(%{
-        optional(builtin(:atom)) => builtin(:any),
-        __struct__: builtin(:atom)}) == builtin(:struct)
+        optional(atom()) => any(),
+        __struct__: atom()}) == struct()
     end
 
     test "timeout" do
-      assert builtin(:non_neg_integer) <|> :infinity == builtin(:timeout)
+      assert non_neg_integer() <|> :infinity == timeout()
     end
   end
 
@@ -264,24 +266,24 @@ defmodule TypeTest do
 
     test "list macro that is a k/v" do
       assert %Type.List{type: %Type.Union{of: [
-        tuple({:foo, builtin(:float)}),
-        tuple({:bar, builtin(:integer)})
+        tuple({:foo, float()}),
+        tuple({:bar, integer()})
       ]}} ==
-        list(foo: builtin(:float), bar: builtin(:integer))
+        list(foo: float(), bar: integer())
     end
   end
 
   describe "function macro" do
     test "works with a zero-arity function" do
-      assert %Type.Function{params: [], return: builtin(:any)} ==
-        function(( -> builtin(:any)))
+      assert %Type.Function{params: [], return: any()} ==
+        function(( -> any()))
     end
 
     test "works with top-arity functions" do
-      assert %Type.Function{params: 1, return: builtin(:any)} ==
-        function((_ -> builtin(:any)))
-      assert %Type.Function{params: 2, return: builtin(:integer)} ==
-        function((_, _ -> builtin(:integer)))
+      assert %Type.Function{params: 1, return: any()} ==
+        function((_ -> any()))
+      assert %Type.Function{params: 2, return: integer()} ==
+        function((_, _ -> integer()))
     end
 
     test "works with generic var constraints" do
@@ -293,9 +295,9 @@ defmodule TypeTest do
 
   describe "map macro" do
     test "works with a hybrid system" do
-      assert %Type.Map{required: %{foo: builtin(:integer)},
-                       optional: %{1 => builtin(:integer)}} ==
-        map(%{optional(1) => builtin(:integer), foo: builtin(:integer)})
+      assert %Type.Map{required: %{foo: integer()},
+                       optional: %{1 => integer()}} ==
+        map(%{optional(1) => integer(), foo: integer()})
     end
   end
 

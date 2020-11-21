@@ -11,62 +11,62 @@ defmodule TypeTest.TypeList.OrderTest do
 
   describe "a nonempty true list" do
     test "is bigger than bottom and reference" do
-      assert list(...) > builtin(:none)
-      assert list(...) > builtin(:reference)
+      assert list(...) > none()
+      assert list(...) > reference()
     end
 
     test "is bigger than a list which is a subclass" do
-      assert list(...) > list(builtin(:integer), ...)
+      assert list(...) > list(integer(), ...)
       # because the final is more general
-      assert %List{type: builtin(:any), final: builtin(:any)} >
-        list(builtin(:any), ...)
+      assert %List{type: any(), final: any()} >
+        list(any(), ...)
     end
 
     test "is smaller than a list which is a superclass" do
-      assert list(builtin(:integer), ...) < list(...)
-      assert list(builtin(:integer), ...) < list(builtin(:integer))
+      assert list(integer(), ...) < list(...)
+      assert list(integer(), ...) < list(integer())
       # because the final is more general
-      assert list(...) < %List{type: builtin(:any), final: builtin(:any)}
+      assert list(...) < %List{type: any(), final: any()}
     end
 
     test "is smaller than maybe-empty lists, empty list, bitstrings or top" do
       assert list(...) < []
-      assert list(...) < list(builtin(:integer))
+      assert list(...) < list(integer())
       assert list(...) < %Type.Bitstring{size: 0, unit: 0}
-      assert list(...) < builtin(:any)
+      assert list(...) < any()
     end
   end
 
   describe "a nonempty false list" do
     test "is bigger than bottom and reference, and empty list" do
-      assert builtin(:list) > builtin(:none)
-      assert builtin(:list) > builtin(:reference)
-      assert builtin(:list) > []
+      assert list() > none()
+      assert list() > reference()
+      assert list() > []
     end
 
     test "is bigger than a list which is nonempty: true" do
-      assert list(builtin(:integer)) > list(builtin(:any), ...)
+      assert list(integer()) > list(any(), ...)
     end
 
     test "is bigger than a list which is a subclass" do
-      assert builtin(:list) > list(builtin(:integer))
+      assert list() > list(integer())
       # because the final is more general
-      assert %List{type: builtin(:any), final: builtin(:any)} > builtin(:list)
+      assert %List{type: any(), final: any()} > list()
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:list) < (nil <|> builtin(:list))
+      assert list() < (nil <|> list())
     end
 
     test "is smaller than a list which is a superclass" do
-      assert list(builtin(:integer)) < builtin(:list)
+      assert list(integer()) < list()
       # because the final is more general
-      assert builtin(:list) < %List{type: builtin(:any), final: builtin(:any)}
+      assert list() < %List{type: any(), final: any()}
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do
-      assert builtin(:list) < %Type.Bitstring{size: 0, unit: 0}
-      assert builtin(:list) < builtin(:any)
+      assert list() < %Type.Bitstring{size: 0, unit: 0}
+      assert list() < any()
     end
   end
 

@@ -13,13 +13,13 @@ defmodule TypeTest.TypeOpaque.SubtypeTest do
     module: Foo,
     name: :bar,
     params: [],
-    type: builtin(:integer)
+    type: integer()
   }
 
   describe "the opaque type" do
     test "is disjoint with its underlying type" do
-      refute @opaque_int in builtin(:integer)
-      refute builtin(:integer) in @opaque_int
+      refute @opaque_int in integer()
+      refute integer() in @opaque_int
     end
   end
 end

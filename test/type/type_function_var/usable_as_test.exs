@@ -11,10 +11,10 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
 
   alias Type.Function.Var
 
-  @any builtin(:any)
+  @any any()
   @any_var %Var{name: :foo}
   @bar_var %Var{name: :bar}
-  @int_var %Var{name: :foo, constraint: builtin(:integer)}
+  @int_var %Var{name: :foo, constraint: integer()}
 
   describe "any variables" do
     test "are usable as itself and any" do
@@ -29,11 +29,11 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
     test "are usable as itself and any" do
       assert :ok = @int_var ~> @int_var
       assert :ok = @int_var ~> @any
-      assert :ok = builtin(:integer) ~> @int_var
+      assert :ok = integer() ~> @int_var
     end
 
     test "can take integer subtypes" do
-      assert :ok = 1..10 ~> builtin(:integer)
+      assert :ok = 1..10 ~> integer()
     end
   end
 end

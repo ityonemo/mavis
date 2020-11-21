@@ -12,18 +12,18 @@ defmodule TypeTest.TypeOpaque.UsableAsTest do
     module: Foo,
     name: :bar,
     params: [],
-    type: builtin(:integer)
+    type: integer()
   }
 
   describe "the opaque type" do
     test "is usable as any and self" do
-      assert :ok = @opaque_int ~> builtin(:any)
+      assert :ok = @opaque_int ~> any()
       assert :ok = @opaque_int ~> @opaque_int
     end
 
     test "warns when usable_as is transferred" do
-      assert {:maybe, _} = @opaque_int ~> builtin(:integer)
-      assert {:maybe, _} = builtin(:integer) ~> @opaque_int
+      assert {:maybe, _} = @opaque_int ~> integer()
+      assert {:maybe, _} = integer() ~> @opaque_int
     end
   end
 end

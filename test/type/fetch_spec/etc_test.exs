@@ -23,7 +23,7 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
         Type.fetch_spec(@remote, :elixir_string, 1)
     end
     test "with arity" do
-      assert {:ok, identity_for(%Type{module: Foo, name: :bar, params: [builtin(:integer)]})} ==
+      assert {:ok, identity_for(%Type{module: Foo, name: :bar, params: [integer()]})} ==
         Type.fetch_spec(@remote, :foobar, 1)
     end
   end
@@ -54,7 +54,7 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
 
   test "with annotation" do
     assert {:ok, fun} = Type.fetch_spec(@example, :with_annotation, 1)
-    assert %Function{params: [builtin(:any)], return: builtin(:any)} = fun
+    assert %Function{params: [any()], return: any()} = fun
   end
 
   test "function with basic when statement" do
@@ -81,8 +81,8 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
     assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_any, 1)
 
     assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:any)}],
-      return: %Var{name: :t, constraint: builtin(:any)}
+      params: [%Var{name: :t, constraint: any()}],
+      return: %Var{name: :t, constraint: any()}
     } = fun
   end
 
@@ -90,18 +90,18 @@ defmodule TypeTest.Type.FetchSpec.EtcTest do
     assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_int, 1)
 
     assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:integer)}],
-      return: %Var{name: :t, constraint: builtin(:integer)}
+      params: [%Var{name: :t, constraint: integer()}],
+      return: %Var{name: :t, constraint: integer()}
     } = fun
   end
 
   test "type constrained result" do
     assert {:ok, fun} = Type.fetch_spec(@example, :basic_when_union, 1)
 
-    type_union = %Var{name: :t, constraint: builtin(:integer)} <|> builtin(:atom)
+    type_union = %Var{name: :t, constraint: integer()} <|> atom()
 
     assert %Function{
-      params: [%Var{name: :t, constraint: builtin(:integer)}],
+      params: [%Var{name: :t, constraint: integer()}],
       return: ^type_union
     } = fun
   end

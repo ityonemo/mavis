@@ -12,7 +12,7 @@ defmodule Type.Iolist do
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}
-  @ltype Type.union([@char, @binary, builtin(:iolist)])
+  @ltype Type.union([@char, @binary, iolist()])
   @final Type.union([], @binary)
 
   # INTERSECTIONS
@@ -20,20 +20,20 @@ defmodule Type.Iolist do
   def intersection_with([]), do: []
   def intersection_with(list = %List{}) do
     # iolist is char | binary | iolist
-    type = [@char, @binary, builtin(:iolist)]
+    type = [@char, @binary, iolist()]
     |> Enum.map(&Type.intersection(&1, list.type))
-    |> Enum.reject(&(&1 == builtin(:none)))
+    |> Enum.reject(&(&1 == none()))
     |> Enum.into(%Union{})
 
     final = Type.intersection(list.final, @final)
 
-    if final == builtin(:none) or type == builtin(:none) do
-      builtin(:none)
+    if final == none() or type == none() do
+      none()
     else
       %List{type: type, final: final, nonempty: list.nonempty}
     end
   end
-  def intersection_with(_), do: builtin(:none)
+  def intersection_with(_), do: none()
 
   # COMPARISONS
 
@@ -71,10 +71,10 @@ defmodule Type.Iolist do
     u2 = Type.usable_as(@final, target.final, meta)
 
     case Type.ternary_and(u1, u2) do
-      :ok -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
+      :ok -> {:maybe, [Message.make(iolist(), target, meta)]}
       # TODO: make this report the internal error as well.
-      {:maybe, _} -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
-      {:error, _} -> {:error, Message.make(builtin(:iolist), target, meta)}
+      {:maybe, _} -> {:maybe, [Message.make(iolist(), target, meta)]}
+      {:error, _} -> {:error, Message.make(iolist(), target, meta)}
     end
   end
   def usable_as_list(target, meta) do
@@ -85,8 +85,8 @@ defmodule Type.Iolist do
     |> Type.ternary_and(Type.usable_as(@final, target.final, meta))
     |> case do
       :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(builtin(:iolist), target, meta)]}
-      {:error, _} -> {:error, Message.make(builtin(:iolist), target, meta)}
+      {:maybe, _} -> {:maybe, [Message.make(iolist(), target, meta)]}
+      {:error, _} -> {:error, Message.make(iolist(), target, meta)}
     end
   end
 
@@ -99,8 +99,8 @@ defmodule Type.Iolist do
     |> Type.ternary_and(Type.usable_as(challenge.final, @final, meta))
     |> case do
       :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(challenge, builtin(:iolist), meta)]}
-      {:error, _} -> {:error, Message.make(challenge, builtin(:iolist), meta)}
+      {:maybe, _} -> {:maybe, [Message.make(challenge, iolist(), meta)]}
+      {:error, _} -> {:error, Message.make(challenge, iolist(), meta)}
     end
   end
 end

@@ -70,68 +70,68 @@ defmodule TypeTest.UnionTest do
 
   describe "when collecting neg_integer in unions" do
     test "collects negative integers" do
-      assert builtin(:neg_integer) == (builtin(:neg_integer) <|> -2)
+      assert neg_integer() == (neg_integer() <|> -2)
     end
     test "collects negative ranges" do
-      assert builtin(:neg_integer) == (builtin(:neg_integer) <|> -10..-2)
+      assert neg_integer() == (neg_integer() <|> -10..-2)
     end
     test "collects partially negative ranges" do
-      assert (builtin(:neg_integer) <|> 0) == (builtin(:neg_integer) <|> -10..0)
-      assert (builtin(:neg_integer) <|> 0..1) == (builtin(:neg_integer) <|> -10..1)
+      assert (neg_integer() <|> 0) == (neg_integer() <|> -10..0)
+      assert (neg_integer() <|> 0..1) == (neg_integer() <|> -10..1)
     end
   end
 
   describe "when collecting pos_integer in unions" do
     test "collects positive integers" do
-      assert builtin(:pos_integer) == (builtin(:pos_integer) <|> 2)
+      assert pos_integer() == (pos_integer() <|> 2)
     end
     test "collects positive ranges" do
-      assert builtin(:pos_integer) == (builtin(:pos_integer) <|> 2..10)
+      assert pos_integer() == (pos_integer() <|> 2..10)
     end
     test "collects zero" do
-      assert builtin(:non_neg_integer) == (builtin(:pos_integer) <|> 0)
+      assert non_neg_integer() == (pos_integer() <|> 0)
     end
     test "collects ranges with zero" do
-      assert builtin(:non_neg_integer) == (builtin(:pos_integer) <|> 0..10)
+      assert non_neg_integer() == (pos_integer() <|> 0..10)
     end
     test "collects ranges ending in zero" do
-      assert (0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> 0..1)
-      assert (-3..0 <|> builtin(:pos_integer)) == (builtin(:pos_integer) <|> -3..1)
+      assert (0 <|> pos_integer()) == (pos_integer() <|> 0..1)
+      assert (-3..0 <|> pos_integer()) == (pos_integer() <|> -3..1)
     end
   end
 
   describe "when collecting integer in unions" do
     test "collects neg_integer" do
-      assert builtin(:integer) == (builtin(:integer) <|> builtin(:neg_integer))
+      assert integer() == (integer() <|> neg_integer())
     end
     test "collects integers" do
-      assert builtin(:integer) == (builtin(:integer) <|> -1)
+      assert integer() == (integer() <|> -1)
     end
     test "collects non_neg_integer" do
-      assert builtin(:integer) == (builtin(:integer) <|> builtin(:non_neg_integer))
+      assert integer() == (integer() <|> non_neg_integer())
     end
     test "collects pos_integer" do
-      assert builtin(:integer) == (builtin(:integer) <|> builtin(:pos_integer))
+      assert integer() == (integer() <|> pos_integer())
     end
     test "collects ranges" do
-      assert builtin(:integer) == (builtin(:integer) <|> -3..10)
+      assert integer() == (integer() <|> -3..10)
     end
   end
 
   test "full integer fusion" do
-    assert builtin(:integer) = (builtin(:neg_integer) <|> 0 <|> builtin(:pos_integer))
-    assert builtin(:integer) = (builtin(:neg_integer) <|> 0..3 <|> builtin(:pos_integer))
-    assert builtin(:integer) = (builtin(:neg_integer) <|> -1..3 <|> builtin(:pos_integer))
+    assert integer() = (neg_integer() <|> 0 <|> pos_integer())
+    assert integer() = (neg_integer() <|> 0..3 <|> pos_integer())
+    assert integer() = (neg_integer() <|> -1..3 <|> pos_integer())
   end
 
   test "builtin atom collects atoms" do
     assert :foo == (:foo <|> :foo)
-    assert builtin(:atom) = (builtin(:atom) <|> :foo)
-    assert builtin(:atom) = (builtin(:atom) <|> :bar)
+    assert atom() = (atom() <|> :foo)
+    assert atom() = (atom() <|> :bar)
   end
 
-  @any builtin(:any)
-  @anytuple builtin(:tuple)
+  @any any()
+  @anytuple tuple()
   @min_2_tuple tuple({...(min: 2)})
 
   describe "for the tuple type" do
@@ -146,32 +146,32 @@ defmodule TypeTest.UnionTest do
     end
 
     test "a tuple that is a subtype of another tuple gets merged" do
-      outer = tuple({:ok, builtin(:integer) <|> :bar, builtin(:float) <|> builtin(:integer)})
-      inner = tuple({:ok, builtin(:integer), builtin(:float)})
+      outer = tuple({:ok, integer() <|> :bar, float() <|> integer()})
+      inner = tuple({:ok, integer(), float()})
 
       assert outer == outer <|> inner
     end
 
     test "a defined tuple merges into an minimum-arity tuple" do
-      assert @min_2_tuple = tuple({:ok, builtin(:integer)}) <|> @min_2_tuple
-      assert @min_2_tuple = tuple({:ok, builtin(:binary), builtin(:integer)}) <|> @min_2_tuple
+      assert @min_2_tuple = tuple({:ok, integer()}) <|> @min_2_tuple
+      assert @min_2_tuple = tuple({:ok, binary(), integer()}) <|> @min_2_tuple
     end
 
     test "a tuple that is identical or has one difference gets merged" do
-      duple1 = tuple({:ok, builtin(:integer)})
-      duple2 = tuple({:ok, builtin(:float)})
-      duple3 = tuple({:error, builtin(:integer)})
+      duple1 = tuple({:ok, integer()})
+      duple2 = tuple({:ok, float()})
+      duple3 = tuple({:error, integer()})
 
       assert duple1 == duple1 <|> duple1
 
-      assert tuple({:ok, builtin(:number)}) == duple1 <|> duple2
-      assert tuple({:ok <|> :error, builtin(:integer)}) == duple1 <|> duple3
+      assert tuple({:ok, number()}) == duple1 <|> duple2
+      assert tuple({:ok <|> :error, integer()}) == duple1 <|> duple3
 
-      triple1 = tuple({:ok, builtin(:integer), builtin(:float)})
-      triple2 = tuple({:error, builtin(:integer), builtin(:float)})
-      triple3 = tuple({:ok, builtin(:pid), builtin(:atom)})
+      triple1 = tuple({:ok, integer(), float()})
+      triple2 = tuple({:error, integer(), float()})
+      triple3 = tuple({:ok, pid(), atom()})
 
-      assert tuple({:ok <|> :error, builtin(:integer), builtin(:float)}) ==
+      assert tuple({:ok <|> :error, integer(), float()}) ==
         triple1 <|> triple2
 
       # if there is more than one difference it doesn't get merged.
@@ -202,12 +202,12 @@ defmodule TypeTest.UnionTest do
 
     test "orthogonal tuples don't merge" do
       assert %Type.Union{} =
-        (tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)}))
+        (tuple({:foo, integer()}) <|> tuple({:bar, float()}))
     end
 
     test "tuples that are too small for a minimum don't merge" do
       assert %Type.Union{} =
-        (tuple({...(min: 3)}) <|> tuple({:ok, builtin(:integer)}))
+        (tuple({...(min: 3)}) <|> tuple({:ok, integer()}))
     end
   end
 
@@ -229,7 +229,7 @@ defmodule TypeTest.UnionTest do
     end
 
     test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
-      assert builtin(:list) = [] <|> list(...)
+      assert list() = [] <|> list(...)
     end
 
     test "nonempty: true lists get merged into nonempty: false lists" do
@@ -253,8 +253,8 @@ defmodule TypeTest.UnionTest do
     end
 
     test "bitstrings merge strings" do
-      assert builtin(:bitstring) == remote(String.t) <|> builtin(:bitstring)
-      assert builtin(:binary) == remote(String.t) <|> builtin(:binary)
+      assert bitstring() == remote(String.t) <|> bitstring()
+      assert binary() == remote(String.t) <|> binary()
     end
 
     test "bitstrings can merge string/1 s" do

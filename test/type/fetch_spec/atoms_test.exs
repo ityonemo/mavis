@@ -14,7 +14,7 @@ defmodule TypeTest.Type.FetchSpec.AtomsTest do
   end
 
   test "atom" do
-    assert {:ok, identity_for(builtin(:atom))} == Type.fetch_spec(@source, :atom_spec, 1)
+    assert {:ok, identity_for(atom())} == Type.fetch_spec(@source, :atom_spec, 1)
   end
 
   test "boolean" do
@@ -22,10 +22,10 @@ defmodule TypeTest.Type.FetchSpec.AtomsTest do
   end
 
   test "module" do
-    assert {:ok, identity_for(builtin(:module))} == Type.fetch_spec(@source, :module_spec, 1)
+    assert {:ok, identity_for(module())} == Type.fetch_spec(@source, :module_spec, 1)
   end
 
   test "node" do
-    assert {:ok, identity_for(builtin(:node))} == Type.fetch_spec(@source, :node_spec, 1)
+    assert {:ok, identity_for(node_type())} == Type.fetch_spec(@source, :node_spec, 1)
   end
 end

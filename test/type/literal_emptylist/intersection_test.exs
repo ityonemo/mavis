@@ -10,26 +10,26 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
 
   describe "the intersection of a literal empty list" do
     test "with itself, general lists and any is itself" do
-      assert [] == [] <~> builtin(:any)
+      assert [] == [] <~> any()
       assert [] == [] <~> list(:foo)
-      assert [] == [] <~> builtin(:list)
+      assert [] == [] <~> list()
       assert [] == [] <~> []
     end
 
     test "with nonempty, or odd-termination final lists is not ok" do
-      assert builtin(:none) == [] <~> %List{final: :foo}
-      assert builtin(:none) == [] <~> list(...)
+      assert none() == [] <~> %List{final: :foo}
+      assert none() == [] <~> list(...)
     end
 
     test "with unions works as expected" do
-      assert [] == [] <~> ([] <|> builtin(:integer))
-      assert builtin(:none) == [] <~> (builtin(:integer) <|> builtin(:port))
+      assert [] == [] <~> ([] <|> integer())
+      assert none() == [] <~> (integer() <|> port())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([[], builtin(:list)])
+      TypeTest.Targets.except([[], list()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == [] <~> target
+        assert none() == [] <~> target
       end)
     end
   end

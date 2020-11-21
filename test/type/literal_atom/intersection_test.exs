@@ -8,38 +8,38 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
 
   describe "the intersection of a literal atom" do
     test "with itself, atoms, and any is itself" do
-      assert :foo == :foo <~> builtin(:any)
-      assert :foo == :foo <~> builtin(:atom)
+      assert :foo == :foo <~> any()
+      assert :foo == :foo <~> atom()
       assert :foo == :foo <~> :foo
     end
 
     test "with other atoms is none" do
-      assert builtin(:none) == :foo <~> :bar
+      assert none() == :foo <~> :bar
     end
 
     test "with node works is itself if it has node form" do
-      assert :nonode@nohost == :nonode@nohost <~> builtin(:node)
-      assert builtin(:none) == :foobar <~> builtin(:node)
+      assert :nonode@nohost == :nonode@nohost <~> node_type()
+      assert none() == :foobar <~> node_type()
     end
 
     test "with module works if it has module form" do
-      assert Kernel == Kernel <~> builtin(:module)
-      assert builtin(:none) == :foobar <~> builtin(:module)
+      assert Kernel == Kernel <~> module()
+      assert none() == :foobar <~> module()
     end
 
     test "with unions works as expected" do
-      assert :foo == :foo <~> (builtin(:atom) <|> builtin(:integer))
-      assert builtin(:none) == :foo <~> (builtin(:integer) <|> builtin(:port))
+      assert :foo == :foo <~> (atom() <|> integer())
+      assert none() == :foo <~> (integer() <|> port())
     end
 
     test "with the none type is none" do
-      assert builtin(:none) == :foo <~> builtin(:none)
+      assert none() == :foo <~> none()
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([:foo, builtin(:atom)])
+      TypeTest.Targets.except([:foo, atom()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == :foo <~> target
+        assert none() == :foo <~> target
       end)
     end
   end

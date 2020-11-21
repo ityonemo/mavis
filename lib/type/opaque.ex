@@ -70,7 +70,7 @@ defmodule Type.Opaque do
 
     intersection do
       def intersection(%Opaque{}, _non_opaque) do
-        builtin(:none)
+        none()
       end
     end
 

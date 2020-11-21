@@ -12,17 +12,17 @@ defmodule TypeTest.Type.FetchType.TuplesTest do
   end
 
   test "ok tuple literal" do
-    assert {:ok, tuple({:ok, builtin(:any)})}
+    assert {:ok, tuple({:ok, any()})}
       == Type.fetch_type(@source, :ok_literal)
   end
 
   test "tuple type" do
-    assert {:ok, builtin(:tuple)}
+    assert {:ok, tuple()}
       == Type.fetch_type(@source, :tuple_type)
   end
 
   test "mfa" do
-    assert {:ok, tuple({builtin(:module), builtin(:atom), 0..255})}
+    assert {:ok, tuple({module(), atom(), 0..255})}
       == Type.fetch_type(@source, :mfa_type)
   end
 end

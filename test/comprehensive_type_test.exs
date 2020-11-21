@@ -41,7 +41,7 @@ defmodule TypeTest.ComprehensiveTypeTest do
     name
   end
   defp strip_type_name({t, {name, _, lst}}) when t in @types do
-    {name, Enum.map(1..length(lst), fn _ -> builtin(:any) end)}
+    {name, Enum.map(1..length(lst), fn _ -> any() end)}
   end
 
   defp do_fetch_type(module, {name, params}) do

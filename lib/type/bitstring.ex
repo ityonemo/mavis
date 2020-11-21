@@ -220,7 +220,7 @@ defmodule Type.Bitstring do
       end
 
       def usable_as(challenge, target = %Type{module: String, name: :t, params: []}, meta) do
-        case Type.usable_as(challenge, builtin(:binary)) do
+        case Type.usable_as(challenge, binary()) do
           :ok ->
             msg = encapsulation_msg(challenge, target)
             {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
@@ -255,7 +255,7 @@ defmodule Type.Bitstring do
     end
 
     intersection do
-      def intersection(%{unit: 0}, %Bitstring{unit: 0}), do: builtin(:none)
+      def intersection(%{unit: 0}, %Bitstring{unit: 0}), do: none()
       def intersection(%{size: asz, unit: 0}, %Bitstring{size: bsz, unit: unit})
           when asz >= bsz and rem(asz - bsz, unit) == 0 do
         %Bitstring{size: asz, unit: 0}
@@ -266,7 +266,7 @@ defmodule Type.Bitstring do
       end
       def intersection(%{unit: aun}, %Bitstring{unit: bun})
         when aun == 0 or bun == 0 do
-        builtin(:none)
+        none()
       end
       def intersection(%{size: asz, unit: aun}, %Bitstring{size: bsz, unit: bun}) do
         if rem(asz - bsz, Integer.gcd(aun, bun)) == 0 do
@@ -279,7 +279,7 @@ defmodule Type.Bitstring do
             size: size,
             unit: lcm(aun, bun)}
         else
-          builtin(:none)
+          none()
         end
       end
       def intersection(bs, st = %Type{module: String, name: :t}) do
