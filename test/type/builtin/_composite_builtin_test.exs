@@ -63,55 +63,55 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "byte/0 type" do
     test "works in use" do
-      assert 0..255 == builtin(:byte)
+      assert 0..255 == byte()
     end
     test "works in matches" do
-      assert builtin(:byte) = 0..255
+      assert byte() = 0..255
     end
   end
 
   describe "char/0 type" do
     test "works in use" do
-      assert 0..0x10_FFFF == builtin(:char)
+      assert 0..0x10_FFFF == char()
     end
     test "works in matches" do
-      assert builtin(:char) = 0..0x10_FFFF
+      assert char() = 0..0x10_FFFF
     end
   end
 
   describe "charlist/0 type" do
     test "works in use" do
-      assert %Type.List{type: 0..0x10_FFFF} == builtin(:charlist)
+      assert %Type.List{type: 0..0x10_FFFF} == charlist()
     end
     test "works in matches" do
-      assert builtin(:charlist) = %Type.List{type: 0..0x10_FFFF}
+      assert charlist() = %Type.List{type: 0..0x10_FFFF}
     end
   end
 
   describe "nonempty_charlist/0 type" do
     test "works in use" do
-      assert %Type.List{type: 0..0x10_FFFF, nonempty: true} == builtin(:nonempty_charlist)
+      assert %Type.List{type: 0..0x10_FFFF, nonempty: true} == nonempty_charlist()
     end
     test "works in matches" do
-      assert builtin(:nonempty_charlist) = %Type.List{type: 0..0x10_FFFF, nonempty: true}
+      assert nonempty_charlist() = %Type.List{type: 0..0x10_FFFF, nonempty: true}
     end
   end
 
   describe "fun/0 type" do
     test "works in use" do
-      assert %Type.Function{params: :any, return: builtin(:any)} == builtin(:fun)
+      assert %Type.Function{params: :any, return: builtin(:any)} == fun()
     end
     test "works in matches" do
-      assert builtin(:fun) = %Type.Function{params: :any, return: builtin(:any)}
+      assert fun() = %Type.Function{params: :any, return: builtin(:any)}
     end
   end
 
   describe "function/0 type" do
     test "works in use" do
-      assert %Type.Function{params: :any, return: builtin(:any)} == builtin(:function)
+      assert %Type.Function{params: :any, return: builtin(:any)} == function()
     end
     test "works in matches" do
-      assert builtin(:function) = %Type.Function{params: :any, return: builtin(:any)}
+      assert function() = %Type.Function{params: :any, return: builtin(:any)}
     end
   end
 

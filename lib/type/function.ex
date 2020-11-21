@@ -140,8 +140,6 @@ defmodule Type.Function do
     inferred: boolean
   }
 
-  import Type, only: :macros
-
   @type return :: {:ok, Type.t} | {:maybe, Type.t, [Type.Message.t]} | {:error, Type.Message.t}
 
   @spec apply_types(t | Type.Union.t(t), [Type.t], keyword) :: return
@@ -238,7 +236,9 @@ defmodule Type.Function do
     end)
     |> Type.union()
 
-    if evaluated_type == builtin(:none) do
+    import Type, only: :macros
+
+    if evaluated_type == none() do
       # find the type that doesn't match.  Sorry, just going to do the worst
       # possible thing here.
       vars
