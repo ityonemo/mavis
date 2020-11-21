@@ -3,7 +3,7 @@ defmodule Type.Inference.Api do
   @moduledoc "TBD"
 
   @callback infer(module, atom, arity) ::
-    {:ok, Type.Function.t} |
+    {:ok, Type.inferred} |
     {:error, term} |
     :unknown
 end
@@ -31,15 +31,8 @@ defmodule Type.NoInference do
 
   """
   def infer(_, _, arity) do
-    {:ok, %Type.Function{params: any_params(arity),
+    {:ok, %Type.Function{params: List.duplicate(any(), arity),
                          return: any()}}
-  end
-
-  @doc false
-  def any_params(arity) do
-    fn -> any() end
-    |> Stream.repeatedly
-    |> Enum.take(arity)
   end
 end
 

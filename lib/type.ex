@@ -254,6 +254,11 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
+  @typedoc """
+  output type for `c:Type.Inference.Api.infer/1` and `c:Type.Inference.Api.infer/3`
+  """
+  @type inferred :: Type.Function.t | Type.Union.t(Type.Function.t)
+
   @primitive_builtins ~w(none neg_integer pos_integer float node_type module
   atom reference port pid iolist any)a
 
