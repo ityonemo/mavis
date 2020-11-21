@@ -126,19 +126,19 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "iodata/0 type" do
     test "works in use" do
-      assert Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) == builtin(:iodata)
+      assert Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) == iodata()
     end
     test "works in matches" do
-      assert builtin(:iodata) = Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
+      assert iodata() = Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
     end
   end
 
   describe "keyword/0 type" do
     test "works in use" do
-      assert %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}} == builtin(:keyword)
+      assert %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}} == keyword()
     end
     test "works in matches" do
-      assert builtin(:keyword) = %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
+      assert keyword() = %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
     end
   end
 

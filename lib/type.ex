@@ -284,6 +284,7 @@ defmodule Type do
   defbuiltin :pid
   defbuiltin :port
   defbuiltin :reference
+  defbuiltin :iolist
   defbuiltin :any
 
   # composite builtins (basic)
@@ -304,7 +305,14 @@ defmodule Type do
   defbuiltin :charlist,
                %Type.List{type: 0..0x10_FFFF, final: [], nonempty: false},
                "%Type.List{type: 0..0x10_FFFF}"
+  defbuiltin :keyword,
+               %Type.List{
+                 type: %Type.Tuple{elements: [atom(), any()]},
+                 final: [],
+                 nonempty: false},
+               "Type.List{type: tuple({atom(), any()}}"
   defbuiltin :binary, %Type.Bitstring{size: 0, unit: 8}, "%Type.Bitstring{unit: 8}"
+  defbuiltin :iodata, %Type.Union{of: [binary(), iolist()]}, "%Type.Union{of: [binary(), iolist()]}"
   defbuiltin :bitstring, %Type.Bitstring{size: 0, unit: 1}, "%Type.Bitstring{unit: 1}"
 
   @spec builtin(atom) :: Macro.t

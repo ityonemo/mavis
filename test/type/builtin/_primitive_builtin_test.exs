@@ -82,4 +82,13 @@ defmodule TypeTest.PrimitiveBuiltinTest do
       assert reference() = %Type{name: :reference}
     end
   end
+
+  describe "iolist/0 type" do
+    test "works in use" do
+      assert %Type{name: :iolist} == iolist()
+    end
+    test "works in matches" do
+      assert iolist() = %Type{name: :iolist}
+    end
+  end
 end
