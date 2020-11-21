@@ -4,6 +4,8 @@
 - deprecates `Type.builtin/1` and switches to macros for each type.
 - renames `Type.select_builtin/1` to `Type.builtin/1` which can serve
   as bridging functionality.
+- changes union behaviour to ignore `t:none()`, with an opt-in for
+  explicitness
 
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
