@@ -32,12 +32,12 @@ defmodule Type.NoInference do
   """
   def infer(_, _, arity) do
     {:ok, %Type.Function{params: any_params(arity),
-                         return: builtin(:any)}}
+                         return: any()}}
   end
 
   @doc false
   def any_params(arity) do
-    fn -> builtin(:any) end
+    fn -> any() end
     |> Stream.repeatedly
     |> Enum.take(arity)
   end

@@ -7,15 +7,15 @@ defmodule TypeTest.TypeMap.SubtypeTest do
   alias Type.Map
   import Type, only: :macros
 
-  @any builtin(:any)
-  @any_map builtin(:map)
+  @any any()
+  @any_map map()
   @empty_map %Map{}
 
   describe "the empty map" do
     test "is a subtype of itself and maps with optional types" do
       assert @empty_map in map(%{optional(:foo) => @any})
-      assert @empty_map in map(%{builtin(:integer) => @any})
-      assert @empty_map in map(%{builtin(:atom) => builtin(:integer)})
+      assert @empty_map in map(%{integer() => @any})
+      assert @empty_map in map(%{atom() => integer()})
     end
 
     test "is not a subtype of a map with a required type" do
@@ -29,7 +29,7 @@ defmodule TypeTest.TypeMap.SubtypeTest do
 
   describe "for a map with a required type" do
     test "are subtypes for a broader value type" do
-      assert map(%{foo: 1..10}) in map(%{foo: builtin(:integer)})
+      assert map(%{foo: 1..10}) in map(%{foo: integer()})
     end
 
     test "is a subtype of the same map except optional" do
@@ -37,11 +37,11 @@ defmodule TypeTest.TypeMap.SubtypeTest do
     end
 
     test "is a subtype when the the optional version is broader" do
-      assert map(%{foo: @any}) in map(%{builtin(:atom) => @any})
+      assert map(%{foo: @any}) in map(%{atom() => @any})
     end
 
     test "is not a subtype when the target is narrower" do
-      refute map(%{foo: @any}) in map(%{builtin(:atom) => builtin(:integer)})
+      refute map(%{foo: @any}) in map(%{atom() => integer()})
     end
 
     test "is a subtype of the any map" do

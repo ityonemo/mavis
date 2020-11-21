@@ -12,22 +12,22 @@ defmodule TypeTest.Remote.SubtypeTest do
   describe "the elixir String.t" do
     test "is a subtype of itself and any" do
       assert remote(String.t()) in remote(String.t())
-      assert remote(String.t()) in builtin(:any)
+      assert remote(String.t()) in any()
     end
 
     test "is a subtype of any bitstring with size 0" do
-      assert remote(String.t()) in builtin(:bitstring)
-      assert remote(String.t()) in builtin(:binary)
+      assert remote(String.t()) in bitstring()
+      assert remote(String.t()) in binary()
     end
 
     test "is a subtype of appropriate unions" do
-      assert remote(String.t()) in (builtin(:bitstring) <|> builtin(:atom))
-      assert remote(String.t()) in (builtin(:binary) <|> builtin(:atom))
-      assert remote(String.t()) in (remote(String.t()) <|> builtin(:atom))
+      assert remote(String.t()) in (bitstring() <|> atom())
+      assert remote(String.t()) in (binary() <|> atom())
+      assert remote(String.t()) in (remote(String.t()) <|> atom())
     end
 
     test "is not a subtype of orthogonal types" do
-      refute remote(String.t()) in (builtin(:atom) <|> builtin(:integer))
+      refute remote(String.t()) in (atom() <|> integer())
     end
   end
 
@@ -35,7 +35,7 @@ defmodule TypeTest.Remote.SubtypeTest do
     test "is a subtype of itself, general String.t" do
       assert remote(String.t(3)) in remote(String.t(3))
       assert remote(String.t(3)) in remote(String.t())
-      assert remote(String.t(3)) in builtin(:any)
+      assert remote(String.t(3)) in any()
     end
 
     test "is a subtype of any with the correct size" do
@@ -48,7 +48,7 @@ defmodule TypeTest.Remote.SubtypeTest do
 
   describe "basic binary" do
     test "is not a subtype of String.t()" do
-      refute builtin(:binary) in remote(String.t())
+      refute binary() in remote(String.t())
     end
   end
 

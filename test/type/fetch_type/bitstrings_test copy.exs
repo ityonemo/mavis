@@ -35,10 +35,10 @@ defmodule TypeTest.Type.FetchType.BitstringsTest do
   end
 
   test "iodata/0" do
-    assert {:ok, (%Bitstring{size: 0, unit: 8} <|> builtin(:iolist))} == Type.fetch_type(@source, :iodata_type)
+    assert {:ok, (%Bitstring{size: 0, unit: 8} <|> iolist())} == Type.fetch_type(@source, :iodata_type)
   end
 
   test "iolist/0" do
-    assert {:ok, builtin(:iolist)} == Type.fetch_type(@source, :iolist_type)
+    assert {:ok, iolist()} == Type.fetch_type(@source, :iolist_type)
   end
 end

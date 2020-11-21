@@ -7,8 +7,8 @@
 
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
-- change `builtin(:non_neg_integer)` from a true builtin to an aliased builtin.
-- change `builtin(:integer)` from a true builtin to an aliased builtin
+- change `non_neg_integer()` from a true builtin to an aliased builtin.
+- change `integer()` from a true builtin to an aliased builtin
 - adds `Type.map/1`, `Type.tuple/1`, and `Type.function/1` macros
 - adds `Type.is_singleton/1` guard
 - fixes tuple union merging rules and makes function union merging rules

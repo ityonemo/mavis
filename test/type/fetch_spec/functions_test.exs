@@ -12,21 +12,21 @@ defmodule TypeTest.Type.FetchSpec.FunctionsTest do
   alias Type.Function
 
   test "zero arity" do
-    assert {:ok, identity_for(%Function{params: [], return: builtin(:any)})} ==
+    assert {:ok, identity_for(%Function{params: [], return: any()})} ==
       Type.fetch_spec(@source, :zero_arity_spec, 1)
   end
 
   test "two arity" do
-    assert {:ok, identity_for(%Function{params: [builtin(:integer), builtin(:atom)],
-                                        return: builtin(:float)})} ==
+    assert {:ok, identity_for(%Function{params: [integer(), atom()],
+                                        return: float()})} ==
       Type.fetch_spec(@source, :two_arity_spec, 1)
   end
 
-  @any_fn %Function{params: :any, return: builtin(:any)}
+  @any_fn %Function{params: :any, return: any()}
 
   test "any arity" do
     assert {:ok, identity_for(%Function{params: :any,
-                                        return: builtin(:integer)})} == Type.fetch_spec(@source, :any_arity_spec, 1)
+                                        return: integer()})} == Type.fetch_spec(@source, :any_arity_spec, 1)
   end
 
   test "fun" do

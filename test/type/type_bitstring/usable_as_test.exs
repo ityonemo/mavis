@@ -14,10 +14,10 @@ defmodule TypeTest.TypeBitString.UsableAsTest do
   @basic_binary %Bitstring{size: 0, unit: 8}
 
   test "all bitstring types are usable as any and self" do
-    assert :ok = @empty_bitstring ~> builtin(:any)
-    assert :ok = @basic_bitstring ~> builtin(:any)
-    assert :ok = @basic_binary ~> builtin(:any)
-    assert :ok = %Bitstring{size: 3, unit: 4} ~> builtin(:any)
+    assert :ok = @empty_bitstring ~> any()
+    assert :ok = @basic_bitstring ~> any()
+    assert :ok = @basic_binary ~> any()
+    assert :ok = %Bitstring{size: 3, unit: 4} ~> any()
 
     assert :ok = @empty_bitstring ~> @empty_bitstring
     assert :ok = @basic_bitstring ~> @basic_bitstring
@@ -115,11 +115,11 @@ defmodule TypeTest.TypeBitString.UsableAsTest do
   end
 
   test "bitstrings are usable as unions including their supertype" do
-    assert :ok = %Bitstring{size: 16, unit: 8} ~> (%Bitstring{size: 0, unit: 8} <|> builtin(:atom))
+    assert :ok = %Bitstring{size: 16, unit: 8} ~> (%Bitstring{size: 0, unit: 8} <|> atom())
   end
 
   test "bitstrings are not usable as disjoint unions" do
-    assert {:error, _} = %Bitstring{size: 16, unit: 8} ~> (builtin(:pid) <|> builtin(:atom))
+    assert {:error, _} = %Bitstring{size: 16, unit: 8} ~> (pid() <|> atom())
   end
 
   test "bitstrings generally are not usable as other types" do

@@ -49,8 +49,8 @@ defmodule Type.Tuple do
   %Type.Tuple{elements: {:min, 0}}
   iex> tuple {...(min: 2)}
   %Type.Tuple{elements: {:min, 2}}
-  iex> tuple {:ok, builtin(:integer)}
-  %Type.Tuple{elements: [:ok, builtin(:integer)]}
+  iex> tuple {:ok, integer()}
+  %Type.Tuple{elements: [:ok, integer()]}
   ```
 
   ### Key functions:
@@ -75,9 +75,9 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(tuple({}), tuple({:ok, builtin(:integer)}))
+  iex> Type.intersection(tuple({}), tuple({:ok, integer()}))
   %Type{name: :none}
-  iex> Type.intersection(tuple({:ok, builtin(:integer)}), tuple({builtin(:atom), 1..10}))
+  iex> Type.intersection(tuple({:ok, integer()}), tuple({atom(), 1..10}))
   %Type.Tuple{elements: [:ok, 1..10]}
   ```
 
@@ -101,7 +101,7 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({builtin(:atom), builtin(:integer)}))
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({atom(), integer()}))
   true
   iex> Type.subtype?(tuple({:ok, 1..10}), tuple({...(min: 2)}))
   true
@@ -117,13 +117,13 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.usable_as(tuple({:ok, 1..10}), tuple({builtin(:atom), builtin(:integer)}))
+  iex> Type.usable_as(tuple({:ok, 1..10}), tuple({atom(), integer()}))
   :ok
-  iex> Type.usable_as(tuple({:ok, builtin(:integer)}), tuple({builtin(:atom), 1..10}))
-  {:maybe, [%Type.Message{type: tuple({:ok, builtin(:integer)}),
-                          target: tuple({builtin(:atom), 1..10})}]}
-  iex> Type.usable_as(tuple({:ok, builtin(:integer)}), tuple({:error, 1..10}))
-  {:error, %Type.Message{type: tuple({:ok, builtin(:integer)}),
+  iex> Type.usable_as(tuple({:ok, integer()}), tuple({atom(), 1..10}))
+  {:maybe, [%Type.Message{type: tuple({:ok, integer()}),
+                          target: tuple({atom(), 1..10})}]}
+  iex> Type.usable_as(tuple({:ok, integer()}), tuple({:error, 1..10}))
+  {:error, %Type.Message{type: tuple({:ok, integer()}),
                          target: tuple({:error, 1..10})}}
   ```
 
@@ -170,7 +170,7 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.Tuple.elem(tuple({:ok, builtin(:pos_integer)}), 1)
+  iex> Type.Tuple.elem(tuple({:ok, pos_integer()}), 1)
   %Type{name: :pos_integer}
   ```
   """
@@ -255,17 +255,17 @@ defmodule Type.Tuple do
         %Tuple{elements: {:min, max(m, n)}}
       end
       def intersection(%{elements: {:min, m}}, tup = %Tuple{elements: e}) do
-        if length(e) >= m, do: tup, else: builtin(:none)
+        if length(e) >= m, do: tup, else: none()
       end
       def intersection(tup = %{elements: e}, %Tuple{elements: {:min, m}}) do
-        if length(e) >= m, do: tup, else: builtin(:none)
+        if length(e) >= m, do: tup, else: none()
       end
       def intersection(%{elements: e1}, %Tuple{elements: e2}) when length(e1) == length(e2) do
         elements = e1
         |> Enum.zip(e2)
         |> Enum.map(fn {t1, t2} ->
           case Type.intersection(t1, t2) do
-            builtin(:none) -> throw :mismatch
+            none() -> throw :mismatch
             any -> any
           end
         end)
@@ -273,7 +273,7 @@ defmodule Type.Tuple do
         %Tuple{elements: elements}
       catch
         :mismatch ->
-          builtin(:none)
+          none()
       end
     end
 
@@ -310,7 +310,7 @@ defmodule Type.Tuple do
     def inspect(%{elements: {:min, n}}, _opts) do
       "tuple({...(min: #{n})})"
     end
-    def inspect(%{elements: [builtin(:module), builtin(:atom), 0..255]}, _opts) do
+    def inspect(%{elements: [module(), atom(), 0..255]}, _opts) do
       "mfa()"
     end
     def inspect(%{elements: elements}, opts) do

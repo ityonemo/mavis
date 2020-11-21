@@ -9,12 +9,12 @@ defmodule TypeTest.TypeUnion.IntersectionTest do
 
   describe "unions" do
     test "are all part of any" do
-      assert (1 <|> 3) == (1 <|> 3) <~> builtin(:any)
+      assert (1 <|> 3) == (1 <|> 3) <~> any()
       assert (1 <|> 3) == (1 <|> 3) <~> (1 <|> 3)
     end
 
     test "are disjoint" do
-      assert builtin(:none) == (1 <|> 3) <~> (2 <|> 5)
+      assert none() == (1 <|> 3) <~> (2 <|> 5)
     end
 
     test "get the overlap" do

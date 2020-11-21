@@ -24,18 +24,18 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
   end
 
   test "builtin float" do
-    assert {:ok, identity_for(builtin(:float))} ==
+    assert {:ok, identity_for(float())} ==
       Type.fetch_spec(@source, :float_spec, 1)
   end
 
   test "builtin integers" do
-    assert {:ok, identity_for(builtin(:integer))} ==
+    assert {:ok, identity_for(integer())} ==
       Type.fetch_spec(@source, :integer_spec, 1)
-    assert {:ok, identity_for(builtin(:neg_integer))} ==
+    assert {:ok, identity_for(neg_integer())} ==
       Type.fetch_spec(@source, :neg_integer_spec, 1)
-    assert {:ok, identity_for(builtin(:non_neg_integer))} ==
+    assert {:ok, identity_for(non_neg_integer())} ==
       Type.fetch_spec(@source, :non_neg_integer_spec, 1)
-    assert {:ok, identity_for(builtin(:pos_integer))} ==
+    assert {:ok, identity_for(pos_integer())} ==
       Type.fetch_spec(@source, :pos_integer_spec, 1)
   end
 
@@ -49,10 +49,10 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
   end
 
   test "number" do
-    assert {:ok, identity_for(builtin(:number))} == Type.fetch_spec(@source, :number_spec, 1)
+    assert {:ok, identity_for(number())} == Type.fetch_spec(@source, :number_spec, 1)
   end
 
   test "timeout" do
-    assert {:ok, identity_for(builtin(:timeout))} == Type.fetch_spec(@source, :timeout_spec, 1)
+    assert {:ok, identity_for(timeout())} == Type.fetch_spec(@source, :timeout_spec, 1)
   end
 end

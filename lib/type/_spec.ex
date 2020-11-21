@@ -7,9 +7,35 @@ defmodule Type.Spec do
   @builtins Type.builtins()
 
   def parse(spec, assigns \\ %{})
-  def parse({:type, _, :map, :any}, _assigns) do
-    %Type.Map{optional: %{builtin(:any) => builtin(:any)}}
+
+  # fix assigns
+  def parse({:var, _, name}, assigns) when is_map_key(assigns, name) do
+    assigns[name]
   end
+  def parse({:var, _, :_}, _assigns) do
+    any()
+  end
+  def parse({:var, _, name}, assigns) when is_map_key(assigns, {name, :subtype_of}) do
+    %Type.Function.Var{name: name, constraint: assigns[{name, :subtype_of}]}
+  end
+  def parse({:var, _, name}, _assigns) do
+    %Type.Function.Var{name: name}
+  end
+
+  # general types
+  def parse({:type, _, :range, [first, last]}, assigns), do: parse(first, assigns)..parse(last, assigns)
+  def parse({:op, _, :-, value}, assigns), do: -parse(value, assigns)
+  def parse({:integer, _, value}, _), do: value
+  def parse({:atom, _, value}, _), do: value
+  def parse({:type, _, :fun, [{:type, _, :any}, return]}, assigns) do
+    %Type.Function{params: :any, return: parse(return, assigns)}
+  end
+  def parse({:type, _, :fun, [{:type, _, :product, params}, return]}, assigns) do
+    param_types = Enum.map(params, &parse(&1, assigns))
+    %Type.Function{params: param_types, return: parse(return, assigns)}
+  end
+
+  def parse({:type, _, :map, :any}, _assigns), do: map()
   def parse({:type, _, :map, params}, assigns) when is_list(params) do
     Enum.reduce(params, %Type.Map{}, fn
       {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
@@ -23,34 +49,7 @@ defmodule Type.Spec do
     end)
   end
 
-  # fix assigns
-  def parse({:var, _, name}, assigns) when is_map_key(assigns, name) do
-    assigns[name]
-  end
-  def parse({:var, _, :_}, _assigns) do
-    builtin(:any)
-  end
-  def parse({:var, _, name}, assigns) when is_map_key(assigns, {name, :subtype_of}) do
-    %Type.Function.Var{name: name, constraint: assigns[{name, :subtype_of}]}
-  end
-  def parse({:var, _, name}, _assigns) do
-    %Type.Function.Var{name: name}
-  end
-  # general types
-  def parse({:type, _, :range, [first, last]}, assigns), do: parse(first, assigns)..parse(last, assigns)
-  def parse({:op, _, :-, value}, assigns), do: -parse(value, assigns)
-  def parse({:integer, _, value}, _), do: value
-  def parse({:atom, _, value}, _), do: value
-  def parse({:type, _, :fun, [{:type, _, :any}, return]}, assigns) do
-    %Type.Function{params: :any, return: parse(return, assigns)}
-  end
-  def parse({:type, _, :fun, [{:type, _, :product, params}, return]}, assigns) do
-    param_types = Enum.map(params, &parse(&1, assigns))
-    %Type.Function{params: param_types, return: parse(return, assigns)}
-  end
-  def parse({:type, _, :tuple, :any}, _) do
-    %Type.Tuple{elements: {:min, 0}}
-  end
+  def parse({:type, _, :tuple, :any}, _), do: tuple()
   def parse({:type, _, :tuple, elements}, assigns) do
     %Type.Tuple{elements: Enum.map(elements, &parse(&1, assigns))}
   end
@@ -95,10 +94,10 @@ defmodule Type.Spec do
     %Type.List{type: 0..0x10FFFF, nonempty: true}
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
-    list(tuple({builtin(:atom), builtin(:any)}))
+    list(tuple({atom(), any()}))
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
-    list(tuple({builtin(:atom), parse(type, assigns)}))
+    list(tuple({atom(), parse(type, assigns)}))
   end
   # general remote type
   def parse({:remote_type, _, [module, name, args]}, assigns) do
@@ -117,8 +116,8 @@ defmodule Type.Spec do
     parse(type, assigns)
   end
   # default builtin
-  def parse({:type, _, type, []}, _) when type in @builtins do
-    Type.select_builtin(type)
+  def parse({:type, _, type, []}, _) when type in [:node | @builtins] do
+    Type.builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment

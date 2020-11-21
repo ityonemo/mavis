@@ -12,13 +12,13 @@ defmodule TypeTest.TypeOpaque.IntersectionTest do
     module: Foo,
     name: :bar,
     params: [],
-    type: builtin(:integer)
+    type: integer()
   }
 
   describe "the opaque type" do
     test "does not intersect with a matching type" do
-      assert builtin(:none) == builtin(:integer) <~> @opaque_int
-      assert builtin(:none) == @opaque_int <~> builtin(:integer)
+      assert none() == integer() <~> @opaque_int
+      assert none() == @opaque_int <~> integer()
     end
   end
 end

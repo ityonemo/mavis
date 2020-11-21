@@ -14,17 +14,17 @@ defmodule TypeTest.Type.FetchSpec.TuplesTest do
   end
 
   test "ok tuple literal" do
-    assert {:ok, identity_for(tuple({:ok, builtin(:any)}))}
+    assert {:ok, identity_for(tuple({:ok, any()}))}
       == Type.fetch_spec(@source, :ok_literal_spec, 1)
   end
 
   test "tuple type" do
-    assert {:ok, identity_for(builtin(:tuple))}
+    assert {:ok, identity_for(tuple())}
       == Type.fetch_spec(@source, :tuple_spec, 1)
   end
 
   test "mfa" do
-    assert {:ok, identity_for(tuple({builtin(:module), builtin(:atom), 0..255}))}
+    assert {:ok, identity_for(tuple({module(), atom(), 0..255}))}
       == Type.fetch_spec(@source, :mfa_spec, 1)
   end
 end

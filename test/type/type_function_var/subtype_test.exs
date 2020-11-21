@@ -9,9 +9,9 @@ defmodule TypeTest.TypeFunctionVar.SubtypeTest do
 
   alias Type.Function.Var
 
-  @any builtin(:any)
+  @any any()
   @any_var %Var{name: :foo}
-  @int_var %Var{name: :foo, constraint: builtin(:integer)}
+  @int_var %Var{name: :foo, constraint: integer()}
 
   describe "the any variable" do
     test "is a subtype of itself and any" do
@@ -33,11 +33,11 @@ defmodule TypeTest.TypeFunctionVar.SubtypeTest do
 
   describe "the integer-constrained variable" do
     test "is a subtype of integer" do
-      assert @int_var in builtin(:integer)
+      assert @int_var in integer()
     end
 
     test "is a supertype of integer types" do
-      #assert builtin(:pos_integer) in @int_var
+      #assert pos_integer() in @int_var
       assert 1..10 in @int_var
     end
   end

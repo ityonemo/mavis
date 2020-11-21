@@ -37,7 +37,7 @@ defmodule Type.Function.Var do
 
   import Type, only: :macros
   @enforce_keys [:name]
-  defstruct @enforce_keys ++ [constraint: builtin(:any)]
+  defstruct @enforce_keys ++ [constraint: any()]
 
   @type t :: %__MODULE__{
     name: atom,
@@ -74,7 +74,7 @@ defimpl Inspect, for: Type.Function.Var do
 
   def inspect(var, opts = %{custom_options: [show_constraints: true]}) do
     case var.constraint do
-      builtin(:any) -> "#{var.name}: var"
+      any() -> "#{var.name}: var"
       _ ->
         clean_opts = %{opts | custom_options: []}
         concat("#{var.name}: ", to_doc(var.constraint, clean_opts))
@@ -117,7 +117,7 @@ defimpl Type.Properties, for: Type.Function.Var do
 
     def intersection(left = %Var{}, right) do
       case Type.intersection(left.constraint, right) do
-        builtin(:none) -> builtin(:none)
+        none() -> none()
         type -> %{left | constraint: type}
       end
     end
