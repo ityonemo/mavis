@@ -147,7 +147,7 @@ defmodule TypeTest do
     end
 
     test "term" do
-      assert builtin(:term) == builtin(:any)
+      assert term() == builtin(:any)
     end
 
     test "arity" do

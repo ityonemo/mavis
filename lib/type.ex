@@ -273,6 +273,19 @@ defmodule Type do
   @doc false
   def builtins, do: @builtins
 
+  import Type.Helpers, only: [defbuiltin: 1]
+
+  # primitive builtins
+  defbuiltin :none
+  defbuiltin :neg_integer
+  defbuiltin :pos_integer
+  defbuiltin :float
+  defbuiltin :atom
+  defbuiltin :pid
+  defbuiltin :port
+  defbuiltin :reference
+  defbuiltin :any
+
   @spec builtin(atom) :: Macro.t
   @doc """
   helper macro to  match on builtin types.  The parameter must be
@@ -288,7 +301,9 @@ defmodule Type do
   *Usable in guards*
   """
   defmacro builtin(:term) do
-    quote do %Type{module: nil, name: :any, params: []} end
+    quote do
+      %Type{module: nil, name: :term, params: []}
+    end
   end
   defmacro builtin(:integer) do
     quote do
