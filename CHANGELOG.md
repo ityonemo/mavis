@@ -6,6 +6,7 @@
   as bridging functionality.
 - changes union behaviour to ignore `t:none()`, with an opt-in for
   explicitness
+- fixes `c:Type.Inference.Api.infer/3`
 
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
