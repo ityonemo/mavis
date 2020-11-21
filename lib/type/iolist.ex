@@ -22,8 +22,7 @@ defmodule Type.Iolist do
     # iolist is char | binary | iolist
     type = [@char, @binary, iolist()]
     |> Enum.map(&Type.intersection(&1, list.type))
-    |> Enum.reject(&(&1 == none()))
-    |> Enum.into(%Union{})
+    |> Type.union
 
     final = Type.intersection(list.final, @final)
 

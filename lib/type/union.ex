@@ -150,14 +150,12 @@ defmodule Type.Union do
       def intersection(lunion, runion = %Type.Union{}) do
         lunion.of
         |> Enum.map(&Type.intersection(runion, &1))
-        |> Enum.reject(&(&1 == none()))
-        |> Enum.into(%Type.Union{})
+        |> Type.union
       end
       def intersection(union = %{}, ritem) do
         union.of
         |> Enum.map(&Type.intersection(&1, ritem))
-        |> Enum.reject(&(&1 == none()))
-        |> Enum.into(%Type.Union{})
+        |> Type.union
       end
     end
 
