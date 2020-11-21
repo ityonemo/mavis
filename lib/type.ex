@@ -295,6 +295,7 @@ defmodule Type do
   defbuiltin :byte, 0..255
   defbuiltin :char, 0..0x10_FFFF
   defbuiltin :boolean, %Type.Union{of: [true, false]}, "%Type.Union{of: [true, false]}"
+  defbuiltin :identifier, %Type.Union{of: [pid(), port(), reference()]}, "%Type.Union{of: [pid(), port(), reference()]}"
   defbuiltin :fun, %Type.Function{params: :any, return: any()}, "Type.Function{params: :any, return: any()}"
   defbuiltin :function, %Type.Function{params: :any, return: any()}, "Type.Function{params: :any, return: any()}"
   defbuiltin :nonempty_charlist,

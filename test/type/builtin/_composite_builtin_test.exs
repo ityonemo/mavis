@@ -117,10 +117,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "identifier/0 type" do
     test "works in use" do
-      assert Type.union([builtin(:reference), builtin(:port), builtin(:pid)]) == builtin(:identifier)
+      assert Type.union([builtin(:reference), builtin(:port), builtin(:pid)]) == identifier()
     end
     test "works in matches" do
-      assert builtin(:identifier) = Type.union([builtin(:reference), builtin(:port), builtin(:pid)])
+      assert identifier() = Type.union([builtin(:reference), builtin(:port), builtin(:pid)])
     end
   end
 
