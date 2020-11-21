@@ -26,9 +26,8 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
     end
 
     test "is smaller than bitstring and top" do
-      assert [] < builtin(%Type.Bitstring{size: 0, unit: 0})
+      assert [] < %Type.Bitstring{size: 0, unit: 0}
       assert [] < any()
     end
   end
-
 end

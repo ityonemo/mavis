@@ -273,7 +273,7 @@ defmodule Type do
   @doc false
   def builtins, do: @builtins
 
-  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 2, defbuiltin: 3]
+  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 3]
 
   # primitive builtins
   defbuiltin :none
@@ -300,15 +300,15 @@ defmodule Type do
              "%Type.Union{of: [pos_integer(), 0, neg_integer()]}"
   defbuiltin :map,
              %Type.Map{optional: %{any() => any()}},
-             "%Type.Map{optional: %{any() => any()}"
+             "%Type.Map{optional: %{any() => any()}}"
   defbuiltin :tuple,
              %Type.Tuple{elements: {:min, 0}},
-             "Type.Tuple{elements: {:min, 0}}"
+             "%Type.Tuple{elements: {:min, 0}}"
   # composite builtins (built-in types)
   defbuiltin :no_return, none(), "%Type{name: :none}"
-  defbuiltin :arity, 0..255
-  defbuiltin :byte, 0..255
-  defbuiltin :char, 0..0x10_FFFF
+  defbuiltin :arity, 0..255, "0..255"
+  defbuiltin :byte, 0..255, "0..255"
+  defbuiltin :char, 0..0x10_FFFF, "0..0x10_FFFF"
   defbuiltin :number,
              %Type.Union{of: [float(), pos_integer(), 0, neg_integer()]},
              "%Type.Union{of: [float(), pos_integer(), 0, neg_integer()]}"
@@ -323,19 +323,19 @@ defmodule Type do
              "%Type.Union{of: [pid(), port(), reference()]}"
   defbuiltin :fun,
              %Type.Function{params: :any, return: any()},
-             "Type.Function{params: :any, return: any()}"
+             "%Type.Function{params: :any, return: any()}"
   defbuiltin :function,
              %Type.Function{params: :any, return: any()},
-             "Type.Function{params: :any, return: any()}"
+             "%Type.Function{params: :any, return: any()}"
   defbuiltin :mfa,
              %Type.Tuple{elements: [module(), atom(), arity()]},
-             "Type.Tuple{elements: [module(), atom(), arity()]}"
+             "%Type.Tuple{elements: [module(), atom(), arity()]}"
   defbuiltin :struct,
              %Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}},
              "%Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}}"
   defbuiltin :nonempty_charlist,
              %Type.List{type: 0..0x10_FFFF, final: [], nonempty: true},
-             "Type.List{type: 0..0x10_FFFF, nonempty: true}"
+             "%Type.List{type: 0..0x10_FFFF, nonempty: true}"
   defbuiltin :nonempty_list,
              %Type.List{type: any(), final: [], nonempty: true},
              "%Type.List{type: any(), nonempty: true}"
@@ -350,7 +350,7 @@ defmodule Type do
                type: %Type.Tuple{elements: [atom(), any()]},
                final: [],
                nonempty: false},
-             "Type.List{type: tuple({atom(), any()}}"
+             "%Type.List{type: tuple({atom(), any()})}"
   defbuiltin :list,
              %Type.List{type: any(), final: [], nonempty: false},
              "%Type.List{type: any()}"
@@ -1002,7 +1002,7 @@ defmodule Type do
   resolves a remote type into its constitutent type.  raises if the type
   is not found.
   """
-  def fetch_type!(type = %Type{module: String, name: :t, params: [size]}) do
+  def fetch_type!(%Type{module: String, name: :t, params: [size]}) do
     struct(Type.Bitstring, size: 8 * size)
   end
   def fetch_type!(type = %Type{module: module, name: name, params: params})

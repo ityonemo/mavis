@@ -2,6 +2,10 @@ defmodule TypeTest do
 
   # tests on the Type module
   use ExUnit.Case, async: true
+
+  # allows us to use these in doctests
+  import Type, only: :macros
+
   doctest Type
 
   # tests on types
@@ -14,8 +18,6 @@ defmodule TypeTest do
   doctest Type.Union
 
   use Type.Operators
-
-  import Type, only: :macros
 
   test "foo" do
     var_func = function((i -> i when i: integer()))

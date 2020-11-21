@@ -7,21 +7,6 @@ defmodule Type.Spec do
   @builtins Type.builtins()
 
   def parse(spec, assigns \\ %{})
-  def parse({:type, _, :map, :any}, _assigns) do
-    %Type.Map{optional: %{any() => any()}}
-  end
-  def parse({:type, _, :map, params}, assigns) when is_list(params) do
-    Enum.reduce(params, %Type.Map{}, fn
-      {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
-        %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
-      {:type, _, :map_field_exact, [src_type = {t, _, _}, dst_type]}, map = %{required: required}
-        when t in [:atom, :integer] ->
-        %{map | required: Map.put(required, parse(src_type, assigns), parse(dst_type, assigns))}
-      # downgrade required types that aren't either integer or atom literals.
-      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{optional: optional} ->
-        %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
-    end)
-  end
 
   # fix assigns
   def parse({:var, _, name}, assigns) when is_map_key(assigns, name) do
@@ -36,6 +21,7 @@ defmodule Type.Spec do
   def parse({:var, _, name}, _assigns) do
     %Type.Function.Var{name: name}
   end
+
   # general types
   def parse({:type, _, :range, [first, last]}, assigns), do: parse(first, assigns)..parse(last, assigns)
   def parse({:op, _, :-, value}, assigns), do: -parse(value, assigns)
@@ -48,9 +34,22 @@ defmodule Type.Spec do
     param_types = Enum.map(params, &parse(&1, assigns))
     %Type.Function{params: param_types, return: parse(return, assigns)}
   end
-  def parse({:type, _, :tuple, :any}, _) do
-    %Type.Tuple{elements: {:min, 0}}
+
+  def parse({:type, _, :map, :any}, _assigns), do: map()
+  def parse({:type, _, :map, params}, assigns) when is_list(params) do
+    Enum.reduce(params, %Type.Map{}, fn
+      {:type, _, :map_field_assoc, [src_type, dst_type]}, map = %{optional: optional} ->
+        %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
+      {:type, _, :map_field_exact, [src_type = {t, _, _}, dst_type]}, map = %{required: required}
+        when t in [:atom, :integer] ->
+        %{map | required: Map.put(required, parse(src_type, assigns), parse(dst_type, assigns))}
+      # downgrade required types that aren't either integer or atom literals.
+      {:type, _, :map_field_exact, [src_type, dst_type]}, map = %{optional: optional} ->
+        %{map | optional: Map.put(optional, parse(src_type, assigns), parse(dst_type, assigns))}
+    end)
   end
+
+  def parse({:type, _, :tuple, :any}, _), do: tuple()
   def parse({:type, _, :tuple, elements}, assigns) do
     %Type.Tuple{elements: Enum.map(elements, &parse(&1, assigns))}
   end
@@ -117,7 +116,7 @@ defmodule Type.Spec do
     parse(type, assigns)
   end
   # default builtin
-  def parse({:type, _, type, []}, _) when type in @builtins do
+  def parse({:type, _, type, []}, _) when type in [:node | @builtins] do
     Type.builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do

@@ -27,6 +27,6 @@ defmodule TypeTest.Type.Inspect.AtomsTest do
   end
 
   test "node" do
-    assert "node_type()" == inspect_type(@source, :node_type)
+    assert "node()" == inspect_type(@source, :node_type)
   end
 end
