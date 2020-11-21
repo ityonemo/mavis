@@ -16,8 +16,8 @@ defmodule TypeTest.Builtin.SubtypeTest do
       refute none() in any()
     end
 
-    test "is a subtype of a union with itself" do
-      assert none() in (none() <|> integer())
+    test "can be subtype of a union with itself" do
+      assert none() in Type.union([none(), integer()], preserve_nones: true)
     end
 
     test "is not a subtype of all types" do

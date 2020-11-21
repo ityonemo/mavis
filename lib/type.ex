@@ -814,6 +814,7 @@ defmodule Type do
   defdelegate subtype?(type, target), to: Type.Properties
 
   @spec union(t, t) :: t
+  @spec union([t], preserve_nones: true) :: t
   @doc """
   outputs the type which is guaranteed to satisfy the following conditions:
 
@@ -830,6 +831,7 @@ defmodule Type do
   "-10..-1 | non_neg_integer()"
   ```
   """
+  def union(lst, [preserve_nones: true]), do: upn(lst)
   def union(a, b), do: union([a, b])
 
   @spec union([t]) :: t
@@ -842,15 +844,28 @@ defmodule Type do
   `union/1` will try to collapse types into the simplest representation,
   but the success of this operation is not guaranteed.
 
+  If you are in a situation where you would like to explicitly preserve
+  the existence of a `none()` type, you can pass `preserve_nones: true`
+  to the options list.
+
   ### Example:
   ```elixir
   iex> import Type, only: :macros
   iex> inspect Type.union([pos_integer(), -10..10, 32, neg_integer()])
   "integer()"
+  iex> inspect Type.union([pos_integer(), none()], preserve_nones: true)
+  "none() | pos_integer()"
   ```
   """
   def union(types) when is_list(types) do
-    Enum.into(types, struct(Type.Union))
+    types
+    |> Enum.reject(&(&1 == none()))
+    |> upn
+  end
+
+  # helper function (see above:)
+  defp upn(types) do
+    Enum.into(types, %Type.Union{})
   end
 
   @spec intersection(t, t) :: t
