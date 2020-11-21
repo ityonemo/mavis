@@ -54,10 +54,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "boolean/0 type" do
     test "works in use" do
-      assert Type.union(true, false) == builtin(:boolean)
+      assert Type.union(true, false) == boolean()
     end
     test "works in matches" do
-      assert builtin(:boolean) = Type.union(true, false)
+      assert boolean() = Type.union(true, false)
     end
   end
 

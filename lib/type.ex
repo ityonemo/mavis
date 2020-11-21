@@ -292,6 +292,7 @@ defmodule Type do
   # composite builtins (built-in types)
   defbuiltin :term, %Type{module: nil, params: [], name: :any}, "%Type{name: :any}"
   defbuiltin :arity, 0..255
+  defbuiltin :boolean, %Type.Union{of: [true, false]}, "%Type.Union{of: [true, false]}"
   defbuiltin :binary, %Type.Bitstring{size: 0, unit: 8}, "%Type.Bitstring{unit: 8}"
   defbuiltin :bitstring, %Type.Bitstring{size: 0, unit: 1}, "%Type.Bitstring{unit: 1}"
 
