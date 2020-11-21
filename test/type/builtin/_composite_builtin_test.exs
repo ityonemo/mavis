@@ -3,6 +3,19 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   import Type, only: :macros
 
+  # basic types.  See https://hexdocs.pm/elixir/typespecs.html#basic-types
+
+  describe "map/0 type" do
+    test "works in use" do
+      assert %Type.Map{optional: %{any() => any()}} == map()
+    end
+    test "works in matches" do
+      assert map() = %Type.Map{optional: %{any() => any()}}
+    end
+  end
+
+  # built-in types.  See https://hexdocs.pm/elixir/typespecs.html#built-in-types
+
   describe "term/0 type" do
     test "works in use" do
       assert any() == term()
@@ -32,10 +45,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "bitstring/0 type" do
     test "works in use" do
-      assert %Type.Bitstring{size: 0, unit: 1} == builtin(:bitstring)
+      assert %Type.Bitstring{size: 0, unit: 1} == bitstring()
     end
     test "works in matches" do
-      assert builtin(:bitstring) = %Type.Bitstring{size: 0, unit: 1}
+      assert bitstring() = %Type.Bitstring{size: 0, unit: 1}
     end
   end
 

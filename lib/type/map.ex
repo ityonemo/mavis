@@ -186,7 +186,7 @@ defmodule Type.Map do
 
   defstruct [required: %{}, optional: %{}]
 
-  import Type, only: :macros
+  #import Type, only: :macros
 
   @type required :: %{optional(integer | atom) => Type.t}
   @type optional :: %{optional(Type.t) => Type.t}
@@ -263,10 +263,12 @@ defmodule Type.Map do
     segment_apply(map, singleton)
   end
   def apply(map, preimage_clamp) do
+    import Type, only: :macros
+
     map
     |> resegment([preimage_clamp])
     |> Enum.map(&segment_apply(map, &1))
-    |> Enum.reject(&(&1 == builtin(:none)))
+    |> Enum.reject(&(&1 == none()))
     |> Type.union
   end
 
@@ -327,7 +329,7 @@ defmodule Type.Map do
     |> keytypes
     |> Enum.flat_map(fn key_type ->
       case Type.intersection(key_type, preimage_segment) do
-        builtin(:none) -> resegment(map, rest)
+        none() -> resegment(map, rest)
         other -> [other | resegment(map, rest)]
       end
     end)

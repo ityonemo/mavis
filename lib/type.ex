@@ -286,10 +286,14 @@ defmodule Type do
   defbuiltin :reference
   defbuiltin :any
 
-  # composite builtins
+  # composite builtins (basic)
+  defbuiltin :map, %Type.Map{optional: %{any() => any()}}, "%Type.Map{optional: %{any() => any()}"
+  defbuiltin :tuple, %Type.Tuple{elements: {:min, 0}}, "Type.Tuple{elements: {:min, 0}}"
+  # composite builtins (built-in types)
   defbuiltin :term, %Type{module: nil, params: [], name: :any}, "%Type{name: :any}"
   defbuiltin :arity, 0..255
   defbuiltin :binary, %Type.Bitstring{size: 0, unit: 8}, "%Type.Bitstring{unit: 8}"
+  defbuiltin :bitstring, %Type.Bitstring{size: 0, unit: 1}, "%Type.Bitstring{unit: 1}"
 
   @spec builtin(atom) :: Macro.t
   @doc """
@@ -323,12 +327,6 @@ defmodule Type do
   end
   defmacro builtin(:map) do
     quote do %Type.Map{optional: %{builtin(:any) => builtin(:any)}} end
-  end
-  defmacro builtin(:binary) do
-    quote do %Type.Bitstring{size: 0, unit: 8} end
-  end
-  defmacro builtin(:bitstring) do
-    quote do %Type.Bitstring{size: 0, unit: 1} end
   end
   defmacro builtin(:boolean) do
     quote do %Type.Union{of: [true, false]} end
