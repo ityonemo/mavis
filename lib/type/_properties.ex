@@ -104,8 +104,7 @@ defimpl Type.Properties, for: Range do
       # range.
       list
       |> Enum.map(&Type.intersection(&1, range))
-      |> Enum.reject(&(&1 == none()))
-      |> Enum.into(%Type.Union{})
+      |> Type.union
       |> case do
         none() -> {:error, Type.Message.make(range, union, meta)}
         ^range -> :ok

@@ -268,7 +268,6 @@ defmodule Type.Map do
     map
     |> resegment([preimage_clamp])
     |> Enum.map(&segment_apply(map, &1))
-    |> Enum.reject(&(&1 == none()))
     |> Type.union
   end
 
