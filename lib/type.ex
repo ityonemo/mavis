@@ -273,7 +273,7 @@ defmodule Type do
   @doc false
   def builtins, do: @builtins
 
-  import Type.Helpers, only: [defbuiltin: 1]
+  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 3]
 
   # primitive builtins
   defbuiltin :none
@@ -285,6 +285,9 @@ defmodule Type do
   defbuiltin :port
   defbuiltin :reference
   defbuiltin :any
+
+  # composite builtins
+  defbuiltin :term, %Type{module: nil, params: [], name: :any}, "%Type{name: :any}"
 
   @spec builtin(atom) :: Macro.t
   @doc """
@@ -300,11 +303,6 @@ defmodule Type do
 
   *Usable in guards*
   """
-  defmacro builtin(:term) do
-    quote do
-      %Type{module: nil, name: :term, params: []}
-    end
-  end
   defmacro builtin(:integer) do
     quote do
       %Type.Union{of: [builtin(:pos_integer), 0, builtin(:neg_integer)]}

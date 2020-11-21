@@ -319,4 +319,25 @@ defmodule Type.Helpers do
       end
     end
   end
+
+  @doc false
+  defmacro defbuiltin(name, ast, test) do
+    quote do
+      @doc """
+      provides the `#{unquote name}()` primitive type.
+
+      ### Example:
+      ```elixir
+      iex> import Type, only: :macros
+      iex> #{unquote(name)}()
+      #{unquote test}
+      ```
+
+      *Usable in guards*
+      """
+      defmacro unquote(name)() do
+        Macro.escape(unquote(ast))
+      end
+    end
+  end
 end
