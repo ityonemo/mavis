@@ -23,10 +23,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "binary/0 type" do
     test "works in use" do
-      assert %Type.Bitstring{size: 0, unit: 8} == builtin(:binary)
+      assert %Type.Bitstring{size: 0, unit: 8} == binary()
     end
     test "works in matches" do
-      assert builtin(:binary) = %Type.Bitstring{size: 0, unit: 8}
+      assert binary() = %Type.Bitstring{size: 0, unit: 8}
     end
   end
 

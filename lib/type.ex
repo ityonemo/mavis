@@ -289,6 +289,7 @@ defmodule Type do
   # composite builtins
   defbuiltin :term, %Type{module: nil, params: [], name: :any}, "%Type{name: :any}"
   defbuiltin :arity, 0..255
+  defbuiltin :binary, %Type.Bitstring{size: 0, unit: 8}, "%Type.Bitstring{unit: 8}"
 
   @spec builtin(atom) :: Macro.t
   @doc """
