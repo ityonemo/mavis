@@ -10,50 +10,50 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "normal list" do
     test "intersects with any and self" do
-      assert builtin(:list) == builtin(:list) <~> builtin(:any)
-      assert builtin(:list) == builtin(:list) <~> builtin(:list)
+      assert list() == list() <~> any()
+      assert list() == list() <~> list()
     end
 
     test "intersects with empty list as empty list" do
-      assert [] == builtin(:list) <~> []
+      assert [] == list() <~> []
     end
 
     test "intersects with another list with the intersection of types" do
-      assert list(builtin(:integer)) == builtin(:list) <~> list(builtin(:integer))
-      assert list(47) == list(47) <~> list(builtin(:integer))
+      assert list(integer()) == list() <~> list(integer())
+      assert list(47) == list(47) <~> list(integer())
     end
 
     test "with unions works as expected" do
-      assert [] == builtin(:list) <~> ([] <|> builtin(:atom))
-      assert builtin(:none) == builtin(:list) <~> (builtin(:atom) <|> builtin(:port))
+      assert [] == list() <~> ([] <|> atom())
+      assert none() == list() <~> (atom() <|> port())
     end
 
     test "doesn't intersect with anything else" do
-      TypeTest.Targets.except([builtin(:list), []])
+      TypeTest.Targets.except([list(), []])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:list) <~> target
+        assert none() == list() <~> target
       end)
     end
   end
 
   describe "nonempty list" do
     test "intersects with any and self" do
-      assert list(...) == builtin(:list) <~> list(...)
-      assert list(...) == list(...) <~> builtin(:list)
+      assert list(...) == list() <~> list(...)
+      assert list(...) == list(...) <~> list()
     end
 
     test "doesn't intersect with empty list" do
-      assert builtin(:none) == [] <~> list(...)
-      assert builtin(:none) == list(...) <~> []
+      assert none() == [] <~> list(...)
+      assert none() == list(...) <~> []
     end
   end
 
   describe "list finals" do
     test "are reduced" do
-      assert %List{final: builtin(:pos_integer)} ==
-        %List{final: builtin(:pos_integer)} <~> %List{final: builtin(:integer)}
-      assert %List{final: builtin(:pos_integer)} ==
-        %List{final: builtin(:integer)} <~> %List{final: builtin(:pos_integer)}
+      assert %List{final: pos_integer()} ==
+        %List{final: pos_integer()} <~> %List{final: integer()}
+      assert %List{final: pos_integer()} ==
+        %List{final: integer()} <~> %List{final: pos_integer()}
     end
   end
 end

@@ -13,281 +13,281 @@ defmodule TypeTest.Builtin.OrderTest do
 
   describe "none" do
     test "is smaller than all types" do
-      assert builtin(:none) < -47
-      assert builtin(:none) < builtin(:neg_integer)
-      assert builtin(:none) < 0
-      assert builtin(:none) < 47
-      assert builtin(:none) < builtin(:pos_integer)
-      assert builtin(:none) < builtin(:non_neg_integer)
-      assert builtin(:none) < builtin(:integer)
-      assert builtin(:none) < builtin(:float)
-      assert builtin(:none) < :foo
-      assert builtin(:none) < builtin(:atom)
-      assert builtin(:none) < builtin(:reference)
-      assert builtin(:none) < function(( -> 0))
-      assert builtin(:none) < builtin(:port)
-      assert builtin(:none) < builtin(:pid)
-      assert builtin(:none) < builtin(:tuple)
-      assert builtin(:none) < builtin(:map)
-      assert builtin(:none) < []
-      assert builtin(:none) < builtin(:list)
-      assert builtin(:none) < %Bitstring{size: 0, unit: 0}
-      assert builtin(:none) < builtin(:any)
+      assert none() < -47
+      assert none() < neg_integer()
+      assert none() < 0
+      assert none() < 47
+      assert none() < pos_integer()
+      assert none() < non_neg_integer()
+      assert none() < integer()
+      assert none() < float()
+      assert none() < :foo
+      assert none() < atom()
+      assert none() < reference()
+      assert none() < function(( -> 0))
+      assert none() < port()
+      assert none() < pid()
+      assert none() < tuple()
+      assert none() < map()
+      assert none() < []
+      assert none() < list()
+      assert none() < %Bitstring{size: 0, unit: 0}
+      assert none() < any()
     end
   end
 
   describe "neg_integer" do
     test "is bigger than bottom class" do
-      assert builtin(:neg_integer) > builtin(:none)
+      assert neg_integer() > none()
     end
 
     test "is bigger than that which it is a superclass of" do
-    #  assert builtin(:neg_integer) > -47
-      assert builtin(:neg_integer) > -50..-47
+    #  assert neg_integer() > -47
+      assert neg_integer() > -50..-47
     end
 
     test "is smaller than the class it's a subclass of" do
-      assert builtin(:neg_integer) < builtin(:integer)
+      assert neg_integer() < integer()
     end
 
     test "is smaller than most other things" do
-      assert builtin(:neg_integer) < 0
-      assert builtin(:neg_integer) < 47
-      assert builtin(:neg_integer) < builtin(:pos_integer)
-      assert builtin(:neg_integer) < builtin(:float) # outside of group
-      assert builtin(:neg_integer) < builtin(:any)   # top
+      assert neg_integer() < 0
+      assert neg_integer() < 47
+      assert neg_integer() < pos_integer()
+      assert neg_integer() < float() # outside of group
+      assert neg_integer() < any()   # top
     end
   end
 
   describe "pos_integer" do
     test "is bigger than bottom and integer classes" do
-      assert builtin(:pos_integer) > builtin(:none)
-      assert builtin(:pos_integer) > -47
-      assert builtin(:pos_integer) > 0
-      assert builtin(:pos_integer) > -47..47
-      assert builtin(:pos_integer) > builtin(:neg_integer)
+      assert pos_integer() > none()
+      assert pos_integer() > -47
+      assert pos_integer() > 0
+      assert pos_integer() > -47..47
+      assert pos_integer() > neg_integer()
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:pos_integer) > 47
-      assert builtin(:pos_integer) > 42..47
+      assert pos_integer() > 47
+      assert pos_integer() > 42..47
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:pos_integer) < builtin(:pos_integer) <|> -1
+      assert pos_integer() < pos_integer() <|> -1
     end
 
     test "is smaller than the classes it's a subclass of" do
-      assert builtin(:pos_integer) < builtin(:non_neg_integer)
-      assert builtin(:pos_integer) < builtin(:integer)
+      assert pos_integer() < non_neg_integer()
+      assert pos_integer() < integer()
     end
 
     test "is smaller than most other things" do
-      assert builtin(:pos_integer) < builtin(:float) # outside of group
-      assert builtin(:pos_integer) < builtin(:any)   # top
+      assert pos_integer() < float() # outside of group
+      assert pos_integer() < any()   # top
     end
   end
 
   describe "non_neg_integer" do
     test "is bigger than bottom and integer classes" do
-      assert builtin(:non_neg_integer) > builtin(:none)
-      assert builtin(:non_neg_integer) > -47
-      assert builtin(:non_neg_integer) > -47..47
-      assert builtin(:non_neg_integer) > builtin(:neg_integer)
+      assert non_neg_integer() > none()
+      assert non_neg_integer() > -47
+      assert non_neg_integer() > -47..47
+      assert non_neg_integer() > neg_integer()
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:non_neg_integer) > 0
-      assert builtin(:non_neg_integer) > 47
-      assert builtin(:non_neg_integer) > 42..47
-      assert builtin(:non_neg_integer) > builtin(:pos_integer)
+      assert non_neg_integer() > 0
+      assert non_neg_integer() > 47
+      assert non_neg_integer() > 42..47
+      assert non_neg_integer() > pos_integer()
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:non_neg_integer) < builtin(:non_neg_integer) <|> -1
+      assert non_neg_integer() < non_neg_integer() <|> -1
     end
 
     test "is smaller than the classes it's a subclass of" do
-      assert builtin(:non_neg_integer) < builtin(:integer)
+      assert non_neg_integer() < integer()
     end
 
     test "is smaller than most other things" do
-      assert builtin(:non_neg_integer) < builtin(:float) # outside of group
-      assert builtin(:non_neg_integer) < builtin(:any)   # top
+      assert non_neg_integer() < float() # outside of group
+      assert non_neg_integer() < any()   # top
     end
   end
 
   describe "integer" do
     test "is bigger than bottom" do
-      assert builtin(:integer) > builtin(:none)
+      assert integer() > none()
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:integer) > -47
-      assert builtin(:integer) > -47..47
-      assert builtin(:integer) > builtin(:neg_integer)
-      assert builtin(:integer) > 0
-      assert builtin(:integer) > 47
-      assert builtin(:integer) > 42..47
-      assert builtin(:integer) > builtin(:pos_integer)
+      assert integer() > -47
+      assert integer() > -47..47
+      assert integer() > neg_integer()
+      assert integer() > 0
+      assert integer() > 47
+      assert integer() > 42..47
+      assert integer() > pos_integer()
     end
 
     test "is smaller than most other things" do
-      assert builtin(:integer) < builtin(:float) # outside of group
-      assert builtin(:integer) < builtin(:any)   # top
+      assert integer() < float() # outside of group
+      assert integer() < any()   # top
     end
   end
 
   describe "float" do
     test "is bigger than bottom and integer" do
-      assert builtin(:float) > builtin(:none)    # bottom
-      assert builtin(:float) > builtin(:integer) # outside of group
+      assert float() > none()    # bottom
+      assert float() > integer() # outside of group
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:float) < builtin(:float) <|> 0
+      assert float() < float() <|> 0
     end
 
     test "is smaller than most other things" do
-      assert builtin(:float) < builtin(:atom)      # outside of group
-      assert builtin(:float) < builtin(:any)       # top
+      assert float() < atom()      # outside of group
+      assert float() < any()       # top
     end
   end
 
   describe "node" do
     test "is bigger than bottom and float" do
-      assert builtin(:node) > builtin(:none)  # bottom
-      assert builtin(:node) > builtin(:float) # outside of group
+      assert node_type() > none()  # bottom
+      assert node_type() > float() # outside of group
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:node) > :nonode@nohost
+      assert node_type() > :nonode@nohost
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:node) < builtin(:node) <|> builtin(:integer)
+      assert node_type() < node_type() <|> integer()
     end
 
     test "is smaller than atom, reference and top" do
-      assert builtin(:node) < builtin(:atom)
-      assert builtin(:node) < builtin(:reference) # outside of group
-      assert builtin(:node) < builtin(:any)       # top
+      assert node_type() < atom()
+      assert node_type() < reference() # outside of group
+      assert node_type() < any()       # top
     end
   end
 
   describe "module" do
     test "is bigger than bottom and float" do
-      assert builtin(:module) > builtin(:none)  # bottom
-      assert builtin(:module) > builtin(:float) # outside of group
+      assert module() > none()  # bottom
+      assert module() > float() # outside of group
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:module) > :nonode@nohost
+      assert module() > :nonode@nohost
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:module) < builtin(:module) <|> builtin(:integer)
+      assert module() < module() <|> integer()
     end
 
     test "is smaller than atom, reference and top" do
-      assert builtin(:module) < builtin(:atom)
-      assert builtin(:module) < builtin(:reference) # outside of group
-      assert builtin(:module) < builtin(:any)       # top
+      assert module() < atom()
+      assert module() < reference() # outside of group
+      assert module() < any()       # top
     end
   end
 
   describe "atom" do
     test "is bigger than bottom and float" do
-      assert builtin(:atom) > builtin(:none)  # bottom
-      assert builtin(:atom) > builtin(:float) # outside of group
+      assert atom() > none()  # bottom
+      assert atom() > float() # outside of group
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert builtin(:atom) > :foo
-      assert builtin(:atom) > builtin(:node)
-      assert builtin(:atom) > builtin(:module)
+      assert atom() > :foo
+      assert atom() > node_type()
+      assert atom() > module()
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:atom) < builtin(:atom) <|> builtin(:integer)
+      assert atom() < atom() <|> integer()
     end
 
     test "is smaller than reference and top" do
-      assert builtin(:atom) < builtin(:reference) # outside of group
-      assert builtin(:atom) < builtin(:any)       # top
+      assert atom() < reference() # outside of group
+      assert atom() < any()       # top
     end
   end
 
   describe "reference" do
     test "is bigger than bottom and atom" do
-      assert builtin(:reference) > builtin(:none) # bottom
-      assert builtin(:reference) > builtin(:atom) # outside of group
+      assert reference() > none() # bottom
+      assert reference() > atom() # outside of group
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:reference) < builtin(:reference) <|> builtin(:integer)
+      assert reference() < reference() <|> integer()
     end
 
     test "is smaller than port and top" do
-      assert builtin(:reference) < builtin(:port) # outside of group
-      assert builtin(:reference) < builtin(:any)  # top
+      assert reference() < port() # outside of group
+      assert reference() < any()  # top
     end
   end
 
   describe "port" do
     test "is bigger than bottom and reference" do
-      assert builtin(:port) > builtin(:none)      # bottom
-      assert builtin(:port) > builtin(:reference) # outside of group
+      assert port() > none()      # bottom
+      assert port() > reference() # outside of group
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:port) < builtin(:port) <|> builtin(:integer)
+      assert port() < port() <|> integer()
     end
 
     test "is smaller than pid and top" do
-      assert builtin(:port) < builtin(:pid) # outside of group
-      assert builtin(:port) < builtin(:any) # top
+      assert port() < pid() # outside of group
+      assert port() < any() # top
     end
   end
 
   describe "pid" do
     test "is bigger than bottom and reference" do
-      assert builtin(:pid) > builtin(:none)      # bottom
-      assert builtin(:pid) > builtin(:port) # outside of group
+      assert pid() > none()      # bottom
+      assert pid() > port() # outside of group
     end
 
     test "is smaller than a union containing it" do
-      assert builtin(:pid) < builtin(:pid) <|> builtin(:integer)
+      assert pid() < pid() <|> integer()
     end
 
     test "is smaller than tuple and top" do
-      assert builtin(:pid) < builtin(:tuple) # outside of group
-      assert builtin(:pid) < builtin(:any) # top
+      assert pid() < tuple() # outside of group
+      assert pid() < any() # top
     end
   end
 
   describe "any" do
     test "is bigger than all types" do
-      assert builtin(:any) > builtin(:none)
-      assert builtin(:any) > -47
-      assert builtin(:any) > builtin(:neg_integer)
-      assert builtin(:any) > 0
-      assert builtin(:any) > 47
-      assert builtin(:any) > builtin(:pos_integer)
-      assert builtin(:any) > builtin(:non_neg_integer)
-      assert builtin(:any) > builtin(:integer)
-      assert builtin(:any) > builtin(:float)
-      assert builtin(:any) > :foo
-      assert builtin(:any) > builtin(:atom)
-      assert builtin(:any) > builtin(:reference)
-      assert builtin(:any) > function(( -> 0))
-      assert builtin(:any) > builtin(:port)
-      assert builtin(:any) > builtin(:pid)
-      assert builtin(:any) > builtin(:tuple)
-      assert builtin(:any) > builtin(:map)
-      assert builtin(:any) > []
-      assert builtin(:any) > builtin(:list)
-      assert builtin(:any) > %Bitstring{size: 0, unit: 0}
+      assert any() > none()
+      assert any() > -47
+      assert any() > neg_integer()
+      assert any() > 0
+      assert any() > 47
+      assert any() > pos_integer()
+      assert any() > non_neg_integer()
+      assert any() > integer()
+      assert any() > float()
+      assert any() > :foo
+      assert any() > atom()
+      assert any() > reference()
+      assert any() > function(( -> 0))
+      assert any() > port()
+      assert any() > pid()
+      assert any() > tuple()
+      assert any() > map()
+      assert any() > []
+      assert any() > list()
+      assert any() > %Bitstring{size: 0, unit: 0}
     end
   end
 end

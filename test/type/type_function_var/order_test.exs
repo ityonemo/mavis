@@ -9,7 +9,7 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
 
   alias Type.Function.Var
 
-  @any builtin(:any)
+  @any any()
   @any_var %Var{name: :foo}
   @bar_var %Var{name: :bar}
 
@@ -29,11 +29,11 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
   end
 
   describe "the negative integer variable" do
-    @neg_var %Var{name: :foo, constraint: builtin(:neg_integer)}
+    @neg_var %Var{name: :foo, constraint: neg_integer()}
 
     test "is smaller than the pure type" do
-      assert @neg_var < builtin(:neg_integer)
-      assert builtin(:neg_integer) > @neg_var
+      assert @neg_var < neg_integer()
+      assert neg_integer() > @neg_var
     end
 
     test "is bigger than the biggest negative integer" do

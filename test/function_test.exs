@@ -7,19 +7,19 @@ defmodule TypeTest.FunctionTest do
   alias Type.{Function, FunctionError}
 
   describe "the apply_types/3 function" do
-    @zero_arity function(( -> builtin(:pos_integer)))
+    @zero_arity function(( -> pos_integer()))
     test "works with a zero arity function" do
-      assert {:ok, builtin(:pos_integer)} == Function.apply_types(@zero_arity, [])
+      assert {:ok, pos_integer()} == Function.apply_types(@zero_arity, [])
     end
 
-    @one_arity function((builtin(:pos_integer) -> builtin(:pos_integer)))
+    @one_arity function((pos_integer() -> pos_integer()))
     test "works trivially with a one arity function" do
-      assert {:ok, builtin(:pos_integer)} ==
-        Function.apply_types(@one_arity, [builtin(:pos_integer)])
+      assert {:ok, pos_integer()} ==
+        Function.apply_types(@one_arity, [pos_integer()])
     end
 
     test "if there is an underspecified parameter it works" do
-      assert {:ok, builtin(:pos_integer)} =
+      assert {:ok, pos_integer()} =
         Function.apply_types(@one_arity, [1..10])
     end
 
@@ -31,10 +31,10 @@ defmodule TypeTest.FunctionTest do
     end
 
     test "when there is an compound overspecified parameter it works" do
-      assert {:maybe, builtin(:pos_integer), [%Type.Message{
-        type: builtin(:integer),
-        target: builtin(:pos_integer),
-        meta: meta}]} = Function.apply_types(@one_arity, [builtin(:integer)])
+      assert {:maybe, pos_integer(), [%Type.Message{
+        type: integer(),
+        target: pos_integer(),
+        meta: meta}]} = Function.apply_types(@one_arity, [integer()])
 
       assert meta[:message] =~ "integer() is overbroad for argument 1 (pos_integer()) of function"
     end
@@ -42,7 +42,7 @@ defmodule TypeTest.FunctionTest do
     test "when there is an disjoint parameter it says error" do
       assert {:error, %Type.Message{
         type: -42..-1,
-        target: builtin(:pos_integer),
+        target: pos_integer(),
         meta: meta
       }} = Function.apply_types(@one_arity, [-42..-1])
 
@@ -50,66 +50,66 @@ defmodule TypeTest.FunctionTest do
     end
 
     # simulate a compound function
-    @simulated_neg function((builtin(:pos_integer) -> builtin(:neg_integer))) <|>
-                   function((builtin(:neg_integer) -> builtin(:pos_integer))) <|>
+    @simulated_neg function((pos_integer() -> neg_integer())) <|>
+                   function((neg_integer() -> pos_integer())) <|>
                    function((0 -> 0))
 
     test "compound functions work on parameters hitting one partition" do
-      assert {:ok, builtin(:neg_integer)} ==
-        Function.apply_types(@simulated_neg, [builtin(:pos_integer)])
-      assert {:ok, builtin(:pos_integer)} ==
+      assert {:ok, neg_integer()} ==
+        Function.apply_types(@simulated_neg, [pos_integer()])
+      assert {:ok, pos_integer()} ==
         Function.apply_types(@simulated_neg, [-10..-1])
     end
 
     test "compound functions work on parameters hitting multiple partitions" do
-      assert {:ok, builtin(:integer)} ==
-        Function.apply_types(@simulated_neg, [builtin(:integer)])
-      assert {:ok, 0 <|> builtin(:neg_integer)} ==
-        Function.apply_types(@simulated_neg, [builtin(:non_neg_integer)])
-      assert {:ok, builtin(:non_neg_integer)} ==
+      assert {:ok, integer()} ==
+        Function.apply_types(@simulated_neg, [integer()])
+      assert {:ok, 0 <|> neg_integer()} ==
+        Function.apply_types(@simulated_neg, [non_neg_integer()])
+      assert {:ok, non_neg_integer()} ==
         Function.apply_types(@simulated_neg, [-10..0])
     end
 
     test "for compound functions overbroad parameters are maybe" do
       # note that timeout has ":infinity"
       assert {:maybe,
-              %Type.Union{of: [0, builtin(:neg_integer)]},
-              [%Type.Message{type: builtin(:timeout),
-                             target: builtin(:integer),
+              %Type.Union{of: [0, neg_integer()]},
+              [%Type.Message{type: timeout(),
+                             target: integer(),
                              meta: meta}]} =
-        Function.apply_types(@simulated_neg, [builtin(:timeout)])
+        Function.apply_types(@simulated_neg, [timeout()])
 
       assert meta[:message] =~ "timeout() is overbroad for argument 1 (integer()) of"
     end
-    
+
     test "for compound functions disjoint parameters trigger errors" do
       assert {:error, %Type.Message{
-        type: builtin(:pid),
-        target: builtin(:integer),
+        type: pid(),
+        target: integer(),
         meta: meta
-      }} = Function.apply_types(@simulated_neg, [builtin(:pid)])
+      }} = Function.apply_types(@simulated_neg, [pid()])
 
       assert meta[:message] =~ "pid() is disjoint to argument 1 (integer()) of"
     end
 
     ## works with an arity/2 function
-    @simple_arity_2 function((builtin(:float), builtin(:float) -> builtin(:integer)))
+    @simple_arity_2 function((float(), float() -> integer()))
     test "works on a simple arity/2 function" do
-      assert {:ok, builtin(:integer)} = Function.apply_types(@simple_arity_2,
-        [builtin(:float), builtin(:float)])
+      assert {:ok, integer()} = Function.apply_types(@simple_arity_2,
+        [float(), float()])
     end
 
-    @compound_arity_2 function((builtin(:pos_integer), builtin(:pos_integer) -> builtin(:pos_integer))) <|>
-                      function((builtin(:pos_integer), 0 -> builtin(:pos_integer))) <|>
-                      function((0, builtin(:pos_integer) -> builtin(:pos_integer))) <|>
+    @compound_arity_2 function((pos_integer(), pos_integer() -> pos_integer())) <|>
+                      function((pos_integer(), 0 -> pos_integer())) <|>
+                      function((0, pos_integer() -> pos_integer())) <|>
                       function((0, 0 -> 0))
     test "works on a compound arity/2 function" do
-      assert {:ok, builtin(:pos_integer)} = Function.apply_types(@compound_arity_2,
-        [builtin(:pos_integer), builtin(:non_neg_integer)])
+      assert {:ok, pos_integer()} = Function.apply_types(@compound_arity_2,
+        [pos_integer(), non_neg_integer()])
     end
     test "maybe works on overdetermined parameters to a compound arity/2 function" do
-      assert {:maybe, builtin(:non_neg_integer), [_]} =
-        Function.apply_types(@compound_arity_2, [builtin(:non_neg_integer), builtin(:timeout)])
+      assert {:maybe, non_neg_integer(), [_]} =
+        Function.apply_types(@compound_arity_2, [non_neg_integer(), timeout()])
     end
 
     ## RAISING
@@ -117,21 +117,21 @@ defmodule TypeTest.FunctionTest do
     @arity1_msg "mismatched arity; (pos_integer() -> pos_integer()) expects 1 parameter, got 0 parameters []"
     test "raises with FunctionError when the arity is mismatched" do
       assert_raise FunctionError, @arity0_msg, fn ->
-        Function.apply_types(@zero_arity, [builtin(:integer)])
+        Function.apply_types(@zero_arity, [integer()])
       end
 
       assert_raise FunctionError, @arity1_msg, fn ->
-        Function.apply_types(function((builtin(:pos_integer) -> builtin(:pos_integer))), [])
+        Function.apply_types(function((pos_integer() -> pos_integer())), [])
       end
     end
 
     @anyfn_msg "cannot apply a function with ... parameters"
     test "raises with FunctionError when an any-arity function is supplied" do
       assert_raise FunctionError, @anyfn_msg, fn ->
-        Function.apply_types(builtin(:function), [])
+        Function.apply_types(function(), [])
       end
       assert_raise FunctionError, @anyfn_msg, fn ->
-        Function.apply_types(builtin(:function), [builtin(:integer)])
+        Function.apply_types(function(), [integer()])
       end
     end
   end

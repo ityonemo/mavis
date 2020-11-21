@@ -42,12 +42,12 @@ defmodule TypeTest.Type.FetchSpec.BitstringsTest do
   end
 
   test "iodata/0" do
-    assert {:ok, identity_for(%Bitstring{size: 0, unit: 8} <|> builtin(:iolist))} ==
+    assert {:ok, identity_for(%Bitstring{size: 0, unit: 8} <|> iolist())} ==
       Type.fetch_spec(@source, :iodata_spec, 1)
   end
 
   test "iolist/0" do
-    assert {:ok, identity_for(builtin(:iolist))} ==
+    assert {:ok, identity_for(iolist())} ==
       Type.fetch_spec(@source, :iolist_spec, 1)
   end
 end

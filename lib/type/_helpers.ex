@@ -56,7 +56,7 @@ defmodule Type.Helpers do
 
   Prologue function matches:
   - matches equal types and makes them output :ok
-  - matches usable_as with `builtin(:any)` and makes them output :ok
+  - matches usable_as with `any()` and makes them output :ok
 
   Fallback function matches:
   - catches usable_as against unions; and performs the appropriate attempt to
@@ -68,12 +68,12 @@ defmodule Type.Helpers do
       def usable_as(type, type, meta), do: :ok
 
       if __MODULE__ == Type.Properties.Type do
-      def usable_as(builtin(:none), target, meta) do
-        {:error, Type.Message.make(builtin(:none), target, meta)}
+      def usable_as(none(), target, meta) do
+        {:error, Type.Message.make(none(), target, meta)}
       end
       end
 
-      def usable_as(type, Type.builtin(:any), meta), do: :ok
+      def usable_as(type, Type.any(), meta), do: :ok
 
       def usable_as(challenge, target = %Type.Function.Var{}, meta) do
         Type.usable_as(challenge, target.constraint, meta)
@@ -125,10 +125,10 @@ defmodule Type.Helpers do
     quote do
       @spec intersection(Type.t, Type.t) :: Type.t
       def intersection(type, type), do: type
-      def intersection(type, builtin(:any)), do: type
+      def intersection(type, any()), do: type
 
       if __MODULE__ == Type.Properties.Type do
-      def intersection(builtin(:any), type) do
+      def intersection(any(), type) do
         type
       end
       end
@@ -142,7 +142,7 @@ defmodule Type.Helpers do
       unless __MODULE__ == Type.Properties.Type.Function.Var do
       def intersection(left, right = %Type.Function.Var{}) do
         case Type.intersection(left, right.constraint) do
-          builtin(:none) -> builtin(:none)
+          none() -> none()
           type -> %{right | constraint: type}
         end
       end
@@ -155,7 +155,7 @@ defmodule Type.Helpers do
         Type.intersection(left, Type.fetch_type!(right))
       end
 
-      def intersection(_, _), do: builtin(:none)
+      def intersection(_, _), do: none()
     end
   end
 
@@ -232,10 +232,10 @@ defmodule Type.Helpers do
       end
 
       if __MODULE__ == Type.Properties.Type do
-        def subtype?(builtin(:none), _), do: false
+        def subtype?(none(), _), do: false
       end
 
-      def subtype?(_, builtin(:any)), do: true
+      def subtype?(_, any()), do: true
 
       unquote(block)
 

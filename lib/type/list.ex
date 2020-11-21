@@ -18,11 +18,11 @@ defmodule Type.List do
 
   ```
   iex> import Type, only: :macros
-  iex> list(builtin(:pos_integer))
+  iex> list(pos_integer())
   %Type.List{type: %Type{name: :pos_integer}}
   iex> list(...)
   %Type.List{type: %Type{name: :any}, nonempty: true}
-  iex> list(builtin(:pos_integer), ...)
+  iex> list(pos_integer(), ...)
   %Type.List{type: %Type{name: :pos_integer}, nonempty: true}
   ```
 
@@ -70,11 +70,11 @@ defmodule Type.List do
   iex> import Type, only: :macros
   iex> Type.compare(list(...), [])
   :lt
-  iex> Type.compare(builtin(:list), [])
+  iex> Type.compare(list(), [])
   :gt
-  iex> Type.compare(list(builtin(:integer)), list(builtin(:atom)))
+  iex> Type.compare(list(integer()), list(atom()))
   :lt
-  iex> Type.compare(%Type.List{final: builtin(:integer)}, %Type.List{final: builtin(:atom)})
+  iex> Type.compare(%Type.List{final: integer()}, %Type.List{final: atom()})
   :lt
   ```
 
@@ -85,7 +85,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(list(...), builtin(:list))
+  iex> Type.intersection(list(...), list())
   %Type.List{nonempty: true}
   iex> Type.intersection(list(1..20), list(10..30))
   %Type.List{type: 10..20}
@@ -98,7 +98,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.union(list(...), builtin(:list))
+  iex> Type.union(list(...), list())
   %Type.List{}
   iex> Type.union(list(1..10), list(10..20))
   %Type.List{type: 1..20}
@@ -111,7 +111,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.subtype?(list(...), builtin(:list))
+  iex> Type.subtype?(list(...), list())
   true
   iex> Type.subtype?(list(1..10), list(2..30))
   false
@@ -124,11 +124,11 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.usable_as(list(1..10), list(builtin(:integer)))
+  iex> Type.usable_as(list(1..10), list(integer()))
   :ok
-  iex> Type.usable_as(list(1..10), list(builtin(:atom))) # note it might be the empty list
+  iex> Type.usable_as(list(1..10), list(atom())) # note it might be the empty list
   {:maybe, [%Type.Message{type: %Type.List{type: 1..10}, target: %Type.List{type: %Type{name: :atom}}}]}
-  iex> Type.usable_as(builtin(:list), list(...))
+  iex> Type.usable_as(list(), list(...))
   {:maybe, [%Type.Message{type: %Type.List{}, target: %Type.List{nonempty: true}}]}
   ```
 
@@ -166,7 +166,7 @@ defmodule Type.List do
     end
 
     usable_as do
-      def usable_as(challenge, builtin(:iolist), meta) do
+      def usable_as(challenge, iolist(), meta) do
         Type.Iolist.usable_as_iolist(challenge, meta)
       end
 
@@ -204,19 +204,19 @@ defmodule Type.List do
       def intersection(%{nonempty: false}, []), do: []
       def intersection(a, b = %List{}) do
         case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
-          {builtin(:none), _} -> builtin(:none)
-          {_, builtin(:none)} -> builtin(:none)
+          {none(), _} -> none()
+          {_, none()} -> none()
           {type, final} ->
             %List{type: type, final: final, nonempty: a.nonempty or b.nonempty}
         end
       end
-      def intersection(a, builtin(:iolist)), do: Type.Iolist.intersection_with(a)
+      def intersection(a, iolist()), do: Type.Iolist.intersection_with(a)
     end
 
     subtype do
       # can't simply forward to usable_as, because any of the encapsulated
       # types might have a usable_as rule that isn't strictly subtype?
-      def subtype?(list, builtin(:iolist)), do: Type.Iolist.subtype_of_iolist?(list)
+      def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
       def subtype?(challenge = %{nonempty: ne_c}, target = %List{nonempty: ne_t})
         when ne_c == ne_t or ne_c do
 
@@ -241,8 +241,8 @@ defmodule Type.List do
     def inspect(list = %{final: [], type: 0..1114111}, _) do
       "#{nonempty_prefix list}charlist()"
     end
-    def inspect(%{final: [], type: builtin(:any), nonempty: true}, _), do: "list(...)"
-    def inspect(%{final: [], type: builtin(:any)}, _), do: "list()"
+    def inspect(%{final: [], type: any(), nonempty: true}, _), do: "list(...)"
+    def inspect(%{final: [], type: any()}, _), do: "list()"
     # keyword list literal syntax
     def inspect(%{
         final: [],
@@ -271,10 +271,10 @@ defmodule Type.List do
       end
     end
     # keyword syntax
-    def inspect(list(tuple({builtin(:atom), builtin(:any)})), _) do
+    def inspect(list(tuple({atom(), any()})), _) do
       "keyword()"
     end
-    def inspect(list(tuple({builtin(:atom), type})), opts) do
+    def inspect(list(tuple({atom(), type})), opts) do
       concat(["keyword(", to_doc(type, opts), ")"])
     end
 
@@ -290,7 +290,7 @@ defmodule Type.List do
         render_improper(list, opts)
       end
     end
-    def inspect(list = %{type: builtin(:any), final: builtin(:any)}, _) do
+    def inspect(list = %{type: any(), final: any()}, _) do
       "#{nonempty_prefix list}maybe_improper_list()"
     end
     def inspect(list, opts), do: render_improper(list, opts)

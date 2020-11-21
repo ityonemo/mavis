@@ -19,44 +19,44 @@ defmodule Type.Union.Merge do
   def type_merge(a..b, c..d) when c <= b + 1,     do: [a..d]
 
   # ranges with negative integer (note these ranges are > neg_integer())
-  def type_merge(builtin(:neg_integer), _..0) do
-    [builtin(:neg_integer), 0]
+  def type_merge(neg_integer(), _..0) do
+    [neg_integer(), 0]
   end
-  def type_merge(builtin(:neg_integer), a..b) when a < 0 and b > 0 do
-    [builtin(:neg_integer), 0..b]
+  def type_merge(neg_integer(), a..b) when a < 0 and b > 0 do
+    [neg_integer(), 0..b]
   end
   # negative integers with integers and ranges
-  def type_merge(i, builtin(:neg_integer)) when is_integer(i) and i < 0 do
-    [builtin(:neg_integer)]
+  def type_merge(i, neg_integer()) when is_integer(i) and i < 0 do
+    [neg_integer()]
   end
-  def type_merge(_..b, builtin(:neg_integer)) when b < 0 do
-    [builtin(:neg_integer)]
+  def type_merge(_..b, neg_integer()) when b < 0 do
+    [neg_integer()]
   end
 
   # positive integers with integers and ranges.  Note that positive integer
   # will always be greater than these ranges.
-  def type_merge(i, builtin(:pos_integer)) when is_integer(i) and i > 0 do
-    [builtin(:pos_integer)]
+  def type_merge(i, pos_integer()) when is_integer(i) and i > 0 do
+    [pos_integer()]
   end
-  def type_merge(a.._, builtin(:pos_integer)) when a > 0 do
-    [builtin(:pos_integer)]
+  def type_merge(a.._, pos_integer()) when a > 0 do
+    [pos_integer()]
   end
-  def type_merge(0.._, builtin(:pos_integer)) do
-    [0, builtin(:pos_integer)]
+  def type_merge(0.._, pos_integer()) do
+    [0, pos_integer()]
   end
-  def type_merge(a..b, builtin(:pos_integer)) when b > 0 do
-    [a..0, builtin(:pos_integer)]
+  def type_merge(a..b, pos_integer()) when b > 0 do
+    [a..0, pos_integer()]
   end
 
   # atom literals
-  def type_merge(atom, builtin(:atom)) when is_atom(atom) do
-    [builtin(:atom)]
+  def type_merge(atom, atom()) when is_atom(atom) do
+    [atom()]
   end
 
   # tuples
   alias Type.Tuple
-  def type_merge(%Tuple{}, builtin(:tuple)) do
-    [builtin(:tuple)]
+  def type_merge(%Tuple{}, tuple()) do
+    [tuple()]
   end
   def type_merge(%Tuple{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
     [tuple({...(min: min(m, n))})]
@@ -176,8 +176,8 @@ defmodule Type.Union.Merge do
   end
 
   # any
-  def type_merge(_, builtin(:any)) do
-    [builtin(:any)]
+  def type_merge(_, any()) do
+    [any()]
   end
   def type_merge(_, _), do: :nomerge
 end

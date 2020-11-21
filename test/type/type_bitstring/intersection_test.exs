@@ -14,7 +14,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
 
   describe "the intersection of empty bitstring" do
     test "with itself and any is itself" do
-      assert @empty_bitstring == @empty_bitstring <~> builtin(:any)
+      assert @empty_bitstring == @empty_bitstring <~> any()
       assert @empty_bitstring == @empty_bitstring <~> @empty_bitstring
     end
 
@@ -24,21 +24,21 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
     end
 
     test "with any fixed size string is none" do
-      assert builtin(:none) == @empty_bitstring <~> %Bitstring{size: 8, unit: 0}
-      assert builtin(:none) == @empty_bitstring <~> %Bitstring{size: 8, unit: 8}
+      assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 0}
+      assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 8}
     end
 
     test "with all other types is none" do
       TypeTest.Targets.except([@empty_bitstring])
       |> Enum.each(fn target ->
-        assert builtin(:none) == @empty_bitstring <~> target
+        assert none() == @empty_bitstring <~> target
       end)
     end
   end
 
   describe "the intersection of basic bitstring" do
     test "with itself, integer and any is itself" do
-      assert @basic_bitstring == @basic_bitstring <~> builtin(:any)
+      assert @basic_bitstring == @basic_bitstring <~> any()
       assert @basic_bitstring == @basic_bitstring <~> @basic_bitstring
     end
 
@@ -65,8 +65,8 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
     end
 
     test "with unions" do
-      assert @basic_binary == @basic_binary <~> (@basic_bitstring <|> builtin(:atom))
-      assert builtin(:none) == @basic_binary <~> (builtin(:atom) <|> builtin(:port))
+      assert @basic_binary == @basic_binary <~> (@basic_bitstring <|> atom())
+      assert none() == @basic_binary <~> (atom() <|> port())
     end
   end
 

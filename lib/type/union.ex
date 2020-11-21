@@ -150,13 +150,13 @@ defmodule Type.Union do
       def intersection(lunion, runion = %Type.Union{}) do
         lunion.of
         |> Enum.map(&Type.intersection(runion, &1))
-        |> Enum.reject(&(&1 == builtin(:none)))
+        |> Enum.reject(&(&1 == none()))
         |> Enum.into(%Type.Union{})
       end
       def intersection(union = %{}, ritem) do
         union.of
         |> Enum.map(&Type.intersection(&1, ritem))
-        |> Enum.reject(&(&1 == builtin(:none)))
+        |> Enum.reject(&(&1 == none()))
         |> Enum.into(%Type.Union{})
       end
     end
@@ -194,36 +194,36 @@ defmodule Type.Union do
           override(rest, :boolean, opts)
 
         # override for identifier
-        rest = type_has(types, [builtin(:reference), builtin(:port), builtin(:pid)]) ->
+        rest = type_has(types, [reference(), port(), pid()]) ->
           override(rest, :identifier, opts)
 
         # override for iodata
-        rest = type_has(types, [builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) ->
+        rest = type_has(types, [iolist(), %Type.Bitstring{size: 0, unit: 8}]) ->
           override(rest, :iodata, opts)
 
         # override for number
-        rest = type_has(types, [builtin(:float), builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
+        rest = type_has(types, [float(), neg_integer(), 0, pos_integer()]) ->
           override(rest, :number, opts)
 
         # override for integers
-        rest = type_has(types, [builtin(:neg_integer), 0, builtin(:pos_integer)]) ->
+        rest = type_has(types, [neg_integer(), 0, pos_integer()]) ->
           override(rest, :integer, opts)
 
         # override for timeout
-        rest = type_has(types, [0, builtin(:pos_integer), :infinity]) ->
+        rest = type_has(types, [0, pos_integer(), :infinity]) ->
           override(rest, :timeout, opts)
 
         # override for non_neg_integer
-        rest = type_has(types, [0, builtin(:pos_integer)]) ->
+        rest = type_has(types, [0, pos_integer()]) ->
           override(rest, :non_neg_integer, opts)
 
-        rest = type_has(types, [-1..0, builtin(:pos_integer)]) ->
+        rest = type_has(types, [-1..0, pos_integer()]) ->
           type = override(rest, :non_neg_integer, opts)
           concat(["-1", " | ", type])
 
-        (range = Enum.find(types, &match?(_..0, &1))) && builtin(:pos_integer) in types ->
+        (range = Enum.find(types, &match?(_..0, &1))) && pos_integer() in types ->
           type = types
-          |> Kernel.--([range, builtin(:pos_integer)])
+          |> Kernel.--([range, pos_integer()])
           |> override(:non_neg_integer, opts)
 
           concat(["#{range.first}..-1", " | ", type])

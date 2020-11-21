@@ -17,11 +17,11 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> map(%{optional(builtin(:atom)) => builtin(:pos_integer)})
+  iex> map(%{optional(atom()) => pos_integer()})
   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :pos_integer}}}
   iex> map(%{})       # empty map
   %Type.Map{optional: %{}, required: %{}}
-  iex> builtin(:map)  # t:map/0
+  iex> map()  # t:map/0
   %Type.Map{optional: %{%Type{name: :any} => %Type{name: :any}}}
   ```
 
@@ -80,8 +80,8 @@ defmodule Type.Map do
   :lt
   iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
   :gt
-  iex> Type.compare(map(%{optional(1) => builtin(:integer), foo: builtin(:integer)}),
-  ...>              map(%{optional(2) => builtin(:integer), foo: builtin(:integer)}))
+  iex> Type.compare(map(%{optional(1) => integer(), foo: integer()}),
+  ...>              map(%{optional(2) => integer(), foo: integer()}))
   :lt
   iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
   :lt
@@ -100,18 +100,18 @@ defmodule Type.Map do
   iex> import Type, only: :macros
   iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
   %Type{name: :none}
-  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(builtin(:atom)) => builtin(:atom)}))
+  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(atom()) => atom()}))
   %Type.Map{required: %{foo: :bar}}
   iex> Type.intersection(map(%{1 => 1..10}), map(%{1 => 5..20}))
   %Type.Map{required: %{1 => 5..10}}
-  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
-  ...>                   map(%{optional(builtin(:integer)) => 1..10}))
+  iex> Type.intersection(map(%{optional(1..10) => integer()}),
+  ...>                   map(%{optional(integer()) => 1..10}))
   %Type.Map{optional: %{1..10 => 1..10}}
-  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
-  ...>                   map(%{optional(1..10) => builtin(:atom)}))
+  iex> Type.intersection(map(%{optional(1..10) => integer()}),
+  ...>                   map(%{optional(1..10) => atom()}))
   %Type.Map{}
-  iex> Type.intersection(map(%{optional(1..10) => builtin(:integer)}),
-  ...>                   map(%{optional(11..20) => builtin(:integer)}))
+  iex> Type.intersection(map(%{optional(1..10) => integer()}),
+  ...>                   map(%{optional(11..20) => integer()}))
   %Type.Map{}
   ```
 
@@ -141,13 +141,13 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.subtype?(map(%{foo: :bar}), map(%{foo: builtin(:atom)}))
+  iex> Type.subtype?(map(%{foo: :bar}), map(%{foo: atom()}))
   true
-  iex> Type.subtype?(map(%{foo: :bar}), map(%{optional(:foo) => builtin(:atom)}))
+  iex> Type.subtype?(map(%{foo: :bar}), map(%{optional(:foo) => atom()}))
   true
-  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{optional(:foo) => builtin(:atom)}))
+  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{optional(:foo) => atom()}))
   true
-  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{foo: builtin(:atom)}))
+  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{foo: atom()}))
   false
   ```
 
@@ -202,9 +202,9 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.preimage(map(%{builtin(:pos_integer) => builtin(:any)}))
+  iex> Map.preimage(map(%{pos_integer() => any()}))
   %Type{name: :pos_integer}
-  iex> Map.preimage(map(%{0 => builtin(:any), builtin(:pos_integer) => builtin(:any)}))
+  iex> Map.preimage(map(%{0 => any(), pos_integer() => any()}))
   %Type.Union{of: [%Type{name: :pos_integer}, 0]}
   ```
   """
@@ -234,8 +234,8 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(map(%{builtin(:neg_integer) => :foo,
-  ...>                 builtin(:pos_integer) => :bar}), -5..5)
+  iex> Map.apply(map(%{neg_integer() => :foo,
+  ...>                 pos_integer() => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
   ```
 
@@ -254,7 +254,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(map(%{0..3 => 1..10, builtin(:pos_integer) => 0..5}), 1..3)
+  iex> Map.apply(map(%{0..3 => 1..10, pos_integer() => 0..5}), 1..3)
   1..5
   ```
   """
@@ -288,7 +288,7 @@ defmodule Type.Map do
     import Type, only: :macros
     req_or_opt
     |> Enum.flat_map(fn {keytype, valtype} ->
-      if Type.intersection(keytype, preimage_subtype) == builtin(:none) do
+      if Type.intersection(keytype, preimage_subtype) == none() do
         []
       else
         [valtype]
@@ -310,10 +310,10 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.resegment(map(%{builtin(:neg_integer) => :neg}), [-10..10])
+  iex> Map.resegment(map(%{neg_integer() => :neg}), [-10..10])
   [-10..-1]
-  iex> Map.resegment(map(%{builtin(:neg_integer) => :neg,
-  ...>                     builtin(:pos_integer) => :pos}), [-10..10])
+  iex> Map.resegment(map(%{neg_integer() => :neg,
+  ...>                     pos_integer() => :pos}), [-10..10])
   [-10..-1, 1..10]
   ```
   """
@@ -409,7 +409,7 @@ defmodule Type.Map do
 
             %Type.Map{required: requireds, optional: optionals}
           :empty ->
-            builtin(:none)
+            none()
         end
       end
     end
@@ -429,7 +429,7 @@ defmodule Type.Map do
           val_type = Map.apply(map, rq_key)
           |> Type.intersection(Map.apply(tgt, rq_key))
 
-          val_type == builtin(:none) && throw :empty
+          val_type == none() && throw :empty
 
           {rq_key, val_type}
         end)
@@ -454,7 +454,7 @@ defmodule Type.Map do
         |> Map.apply(segment)
         |> Type.intersection(Map.apply(tgt, segment))
         |> case do
-          builtin(:none) -> []
+          none() -> []
           image -> [{segment, image}]
         end
       end)
@@ -536,7 +536,7 @@ defmodule Type.Map do
           :erlang.is_map_key(key, challenge.required) ->
             Type.usable_as(challenge_image, target_image, meta)
 
-          challenge_image != builtin(:none) ->
+          challenge_image != none() ->
             Type.ternary_and(
               {:maybe, [Message.make(challenge, target, meta)]},
               Type.usable_as(challenge_image, target_image, meta))
@@ -553,7 +553,7 @@ defmodule Type.Map do
         cond do
           :erlang.is_map_key(key, target.required) ->
             Type.usable_as(value, target.required[key], meta)
-          (target_value = Map.apply(target, key)) != builtin(:none) ->
+          (target_value = Map.apply(target, key)) != none() ->
             Type.usable_as(value, target_value, meta)
           true ->
             {:error, Message.make(challenge, target, meta)}
@@ -588,7 +588,7 @@ defmodule Type.Map do
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
       |> Map.from_struct
-      |> Enum.reject(&(elem(&1, 1) == builtin(:any)))
+      |> Enum.reject(&(elem(&1, 1) == any()))
       |> inner_content(opts)
 
       concat(["map(%#{inspect struct}{", inner, "})"])

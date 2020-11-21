@@ -5,12 +5,39 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   # basic types.  See https://hexdocs.pm/elixir/typespecs.html#basic-types
 
+  describe "non_neg_integer/0 type" do
+    test "works in use" do
+      assert %Type.Union{of: [pos_integer(), 0]} == non_neg_integer()
+    end
+    test "works in matches" do
+      assert non_neg_integer() = %Type.Union{of: [pos_integer(), 0]}
+    end
+  end
+
+  describe "integer/0 type" do
+    test "works in use" do
+      assert %Type.Union{of: [pos_integer(), 0, neg_integer()]} == integer()
+    end
+    test "works in matches" do
+      assert integer() = %Type.Union{of: [pos_integer(), 0, neg_integer()]}
+    end
+  end
+
   describe "map/0 type" do
     test "works in use" do
       assert %Type.Map{optional: %{any() => any()}} == map()
     end
     test "works in matches" do
       assert map() = %Type.Map{optional: %{any() => any()}}
+    end
+  end
+
+  describe "tuple/0 type" do
+    test "works in use" do
+      assert %Type.Tuple{elements: {:min, 0}} == tuple()
+    end
+    test "works in matches" do
+      assert tuple() = %Type.Tuple{elements: {:min, 0}}
     end
   end
 
@@ -99,130 +126,130 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "fun/0 type" do
     test "works in use" do
-      assert %Type.Function{params: :any, return: builtin(:any)} == fun()
+      assert %Type.Function{params: :any, return: any()} == fun()
     end
     test "works in matches" do
-      assert fun() = %Type.Function{params: :any, return: builtin(:any)}
+      assert fun() = %Type.Function{params: :any, return: any()}
     end
   end
 
   describe "function/0 type" do
     test "works in use" do
-      assert %Type.Function{params: :any, return: builtin(:any)} == function()
+      assert %Type.Function{params: :any, return: any()} == function()
     end
     test "works in matches" do
-      assert function() = %Type.Function{params: :any, return: builtin(:any)}
+      assert function() = %Type.Function{params: :any, return: any()}
     end
   end
 
   describe "identifier/0 type" do
     test "works in use" do
-      assert Type.union([builtin(:reference), builtin(:port), builtin(:pid)]) == identifier()
+      assert Type.union([reference(), port(), pid()]) == identifier()
     end
     test "works in matches" do
-      assert identifier() = Type.union([builtin(:reference), builtin(:port), builtin(:pid)])
+      assert identifier() = Type.union([reference(), port(), pid()])
     end
   end
 
   describe "iodata/0 type" do
     test "works in use" do
-      assert Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}]) == iodata()
+      assert Type.union([iolist(), %Type.Bitstring{size: 0, unit: 8}]) == iodata()
     end
     test "works in matches" do
-      assert iodata() = Type.union([builtin(:iolist), %Type.Bitstring{size: 0, unit: 8}])
+      assert iodata() = Type.union([iolist(), %Type.Bitstring{size: 0, unit: 8}])
     end
   end
 
   describe "keyword/0 type" do
     test "works in use" do
-      assert %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}} == keyword()
+      assert %Type.List{type: %Type.Tuple{elements: [atom(), any()]}} == keyword()
     end
     test "works in matches" do
-      assert keyword() = %Type.List{type: %Type.Tuple{elements: [builtin(:atom), builtin(:any)]}}
+      assert keyword() = %Type.List{type: %Type.Tuple{elements: [atom(), any()]}}
     end
   end
 
   describe "list/0 type" do
     test "works in use" do
-      assert %Type.List{type: builtin(:any)} == builtin(:list)
+      assert %Type.List{type: any()} == list()
     end
     test "works in matches" do
-      assert builtin(:list) = %Type.List{type: builtin(:any)}
+      assert list() = %Type.List{type: any()}
     end
   end
 
   describe "nonempty_list/0 type" do
     test "works in use" do
-      assert %Type.List{type: builtin(:any), nonempty: true} == builtin(:nonempty_list)
+      assert %Type.List{type: any(), nonempty: true} == nonempty_list()
     end
     test "works in matches" do
-      assert builtin(:nonempty_list) = %Type.List{type: builtin(:any), nonempty: true}
+      assert nonempty_list() = %Type.List{type: any(), nonempty: true}
     end
   end
 
   describe "maybe_improper_list/0 type" do
     test "works in use" do
-      assert %Type.List{type: builtin(:any), final: builtin(:any)} == builtin(:maybe_improper_list)
+      assert %Type.List{type: any(), final: any()} == maybe_improper_list()
     end
     test "works in matches" do
-      assert builtin(:maybe_improper_list) = %Type.List{type: builtin(:any), final: builtin(:any)}
+      assert maybe_improper_list() = %Type.List{type: any(), final: any()}
     end
   end
 
   describe "nonempty_maybe_improper_list/0 type" do
     test "works in use" do
-      assert %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)} == builtin(:nonempty_maybe_improper_list)
+      assert %Type.List{type: any(), nonempty: true, final: any()} == nonempty_maybe_improper_list()
     end
     test "works in matches" do
-      assert builtin(:nonempty_maybe_improper_list) = %Type.List{type: builtin(:any), nonempty: true, final: builtin(:any)}
+      assert nonempty_maybe_improper_list() = %Type.List{type: any(), nonempty: true, final: any()}
     end
   end
 
   describe "mfa/0 type" do
     test "works in use" do
-      assert %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]} == builtin(:mfa)
+      assert %Type.Tuple{elements: [module(), atom(), arity()]} == mfa()
     end
     test "works in matches" do
-      assert builtin(:mfa) = %Type.Tuple{elements: [builtin(:module), builtin(:atom), builtin(:arity)]}
+      assert mfa() = %Type.Tuple{elements: [module(), atom(), arity()]}
     end
   end
 
   describe "no_return/0 type" do
     test "works in use" do
-      assert builtin(:none) == builtin(:no_return)
+      assert none() == no_return()
     end
     test "works in matches" do
-      assert builtin(:no_return) = builtin(:none)
+      assert no_return() = none()
     end
   end
 
   describe "number/0 type" do
     test "works in use" do
-      assert Type.union(builtin(:integer), builtin(:float)) == builtin(:number)
+      assert Type.union(integer(), float()) == number()
     end
     test "works in matches" do
-      assert builtin(:number) = Type.union(builtin(:integer), builtin(:float))
+      assert number() = Type.union(integer(), float())
     end
   end
 
   describe "struct/0 type" do
     test "works in use" do
-      assert %Type.Map{required: %{__struct__: builtin(:atom)},
-                       optional: %{builtin(:atom) => builtin(:any)}} == builtin(:struct)
+      assert %Type.Map{required: %{__struct__: atom()},
+                       optional: %{atom() => any()}} == struct()
     end
     test "works in matches" do
-      assert builtin(:struct) =
-        %Type.Map{required: %{__struct__: builtin(:atom)},
-                  optional: %{builtin(:atom) => builtin(:any)}}
+      assert struct() =
+        %Type.Map{required: %{__struct__: atom()},
+                  optional: %{atom() => any()}}
     end
   end
 
   describe "timeout/0 type" do
     test "works in use" do
-      assert Type.union(:infinity, builtin(:non_neg_integer)) == builtin(:timeout)
+      assert Type.union(:infinity, non_neg_integer()) == timeout()
     end
     test "works in matches" do
-      assert builtin(:timeout) = Type.union(:infinity, builtin(:non_neg_integer))
+      assert timeout() = Type.union(:infinity, non_neg_integer())
     end
   end
 end

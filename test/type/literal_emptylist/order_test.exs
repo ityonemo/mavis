@@ -9,8 +9,8 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
 
   describe "an empty list literal" do
     test "is bigger than bottom and integers" do
-      assert [] > builtin(:none)
-      assert [] > builtin(:pid)
+      assert [] > none()
+      assert [] > pid()
     end
 
     test "is bigger than any nonempty: true list" do
@@ -22,12 +22,12 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
     end
 
     test "is smaller than any nonempty: false list" do
-      assert [] < builtin(:list)
+      assert [] < list()
     end
 
     test "is smaller than bitstring and top" do
       assert [] < builtin(%Type.Bitstring{size: 0, unit: 0})
-      assert [] < builtin(:any)
+      assert [] < any()
     end
   end
 

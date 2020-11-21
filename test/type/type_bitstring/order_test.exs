@@ -11,8 +11,8 @@ defmodule TypeTest.TypeBitstring.OrderTest do
 
   describe "a bitstring" do
     test "is bigger than bottom and reference" do
-      assert %Bitstring{size: 0, unit: 0} > builtin(:none)
-      assert %Bitstring{size: 0, unit: 0} > builtin(:reference)
+      assert %Bitstring{size: 0, unit: 0} > none()
+      assert %Bitstring{size: 0, unit: 0} > reference()
     end
 
     test "is bigger than a fixed size bitstring" do
@@ -40,7 +40,7 @@ defmodule TypeTest.TypeBitstring.OrderTest do
     end
 
     test "is smaller than top" do
-      assert %Bitstring{size: 0, unit: 0} < builtin(:any)
+      assert %Bitstring{size: 0, unit: 0} < any()
     end
   end
 end

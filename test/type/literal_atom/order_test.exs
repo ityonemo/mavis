@@ -9,8 +9,8 @@ defmodule TypeTest.LiteralAtom.OrderTest do
 
   describe "an atom literal" do
     test "is bigger than bottom and integers" do
-      assert :foo > builtin(:none)
-      assert :foo > builtin(:integer)
+      assert :foo > none()
+      assert :foo > integer()
     end
 
     test "has the expected erlang relations" do
@@ -23,12 +23,12 @@ defmodule TypeTest.LiteralAtom.OrderTest do
     end
 
     test "is smaller than atom, which it is a subset of" do
-      assert :foo < builtin(:atom)
+      assert :foo < atom()
     end
 
     test "is smaller than reference and top" do
-      assert :foo < builtin(:reference)
-      assert :foo < builtin(:any)
+      assert :foo < reference()
+      assert :foo < any()
     end
   end
 

@@ -7,15 +7,15 @@ defmodule TypeTest.TypeMap.UnionTest do
   alias Type.Map
   import Type, only: :macros
 
-  @any builtin(:any)
+  @any any()
   @empty_map %Map{}
 
   describe "for the empty map type" do
     test "union with an optional or required term is the same" do
       assert map(%{optional(:foo) => @any}) == @empty_map <|> map(%{foo: @any})
       assert map(%{optional(:foo) => @any}) == @empty_map <|> map(%{optional(:foo) => @any})
-      assert map(%{optional(:foo) => @any, optional(:bar) => builtin(:integer)}) ==
-        @empty_map <|> map(%{optional(:foo) => @any, bar: builtin(:integer)})
+      assert map(%{optional(:foo) => @any, optional(:bar) => integer()}) ==
+        @empty_map <|> map(%{optional(:foo) => @any, bar: integer()})
     end
   end
 
@@ -35,13 +35,13 @@ defmodule TypeTest.TypeMap.UnionTest do
     end
 
     test "they have the same keys with one side having bigger values" do
-      assert map(%{foo: @any}) == map(%{foo: @any}) <|> map(%{foo: builtin(:integer)})
+      assert map(%{foo: @any}) == map(%{foo: @any}) <|> map(%{foo: integer()})
     end
 
     test "the side that has more keys also has more values" do
-      assert map(%{optional(:bar) => builtin(:integer), foo: @any}) ==
-         map(%{foo: @any, bar: builtin(:integer)}) <|>
-         map(%{foo: builtin(:integer)})
+      assert map(%{optional(:bar) => integer(), foo: @any}) ==
+         map(%{foo: @any, bar: integer()}) <|>
+         map(%{foo: integer()})
     end
   end
 
@@ -54,13 +54,13 @@ defmodule TypeTest.TypeMap.UnionTest do
       ## would be in %{foo: any, bar: any} but not in either member of
       ## the union.
 
-      assert %Type.Union{} = map(%{foo: @any, bar: builtin(:integer)}) <|>
-         map(%{foo: builtin(:integer), bar: @any})
+      assert %Type.Union{} = map(%{foo: @any, bar: integer()}) <|>
+         map(%{foo: integer(), bar: @any})
     end
     test "the side that has extra keys has even one value that's smaller" do
       assert %Type.Union{} =
-        map(%{foo: @any, bar: 1..10, baz: builtin(:atom), quux: builtin(:integer)})<|>
-        map(%{foo: @any, bar: builtin(:integer), baz: :ping})
+        map(%{foo: @any, bar: 1..10, baz: atom(), quux: integer()})<|>
+        map(%{foo: @any, bar: integer(), baz: :ping})
     end
   end
 

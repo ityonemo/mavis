@@ -9,8 +9,8 @@ defmodule TypeTest.TypeMap.OrderTest do
 
   alias Type.Map
 
-  @any builtin(:any)
-  @any_map builtin(:map)
+  @any any()
+  @any_map map()
 
   describe "maps are first compared based on their global preimages" do
     test "any maps are bigger than other maps" do
@@ -25,15 +25,15 @@ defmodule TypeTest.TypeMap.OrderTest do
 
     test "empty maps are smaller than other maps" do
       assert %Map{} < map(%{foo: @any})
-      assert %Map{} < map(%{builtin(:integer) => @any})
+      assert %Map{} < map(%{integer() => @any})
     end
 
     test "maps that have keys which are strict subtypes are smaller" do
       assert map(%{optional(:foo) => @any}) < map(%{bar: @any, foo: @any})
-      assert map(%{optional(:foo) => @any}) < map(%{builtin(:atom) => @any})
+      assert map(%{optional(:foo) => @any}) < map(%{atom() => @any})
       assert map(%{1 => @any}) < map(%{0..10 => @any})
-      assert map(%{1 => @any}) < map(%{builtin(:pos_integer) => @any})
-      assert map(%{builtin(:pos_integer) => @any}) < map(%{builtin(:integer) => @any})
+      assert map(%{1 => @any}) < map(%{pos_integer() => @any})
+      assert map(%{pos_integer() => @any}) < map(%{integer() => @any})
     end
 
     test "keys are ordered without respect to being required or optional" do
@@ -47,7 +47,7 @@ defmodule TypeTest.TypeMap.OrderTest do
   describe "a map with a required key" do
     test "is smaller than the same map with an optional key" do
       assert map(%{foo: @any}) < map(%{optional(:foo) => @any})
-      assert map(%{foo: @any}) < map(%{optional(:foo) => builtin(:integer)})
+      assert map(%{foo: @any}) < map(%{optional(:foo) => integer()})
     end
   end
 end

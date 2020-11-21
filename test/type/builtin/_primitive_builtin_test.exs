@@ -20,6 +20,7 @@ defmodule TypeTest.PrimitiveBuiltinTest do
       assert none() = %Type{name: :none}
     end
   end
+
   describe "pos_integer/0 type" do
     test "works in use" do
       assert %Type{name: :pos_integer} == pos_integer()
@@ -44,6 +45,24 @@ defmodule TypeTest.PrimitiveBuiltinTest do
     end
     test "works in matches" do
       assert float() = %Type{name: :float}
+    end
+  end
+
+  describe "node/0 type" do
+    test "works in use" do
+      assert %Type{name: :node} == node_type()
+    end
+    test "works in matches" do
+      assert node_type() = %Type{name: :node}
+    end
+  end
+
+  describe "module/0 type" do
+    test "works in use" do
+      assert %Type{name: :module} == module()
+    end
+    test "works in matches" do
+      assert module() = %Type{name: :module}
     end
   end
 
