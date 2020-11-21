@@ -14,10 +14,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "arity/0 type" do
     test "works in use" do
-      assert 0..255 == builtin(:arity)
+      assert 0..255 == arity()
     end
     test "works in matches" do
-      assert builtin(:arity) = 0..255
+      assert arity() = 0..255
     end
   end
 

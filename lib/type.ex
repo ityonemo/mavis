@@ -273,7 +273,7 @@ defmodule Type do
   @doc false
   def builtins, do: @builtins
 
-  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 3]
+  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 2, defbuiltin: 3]
 
   # primitive builtins
   defbuiltin :none
@@ -288,6 +288,7 @@ defmodule Type do
 
   # composite builtins
   defbuiltin :term, %Type{module: nil, params: [], name: :any}, "%Type{name: :any}"
+  defbuiltin :arity, 0..255
 
   @spec builtin(atom) :: Macro.t
   @doc """
