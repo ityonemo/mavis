@@ -2,7 +2,7 @@ defmodule Mavis.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/ityonemo/mavis"
-  @version "0.0.5"
+  @version "0.0.6"
 
   def project do
     [

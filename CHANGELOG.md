@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.6
+- deprecates `Type.builtin/1` and switches to macros for each type.
+- renames `Type.select_builtin/1` to `Type.builtin/1` which can serve
+  as bridging functionality.
+
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
 - change `builtin(:non_neg_integer)` from a true builtin to an aliased builtin.
