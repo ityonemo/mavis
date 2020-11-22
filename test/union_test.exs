@@ -268,7 +268,8 @@ defmodule TypeTest.UnionTest do
     end
 
     test "binaries with out of phase minsizes are not unioned" do
-      assert %Type.Union{} = %Bitstring{size: 4, size: 8} <|> %Bitstring{size: 8}
+      assert %Type.Union{} =
+        %Bitstring{size: 4, unit: 8} <|> %Bitstring{size: 8}
     end
   end
 

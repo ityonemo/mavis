@@ -131,6 +131,9 @@ defmodule Type.Union.Merge do
   # bitstrings and binaries
   alias Type.Bitstring
   def type_merge(_, %Bitstring{unit: 0}), do: :nomerge
+  def type_merge(%Bitstring{size: 0, unit: lh}, %Bitstring{size: rh, unit: rh}) do
+    [%Bitstring{size: 0, unit: lh}, %Bitstring{size: 0, unit: rh}]
+  end
   def type_merge(left = %Bitstring{unit: 0}, right = %Bitstring{}) do
     if rem(right.size - left.size, right.unit) == 0 do
       [right]
