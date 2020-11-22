@@ -26,7 +26,7 @@ overloads `~>` as `usable_as` and `in` as `subtype_of`
 know what you're doing.  In the case of Mavis, this is used exclusively to
 make tests easier to read.
 
-## usable_as examples:
+## `usable_as` examples:
 
 ### obvious strict subtypes
 

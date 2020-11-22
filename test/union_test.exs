@@ -273,6 +273,10 @@ defmodule TypeTest.UnionTest do
     end
   end
 
+  describe "for functions" do
+    test ""
+  end
+
   describe "for strings" do
     test "fixed size strings are merged into general string" do
       assert remote(String.t) == (remote(String.t) <|> remote(String.t(42)))

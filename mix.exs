@@ -77,7 +77,10 @@ defmodule Mavis.MixProject do
         "Type Macros": &(&1[:type])
       ],
       extras: [
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "info/typesystem.md",
+        "info/function_deviations.md",
+        "info/tuple_deviations.md"
       ]
     ]
   end
