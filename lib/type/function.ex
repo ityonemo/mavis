@@ -431,6 +431,11 @@ defmodule Type.Function do
         Type.subtype?(challenge.return, target.return)
       end
     end
+
+    def normalize(function = %{params: i}) when is_integer(i) do
+      %{function | params: List.duplicate(any(), i)}
+    end
+    def normalize(function), do: super(function)
   end
 
   defimpl Inspect do
