@@ -1604,6 +1604,7 @@ defimpl Type.Properties, for: Type do
   def normalize(type = %Type{module: String, name: t, params: [_]}) do
     %{type | params: []}
   end
+  def normalize(type), do: type
 end
 
 defimpl Inspect, for: Type do

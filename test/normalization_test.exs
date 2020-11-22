@@ -9,6 +9,16 @@ defmodule TypeTest.NormalizationTest do
   # ensures that types that deviate from the elixir and erlang standard
   # are able to be "renormalized" to the expected types.
 
+  describe "all mainline types" do
+    test "do not get changed by normalization" do
+      TypeTest.Targets.except()
+      |> Enum.each(fn target ->
+        assert target == Type.normalize(target)
+      end)
+    end
+  end
+
+
   describe "String.t/1" do
     test "is normalized back to String.t" do
       refute remote(String.t()) == remote(String.t(8))
