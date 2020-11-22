@@ -127,6 +127,20 @@ defmodule Type.Union.Merge do
                   %Function{params: p, return: right}) do
     [%Function{params: p, return: Type.union(left, right)}]
   end
+  def type_merge(%Function{params: left, return: r},
+                 %Function{params: right, return: r})
+      when length(left) == length(right) do
+
+    zip = Enum.zip(left, right)
+    {merge, diffs} = count_diffs_merge(zip)
+    cond do
+      diffs <= 1 ->
+        [%Function{params: merge, return: r}]
+      Enum.all?(zip, fn {ltype, rtype} -> Type.subtype?(ltype, rtype) end) ->
+        [%Function{params: right, return: r}]
+      true -> :nomerge
+    end
+  end
 
   # bitstrings and binaries
   alias Type.Bitstring
@@ -184,4 +198,15 @@ defmodule Type.Union.Merge do
     [any()]
   end
   def type_merge(_, _), do: :nomerge
+
+  defp count_diffs_merge(zip) do
+    Enum.map_reduce(zip, 0, fn
+      {type, type}, total when total < 2 ->
+        {type, total}
+      {left_t, right_t}, total when total < 2 ->
+        {Type.union(left_t, right_t), total + 1}
+      _, total ->
+        {nil, total}
+    end)
+  end
 end
