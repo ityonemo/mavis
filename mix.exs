@@ -79,6 +79,7 @@ defmodule Mavis.MixProject do
       extras: [
         "CHANGELOG.md",
         "info/typesystem.md",
+        "info/string_deviations.md",
         "info/function_deviations.md",
         "info/tuple_deviations.md"
       ]

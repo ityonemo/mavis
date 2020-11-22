@@ -4,7 +4,7 @@
 
 ### Rationale
 
-Top-arity functions represent the "top type" for function of all arity.
+Top-arity functions represent the "top type" for function of a given arity.
 In the Mavis typesystem, the parameters to the function signature
 signify "which types may be passed and are guaranteed to not crash the
 function.  Accordingly, the type-signature `any() -> any()` represents
@@ -12,10 +12,10 @@ a *smaller* population of functions than the type-signature `integer() -> any()`
 as the former type signature represents that all values are guaranteed to
 succeed, whereas the later represents that only integers are guaranteed to succeed, a less stringent criterion.
 
-We do have a "top type" for functions, namely the any function, which is
-denoted `... -> any()`.  However, it is important to note that there are
-cases when it is reasonable to be able to select on an arity-specific
-top type.  See the example below.
+Erlang does have a "top type" for functions, namely the any function, which
+is denoted in Elixir as`... -> any()`.  However, it is important to note
+that there are cases when it is reasonable to be able to select on an
+arity-specific top type.  See the example below.
 
 ### Nomenclature
 

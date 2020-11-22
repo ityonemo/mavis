@@ -17,6 +17,12 @@ defmodule Type do
   - Does not have to be easily usable from erlang, but must be able to
     handle modules produced in erlang.
 
+  You can read more about the Mavis typesystem [here](typesystem.html), and
+  deviations from dialyzer types in the following documents:
+  - [strings](string_deviations.html)
+  - [functions](function_deviations.html)
+  - [tuples](tuple_deviations.html)
+
   ### Compile-Time Usage
 
   The type analysis system is designed to be a backend for a compile-time
