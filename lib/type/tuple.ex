@@ -270,14 +270,16 @@ defmodule Type.Tuple do
     defp zipfill([], [], _fill, so_far), do: Enum.reverse(so_far)
 
     subtype do
-      # same nonempty is okay
-      def subtype?(%{elements: el_c}, %Tuple{elements: el_t})
-        when length(el_c) == length(el_t) do
-
-        el_c
-        |> Enum.zip(el_t)
+      def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
+        when length(e1) < length(e2), do: false
+      def subtype?(%{elements: e1, fixed: false}, %Tuple{elements: e2, fixed: true})
+        when length(e2) < length(e1), do: false
+      def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: true})
+        when length(e1) != length(e2), do: false
+      def subtype?(%{elements: e1}, %Tuple{elements: e2}) when length(e1) >= length(e2) do
+        e1
+        |> zipfill(e2, any())
         |> Enum.all?(fn {c, t} -> Type.subtype?(c, t) end)
-
       end
       def subtype?(tuple, %Union{of: types}) do
         Enum.any?(types, &Type.subtype?(tuple, &1))
