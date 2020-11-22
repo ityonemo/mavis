@@ -216,13 +216,26 @@ defmodule Type.Tuple do
     end
 
     usable_as do
-      def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
-          when length(ce) == length(te) do
+      def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: true}, meta)
+          when length(ce) != length(te) do
+        {:error, Message.make(challenge, target, meta)}
+      end
+      def usable_as(challenge = %{elements: ce, fixed: false}, target = %Tuple{elements: te, fixed: true}, meta)
+          when length(ce) > length(te) do
+        {:error, Message.make(challenge, target, meta)}
+      end
+      def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: false}, meta)
+          when length(ce) < length(te) do
+        {:error, Message.make(challenge, target, meta)}
+      end
+      def usable_as(challenge = %{elements: ce, fixed: cf}, target = %Tuple{elements: te, fixed: tf}, meta) do
         ce
-        |> Enum.zip(te)
+        |> zipfill(te, any())
         |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-        |> Enum.reduce(&Type.ternary_and/2)
+        |> Enum.reduce(:ok, &Type.ternary_and/2)
         |> case do
+          :ok when not cf and (tf or length(ce) < length(te)) ->
+            {:maybe, [Message.make(challenge, target, meta)]}
           :ok -> :ok
           # TODO: make our type checking nested, should be possible here.
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
