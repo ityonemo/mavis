@@ -211,8 +211,8 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  alias Type.List
   describe "for the list type" do
+    alias Type.List
     test "lists with the same end type get merged" do
       assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
       assert list(@any) == list(@any) <|> list(:bar)
@@ -238,7 +238,39 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  import Type, only: :macros
+  describe "for binaries" do
+    alias Type.Bitstring
+    test "a binary with a smaller minsize gets unioned in" do
+      assert %Bitstring{unit: 1} ==
+        %Bitstring{size: 1, unit: 1} <|> %Bitstring{unit: 1}
+
+      assert %Bitstring{unit: 8} ==
+        %Bitstring{size: 16, unit: 8} <|> %Bitstring{unit: 8}
+
+      assert %Bitstring{size: 8, unit: 8} ==
+        %Bitstring{size: 16, unit: 8} <|> %Bitstring{size: 8, unit: 8}
+    end
+
+    test "the special case of a zero binary gets unioned in" do
+      assert %Bitstring{unit: 1} ==
+        %Bitstring{size: 1, unit: 1} <|> %Bitstring{}
+      assert %Bitstring{unit: 8} ==
+        %Bitstring{size: 8, unit: 8} <|> %Bitstring{}
+    end
+
+    test "binaries with divisible minsizes are unioned" do
+      assert %Bitstring{size: 4} ==
+        %Bitstring{size: 4} <|> %Bitstring{size: 8}
+    end
+
+    test "binaries with incompatible minsizes are not unioned" do
+      assert %Type.Union{} = %Bitstring{size: 8} <|> %Bitstring{size: 9}
+    end
+
+    test "binaries with out of phase minsizes are not unioned" do
+      assert %Type.Union{} = %Bitstring{size: 4, size: 8} <|> %Bitstring{size: 8}
+    end
+  end
 
   describe "for strings" do
     test "fixed size strings are merged into general string" do
