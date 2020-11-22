@@ -259,12 +259,12 @@ defmodule TypeTest.UnionTest do
     end
 
     test "binaries with divisible minsizes are unioned" do
-      assert %Bitstring{size: 4} ==
-        %Bitstring{size: 4} <|> %Bitstring{size: 8}
+      assert %Bitstring{unit: 4} ==
+        %Bitstring{unit: 4} <|> %Bitstring{unit: 8}
     end
 
-    test "binaries with incompatible minsizes are not unioned" do
-      assert %Type.Union{} = %Bitstring{size: 8} <|> %Bitstring{size: 9}
+    test "binaries with incompatible units are not unioned" do
+      assert %Type.Union{} = %Bitstring{unit: 8} <|> %Bitstring{unit: 9}
     end
 
     test "binaries with out of phase minsizes are not unioned" do

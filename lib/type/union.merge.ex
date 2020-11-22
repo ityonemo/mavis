@@ -141,8 +141,9 @@ defmodule Type.Union.Merge do
       :nomerge
     end
   end
-  def type_merge(left = %Bitstring{}, right = %Bitstring{}) do
-    if rem(left.size - right.size, Integer.gcd(left.unit, right.unit)) == 0 do
+  def type_merge(left = %Bitstring{unit: lhu}, right = %Bitstring{unit: rhu})
+      when rem(lhu, rhu) == 0 do
+    if rem(left.size - right.size, rhu) == 0 do
       [right]
     else
       :nomerge
