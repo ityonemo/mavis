@@ -132,12 +132,11 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: :any, inferred: false]
+  defstruct @enforce_keys ++ [params: :any]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any | pos_integer,
-    return: Type.t,
-    inferred: boolean
+    return: Type.t
   }
 
   @type return :: {:ok, Type.t} | {:maybe, Type.t, [Type.Message.t]} | {:error, Type.Message.t}
