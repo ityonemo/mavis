@@ -28,8 +28,8 @@ defmodule TypeTest.NormalizationTest do
 
   describe "min-arity tuples" do
     test "are normalized to general tuples" do
-      refute tuple() == tuple({...(min: 3)})
-      assert tuple() == Type.normalize(tuple({...(min: 3)}))
+      refute tuple() == tuple({any(), any(), any(), ...})
+      assert tuple() == Type.normalize(tuple({any(), any(), any(), ...}))
     end
   end
 

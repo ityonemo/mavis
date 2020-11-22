@@ -58,16 +58,6 @@ defmodule Type.Union.Merge do
   def type_merge(%Tuple{}, tuple()) do
     [tuple()]
   end
-  def type_merge(%Tuple{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
-    [tuple({...(min: min(m, n))})]
-  end
-  def type_merge(%Tuple{elements: els}, %Tuple{elements: {:min, n}}) do
-    if length(els) >= n do
-      [tuple({...(min: n)})]
-    else
-      :nomerge
-    end
-  end
   def type_merge(lhs = %Tuple{}, rhs = %Tuple{}) do
     if merged_elements = Tuple.merge(rhs.elements, lhs.elements) do
       [%Tuple{elements: merged_elements}]
