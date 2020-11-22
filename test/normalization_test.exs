@@ -23,4 +23,23 @@ defmodule TypeTest.NormalizationTest do
     end
   end
 
+  describe "top-arity functions" do
+    test "are normalized to any... functions" do
+      refute function((any() -> any())) == function((_ -> any()))
+      assert function((any() -> any())) == Type.normalize(function((_ -> any())))
+
+      # with a non-"any" return type
+      refute function((any() -> :foo)) ==
+        function((_ -> :foo))
+      assert function((any() -> :foo)) ==
+        Type.normalize(function((_ -> :foo)))
+
+      # with more than 1 arity
+      refute function((any(), any() -> any())) ==
+        function((_, _ -> any()))
+      assert function((any(), any() -> any())) ==
+        Type.normalize(function((_, _ -> any())))
+    end
+  end
+
 end

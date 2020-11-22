@@ -6,7 +6,7 @@
 
 ### Example
 
-### Normalization to erlang function types
+### Normalization to erlang tuple types
 
 ## Pinned-value Tuples
 
@@ -14,4 +14,4 @@
 
 ### Example
 
-### Normalization to erlang function types
+### Normalization to erlang tuple types
