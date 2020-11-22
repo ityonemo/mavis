@@ -299,6 +299,11 @@ defmodule Type.Tuple do
         Enum.any?(types, &Type.subtype?(tuple, &1))
       end
     end
+
+    def normalize(%Tuple{elements: {:min, _}}) do
+      %Tuple{elements: {:min, 0}}
+    end
+    def normalize(type), do: super(type)
   end
 
   defimpl Inspect do
@@ -321,5 +326,4 @@ defmodule Type.Tuple do
       concat(["tuple({" | inner_contents] ++ ["})"])
     end
   end
-
 end

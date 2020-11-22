@@ -8,7 +8,7 @@ defmodule Type.Iolist do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, List, Union}
+  alias Type.{Bitstring, List}
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}

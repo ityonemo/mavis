@@ -17,6 +17,12 @@ defmodule Type do
   - Does not have to be easily usable from erlang, but must be able to
     handle modules produced in erlang.
 
+  You can read more about the Mavis typesystem [here](typesystem.html), and
+  deviations from dialyzer types in the following documents:
+  - [strings](string_deviations.html)
+  - [functions](function_deviations.html)
+  - [tuples](tuple_deviations.html)
+
   ### Compile-Time Usage
 
   The type analysis system is designed to be a backend for a compile-time
@@ -1318,6 +1324,8 @@ defmodule Type do
   def covered?(type, type_list) when is_list(type_list) do
     Type.subtype?(type, Type.union(type_list))
   end
+
+  defdelegate normalize(type), to: Type.Properties
 end
 
 defimpl Type.Properties, for: Type do
@@ -1430,7 +1438,6 @@ defimpl Type.Properties, for: Type do
     |> Enum.map(&Type.usable_as(%Type.Bitstring{size: &1 * 8}, target, meta))
     |> Enum.reduce(&Type.ternary_and/2)
   end
-
 
   intersection do
     # negative integer
@@ -1598,6 +1605,12 @@ defimpl Type.Properties, for: Type do
     end
     def subtype?(a, b) when is_primitive(a), do: usable_as(a, b, []) == :ok
   end
+
+  # downconverts an arity/1 String.t(_) type to String.t()
+  def normalize(type = %Type{module: String, name: :t, params: [_]}) do
+    %{type | params: []}
+  end
+  def normalize(type), do: type
 end
 
 defimpl Inspect, for: Type do

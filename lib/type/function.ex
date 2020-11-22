@@ -132,12 +132,11 @@ defmodule Type.Function do
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: :any, inferred: false]
+  defstruct @enforce_keys ++ [params: :any]
 
   @type t :: %__MODULE__{
     params: [Type.t] | :any | pos_integer,
-    return: Type.t,
-    inferred: boolean
+    return: Type.t
   }
 
   @type return :: {:ok, Type.t} | {:maybe, Type.t, [Type.Message.t]} | {:error, Type.Message.t}
@@ -431,6 +430,11 @@ defmodule Type.Function do
         Type.subtype?(challenge.return, target.return)
       end
     end
+
+    def normalize(function = %{params: i}) when is_integer(i) do
+      %{function | params: List.duplicate(any(), i)}
+    end
+    def normalize(function), do: super(function)
   end
 
   defimpl Inspect do
@@ -439,6 +443,9 @@ defmodule Type.Function do
     def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
     def inspect(%{params: :any, return: return}, opts) do
       concat(basic_inspect(:any, return, opts) ++ [")"])
+    end
+    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
+      concat(basic_inspect(arity, return, opts) ++ [")"])
     end
     def inspect(%{params: params, return: return}, opts) do
 
@@ -466,6 +473,12 @@ defmodule Type.Function do
     end
 
     defp render_params(:any, _), do: "..."
+    defp render_params(arity, _) when is_integer(arity) do
+      "_"
+      |> List.duplicate(arity)
+      |> Enum.intersperse(", ")
+      |> concat
+    end
     defp render_params(lst, opts) do
       lst
       |> Enum.map(&to_doc(&1, opts))

@@ -13,6 +13,9 @@ defprotocol Type.Properties do
 
   @spec intersection(Type.t, Type.t) :: Type.t
   def intersection(type, type)
+
+  @spec normalize(Type.t) :: Type.t
+  def normalize(type)
 end
 
 defimpl Type.Properties, for: Integer do
