@@ -274,7 +274,45 @@ defmodule TypeTest.UnionTest do
   end
 
   describe "for functions" do
-    test ""
+    test "two one-arity functions and same output are merged" do
+      assert function((non_neg_integer() -> :foo)) ==
+        function((pos_integer() -> :foo)) <|> function((0 -> :foo))
+    end
+
+    test "two one-arity functions and same input are merged" do
+      # this is necessary in the case that there is something that
+      # isn't reducible to pos_integer, for example:
+      #
+      #    def my_function(x) when is_integer(x) do
+      #      if div(x, 2) == 0, do: :foo, else: :bar
+      #    end
+      #
+      assert function((pos_integer() -> :foo <|> :bar)) ==
+        function((pos_integer() -> :bar)) <|>
+        function((pos_integer() -> :foo))
+    end
+
+    test "one-arity functions with different output are not merged" do
+      assert %Type.Union{} =
+        function((pos_integer() -> :bar)) <|> function((0 -> :foo))
+    end
+
+    test "two-arity functions are merged if one is the same" do
+      assert function((:bar, non_neg_integer() -> :bar)) ==
+        function((:bar, pos_integer() -> :bar)) <|>
+        function((:bar, 0 -> :bar))
+    end
+
+    test "two-arity functions are merged one is a total subset" do
+      assert function((atom(), pos_integer() -> :bar)) ==
+        function((:bar, 1..10 -> :bar)) <|>
+        function((atom(), pos_integer -> :bar))
+    end
+
+    test "functions are not merged if they have different arities" do
+      assert %Type.Union{} =
+        function((atom() -> :bar)) <|> function((atom(), atom() -> :bar))
+    end
   end
 
   describe "for strings" do
