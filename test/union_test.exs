@@ -306,7 +306,7 @@ defmodule TypeTest.UnionTest do
     test "two-arity functions are merged one is a total subset" do
       assert function((atom(), pos_integer() -> :bar)) ==
         function((:bar, 1..10 -> :bar)) <|>
-        function((atom(), pos_integer -> :bar))
+        function((atom(), pos_integer() -> :bar))
     end
 
     test "functions are not merged if they have different arities" do

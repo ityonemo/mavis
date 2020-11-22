@@ -1601,7 +1601,7 @@ defimpl Type.Properties, for: Type do
   end
 
   # downconverts an arity/1 String.t(_) type to String.t()
-  def normalize(type = %Type{module: String, name: t, params: [_]}) do
+  def normalize(type = %Type{module: String, name: :t, params: [_]}) do
     %{type | params: []}
   end
   def normalize(type), do: type
