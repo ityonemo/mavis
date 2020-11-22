@@ -8,6 +8,10 @@
   explicitness
 - fixes `c:Type.Inference.Api.infer/3`
 - adds merging behaviour for bitstrings and functions
+- adds essays on deviations from erlang and Elixir
+- adds `Type.normalize/1` which takes deviations and conforms them to
+  dialyzer forms.
+- removes inferred field on `t:Type.Function.t/0`.
 
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
