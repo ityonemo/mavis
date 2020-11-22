@@ -211,8 +211,8 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  alias Type.List
   describe "for the list type" do
+    alias Type.List
     test "lists with the same end type get merged" do
       assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
       assert list(@any) == list(@any) <|> list(:bar)
@@ -238,7 +238,82 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  import Type, only: :macros
+  describe "for binaries" do
+    alias Type.Bitstring
+    test "a binary with a smaller minsize gets unioned in" do
+      assert %Bitstring{unit: 1} ==
+        %Bitstring{size: 1, unit: 1} <|> %Bitstring{unit: 1}
+
+      assert %Bitstring{unit: 8} ==
+        %Bitstring{size: 16, unit: 8} <|> %Bitstring{unit: 8}
+
+      assert %Bitstring{size: 8, unit: 8} ==
+        %Bitstring{size: 16, unit: 8} <|> %Bitstring{size: 8, unit: 8}
+    end
+
+    test "the special case of a zero binary gets unioned in" do
+      assert %Bitstring{unit: 1} ==
+        %Bitstring{size: 1, unit: 1} <|> %Bitstring{}
+      assert %Bitstring{unit: 8} ==
+        %Bitstring{size: 8, unit: 8} <|> %Bitstring{}
+    end
+
+    test "binaries with divisible minsizes are unioned" do
+      assert %Bitstring{unit: 4} ==
+        %Bitstring{unit: 4} <|> %Bitstring{unit: 8}
+    end
+
+    test "binaries with incompatible units are not unioned" do
+      assert %Type.Union{} = %Bitstring{unit: 8} <|> %Bitstring{unit: 9}
+    end
+
+    test "binaries with out of phase minsizes are not unioned" do
+      assert %Type.Union{} =
+        %Bitstring{size: 4, unit: 8} <|> %Bitstring{size: 8}
+    end
+  end
+
+  describe "for functions" do
+    test "two one-arity functions and same output are merged" do
+      assert function((non_neg_integer() -> :foo)) ==
+        function((pos_integer() -> :foo)) <|> function((0 -> :foo))
+    end
+
+    test "two one-arity functions and same input are merged" do
+      # this is necessary in the case that there is something that
+      # isn't reducible to pos_integer, for example:
+      #
+      #    def my_function(x) when is_integer(x) do
+      #      if div(x, 2) == 0, do: :foo, else: :bar
+      #    end
+      #
+      assert function((pos_integer() -> :foo <|> :bar)) ==
+        function((pos_integer() -> :bar)) <|>
+        function((pos_integer() -> :foo))
+    end
+
+    test "one-arity functions with different output are not merged" do
+      assert %Type.Union{} =
+        function((pos_integer() -> :bar)) <|> function((0 -> :foo))
+    end
+
+    test "two-arity functions are merged if one is the same" do
+      assert function((:bar, non_neg_integer() -> :bar)) ==
+        function((:bar, pos_integer() -> :bar)) <|>
+        function((:bar, 0 -> :bar))
+    end
+
+    test "two-arity functions are merged one is a total subset" do
+      assert function((atom(), pos_integer() -> :bar)) ==
+        function((:bar, 1..10 -> :bar)) <|>
+        function((atom(), pos_integer -> :bar))
+    end
+
+    test "functions are not merged if they have different arities" do
+      assert %Type.Union{} =
+        function((atom() -> :bar)) <|> function((atom(), atom() -> :bar))
+    end
+  end
 
   describe "for strings" do
     test "fixed size strings are merged into general string" do

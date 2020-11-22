@@ -127,10 +127,27 @@ defmodule Type.Union.Merge do
                   %Function{params: p, return: right}) do
     [%Function{params: p, return: Type.union(left, right)}]
   end
+  def type_merge(%Function{params: left, return: r},
+                 %Function{params: right, return: r})
+      when length(left) == length(right) do
+
+    zip = Enum.zip(left, right)
+    {merge, diffs} = count_diffs_merge(zip)
+    cond do
+      diffs <= 1 ->
+        [%Function{params: merge, return: r}]
+      Enum.all?(zip, fn {ltype, rtype} -> Type.subtype?(ltype, rtype) end) ->
+        [%Function{params: right, return: r}]
+      true -> :nomerge
+    end
+  end
 
   # bitstrings and binaries
   alias Type.Bitstring
   def type_merge(_, %Bitstring{unit: 0}), do: :nomerge
+  def type_merge(%Bitstring{size: 0, unit: lh}, %Bitstring{size: rh, unit: rh}) do
+    [%Bitstring{size: 0, unit: lh}, %Bitstring{size: 0, unit: rh}]
+  end
   def type_merge(left = %Bitstring{unit: 0}, right = %Bitstring{}) do
     if rem(right.size - left.size, right.unit) == 0 do
       [right]
@@ -138,8 +155,9 @@ defmodule Type.Union.Merge do
       :nomerge
     end
   end
-  def type_merge(left = %Bitstring{}, right = %Bitstring{}) do
-    if rem(left.size - right.size, Integer.gcd(left.unit, right.unit)) == 0 do
+  def type_merge(left = %Bitstring{unit: lhu}, right = %Bitstring{unit: rhu})
+      when rem(lhu, rhu) == 0 do
+    if rem(left.size - right.size, rhu) == 0 do
       [right]
     else
       :nomerge
@@ -180,4 +198,15 @@ defmodule Type.Union.Merge do
     [any()]
   end
   def type_merge(_, _), do: :nomerge
+
+  defp count_diffs_merge(zip) do
+    Enum.map_reduce(zip, 0, fn
+      {type, type}, total when total < 2 ->
+        {type, total}
+      {left_t, right_t}, total when total < 2 ->
+        {Type.union(left_t, right_t), total + 1}
+      _, total ->
+        {nil, total}
+    end)
+  end
 end
