@@ -137,4 +137,6 @@ defimpl Type.Properties, for: Type.Function.Var do
       raise "unreachable"
     end
   end
+
+  def normalize(type), do: type
 end

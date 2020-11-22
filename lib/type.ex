@@ -1318,6 +1318,8 @@ defmodule Type do
   def covered?(type, type_list) when is_list(type_list) do
     Type.subtype?(type, Type.union(type_list))
   end
+
+  defdelegate normalize(type), to: Type.Properties
 end
 
 defimpl Type.Properties, for: Type do
@@ -1430,7 +1432,6 @@ defimpl Type.Properties, for: Type do
     |> Enum.map(&Type.usable_as(%Type.Bitstring{size: &1 * 8}, target, meta))
     |> Enum.reduce(&Type.ternary_and/2)
   end
-
 
   intersection do
     # negative integer
@@ -1597,6 +1598,11 @@ defimpl Type.Properties, for: Type do
       |> Type.subtype?(right)
     end
     def subtype?(a, b) when is_primitive(a), do: usable_as(a, b, []) == :ok
+  end
+
+  # downconverts an arity/1 String.t(_) type to String.t()
+  def normalize(type = %Type{module: String, name: t, params: [_]}) do
+    %{type | params: []}
   end
 end
 

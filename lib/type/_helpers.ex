@@ -47,6 +47,10 @@ defmodule Type.Helpers do
             group_compare(this, other)
         end
       end
+
+      # for most types, normalization is not necessary.
+      def normalize(type), do: type
+      defoverridable normalize: 1
     end
   end
 

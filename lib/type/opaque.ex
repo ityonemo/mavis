@@ -76,6 +76,8 @@ defmodule Type.Opaque do
 
     subtype do
     end
+
+    def normalize(type), do: type
   end
 
   defimpl Inspect do

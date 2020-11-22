@@ -164,6 +164,10 @@ defmodule Type.Union do
         Enum.all?(types, &Type.subtype?(&1, target))
       end
     end
+
+    def normalize(%{of: types}) do
+      %Union{of: Enum.map(types, &Type.normalize/1)}
+    end
   end
 
   defimpl Collectable do
