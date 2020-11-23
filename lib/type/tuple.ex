@@ -152,11 +152,14 @@ defmodule Type.Tuple do
   returns nil if the two lists are not mergeable; returns the merged
   list if the two lists are mergeable.
 
+  strict toggles whether a non-fixed tuple is allowed to be the first
+  parameter.
+
   completes full analysis in a single pass of the function.
 
-  Used in common between tuples and function parameters.
+  Used in common between tuples and list parameters.
   """
-  def merge(bigger, smaller, strict) do
+  def merge(bigger, smaller, strict \\ true) do
     merge_helper(bigger, smaller, strict, {[], true, 0})
   end
 
