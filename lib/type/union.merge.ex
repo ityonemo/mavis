@@ -59,8 +59,9 @@ defmodule Type.Union.Merge do
     [tuple()]
   end
   def type_merge(lhs = %Tuple{}, rhs = %Tuple{}) do
-    if merged_elements = Tuple.merge(rhs.elements, lhs.elements) do
-      [%Tuple{elements: merged_elements}]
+    strict = lhs.fixed and rhs.fixed
+    if merged_elements = Tuple.merge(rhs.elements, lhs.elements, strict) do
+      [%Tuple{elements: merged_elements, fixed: strict}]
     else
       :nomerge
     end
@@ -88,7 +89,7 @@ defmodule Type.Union.Merge do
     [%List{type: type, final: Type.union(final, []), nonempty: false}]
   end
   def type_merge(l1 = %List{}, l2 = %List{}) do
-    if merge = Tuple.merge([l1.type, l1.final], [l2.type, l2.final]) do
+    if merge = Tuple.merge([l1.type, l1.final], [l2.type, l2.final], true) do
       [type, final] = merge
       [%List{type: type, final: final, nonempty: l1.nonempty and l2.nonempty}]
     else
