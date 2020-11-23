@@ -12,6 +12,8 @@
 - adds `Type.normalize/1` which takes deviations and conforms them to
   dialyzer forms.
 - removes inferred field on `t:Type.Function.t/0`.
+- supports pinned types on top of min-arity tuples, changes tuple struct
+  implementation for these combined purposes.
 
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
