@@ -2,6 +2,8 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
   use ExUnit.Case, async: true
   import TypeTest.InspectCase
 
+  import Type, only: :macros
+
   @moduletag :inspect
 
   @source TypeTest.TypeExample.Functions
@@ -16,6 +18,14 @@ defmodule TypeTest.Type.Inspect.FunctionsTest do
 
   test "any arity" do
     assert "(... -> integer())" == inspect_type(@source, :any_to_integer)
+  end
+
+  test "top arity 1 function" do
+    assert "(_ -> any())" == inspect %Type.Function{params: 1, return: any()}
+  end
+
+  test "top arity 2 function" do
+    assert "(_, _ -> any())" == inspect %Type.Function{params: 2, return: any()}
   end
 
   test "function" do

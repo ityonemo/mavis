@@ -19,21 +19,21 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
 
     test "integer category" do
-      assert (47 ~> builtin(:pos_integer)) == :ok
-      assert (47 ~> builtin(:non_neg_integer)) == :ok
-      assert (0 ~> builtin(:non_neg_integer)) == :ok
-      assert (-47 ~> builtin(:neg_integer)) == :ok
-      assert (47 ~> builtin(:integer)) == :ok
+      assert (47 ~> pos_integer()) == :ok
+      assert (47 ~> non_neg_integer()) == :ok
+      assert (0 ~> non_neg_integer()) == :ok
+      assert (-47 ~> neg_integer()) == :ok
+      assert (47 ~> integer()) == :ok
     end
 
     test "a union with the appropriate category" do
-      assert 47 ~> (builtin(:pos_integer) <|> :infinity) == :ok
-      assert 47 ~> (builtin(:non_neg_integer) <|> :infinity) == :ok
-      assert 47 ~> (builtin(:integer) <|> :infinity) == :ok
+      assert 47 ~> (pos_integer() <|> :infinity) == :ok
+      assert 47 ~> (non_neg_integer() <|> :infinity) == :ok
+      assert 47 ~> (integer() <|> :infinity) == :ok
     end
 
     test "any" do
-      assert (47 ~> builtin(:any)) == :ok
+      assert (47 ~> any()) == :ok
     end
   end
 
@@ -41,18 +41,18 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
 
   describe "integers not usable as" do
     test "wrong integer category" do
-      assert {:error, %Message{type: 47, target: builtin(:neg_integer)}}
-        = (47 ~> builtin(:neg_integer))
+      assert {:error, %Message{type: 47, target: neg_integer()}}
+        = (47 ~> neg_integer())
 
-      assert {:error, %Message{type: 0, target: builtin(:pos_integer)}}
-        = (0 ~> builtin(:pos_integer))
-      assert {:error, %Message{type: 0, target: builtin(:neg_integer)}}
-        = (0 ~> builtin(:neg_integer))
+      assert {:error, %Message{type: 0, target: pos_integer()}}
+        = (0 ~> pos_integer())
+      assert {:error, %Message{type: 0, target: neg_integer()}}
+        = (0 ~> neg_integer())
 
-      assert {:error, %Message{type: -47, target: builtin(:pos_integer)}}
-        = (-47 ~> builtin(:pos_integer))
-      assert {:error, %Message{type: -47, target: builtin(:non_neg_integer)}}
-        = (-47 ~> builtin(:non_neg_integer))
+      assert {:error, %Message{type: -47, target: pos_integer()}}
+        = (-47 ~> pos_integer())
+      assert {:error, %Message{type: -47, target: non_neg_integer()}}
+        = (-47 ~> non_neg_integer())
     end
 
     test "outside their range" do
@@ -61,11 +61,11 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     end
 
     test "a union with the noninclusive categories" do
-      assert {:error, _} = -47 ~> (builtin(:pos_integer) <|> :infinity)
+      assert {:error, _} = -47 ~> (pos_integer() <|> :infinity)
     end
 
     test "any other type" do
-      targets = TypeTest.Targets.except([builtin(:non_neg_integer), builtin(:pos_integer), builtin(:integer)])
+      targets = TypeTest.Targets.except([non_neg_integer(), pos_integer(), integer()])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: 42, target: ^target}} =
           (42 ~> target)

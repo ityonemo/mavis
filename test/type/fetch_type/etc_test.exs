@@ -22,7 +22,7 @@ defmodule TypeTest.Type.FetchType.EtcTest do
         Type.fetch_type(@remote, :elixir_string)
     end
     test "with arity" do
-      assert {:ok, %Type{module: Foo, name: :bar, params: [builtin(:integer)]}} ==
+      assert {:ok, %Type{module: Foo, name: :bar, params: [integer()]}} ==
         Type.fetch_type(@remote, :foobar)
     end
   end
@@ -48,13 +48,13 @@ defmodule TypeTest.Type.FetchType.EtcTest do
       {:ok, specs} = Code.Typespec.fetch_types(@example)
       assert Enum.find(specs, &match?({:typep, {:typep, _, _}}, &1))
 
-      assert {:ok, builtin(:any)} = Type.fetch_type(@example, :typep)
+      assert {:ok, any()} = Type.fetch_type(@example, :typep)
     end
   end
 
   test "type with arity" do
-    assert {:ok, builtin(:integer)} ==
-      Type.fetch_type(@remote, :with_arity, [builtin(:integer)])
+    assert {:ok, integer()} ==
+      Type.fetch_type(@remote, :with_arity, [integer()])
   end
 
   @type not_compiled :: integer

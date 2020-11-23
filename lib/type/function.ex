@@ -21,7 +21,7 @@ defmodule Type.Function do
 
   ```
   iex> import Type, only: :macros
-  iex> function((builtin(:atom) -> builtin(:pos_integer)))
+  iex> function((atom() -> pos_integer()))
   %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
   ```
 
@@ -53,10 +53,10 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.compare(function(( -> builtin(:atom))), function(( -> builtin(:integer))))
+  iex> Type.compare(function(( -> atom())), function(( -> integer())))
   :gt
-  iex> Type.compare(function((builtin(:integer) -> builtin(:integer))),
-  ...>              function((builtin(:atom) -> builtin(:integer))))
+  iex> Type.compare(function((integer() -> integer())),
+  ...>              function((atom() -> integer())))
   :lt
   ```
 
@@ -67,10 +67,10 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function(( -> 1..10)), function(( -> builtin(:integer))))
+  iex> Type.intersection(function(( -> 1..10)), function(( -> integer())))
   %Type.Function{params: [], return: 1..10}
-  iex> Type.intersection(function((builtin(:integer) -> builtin(:integer))),
-  ...>                   function((1..10 -> builtin(:integer))))
+  iex> Type.intersection(function((integer() -> integer())),
+  ...>                   function((1..10 -> integer())))
   %Type{name: :none}
   ```
 
@@ -79,8 +79,8 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function((... -> builtin(:pos_integer))),
-  ...>                   function((1..10 -> builtin(:pos_integer))))
+  iex> Type.intersection(function((... -> pos_integer())),
+  ...>                   function((1..10 -> pos_integer())))
   %Type.Function{params: [1..10], return: %Type{name: :pos_integer}}
   ```
 
@@ -102,8 +102,8 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.subtype?(function((builtin(:integer) -> 1..10)),
-  ...>               function((builtin(:integer) -> builtin(:integer))))
+  iex> Type.subtype?(function((integer() -> 1..10)),
+  ...>               function((integer() -> integer())))
   true
   ```
 
@@ -120,27 +120,24 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.usable_as(function((builtin(:pos_integer) -> 1..10)), function((1..10 -> builtin(:pos_integer))))
+  iex> Type.usable_as(function((pos_integer() -> 1..10)), function((1..10 -> pos_integer())))
   :ok
-  iex> Type.usable_as(function((1..10 -> 1..10)), function((builtin(:pos_integer) -> builtin(:pos_integer))))
+  iex> Type.usable_as(function((1..10 -> 1..10)), function((pos_integer() -> pos_integer())))
   {:maybe, [%Type.Message{type: %Type.Function{params: [1..10], return: 1..10},
                           target: %Type.Function{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}}]}
-  iex> Type.usable_as(function(( -> builtin(:atom))), function(( -> builtin(:pos_integer))))
+  iex> Type.usable_as(function(( -> atom())), function(( -> pos_integer())))
   {:error, %Type.Message{type: %Type.Function{params: [], return: %Type{name: :atom}},
                          target: %Type.Function{params: [], return: %Type{name: :pos_integer}}}}
   ```
   """
 
   @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: :any, inferred: false]
+  defstruct @enforce_keys ++ [params: :any]
 
   @type t :: %__MODULE__{
-    params: [Type.t] | :any,
-    return: Type.t,
-    inferred: boolean
+    params: [Type.t] | :any | pos_integer,
+    return: Type.t
   }
-
-  import Type, only: :macros
 
   @type return :: {:ok, Type.t} | {:maybe, Type.t, [Type.Message.t]} | {:error, Type.Message.t}
 
@@ -163,24 +160,24 @@ defmodule Type.Function do
 
   ```
   iex> import Type, only: :macros
-  iex> func = function ((builtin(:pos_integer) -> builtin(:float)))
-  iex> Type.Function.apply_types(func, [builtin(:pos_integer)])
+  iex> func = function ((pos_integer() -> float()))
+  iex> Type.Function.apply_types(func, [pos_integer()])
   {:ok, %Type{name: :float}}
-  iex> Type.Function.apply_types(func, [builtin(:non_neg_integer)])
+  iex> Type.Function.apply_types(func, [non_neg_integer()])
   {:maybe, %Type{name: :float}, [
     %Type.Message{
       type: %Type.Union{of: [%Type{name: :pos_integer}, 0]},
       target: %Type{name: :pos_integer},
       meta: [message: "non_neg_integer() is overbroad for argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }]}
-  iex> Type.Function.apply_types(func, [builtin(:float)])
+  iex> Type.Function.apply_types(func, [float()])
   {:error,
     %Type.Message{
       type: %Type{name: :float},
       target: %Type{name: :pos_integer},
       meta: [message: "float() is disjoint to argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }}
-  iex> var_func = function((i -> i when i: builtin(:integer)))
+  iex> var_func = function((i -> i when i: integer()))
   iex> Type.Function.apply_types(var_func, [1..10])
   {:ok, 1..10}
   ```
@@ -238,7 +235,9 @@ defmodule Type.Function do
     end)
     |> Type.union()
 
-    if evaluated_type == builtin(:none) do
+    import Type, only: :macros
+
+    if evaluated_type == none() do
       # find the type that doesn't match.  Sorry, just going to do the worst
       # possible thing here.
       vars
@@ -401,8 +400,8 @@ defmodule Type.Function do
       def intersection(%{params: :any, return: ret}, target = %Function{}) do
         new_ret = Type.intersection(ret, target.return)
 
-        if new_ret == builtin(:none) do
-          builtin(:none)
+        if new_ret == none() do
+          none()
         else
           %Function{params: target.params, return: new_ret}
         end
@@ -414,8 +413,8 @@ defmodule Type.Function do
 
         return = Type.intersection(lr, rr)
 
-        if return == builtin(:none) do
-          builtin(:none)
+        if return == none() do
+          none()
         else
           %Function{params: p, return: return}
         end
@@ -431,6 +430,11 @@ defmodule Type.Function do
         Type.subtype?(challenge.return, target.return)
       end
     end
+
+    def normalize(function = %{params: i}) when is_integer(i) do
+      %{function | params: List.duplicate(any(), i)}
+    end
+    def normalize(function), do: super(function)
   end
 
   defimpl Inspect do
@@ -439,6 +443,9 @@ defmodule Type.Function do
     def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
     def inspect(%{params: :any, return: return}, opts) do
       concat(basic_inspect(:any, return, opts) ++ [")"])
+    end
+    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
+      concat(basic_inspect(arity, return, opts) ++ [")"])
     end
     def inspect(%{params: params, return: return}, opts) do
 
@@ -466,6 +473,12 @@ defmodule Type.Function do
     end
 
     defp render_params(:any, _), do: "..."
+    defp render_params(arity, _) when is_integer(arity) do
+      "_"
+      |> List.duplicate(arity)
+      |> Enum.intersperse(", ")
+      |> concat
+    end
     defp render_params(lst, opts) do
       lst
       |> Enum.map(&to_doc(&1, opts))

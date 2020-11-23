@@ -9,7 +9,7 @@ defmodule TypeTest.TypeUnion.UsableAsTest do
   describe "for union types" do
     test "you can use it for itself and the builtin any" do
       assert :ok = (1 <|> :foo) ~> (1 <|> :foo)
-      assert :ok = (1 <|> :foo) ~> builtin(:any)
+      assert :ok = (1 <|> :foo) ~> any()
     end
 
     test "it's usable as self or a bigger union" do

@@ -7,7 +7,7 @@ defmodule TypeTest.TypeFunctionVar.IntersectionTest do
   import Type, only: :macros
   alias Type.Function.Var
 
-  @any builtin(:any)
+  @any any()
   @any_var %Var{name: :foo}
 
   describe "the default variable" do
@@ -19,15 +19,15 @@ defmodule TypeTest.TypeFunctionVar.IntersectionTest do
     end
 
     test "performs an intersection" do
-      assert %Var{constraint: builtin(:integer)} =
-        @any_var <~> builtin(:integer)
+      assert %Var{constraint: integer()} =
+        @any_var <~> integer()
 
-      assert %Var{constraint: builtin(:integer)} =
-        builtin(:integer) <~> @any_var
+      assert %Var{constraint: integer()} =
+        integer() <~> @any_var
     end
   end
 
-  @int_var %Var{name: :foo, constraint: builtin(:integer)}
+  @int_var %Var{name: :foo, constraint: integer()}
 
   describe "a constrained variable" do
     test "becomes more constrained" do

@@ -9,7 +9,7 @@ defmodule TypeTest.LiteralInteger.OrderTest do
 
   describe "a negative integer" do
     test "is bigger than bottom" do
-      assert -47 > builtin(:none)
+      assert -47 > none()
     end
 
     test "is bigger than smaller numbers, and smaller ranges" do
@@ -21,34 +21,34 @@ defmodule TypeTest.LiteralInteger.OrderTest do
       assert -47 < -50..-47
       assert -47 < -50..-45
       assert -47 < -47..0
-      assert -47 < builtin(:neg_integer)
-      assert -47 < builtin(:integer)
+      assert -47 < neg_integer()
+      assert -47 < integer()
     end
 
     test "is smaller than non negative numbers, number classes" do
       assert -47 < -42
       assert -47 < 0
       assert -47 < 47
-      assert -47 < builtin(:non_neg_integer)
-      assert -47 < builtin(:pos_integer)
+      assert -47 < non_neg_integer()
+      assert -47 < pos_integer()
     end
 
     test "is smaller than content outside its class" do
-      assert -47 < builtin(:atom)  # test one thing out of its typegroup
-      assert -47 < builtin(:any)   # test top
+      assert -47 < atom()  # test one thing out of its typegroup
+      assert -47 < any()   # test top
     end
   end
 
   describe "a positive integer" do
     test "is bigger than bottom" do
-      assert 47 > builtin(:none)
+      assert 47 > none()
     end
 
     test "is bigger than negative numbers, ranges, and classes" do
       assert 47 > -47
       assert 47 > 42
       assert 47 > -3..46
-      assert 47 > builtin(:neg_integer)
+      assert 47 > neg_integer()
     end
 
     test "is smaller than a union containing it" do
@@ -60,8 +60,8 @@ defmodule TypeTest.LiteralInteger.OrderTest do
       assert 47 < 42..50
       assert 47 < 47..50
 
-      assert 47 < builtin(:pos_integer)
-      assert 47 < builtin(:non_neg_integer)
+      assert 47 < pos_integer()
+      assert 47 < non_neg_integer()
     end
 
     test "is smaller than bigger numbers and ranges" do
@@ -70,8 +70,8 @@ defmodule TypeTest.LiteralInteger.OrderTest do
     end
 
     test "is smaller than most types" do
-      assert 47 < builtin(:atom)  # test one thing out of its typegroup
-      assert 47 < builtin(:any)   # test top
+      assert 47 < atom()  # test one thing out of its typegroup
+      assert 47 < any()   # test top
     end
   end
 end

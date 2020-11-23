@@ -16,7 +16,7 @@ defmodule TypeTest.TypeBitstring.SubtypeTest do
   describe "the empty bitstring" do
     test "is a subtype of itself and any" do
       assert @empty_bitstring in @empty_bitstring
-      assert @empty_bitstring in builtin(:any)
+      assert @empty_bitstring in any()
     end
 
     test "is a subtype of any bitstring with size 0" do
@@ -25,13 +25,13 @@ defmodule TypeTest.TypeBitstring.SubtypeTest do
     end
 
     test "is a subtype of appropriate unions" do
-      assert @empty_bitstring in (@empty_bitstring <|> builtin(:atom))
-      assert @empty_bitstring in (@basic_bitstring <|> builtin(:atom))
-      assert @empty_bitstring in (@basic_binary <|> builtin(:atom))
+      assert @empty_bitstring in (@empty_bitstring <|> atom())
+      assert @empty_bitstring in (@basic_bitstring <|> atom())
+      assert @empty_bitstring in (@basic_binary <|> atom())
     end
 
     test "is not a subtype of orthogonal types" do
-      refute @empty_bitstring in (builtin(:atom) <|> builtin(:integer))
+      refute @empty_bitstring in (atom() <|> integer())
     end
 
     test "is not a subtype of any bitstring that has size" do

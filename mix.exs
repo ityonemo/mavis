@@ -2,7 +2,7 @@ defmodule Mavis.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/ityonemo/mavis"
-  @version "0.0.5"
+  @version "0.0.6"
 
   def project do
     [
@@ -72,8 +72,16 @@ defmodule Mavis.MixProject do
           Type.Union
         ]
       ],
+      groups_for_functions: [
+        Guards: &(&1[:guards]),
+        "Type Macros": &(&1[:type])
+      ],
       extras: [
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "info/typesystem.md",
+        "info/string_deviations.md",
+        "info/function_deviations.md",
+        "info/tuple_deviations.md"
       ]
     ]
   end

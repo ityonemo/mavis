@@ -13,7 +13,7 @@ defmodule TypeTest.Type.FetchType.AtomsTest do
   end
 
   test "atom" do
-    assert {:ok, builtin(:atom)} == Type.fetch_type(@source, :atom_type)
+    assert {:ok, atom()} == Type.fetch_type(@source, :atom_type)
   end
 
   test "boolean" do
@@ -21,10 +21,10 @@ defmodule TypeTest.Type.FetchType.AtomsTest do
   end
 
   test "module" do
-    assert {:ok, builtin(:module)} == Type.fetch_type(@source, :module_type)
+    assert {:ok, module()} == Type.fetch_type(@source, :module_type)
   end
 
   test "node" do
-    assert {:ok, builtin(:node)} == Type.fetch_type(@source, :node_type)
+    assert {:ok, node_type()} == Type.fetch_type(@source, :node_type)
   end
 end

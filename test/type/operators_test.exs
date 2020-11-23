@@ -7,7 +7,7 @@ defmodule TypeTest.OperatorsTest do
   @moduletag :operators
 
   test "~>/2 is the usable_as operator" do
-    assert (:foo ~> builtin(:atom)) == :ok
+    assert (:foo ~> atom()) == :ok
   end
 
   test "<|>/2 is the type union operator" do
@@ -29,12 +29,12 @@ defmodule TypeTest.OperatorsTest do
   end
 
   test "ordering operators prefer term ordering over erlang ordering" do
-    refute Kernel.<(builtin(:integer), :foo)
-    assert builtin(:integer) < :foo
+    refute Kernel.<(integer(), :foo)
+    assert integer() < :foo
   end
 
   test "in/2 is the subtyping operator" do
     assert :bar in :bar
-    assert :bar in builtin(:atom)
+    assert :bar in atom()
   end
 end

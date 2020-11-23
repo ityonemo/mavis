@@ -8,34 +8,34 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
 
   describe "the intersection of a literal range" do
     test "with itself, integer and any is itself" do
-      assert -47..47 == -47..47 <~> builtin(:any)
-      assert -47..47 == -47..47 <~> builtin(:integer)
+      assert -47..47 == -47..47 <~> any()
+      assert -47..47 == -47..47 <~> integer()
       assert -47..47 == -47..47 <~> -47..47
     end
 
     test "with integer subsets" do
       # negative ranges
-      assert -47..-1        == -47..-1 <~> builtin(:neg_integer)
-      assert builtin(:none) == -47..-1 <~> builtin(:pos_integer)
-      assert builtin(:none) == -47..-1 <~> builtin(:non_neg_integer)
+      assert -47..-1        == -47..-1 <~> neg_integer()
+      assert none() == -47..-1 <~> pos_integer()
+      assert none() == -47..-1 <~> non_neg_integer()
 
       # straddling ranges
-      assert -47..-1 == -47..47 <~> builtin(:neg_integer)
-      assert -1      == -1..1 <~> builtin(:neg_integer)
-      assert 1..47   == -47..47 <~> builtin(:pos_integer)
-      assert 1       == -1..1 <~> builtin(:pos_integer)
-      assert 0..47   == -47..47 <~> builtin(:non_neg_integer)
-      assert 0       == -1..0 <~> builtin(:non_neg_integer)
+      assert -47..-1 == -47..47 <~> neg_integer()
+      assert -1      == -1..1 <~> neg_integer()
+      assert 1..47   == -47..47 <~> pos_integer()
+      assert 1       == -1..1 <~> pos_integer()
+      assert 0..47   == -47..47 <~> non_neg_integer()
+      assert 0       == -1..0 <~> non_neg_integer()
 
       # positive ranges
-      assert builtin(:none) == 1..47 <~> builtin(:neg_integer)
-      assert 1..47          == 1..47 <~> builtin(:pos_integer)
-      assert 1..47          == 1..47 <~> builtin(:non_neg_integer)
+      assert none() == 1..47 <~> neg_integer()
+      assert 1..47          == 1..47 <~> pos_integer()
+      assert 1..47          == 1..47 <~> non_neg_integer()
     end
 
     test "with other ranges" do
       # disjoint left
-      assert builtin(:none) == 1..10 <~> 11..12
+      assert none() == 1..10 <~> 11..12
       # overlapping left
       assert 10             == 1..10 <~> 10..12
       assert 9..10          == 1..10 <~> 9..12
@@ -49,10 +49,10 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert 1..2           == 1..10 <~> 0..2
       assert 1              == 1..10 <~> 0..1
       #disjoint right
-      assert builtin(:none) == 1..10 <~> -1..0
+      assert none() == 1..10 <~> -1..0
 
       # symmetrical to above
-      assert builtin(:none) == 11..12 <~> 1..10
+      assert none() == 11..12 <~> 1..10
       assert 10             == 10..12 <~> 1..10
       assert 9..10          == 9..12 <~>  1..10
       assert 1..10          == 1..12 <~>  1..10
@@ -60,24 +60,24 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert 1..10          == 0..10 <~>  1..10
       assert 1..2           == 0..2 <~>   1..10
       assert 1              == 0..1 <~>   1..10
-      assert builtin(:none) == -1..0 <~>  1..10
+      assert none() == -1..0 <~>  1..10
     end
 
     test "with integers" do
-      assert builtin(:none) == 1..10 <~> -42
+      assert none() == 1..10 <~> -42
       assert 47 == 0..255 <~> 47
-      assert builtin(:none) == 1..10 <~> 42
+      assert none() == 1..10 <~> 42
     end
 
     test "with unions works as expected" do
       assert (1 <|> 9..10) == 1..10 <~> (0..1 <|> 9..15)
-      assert builtin(:none) == 1..10 <~> (builtin(:atom) <|> builtin(:port))
+      assert none() == 1..10 <~> (atom() <|> port())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([-10..10, builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer)])
+      TypeTest.Targets.except([-10..10, pos_integer(), non_neg_integer(), integer()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == 1..10 <~> target
+        assert none() == 1..10 <~> target
       end)
     end
   end

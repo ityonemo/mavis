@@ -15,7 +15,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "literal/1" do
-    assert {:ok, list(builtin(:integer))} == Type.fetch_type(@source, :literal_1)
+    assert {:ok, list(integer())} == Type.fetch_type(@source, :literal_1)
   end
 
   test "nonempty any list" do
@@ -23,43 +23,43 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "nonempty typed list" do
-    assert {:ok, list(builtin(:integer), ...)} == Type.fetch_type(@source, :nonempty_typed)
+    assert {:ok, list(integer(), ...)} == Type.fetch_type(@source, :nonempty_typed)
   end
 
   test "keyword/1 literal list" do
-    foo_integer = tuple({:foo, builtin(:integer)})
+    foo_integer = tuple({:foo, integer()})
     assert {:ok, list(foo_integer)} == Type.fetch_type(@source, :keyword_literal)
   end
 
   test "keyword/2 literal list" do
-    keyword_type = tuple({:foo, builtin(:integer)}) <|> tuple({:bar, builtin(:float)})
+    keyword_type = tuple({:foo, integer()}) <|> tuple({:bar, float()})
     assert {:ok, list(keyword_type)} == Type.fetch_type(@source, :keyword_2_literal)
   end
 
   test "list/0" do
-    assert {:ok, builtin(:list)} == Type.fetch_type(@source, :list_0)
+    assert {:ok, list()} == Type.fetch_type(@source, :list_0)
   end
 
   test "list/1" do
-    assert {:ok, list(builtin(:integer))} == Type.fetch_type(@source, :list_1)
+    assert {:ok, list(integer())} == Type.fetch_type(@source, :list_1)
   end
 
   test "nonempty_list/1" do
-    assert {:ok, list(builtin(:integer), ...)} == Type.fetch_type(@source, :nonempty_list_1)
+    assert {:ok, list(integer(), ...)} == Type.fetch_type(@source, :nonempty_list_1)
   end
 
   test "maybe_improper_list/2" do
-    assert {:ok, %List{type: builtin(:integer), final: (nil <|> [])}} ==
+    assert {:ok, %List{type: integer(), final: (nil <|> [])}} ==
       Type.fetch_type(@source, :maybe_improper_list_2)
   end
 
   test "nonempty_improper_list/2" do
-    assert {:ok, %List{type: builtin(:integer), nonempty: true, final: nil}} ==
+    assert {:ok, %List{type: integer(), nonempty: true, final: nil}} ==
       Type.fetch_type(@source, :nonempty_improper_list_2)
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, %List{type: builtin(:integer), nonempty: true, final: (nil <|> [])}} ==
+    assert {:ok, %List{type: integer(), nonempty: true, final: (nil <|> [])}} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_2)
   end
 
@@ -72,12 +72,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "keyword/0" do
-    assert {:ok, list(tuple({builtin(:atom), builtin(:any)}))} ==
+    assert {:ok, list(tuple({atom(), any()}))} ==
       Type.fetch_type(@source, :keyword_0)
   end
 
   test "keyword/1" do
-    assert {:ok, list(tuple({builtin(:atom), builtin(:integer)}))} ==
+    assert {:ok, list(tuple({atom(), integer()}))} ==
       Type.fetch_type(@source, :keyword_1)
   end
 
@@ -87,12 +87,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "maybe_improper_list/0" do
-    assert {:ok, %List{final: builtin(:any)}} ==
+    assert {:ok, %List{final: any()}} ==
       Type.fetch_type(@source, :maybe_improper_list_0)
   end
 
   test "nonempty_maybe_improper_list/0" do
-    assert {:ok, %List{final: builtin(:any), nonempty: true}} ==
+    assert {:ok, %List{final: any(), nonempty: true}} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_0)
   end
 end

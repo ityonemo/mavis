@@ -9,288 +9,288 @@ defmodule TypeTest.Builtin.SubtypeTest do
 
   describe "builtin none" do
     test "is a subtype of itself" do
-      assert builtin(:none) in builtin(:none)
+      assert none() in none()
     end
 
     test "is not a subtype of any" do
-      refute builtin(:none) in builtin(:any)
+      refute none() in any()
     end
 
-    test "is a subtype of a union with itself" do
-      assert builtin(:none) in (builtin(:none) <|> builtin(:integer))
+    test "can be subtype of a union with itself" do
+      assert none() in Type.union([none(), integer()], preserve_nones: true)
     end
 
     test "is not a subtype of all types" do
       TypeTest.Targets.except()
       |> Enum.each(fn target ->
-        refute builtin(:none) in target
+        refute none() in target
       end)
     end
   end
 
   describe "builtin neg_integer" do
     test "is a subtype of itself" do
-      assert builtin(:neg_integer) in builtin(:neg_integer)
+      assert neg_integer() in neg_integer()
     end
 
     test "is a subtype of integer and any" do
-      assert builtin(:neg_integer) in builtin(:integer)
-      assert builtin(:neg_integer) in builtin(:any)
+      assert neg_integer() in integer()
+      assert neg_integer() in any()
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:neg_integer) in (builtin(:neg_integer) <|> builtin(:atom))
-      assert builtin(:neg_integer) in (builtin(:integer) <|> builtin(:atom))
+      assert neg_integer() in (neg_integer() <|> atom())
+      assert neg_integer() in (integer() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:neg_integer) in (builtin(:pid) <|> builtin(:atom))
-      refute builtin(:neg_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute neg_integer() in (pid() <|> atom())
+      refute neg_integer() in (pid() <|> atom())
     end
 
     test "is not a subtype of all types" do
-      TypeTest.Targets.except([builtin(:neg_integer), builtin(:integer)])
+      TypeTest.Targets.except([neg_integer(), integer()])
       |> Enum.each(fn target ->
-        refute builtin(:neg_integer) in target
+        refute neg_integer() in target
       end)
     end
   end
 
   describe "builtin pos_integer" do
     test "is a subtype of itself" do
-      assert builtin(:pos_integer) in builtin(:pos_integer)
+      assert pos_integer() in pos_integer()
     end
 
     test "is a subtype of integer and any" do
-      assert builtin(:pos_integer) in builtin(:non_neg_integer)
-      assert builtin(:pos_integer) in builtin(:integer)
-      assert builtin(:pos_integer) in builtin(:any)
+      assert pos_integer() in non_neg_integer()
+      assert pos_integer() in integer()
+      assert pos_integer() in any()
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:pos_integer) in (builtin(:pos_integer) <|> builtin(:atom))
-      assert builtin(:pos_integer) in (builtin(:non_neg_integer) <|> builtin(:atom))
-      assert builtin(:pos_integer) in (builtin(:integer) <|> builtin(:atom))
+      assert pos_integer() in (pos_integer() <|> atom())
+      assert pos_integer() in (non_neg_integer() <|> atom())
+      assert pos_integer() in (integer() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:pos_integer) in (builtin(:pid) <|> builtin(:atom))
-      refute builtin(:pos_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute pos_integer() in (pid() <|> atom())
+      refute pos_integer() in (pid() <|> atom())
     end
 
     test "is not a subtype of all types" do
-      TypeTest.Targets.except([builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer)])
+      TypeTest.Targets.except([pos_integer(), non_neg_integer(), integer()])
       |> Enum.each(fn target ->
-        refute builtin(:pos_integer) in target
+        refute pos_integer() in target
       end)
     end
   end
 
   describe "builtin non_neg_integer" do
     test "is a subtype of itself" do
-      assert builtin(:non_neg_integer) in builtin(:non_neg_integer)
+      assert non_neg_integer() in non_neg_integer()
     end
 
     test "is a subtype of integer and any" do
-      assert builtin(:non_neg_integer) in builtin(:integer)
-      assert builtin(:non_neg_integer) in builtin(:any)
+      assert non_neg_integer() in integer()
+      assert non_neg_integer() in any()
     end
 
     test "is a subtype of unions with itself and integer" do
-      assert builtin(:non_neg_integer) in (builtin(:non_neg_integer) <|> builtin(:atom))
-      assert builtin(:non_neg_integer) in (builtin(:integer) <|> builtin(:atom))
+      assert non_neg_integer() in (non_neg_integer() <|> atom())
+      assert non_neg_integer() in (integer() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:non_neg_integer) in (builtin(:pid) <|> builtin(:atom))
-      refute builtin(:non_neg_integer) in (builtin(:pid) <|> builtin(:atom))
+      refute non_neg_integer() in (pid() <|> atom())
+      refute non_neg_integer() in (pid() <|> atom())
     end
 
     test "is not a subtype of all types" do
-      TypeTest.Targets.except([builtin(:non_neg_integer), builtin(:integer)])
+      TypeTest.Targets.except([non_neg_integer(), integer()])
       |> Enum.each(fn target ->
-        refute builtin(:non_neg_integer) in target
+        refute non_neg_integer() in target
       end)
     end
   end
 
   describe "builtin integer" do
     test "is a subtype of itself" do
-      assert builtin(:integer) in builtin(:integer)
+      assert integer() in integer()
     end
 
     test "is a subtype of integer and any" do
-      assert builtin(:integer) in builtin(:integer)
-      assert builtin(:integer) in builtin(:any)
+      assert integer() in integer()
+      assert integer() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:integer) in (builtin(:integer) <|> builtin(:atom))
+      assert integer() in (integer() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:integer) in (builtin(:pid) <|> builtin(:atom))
+      refute integer() in (pid() <|> atom())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:integer)])
+      TypeTest.Targets.except([integer()])
       |> Enum.each(fn target ->
-        refute builtin(:integer) in target
+        refute integer() in target
       end)
     end
   end
 
   describe "builtin float" do
     test "is a subtype of itself and any" do
-      assert builtin(:float) in builtin(:float)
-      assert builtin(:float) in builtin(:any)
+      assert float() in float()
+      assert float() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:float) in (builtin(:float) <|> builtin(:atom))
+      assert float() in (float() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:float) in (builtin(:pid) <|> builtin(:atom))
+      refute float() in (pid() <|> atom())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:float)])
+      TypeTest.Targets.except([float()])
       |> Enum.each(fn target ->
-        refute builtin(:float) in target
+        refute float() in target
       end)
     end
   end
 
   describe "builtin node" do
     test "is a subtype of itself, atom, and any" do
-      assert builtin(:node) in builtin(:node)
-      assert builtin(:node) in builtin(:atom)
-      assert builtin(:node) in builtin(:any)
+      assert node_type() in node_type()
+      assert node_type() in atom()
+      assert node_type() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:node) in (builtin(:integer) <|> builtin(:node))
+      assert node_type() in (integer() <|> node_type())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:node) in (builtin(:pid) <|> builtin(:integer))
+      refute node_type() in (pid() <|> integer())
     end
   end
 
   describe "builtin module" do
     test "is a subtype of itself, atom, and any" do
-      assert builtin(:module) in builtin(:module)
-      assert builtin(:module) in builtin(:atom)
-      assert builtin(:module) in builtin(:any)
+      assert module() in module()
+      assert module() in atom()
+      assert module() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:module) in (builtin(:integer) <|> builtin(:module))
+      assert module() in (integer() <|> module())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:module) in (builtin(:pid) <|> builtin(:integer))
+      refute module() in (pid() <|> integer())
     end
   end
 
   describe "builtin atom" do
     test "is a subtype of itself and any" do
-      assert builtin(:atom) in builtin(:atom)
-      assert builtin(:atom) in builtin(:any)
+      assert atom() in atom()
+      assert atom() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:atom) in (builtin(:integer) <|> builtin(:atom))
+      assert atom() in (integer() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:atom) in (builtin(:pid) <|> builtin(:integer))
+      refute atom() in (pid() <|> integer())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:atom)])
+      TypeTest.Targets.except([atom()])
       |> Enum.each(fn target ->
-        refute builtin(:atom) in target
+        refute atom() in target
       end)
     end
   end
 
   describe "builtin reference" do
     test "is a subtype of itself ati aty" do
-      assert builtin(:reference) in builtin(:reference)
-      assert builtin(:reference) in builtin(:any)
+      assert reference() in reference()
+      assert reference() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:reference) in (builtin(:reference) <|> builtin(:atom))
+      assert reference() in (reference() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:reference) in (builtin(:pid) <|> builtin(:atom))
+      refute reference() in (pid() <|> atom())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:reference)])
+      TypeTest.Targets.except([reference()])
       |> Enum.each(fn target ->
-        refute builtin(:reference) in target
+        refute reference() in target
       end)
     end
   end
 
   describe "builtin port" do
     test "is a subtype of itself and any" do
-      assert builtin(:port) in builtin(:port)
-      assert builtin(:port) in builtin(:any)
+      assert port() in port()
+      assert port() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:port) in (builtin(:port) <|> builtin(:atom))
+      assert port() in (port() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:port) in (builtin(:pid) <|> builtin(:atom))
+      refute port() in (pid() <|> atom())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:port)])
+      TypeTest.Targets.except([port()])
       |> Enum.each(fn target ->
-        refute builtin(:port) in target
+        refute port() in target
       end)
     end
   end
 
   describe "builtin pid" do
     test "is a subtype of itself and any" do
-      assert builtin(:pid) in builtin(:pid)
-      assert builtin(:pid) in builtin(:any)
+      assert pid() in pid()
+      assert pid() in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert builtin(:pid) in (builtin(:pid) <|> builtin(:atom))
+      assert pid() in (pid() <|> atom())
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute builtin(:pid) in (builtin(:integer) <|> builtin(:atom))
+      refute pid() in (integer() <|> atom())
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:pid)])
+      TypeTest.Targets.except([pid()])
       |> Enum.each(fn target ->
-        refute builtin(:pid) in target
+        refute pid() in target
       end)
     end
   end
 
   describe "builtin any" do
     test "is a subtype of itself" do
-      assert builtin(:any) in builtin(:any)
+      assert any() in any()
     end
 
     test "is not a subtype of all other types" do
-      TypeTest.Targets.except([builtin(:any)])
+      TypeTest.Targets.except([any()])
       |> Enum.each(fn target ->
-        refute builtin(:any) in target
+        refute any() in target
       end)
     end
   end

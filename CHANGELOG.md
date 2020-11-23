@@ -1,9 +1,24 @@
 # Changelog
 
+## 0.0.6
+- deprecates `Type.builtin/1` and switches to macros for each type.
+- renames `Type.select_builtin/1` to `Type.builtin/1` which can serve
+  as bridging functionality.
+- changes union behaviour to ignore `t:none()`, with an opt-in for
+  explicitness
+- fixes `c:Type.Inference.Api.infer/3`
+- adds merging behaviour for bitstrings and functions
+- adds essays on deviations from erlang and Elixir
+- adds `Type.normalize/1` which takes deviations and conforms them to
+  dialyzer forms.
+- removes inferred field on `t:Type.Function.t/0`.
+- supports pinned types on top of min-arity tuples, changes tuple struct
+  implementation for these combined purposes.
+
 ## 0.0.5
 - deprecate `Type.Union.of/2`, use `Type.union/2` instead
-- change `builtin(:non_neg_integer)` from a true builtin to an aliased builtin.
-- change `builtin(:integer)` from a true builtin to an aliased builtin
+- change `non_neg_integer()` from a true builtin to an aliased builtin.
+- change `integer()` from a true builtin to an aliased builtin
 - adds `Type.map/1`, `Type.tuple/1`, and `Type.function/1` macros
 - adds `Type.is_singleton/1` guard
 - fixes tuple union merging rules and makes function union merging rules

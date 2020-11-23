@@ -9,8 +9,8 @@ defmodule TypeTest.TypeUnion.OrderTest do
 
   describe "a union" do
     test "is bigger than bottom and pid" do
-      assert (1 <|> :foo) > builtin(:none)
-      assert (1 <|> :foo) < builtin(:any)
+      assert (1 <|> :foo) > none()
+      assert (1 <|> :foo) < any()
     end
 
     test "is just bigger than its biggest element" do
@@ -27,7 +27,7 @@ defmodule TypeTest.TypeUnion.OrderTest do
     end
 
     test "is bigger when it's categorically bigger" do
-      assert (1 <|> builtin(:atom)) > builtin(:atom)
+      assert (1 <|> atom()) > atom()
       assert (1 <|> :atom) > :atom
     end
 

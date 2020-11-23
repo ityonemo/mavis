@@ -11,9 +11,9 @@ defmodule TypeTest.Remote.UsableAsTest do
 
   describe "String.t" do
     test "is usable as any, basic types and self" do
-      assert :ok = remote(String.t()) ~> builtin(:any)
-      assert :ok = remote(String.t()) ~> builtin(:bitstring)
-      assert :ok = remote(String.t()) ~> builtin(:binary)
+      assert :ok = remote(String.t()) ~> any()
+      assert :ok = remote(String.t()) ~> bitstring()
+      assert :ok = remote(String.t()) ~> binary()
       assert :ok = remote(String.t()) ~> remote(String.t())
     end
 
@@ -44,9 +44,9 @@ defmodule TypeTest.Remote.UsableAsTest do
 
   describe "String.t/1" do
     test "is usable as any, basic types and self" do
-      assert :ok = remote(String.t(3)) ~> builtin(:any)
-      assert :ok = remote(String.t(3)) ~> builtin(:bitstring)
-      assert :ok = remote(String.t(3)) ~> builtin(:binary)
+      assert :ok = remote(String.t(3)) ~> any()
+      assert :ok = remote(String.t(3)) ~> bitstring()
+      assert :ok = remote(String.t(3)) ~> binary()
       assert :ok = remote(String.t(3)) ~> remote(String.t())
       assert :ok = remote(String.t(3)) ~> remote(String.t(3))
     end
@@ -73,7 +73,7 @@ defmodule TypeTest.Remote.UsableAsTest do
 
   describe "bitstring types" do
     test "are maybe usable as String.t" do
-      assert {:maybe, [msg]} = builtin(:binary) ~> remote(String.t())
+      assert {:maybe, [msg]} = binary() ~> remote(String.t())
       assert msg.meta[:message] =~ "remote encapsulation"
     end
 

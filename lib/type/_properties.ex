@@ -13,6 +13,9 @@ defprotocol Type.Properties do
 
   @spec intersection(Type.t, Type.t) :: Type.t
   def intersection(type, type)
+
+  @spec normalize(Type.t) :: Type.t
+  def normalize(type)
 end
 
 defimpl Type.Properties, for: Integer do
@@ -21,8 +24,8 @@ defimpl Type.Properties, for: Integer do
   use Type.Helpers
 
   group_compare do
-    def group_compare(left, builtin(:neg_integer)),       do: (if left >= 0, do: :gt, else: :lt)
-    def group_compare(_, builtin(:pos_integer)),          do: :lt
+    def group_compare(left, neg_integer()),       do: (if left >= 0, do: :gt, else: :lt)
+    def group_compare(_, pos_integer()),          do: :lt
     def group_compare(left, _..last),                     do: (if left > last, do: :gt, else: :lt)
     def group_compare(left, right) when is_integer(right) do
       cond do
@@ -38,14 +41,14 @@ defimpl Type.Properties, for: Integer do
 
   usable_as do
     def usable_as(i, a..b, _) when a <= i and i <= b,           do: :ok
-    def usable_as(i, builtin(:pos_integer), _) when i > 0,      do: :ok
-    def usable_as(i, builtin(:neg_integer), _) when i < 0,      do: :ok
+    def usable_as(i, pos_integer(), _) when i > 0,      do: :ok
+    def usable_as(i, neg_integer(), _) when i < 0,      do: :ok
   end
 
   intersection do
     def intersection(i, a..b) when a <= i and i <= b, do: i
-    def intersection(i, builtin(:neg_integer)) when i < 0, do: i
-    def intersection(i, builtin(:pos_integer)) when i > 0, do: i
+    def intersection(i, neg_integer()) when i < 0, do: i
+    def intersection(i, pos_integer()) when i > 0, do: i
   end
 
   subtype :usable_as
@@ -57,8 +60,8 @@ defimpl Type.Properties, for: Range do
   use Type.Helpers
 
   group_compare do
-    def group_compare(_, builtin(:pos_integer)),              do: :lt
-    def group_compare(_..last, builtin(:neg_integer)),        do: (if last >= 0, do: :gt, else: :lt)
+    def group_compare(_, pos_integer()),              do: :lt
+    def group_compare(_..last, neg_integer()),        do: (if last >= 0, do: :gt, else: :lt)
     def group_compare(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
     def group_compare(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
     def group_compare(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
@@ -78,13 +81,13 @@ defimpl Type.Properties, for: Range do
   end
 
   usable_as do
-    def usable_as(a.._, builtin(:pos_integer), _) when a > 0,      do: :ok
-    def usable_as(_..a, builtin(:neg_integer), _) when a < 0,      do: :ok
-    def usable_as(a..b, builtin(:pos_integer), meta) when b > 0 do
-      {:maybe, [Type.Message.make(a..b, builtin(:pos_integer), meta)]}
+    def usable_as(a.._, pos_integer(), _) when a > 0,      do: :ok
+    def usable_as(_..a, neg_integer(), _) when a < 0,      do: :ok
+    def usable_as(a..b, pos_integer(), meta) when b > 0 do
+      {:maybe, [Type.Message.make(a..b, pos_integer(), meta)]}
     end
-    def usable_as(a..b, builtin(:neg_integer), meta) when a < 0 do
-      {:maybe, [Type.Message.make(a..b, builtin(:neg_integer), meta)]}
+    def usable_as(a..b, neg_integer(), meta) when a < 0 do
+      {:maybe, [Type.Message.make(a..b, neg_integer(), meta)]}
     end
     def usable_as(a..b, target, meta)
         when is_integer(target) and a <= target and target <= b do
@@ -104,10 +107,9 @@ defimpl Type.Properties, for: Range do
       # range.
       list
       |> Enum.map(&Type.intersection(&1, range))
-      |> Enum.reject(&(&1 == builtin(:none)))
-      |> Enum.into(%Type.Union{})
+      |> Type.union
       |> case do
-        builtin(:none) -> {:error, Type.Message.make(range, union, meta)}
+        none() -> {:error, Type.Message.make(range, union, meta)}
         ^range -> :ok
         _ -> {:maybe, [Type.Message.make(range, union, meta)]}
       end
@@ -120,19 +122,19 @@ defimpl Type.Properties, for: Range do
     def intersection(_..a, a.._), do: a
     def intersection(a..b, c..d) do
       case {a >= c, a > d, b < c, b <= d} do
-        {_,     x, y, _} when x or y -> builtin(:none)
+        {_,     x, y, _} when x or y -> none()
         {false, _, _, true}  -> c..b
         {true,  _, _, true}  -> a..b
         {true,  _, _, false} -> a..d
         {false, _, _, false} -> c..d
       end
     end
-    def intersection(a..b,  builtin(:neg_integer)) when b < 0, do: a..b
-    def intersection(-1.._, builtin(:neg_integer)), do: -1
-    def intersection(a.._,  builtin(:neg_integer)) when a < 0, do: a..-1
-    def intersection(a..b,  builtin(:pos_integer)) when a > 0, do: a..b
-    def intersection(_..1,  builtin(:pos_integer)), do: 1
-    def intersection(_..a,  builtin(:pos_integer)) when a > 1, do: 1..a
+    def intersection(a..b,  neg_integer()) when b < 0, do: a..b
+    def intersection(-1.._, neg_integer()), do: -1
+    def intersection(a.._,  neg_integer()) when a < 0, do: a..-1
+    def intersection(a..b,  pos_integer()) when a > 0, do: a..b
+    def intersection(_..1,  pos_integer()), do: 1
+    def intersection(_..a,  pos_integer()) when a > 1, do: 1..a
   end
 
   subtype :usable_as
@@ -146,35 +148,35 @@ defimpl Type.Properties, for: Atom do
   alias Type.Message
 
   group_compare do
-    def group_compare(_, builtin(:atom)), do: :lt
+    def group_compare(_, atom()), do: :lt
     def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
   end
 
   usable_as do
-    def usable_as(_, builtin(:atom), _), do: :ok
-    def usable_as(atom, builtin(:node), meta) do
+    def usable_as(_, atom(), _), do: :ok
+    def usable_as(atom, node_type(), meta) do
       if Type.Properties.Type.valid_node?(atom) do
         :ok
       else
-        {:error, Message.make(atom, builtin(:node), meta)}
+        {:error, Message.make(atom, node_type(), meta)}
       end
     end
-    def usable_as(atom, builtin(:module), meta) do
+    def usable_as(atom, module(), meta) do
       if Type.Properties.Type.valid_module?(atom) do
         :ok
       else
-        {:maybe, [Message.make(atom, builtin(:module), meta)]}
+        {:maybe, [Message.make(atom, module(), meta)]}
       end
     end
   end
 
   intersection do
-    def intersection(atom, builtin(:atom)), do: atom
-    def intersection(atom, builtin(:node)) do
-      if Type.Properties.Type.valid_node?(atom), do: atom, else: builtin(:none)
+    def intersection(atom, atom()), do: atom
+    def intersection(atom, node_type()) do
+      if Type.Properties.Type.valid_node?(atom), do: atom, else: none()
     end
-    def intersection(atom, builtin(:module)) do
-      if Type.Properties.Type.valid_module?(atom), do: atom, else: builtin(:none)
+    def intersection(atom, module()) do
+      if Type.Properties.Type.valid_module?(atom), do: atom, else: none()
     end
   end
 
@@ -196,7 +198,7 @@ defimpl Type.Properties, for: List do
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
-    def usable_as([], builtin(:iolist), _), do: :ok
+    def usable_as([], iolist(), _), do: :ok
     def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
       raise "any list other than the empty list [] is an invalid type!"
     end
@@ -204,7 +206,7 @@ defimpl Type.Properties, for: List do
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
-    def intersection([], builtin(:iolist)), do: Type.Iolist.intersection_with([])
+    def intersection([], iolist()), do: Type.Iolist.intersection_with([])
     def intersection(list, _) when is_list(list) and length(list) > 0  do
       raise "any list other than the empty list [] is an invalid type!"
     end

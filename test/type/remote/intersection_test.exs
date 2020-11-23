@@ -13,7 +13,7 @@ defmodule TypeTest.Remote.IntersectionTest do
   describe "the intersection of String.t" do
     test "with itself and any is itself" do
       assert remote(String.t()) == remote(String.t()) <~> remote(String.t())
-      assert remote(String.t()) == builtin(:any) <~> remote(String.t())
+      assert remote(String.t()) == any() <~> remote(String.t())
     end
 
     test "with empty bitstring is empty bitstring" do
@@ -24,7 +24,7 @@ defmodule TypeTest.Remote.IntersectionTest do
     test "with all other types is none" do
       TypeTest.Targets.except([@empty_bitstring])
       |> Enum.each(fn target ->
-        assert builtin(:none) == remote(String.t()) <~> target
+        assert none() == remote(String.t()) <~> target
       end)
     end
   end
@@ -33,7 +33,7 @@ defmodule TypeTest.Remote.IntersectionTest do
     test "with itself, string, and any is itself" do
       assert remote(String.t(3)) == remote(String.t(3)) <~> remote(String.t(3))
       assert remote(String.t(3)) == remote(String.t(3)) <~> remote(String.t)
-      assert remote(String.t(3)) == builtin(:any) <~> remote(String.t(3))
+      assert remote(String.t(3)) == any() <~> remote(String.t(3))
     end
 
     test "with correctly sized bitstring is itself" do
@@ -41,12 +41,12 @@ defmodule TypeTest.Remote.IntersectionTest do
     end
 
     test "with empty bitstring is nothing" do
-      assert builtin(:none) == remote(String.t(3)) <~> @empty_bitstring
-      assert builtin(:none) == @empty_bitstring <~> remote(String.t(3))
+      assert none() == remote(String.t(3)) <~> @empty_bitstring
+      assert none() == @empty_bitstring <~> remote(String.t(3))
     end
 
     test "with wrongly sized string is nothing" do
-      assert builtin(:none) == remote(String.t(3)) <~> remote(String.t(4))
+      assert none() == remote(String.t(3)) <~> remote(String.t(4))
     end
   end
 end

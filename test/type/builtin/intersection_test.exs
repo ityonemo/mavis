@@ -10,7 +10,7 @@ defmodule TypeTest.Builtin.IntersectionTest do
     test "with all other types is none" do
       TypeTest.Targets.except()
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:none) <~> target
+        assert none() == none() <~> target
       end)
     end
   end
@@ -19,260 +19,260 @@ defmodule TypeTest.Builtin.IntersectionTest do
     test "with all other types is itself" do
       TypeTest.Targets.except()
       |> Enum.each(fn target ->
-        assert target == builtin(:any) <~> target
+        assert target == any() <~> target
       end)
     end
   end
 
   describe "the intersection of neg_integer" do
     test "with any, integer, and neg_integer is itself" do
-      assert builtin(:neg_integer) == builtin(:neg_integer) <~> builtin(:any)
-      assert builtin(:neg_integer) == builtin(:neg_integer) <~> builtin(:integer)
-      assert builtin(:neg_integer) == builtin(:neg_integer) <~> builtin(:neg_integer)
+      assert neg_integer() == neg_integer() <~> any()
+      assert neg_integer() == neg_integer() <~> integer()
+      assert neg_integer() == neg_integer() <~> neg_integer()
     end
 
     test "with integers yields the integer only for negative integers" do
-      assert -47 == builtin(:neg_integer) <~> -47
-      assert builtin(:none) == builtin(:neg_integer) <~> 47
+      assert -47 == neg_integer() <~> -47
+      assert none() == neg_integer() <~> 47
     end
 
     test "with ranges trim as expected" do
-      assert -47..-1        == builtin(:neg_integer) <~> -47..-1
-      assert -47..-1        == builtin(:neg_integer) <~> -47..47
-      assert -1             == builtin(:neg_integer) <~> -1..47
-      assert builtin(:none) == builtin(:neg_integer) <~> 1..47
+      assert -47..-1        == neg_integer() <~> -47..-1
+      assert -47..-1        == neg_integer() <~> -47..47
+      assert -1             == neg_integer() <~> -1..47
+      assert none() == neg_integer() <~> 1..47
     end
 
     test "with unions works as expected" do
-      assert -10..-1 == builtin(:neg_integer) <~> (-10..10 <|> 15..16)
-      assert builtin(:none) == builtin(:neg_integer) <~> (1..10 <|> 12..16)
+      assert -10..-1 == neg_integer() <~> (-10..10 <|> 15..16)
+      assert none() == neg_integer() <~> (1..10 <|> 12..16)
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([-47, builtin(:neg_integer), builtin(:integer), -10..10])
+      TypeTest.Targets.except([-47, neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:neg_integer) <~> target
+        assert none() == neg_integer() <~> target
       end)
     end
   end
 
   describe "the intersection of pos_integer" do
     test "with any, integer, and pos_integer, and non_neg_integer is itself" do
-      assert builtin(:pos_integer) == builtin(:pos_integer) <~> builtin(:any)
-      assert builtin(:pos_integer) == builtin(:pos_integer) <~> builtin(:integer)
-      assert builtin(:pos_integer) == builtin(:pos_integer) <~> builtin(:non_neg_integer)
-      assert builtin(:pos_integer) == builtin(:pos_integer) <~> builtin(:pos_integer)
+      assert pos_integer() == pos_integer() <~> any()
+      assert pos_integer() == pos_integer() <~> integer()
+      assert pos_integer() == pos_integer() <~> non_neg_integer()
+      assert pos_integer() == pos_integer() <~> pos_integer()
     end
 
     test "with integers yields the integer only for negative integers" do
-      assert 47 == builtin(:pos_integer) <~> 47
-      assert builtin(:none) == builtin(:pos_integer) <~> -47
+      assert 47 == pos_integer() <~> 47
+      assert none() == pos_integer() <~> -47
     end
 
     test "with ranges trim as expected" do
-      assert 1..47          == builtin(:pos_integer) <~> 1..47
-      assert 1..47          == builtin(:pos_integer) <~> -47..47
-      assert 1              == builtin(:pos_integer) <~> -47..1
-      assert builtin(:none) == builtin(:pos_integer) <~> -47..-1
+      assert 1..47          == pos_integer() <~> 1..47
+      assert 1..47          == pos_integer() <~> -47..47
+      assert 1              == pos_integer() <~> -47..1
+      assert none() == pos_integer() <~> -47..-1
     end
 
     test "with unions works as expected" do
-      assert (1..10 <|> 15..16) == builtin(:pos_integer) <~> (-10..10 <|> 15..16)
-      assert builtin(:none) == builtin(:pos_integer) <~> (:foo <|> -42)
+      assert (1..10 <|> 15..16) == pos_integer() <~> (-10..10 <|> 15..16)
+      assert none() == pos_integer() <~> (:foo <|> -42)
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([47, builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer), -10..10])
+      TypeTest.Targets.except([47, pos_integer(), non_neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:pos_integer) <~> target
+        assert none() == pos_integer() <~> target
       end)
     end
   end
 
   describe "the intersection of non_neg_integer" do
     test "with any, integer, and non_neg_integer is itself" do
-      assert builtin(:non_neg_integer) == builtin(:non_neg_integer) <~> builtin(:any)
-      assert builtin(:non_neg_integer) == builtin(:non_neg_integer) <~> builtin(:integer)
-      assert builtin(:non_neg_integer) == builtin(:non_neg_integer) <~> builtin(:non_neg_integer)
+      assert non_neg_integer() == non_neg_integer() <~> any()
+      assert non_neg_integer() == non_neg_integer() <~> integer()
+      assert non_neg_integer() == non_neg_integer() <~> non_neg_integer()
     end
 
     test "with pos_integer is pos_integer" do
-      assert builtin(:pos_integer) == builtin(:non_neg_integer) <~> builtin(:pos_integer)
+      assert pos_integer() == non_neg_integer() <~> pos_integer()
     end
 
     test "with integers yields the integer only for negative integers" do
-      assert 47 == builtin(:non_neg_integer) <~> 47
-      assert 0 == builtin(:non_neg_integer) <~> 0
-      assert builtin(:none) == builtin(:non_neg_integer) <~> -47
+      assert 47 == non_neg_integer() <~> 47
+      assert 0 == non_neg_integer() <~> 0
+      assert none() == non_neg_integer() <~> -47
     end
 
     test "with ranges trim as expected" do
-      assert 0..47          == builtin(:non_neg_integer) <~> 0..47
-      assert 0..47          == builtin(:non_neg_integer) <~> -47..47
-      assert 0              == builtin(:non_neg_integer) <~> -47..0
-      assert builtin(:none) == builtin(:non_neg_integer) <~> -47..-1
+      assert 0..47          == non_neg_integer() <~> 0..47
+      assert 0..47          == non_neg_integer() <~> -47..47
+      assert 0              == non_neg_integer() <~> -47..0
+      assert none() == non_neg_integer() <~> -47..-1
     end
 
     test "with unions works as expected" do
-      assert (0..10 <|> 15..16) == builtin(:non_neg_integer) <~> (-10..10 <|> 15..16)
-      assert builtin(:none) == builtin(:non_neg_integer) <~> (:foo <|> -42)
+      assert (0..10 <|> 15..16) == non_neg_integer() <~> (-10..10 <|> 15..16)
+      assert none() == non_neg_integer() <~> (:foo <|> -42)
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([0, 47, builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer), -10..10])
+      TypeTest.Targets.except([0, 47, pos_integer(), non_neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:non_neg_integer) <~> target
+        assert none() == non_neg_integer() <~> target
       end)
     end
   end
 
   describe "the intersection of integer" do
     test "with any, integer is itself" do
-      assert builtin(:integer) == builtin(:integer) <~> builtin(:any)
-      assert builtin(:integer) == builtin(:integer) <~> builtin(:integer)
+      assert integer() == integer() <~> any()
+      assert integer() == integer() <~> integer()
     end
 
     test "with integer subtypes is themselves" do
-      [47, -47..47, builtin(:neg_integer), builtin(:pos_integer), builtin(:non_neg_integer)]
+      [47, -47..47, neg_integer(), pos_integer(), non_neg_integer()]
       |> Enum.each(fn type ->
-        assert type == builtin(:integer) <~> type
+        assert type == integer() <~> type
       end)
     end
 
     test "with unions works as expected" do
-      assert (-10..10 <|> 15..16) == builtin(:integer) <~> (-10..10 <|> 15..16)
-      assert builtin(:none) == builtin(:integer) <~> (:foo <|> builtin(:pid))
+      assert (-10..10 <|> 15..16) == integer() <~> (-10..10 <|> 15..16)
+      assert none() == integer() <~> (:foo <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([-47, 0, 47, builtin(:neg_integer), builtin(:pos_integer), builtin(:non_neg_integer), builtin(:integer), -10..10])
+      TypeTest.Targets.except([-47, 0, 47, neg_integer(), pos_integer(), non_neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:integer) <~> target
+        assert none() == integer() <~> target
       end)
     end
   end
 
   describe "the intersection of float" do
     test "with any, float is itself" do
-      assert builtin(:float) == builtin(:float) <~> builtin(:any)
-      assert builtin(:float) == builtin(:float) <~> builtin(:float)
+      assert float() == float() <~> any()
+      assert float() == float() <~> float()
     end
 
     test "with unions works as expected" do
-      assert builtin(:float) == builtin(:float) <~> (builtin(:float) <|> 15..16)
-      assert builtin(:none) == builtin(:float) <~> (:foo <|> builtin(:pid))
+      assert float() == float() <~> (float() <|> 15..16)
+      assert none() == float() <~> (:foo <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([builtin(:float)])
+      TypeTest.Targets.except([float()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:float) <~> target
+        assert none() == float() <~> target
       end)
     end
   end
 
   describe "the intersection of module" do
     test "with any, atom, and itself is itself" do
-      assert builtin(:module) == builtin(:module) <~> builtin(:any)
-      assert builtin(:module) == builtin(:module) <~> builtin(:atom)
-      assert builtin(:module) == builtin(:module) <~> builtin(:module)
+      assert module() == module() <~> any()
+      assert module() == module() <~> atom()
+      assert module() == module() <~> module()
     end
 
     test "with an atom that is a module is itself" do
-      assert Kernel == builtin(:module) <~> Kernel
-      assert builtin(:none) == builtin(:module) <~> :foobar
+      assert Kernel == module() <~> Kernel
+      assert none() == module() <~> :foobar
     end
   end
 
   describe "the intersection of node" do
     test "with any, atom, and itself is itself" do
-      assert builtin(:node) == builtin(:node) <~> builtin(:any)
-      assert builtin(:node) == builtin(:node) <~> builtin(:atom)
-      assert builtin(:node) == builtin(:node) <~> builtin(:node)
+      assert node_type() == node_type() <~> any()
+      assert node_type() == node_type() <~> atom()
+      assert node_type() == node_type() <~> node_type()
     end
 
     test "with an atom that has node form is itself" do
-      assert :nonode@nohost == builtin(:node) <~> :nonode@nohost
-      assert builtin(:none) == builtin(:node) <~> :foobar
+      assert :nonode@nohost == node_type() <~> :nonode@nohost
+      assert none() == node_type() <~> :foobar
     end
   end
 
   describe "the intersection of atom" do
     test "with any, atom is itself" do
-      assert builtin(:atom) == builtin(:atom) <~> builtin(:any)
-      assert builtin(:atom) == builtin(:atom) <~> builtin(:atom)
+      assert atom() == atom() <~> any()
+      assert atom() == atom() <~> atom()
     end
 
     test "with an actual atom is the atom" do
-      assert :foo == builtin(:atom) <~> :foo
+      assert :foo == atom() <~> :foo
     end
 
     test "with unions works as expected" do
-      assert :foo == builtin(:atom) <~> (builtin(:float) <|> :foo <|> 10..12)
-      assert builtin(:none) == builtin(:atom) <~> (builtin(:integer) <|> builtin(:pid))
+      assert :foo == atom() <~> (float() <|> :foo <|> 10..12)
+      assert none() == atom() <~> (integer() <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([:foo, builtin(:atom)])
+      TypeTest.Targets.except([:foo, atom()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:atom) <~> target
+        assert none() == atom() <~> target
       end)
     end
   end
 
   describe "the intersection of reference" do
     test "with any, reference is itself" do
-      assert builtin(:reference) == builtin(:reference) <~> builtin(:any)
-      assert builtin(:reference) == builtin(:reference) <~> builtin(:reference)
+      assert reference() == reference() <~> any()
+      assert reference() == reference() <~> reference()
     end
 
     test "with unions works as expected" do
-      assert builtin(:reference) == builtin(:reference) <~> (builtin(:reference) <|> :foo <|> 10..12)
-      assert builtin(:none) == builtin(:reference) <~> (builtin(:integer) <|> builtin(:pid))
+      assert reference() == reference() <~> (reference() <|> :foo <|> 10..12)
+      assert none() == reference() <~> (integer() <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([builtin(:reference)])
+      TypeTest.Targets.except([reference()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:reference) <~> target
+        assert none() == reference() <~> target
       end)
     end
   end
 
   describe "the intersection of port" do
     test "with any, port is itself" do
-      assert builtin(:port) == builtin(:port) <~> builtin(:any)
-      assert builtin(:port) == builtin(:port) <~> builtin(:port)
+      assert port() == port() <~> any()
+      assert port() == port() <~> port()
     end
 
     test "with unions works as expected" do
-      assert builtin(:port) == builtin(:port) <~> (builtin(:port) <|> :foo <|> 10..12)
-      assert builtin(:none) == builtin(:port) <~> (builtin(:integer) <|> builtin(:pid))
+      assert port() == port() <~> (port() <|> :foo <|> 10..12)
+      assert none() == port() <~> (integer() <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([builtin(:port)])
+      TypeTest.Targets.except([port()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:port) <~> target
+        assert none() == port() <~> target
       end)
     end
   end
 
   describe "the intersection of pid" do
     test "with any, pid is itself" do
-      assert builtin(:pid) == builtin(:pid) <~> builtin(:any)
-      assert builtin(:pid) == builtin(:pid) <~> builtin(:pid)
+      assert pid() == pid() <~> any()
+      assert pid() == pid() <~> pid()
     end
 
     test "with unions works as expected" do
-      assert builtin(:pid) == builtin(:pid) <~> (builtin(:pid) <|> :foo <|> 10..12)
-      assert builtin(:none) == builtin(:pid) <~> (builtin(:integer) <|> builtin(:port))
+      assert pid() == pid() <~> (pid() <|> :foo <|> 10..12)
+      assert none() == pid() <~> (integer() <|> port())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([builtin(:pid)])
+      TypeTest.Targets.except([pid()])
       |> Enum.each(fn target ->
-        assert builtin(:none) == builtin(:pid) <~> target
+        assert none() == pid() <~> target
       end)
     end
   end
