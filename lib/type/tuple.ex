@@ -2,32 +2,33 @@ defmodule Type.Tuple do
   @moduledoc """
   Represents tuple types.
 
-  The associated struct has one parameter:
+  The associated struct has two parameters:
   - `:elements` which may be a list of types, corresponding to the ordered
     list of tuple element types.
+  - `:fixed` which is false if the total number of elements is not known,
+    but must be at least as many as are in the `:elements` list.
 
   ### Deviations from standard Erlang/Elixir:
 
   Mavis introduces a new type (that is not expressible via dialyzer).
-  This is a tuple with minimum arity (`n`), this is represented by putting
-  the tuple `{:min, n}` in the `:elements` field.  The properties of
-  this type should be self-explanatory.  The `{:min, 0}` tuple is
-  equvalent to the standard Erlang type `{...}`, aka `any tuple`
+  This is a tuple with minimum arity (`n`), this is represented by setting
+  the `:fixed` field to false.  The standard erlang type `any tuple` has an
+  empty list as its elements and `fixed: false`.
 
   ### Examples:
 
-  - the any tuple is `%Type.Tuple{elements: {:min, 0}}`
+  - the any tuple is `%Type.Tuple{elements: [], fixed: false}`
 
-    ```
-    iex> inspect %Type.Tuple{elements: {:min, 0}}
+    ```elixir
+    iex> inspect %Type.Tuple{elements: [], fixed: false}
     "tuple()"
     ```
 
   - A tuple of minimum size is represented as follows:
 
-    ```
-    iex> inspect %Type.Tuple{elements: {:min, 2}}
-    "tuple({...(min: 2)})"
+    ```elixir
+    iex> inspect %Type.Tuple{elements: [any(), any()], fixed: false}
+    "tuple({any(), any(), ...})"
     ```
 
   - generic tuples have their types as lists.
@@ -46,9 +47,9 @@ defmodule Type.Tuple do
   ```
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: {:min, 0}}
-  iex> tuple {...(min: 2)}
-  %Type.Tuple{elements: {:min, 2}}
+  %Type.Tuple{elements: [], fixed: false}
+  iex> tuple {any(), any(), ...}
+  %Type.Tuple{elements: [any(), any()], fixed: false}
   iex> tuple {:ok, integer()}
   %Type.Tuple{elements: [:ok, integer()]}
   ```
@@ -103,9 +104,9 @@ defmodule Type.Tuple do
   iex> import Type, only: :macros
   iex> Type.subtype?(tuple({:ok, 1..10}), tuple({atom(), integer()}))
   true
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({...(min: 2)}))
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({any(), any(), ...}))
   true
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({...(min: 3)}))
+  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({any(), any(), any(), ...}))
   false
   ```
 
@@ -130,9 +131,12 @@ defmodule Type.Tuple do
   """
 
   @enforce_keys [:elements]
-  defstruct @enforce_keys
+  defstruct @enforce_keys ++ [fixed: true]
 
-  @type t :: %__MODULE__{elements: [Type.t] | {:min, non_neg_integer}}
+  @type t :: %__MODULE__{
+    elements: [Type.t],
+    fixed: true
+  }
 
   @doc """
   a utility function which takes two type lists and ascertains if they
@@ -152,18 +156,21 @@ defmodule Type.Tuple do
 
   Used in common between tuples and function parameters.
   """
-  def merge(bigger, smaller), do: merge_helper(bigger, smaller, {[], true, 0})
+  def merge(bigger, smaller, strict) do
+    merge_helper(bigger, smaller, strict, {[], true, 0})
+  end
 
-  defp merge_helper(_, _, {_, false, disjoint}) when disjoint > 1, do: nil
-  defp merge_helper([b_hd | b_tl], [s_hd | s_tl], {so_far, subtype?, disjoint}) do
+  defp merge_helper(_, _, _, {_, false, disjoint}) when disjoint > 1, do: nil
+  defp merge_helper([b_hd | b_tl], [s_hd | s_tl], strict, {so_far, subtype?, disjoint}) do
     subtype? = subtype? and Type.subtype?(s_hd, b_hd)
     disjoint = if s_hd == b_hd, do: disjoint, else: disjoint + 1
     merged = Type.union(b_hd, s_hd)
 
-    merge_helper(b_tl, s_tl, {[merged | so_far], subtype?, disjoint})
+    merge_helper(b_tl, s_tl, strict, {[merged | so_far], subtype?, disjoint})
   end
-  defp merge_helper([], [], {list, _, _}), do: Enum.reverse(list)
-  defp merge_helper(_, _, _), do: nil # if the two lists are not of equal length.
+  defp merge_helper([], [], true,  {list, _, _}), do: Enum.reverse(list)
+  defp merge_helper([], _,  false, {list, _, _}), do: Enum.reverse(list)
+  defp merge_helper(_, _, _, _), do: nil # if the two lists are not of equal length.
 
   @doc """
   returns the tuple type at the (0-indexed) tuple slot.
@@ -186,15 +193,16 @@ defmodule Type.Tuple do
     alias Type.{Message, Tuple, Union}
 
     group_compare do
-      def group_compare(%{elements: {:min, m}}, %{elements: {:min, n}})
-        when n > m,                                 do: :gt
-      def group_compare(%{elements: {:min, m}}, %{elements: {:min, n}})
-        when m > n,                                 do: :lt
-      def group_compare(%{elements: {:min, _}}, _), do: :gt
-      def group_compare(_, %{elements: {:min, _}}), do: :lt
-
-      def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) > length(e2), do: :gt
-      def group_compare(%{elements: e1}, %{elements: e2}) when length(e1) < length(e2), do: :lt
+      def group_compare(%{fixed: false}, %{fixed: true}), do: :gt
+      def group_compare(%{fixed: true}, %{fixed: false}), do: :lt
+      def group_compare(%{elements: e1, fixed: false}, %{elements: e2})
+        when length(e1) > length(e2), do: :lt
+      def group_compare(%{elements: e1, fixed: false}, %{elements: e2})
+        when length(e1) < length(e2), do: :gt
+      def group_compare(%{elements: e1, fixed: true}, %{elements: e2})
+        when length(e1) > length(e2), do: :gt
+      def group_compare(%{elements: e1, fixed: true}, %{elements: e2})
+        when length(e1) < length(e2), do: :lt
       def group_compare(tuple1, tuple2) do
         tuple1.elements
         |> Enum.zip(tuple2.elements)
@@ -211,37 +219,26 @@ defmodule Type.Tuple do
     end
 
     usable_as do
-      # lesser minimum sized tuples are maybes.
-      def usable_as(challenge = %{elements: {:min, m}},
-                    target = %Tuple{elements: {:min, n}},
-                    meta) do
-        if m >= n, do: :ok, else: {:maybe, [Message.make(challenge, target, meta)]}
+      def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: true}, meta)
+          when length(ce) != length(te) do
+        {:error, Message.make(challenge, target, meta)}
       end
-
-      # a minimum tuple maybe can be used as a tuple if the sizes are okay
-      def usable_as(challenge = %{elements: {:min, m}}, target = %Tuple{}, meta) do
-        if m <= length(target.elements) do
-          {:maybe, [Message.make(challenge, target, meta)]}
-        else
-          {:error, Message.make(challenge, target, meta)}
-        end
+      def usable_as(challenge = %{elements: ce, fixed: false}, target = %Tuple{elements: te, fixed: true}, meta)
+          when length(ce) > length(te) do
+        {:error, Message.make(challenge, target, meta)}
       end
-
-      def usable_as(target, challenge = %Tuple{elements: {:min, m}}, meta) do
-        if m <= length(target.elements) do
-          :ok
-        else
-          {:error, Message.make(challenge, target, meta)}
-        end
+      def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: false}, meta)
+          when length(ce) < length(te) do
+        {:error, Message.make(challenge, target, meta)}
       end
-
-      def usable_as(challenge = %{elements: ce}, target = %Tuple{elements: te}, meta)
-          when length(ce) == length(te) do
+      def usable_as(challenge = %{elements: ce, fixed: cf}, target = %Tuple{elements: te, fixed: tf}, meta) do
         ce
-        |> Enum.zip(te)
+        |> zipfill(te, any())
         |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-        |> Enum.reduce(&Type.ternary_and/2)
+        |> Enum.reduce(:ok, &Type.ternary_and/2)
         |> case do
+          :ok when not cf and (tf or length(ce) < length(te)) ->
+            {:maybe, [Message.make(challenge, target, meta)]}
           :ok -> :ok
           # TODO: make our type checking nested, should be possible here.
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
@@ -251,18 +248,15 @@ defmodule Type.Tuple do
     end
 
     intersection do
-      def intersection(%{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
-        %Tuple{elements: {:min, max(m, n)}}
-      end
-      def intersection(%{elements: {:min, m}}, tup = %Tuple{elements: e}) do
-        if length(e) >= m, do: tup, else: none()
-      end
-      def intersection(tup = %{elements: e}, %Tuple{elements: {:min, m}}) do
-        if length(e) >= m, do: tup, else: none()
-      end
-      def intersection(%{elements: e1}, %Tuple{elements: e2}) when length(e1) == length(e2) do
+      def intersection(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
+        when length(e1) < length(e2), do: none()
+      def intersection(%{elements: e1, fixed: false}, %Tuple{elements: e2, fixed: true})
+        when length(e2) < length(e1), do: none()
+      def intersection(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: true})
+        when length(e1) != length(e2), do: none()
+      def intersection(%{elements: e1, fixed: f1}, %Tuple{elements: e2, fixed: f2}) do
         elements = e1
-        |> Enum.zip(e2)
+        |> zipfill(e2, any())
         |> Enum.map(fn {t1, t2} ->
           case Type.intersection(t1, t2) do
             none() -> throw :mismatch
@@ -270,38 +264,46 @@ defmodule Type.Tuple do
           end
         end)
 
-        %Tuple{elements: elements}
+        %Tuple{elements: elements, fixed: f1 or f2}
       catch
         :mismatch ->
           none()
       end
     end
 
+    # like Enum.zip, but only works on lists, and fills up the other
+    # list with a value, instead of stopping when one list is exhausted.
+    defp zipfill(lst1, lst2, fill, so_far \\ [])
+    defp zipfill([h1 | t1], [h2 | t2], fill, so_far) do
+      zipfill(t1, t2, fill, [{h1, h2} | so_far])
+    end
+    defp zipfill([], [h2 | t2], fill, so_far) do
+      zipfill([], t2, fill, [{fill, h2} | so_far])
+    end
+    defp zipfill([h1 | t1], [], fill, so_far) do
+      zipfill(t1, [], fill, [{h1, fill} | so_far])
+    end
+    defp zipfill([], [], _fill, so_far), do: Enum.reverse(so_far)
+
     subtype do
-      # bigger minimums are more restrictive, so subtyping is >=
-      def subtype?(%{elements: {:min, m}}, %Tuple{elements: {:min, n}}) do
-        m >= n
-      end
-      def subtype?(%{elements: {:min, _}}, %Tuple{}), do: false
-      def subtype?(%{elements: el}, %Tuple{elements: {:min, m}}) do
-        length(el) >= m
-      end
-      # same nonempty is okay
-      def subtype?(%{elements: el_c}, %Tuple{elements: el_t})
-        when length(el_c) == length(el_t) do
-
-        el_c
-        |> Enum.zip(el_t)
+      def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
+        when length(e1) < length(e2), do: false
+      def subtype?(%{elements: e1, fixed: false}, %Tuple{elements: e2, fixed: true})
+        when length(e2) < length(e1), do: false
+      def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: true})
+        when length(e1) != length(e2), do: false
+      def subtype?(%{elements: e1}, %Tuple{elements: e2}) when length(e1) >= length(e2) do
+        e1
+        |> zipfill(e2, any())
         |> Enum.all?(fn {c, t} -> Type.subtype?(c, t) end)
-
       end
       def subtype?(tuple, %Union{of: types}) do
         Enum.any?(types, &Type.subtype?(tuple, &1))
       end
     end
 
-    def normalize(%Tuple{elements: {:min, _}}) do
-      %Tuple{elements: {:min, 0}}
+    def normalize(%Tuple{fixed: false}) do
+      %Tuple{elements: [], fixed: false}
     end
     def normalize(type), do: super(type)
   end
@@ -309,18 +311,16 @@ defmodule Type.Tuple do
   defimpl Inspect do
     import Type, only: :macros
     import Inspect.Algebra
-    def inspect(%{elements: {:min, 0}}, _opts) do
+    def inspect(%{elements: [], fixed: false}, _opts) do
       "tuple()"
     end
-    def inspect(%{elements: {:min, n}}, _opts) do
-      "tuple({...(min: #{n})})"
-    end
-    def inspect(%{elements: [module(), atom(), 0..255]}, _opts) do
+    def inspect(%{elements: [module(), atom(), 0..255], fixed: true}, _opts) do
       "mfa()"
     end
-    def inspect(%{elements: elements}, opts) do
+    def inspect(%{elements: elements, fixed: fixed}, opts) do
       inner_contents = elements
       |> Enum.map(&to_doc(&1, opts))
+      |> Kernel.++(if fixed, do: [], else: ["..."])
       |> Enum.intersperse(", ")
 
       concat(["tuple({" | inner_contents] ++ ["})"])

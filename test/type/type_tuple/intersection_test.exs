@@ -7,7 +7,7 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
   import Type, only: :macros
 
   @anytuple tuple()
-  @min_2_tuple tuple({...(min: 2)})
+  @min_2_tuple tuple({any(), any(), ...})
 
   describe "minimum size tuple" do
     test "intersects with any and self" do
@@ -35,7 +35,7 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     end
 
     test "is none when the tuple is too small" do
-      assert none() == tuple({...(min: 3)}) <~> tuple({:ok, integer()})
+      assert none() == tuple({any(), any(), any(), ...}) <~> tuple({:ok, integer()})
     end
 
     test "with unions works as expected" do

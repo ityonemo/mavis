@@ -313,8 +313,8 @@ defmodule Type do
              %Type.Map{optional: %{any() => any()}},
              "%Type.Map{optional: %{any() => any()}}"
   defbuiltin :tuple,
-             %Type.Tuple{elements: {:min, 0}},
-             "%Type.Tuple{elements: {:min, 0}}"
+             %Type.Tuple{elements: [], fixed: false},
+             "%Type.Tuple{elements: [], fixed: false}"
   # composite builtins (built-in types)
   defbuiltin :no_return, none(), "%Type{name: :none}"
   defbuiltin :arity, 0..255, "0..255"
@@ -503,7 +503,7 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> tuple {...}
-  %Type.Tuple{elements: {:min, 0}}
+  %Type.Tuple{elements: [], fixed: false}
   iex> tuple {:ok, pos_integer()}
   %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
   iex> tuple {:error, atom(), pos_integer()}
@@ -513,18 +513,21 @@ defmodule Type do
   * usable in guards *
   """
   @doc type: true
+  defmacro tuple({a, {:..., _, any}}) when is_atom(any) do
+    struct_of(:"Type.Tuple", elements: a, fixed: false)
+  end
   defmacro tuple({a, b}) do
     struct_of(:"Type.Tuple", elements: [a, b])
   end
-  defmacro tuple({:{}, _, [{:..., _, [[min: n]]}]}) do
-    quote do %Type.Tuple{elements: {:min, unquote(n)}} end
+  defmacro tuple({:{}, _, what}) do
+    {elements, fixed} = find_elements(what)
+    struct_of(:"Type.Tuple", elements: elements, fixed: fixed)
   end
-  defmacro tuple({:{}, _, [{:..., _, atom}]}) when is_atom(atom) do
-    Macro.escape(%Type.Tuple{elements: {:min, 0}})
-  end
-  defmacro tuple({:{}, _, elements}) do
-    struct_of(:"Type.Tuple", elements: elements)
-  end
+
+  def find_elements(elements, so_far \\ [])
+  def find_elements([{:..., _, _}], so_far), do: {Enum.reverse(so_far), false}
+  def find_elements([], so_far), do: {Enum.reverse(so_far), true}
+  def find_elements([a | rest], so_far), do: find_elements(rest, [a | so_far])
 
   @doc """
   generates the map type from a map ast.  Unspecified keys default to
