@@ -34,10 +34,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "tuple/0 type" do
     test "works in use" do
-      assert %Type.Tuple{elements: {:min, 0}} == tuple()
+      assert %Type.Tuple{elements: [], fixed: false} == tuple()
     end
     test "works in matches" do
-      assert tuple() = %Type.Tuple{elements: {:min, 0}}
+      assert tuple() = %Type.Tuple{elements: [], fixed: false}
     end
   end
 

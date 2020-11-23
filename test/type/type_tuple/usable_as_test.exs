@@ -9,7 +9,8 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
   alias Type.Message
 
   @any_tuple tuple()
-  @min_2_tuple tuple({...(min: 2)})
+  @min_2_tuple tuple({any(), any(), ...})
+  @min_3_tuple tuple({any(), any(), any(), ...})
 
   describe "for the minimum size tuple types" do
     test "you can use it for itself and the builtin any" do
@@ -46,8 +47,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     end
 
     test "you can't use it as a tuple that's too small" do
-      assert {:error, _} = tuple({...(min: 3)}) ~>
-        tuple({:ok, binary()})
+      assert {:error, _} = @min_3_tuple ~> tuple({:ok, binary()})
     end
 
     test "you can't use it for anything else" do
@@ -100,7 +100,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     end
 
     test "you can't use it as a tuple for which it doesn't have enough" do
-      assert {:error, _} = tuple({:ok, integer()}) ~> tuple({...(min: 3)})
+      assert {:error, _} = tuple({:ok, integer()}) ~> @min_3_tuple
     end
 
     test "for a two-tuple it's the ternary logic match of all elements" do

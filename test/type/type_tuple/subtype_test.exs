@@ -8,7 +8,7 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
   use Type.Operators
 
   @any_tuple tuple()
-  @min_2_tuple tuple({...(min: 2)})
+  @min_2_tuple tuple({any(), any(), ...})
 
   describe "minimum tuples" do
     test "are subtypes of themselves and any" do

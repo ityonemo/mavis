@@ -132,7 +132,7 @@ defmodule TypeTest.UnionTest do
 
   @any any()
   @anytuple tuple()
-  @min_2_tuple tuple({...(min: 2)})
+  @min_2_tuple tuple({any(), any(), ...})
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
@@ -142,7 +142,7 @@ defmodule TypeTest.UnionTest do
     end
 
     test "two minimum-arity tuples get merged" do
-      assert @min_2_tuple = tuple({...(min: 3)}) <|> @min_2_tuple
+      assert @min_2_tuple = tuple({any(), any(), any(), ...}) <|> @min_2_tuple
     end
 
     test "a tuple that is a subtype of another tuple gets merged" do
@@ -207,7 +207,7 @@ defmodule TypeTest.UnionTest do
 
     test "tuples that are too small for a minimum don't merge" do
       assert %Type.Union{} =
-        (tuple({...(min: 3)}) <|> tuple({:ok, integer()}))
+        (tuple({any(), any(), any(), ...}) <|> tuple({:ok, integer()}))
     end
   end
 
