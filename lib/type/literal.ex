@@ -2,13 +2,17 @@ defmodule Type.Literal do
   @enforce_keys [:value]
   defstruct @enforce_keys
 
+  @type t :: %__MODULE__{
+    value: bitstring | nonempty_list
+  }
+
   @moduledoc """
-  Represents literal values, except for the following literals:
-  - Empty List, which is `[]`
-  - integers, which are themselves
-  - atoms, which are themselves
-  - tuples, which can be decomposed into singletons
-  - maps, which can be decomposed into singletons
+  Represents literal values, for the following types:
+  - binaries and bitstrings
+  - floats
+  - lists (except empty list)
+
+  Note that tuples and maps can
 
   There is one field for the struct defined by this value.
 
@@ -25,18 +29,10 @@ defmodule Type.Literal do
 
   ```
   iex> import Type, only: :macros
-  iex> literal(%{foo: :bar})
-  %Type.Literal{value: %{foo: :bar}}
   iex> literal("foo")
   %Type.Literal{value: "foo"}
-  iex> literal([])
-  []
-  iex> literal(:foo)
-  :foo
-  iex> literal(%{foo: "bar"})
-  %Type.Map{required: %{foo: literal("bar")}}
-  iex> literal({:ok, "bar"})
-  %Type.Tuple{elements: [:ok, literal("bar")]}
+  iex> literal([:bar, :baz])
+  %Type.Literal{value: [:bar, :baz]}
   ```
 
   ### Key functions:
@@ -50,7 +46,7 @@ defmodule Type.Literal do
   iex> import Type, only: :macros
   iex> Type.compare(literal([:foo, :bar]), literal([:foo, :baz]))
   :lt
-  iex> Type.compare(literal([:foo, :bar]), list(:foo | :bar))
+  iex> Type.compare(literal([:foo, :bar]), list(%Type.Union{of: [:foo, :bar]}))
   :lt
   iex> Type.compare(literal("foo"), literal("bar"))
   :gt

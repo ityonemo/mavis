@@ -649,6 +649,73 @@ defmodule Type do
   end
 
   @doc """
+  generates type literals.
+
+  - For bitstrings and lists, this is wrapped in the `Type.Literal`
+  struct.
+  - For singletons (empty list, integers, atoms), this is a no-op.
+  - For other composite values, this gets decomposed to
+  singleton values (possibly including literals themselves.)
+  - note that pids, ports, and references will not work.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> literal("foo")
+  %Type.Literal{value: "foo"}
+  iex> literal(47.0)
+  %Type.Literal{value: 47.0}
+  iex> literal([:foo, :bar])
+  %Type.Literal{value: [:foo, :bar]}
+  iex> literal(%{foo: :bar})
+  %Type.Map{required: %{foo: :bar}}
+  iex> literal([])
+  []
+  iex> literal(47)
+  47
+  iex> literal(:foo)
+  :foo
+  iex> literal({:ok, "bar"})
+  %Type.Tuple{elements: [:ok, %Type.Literal{value: "bar"}]}
+  iex> literal({:ok, "bar", 1})
+  %Type.Tuple{elements: [:ok, %Type.Literal{value: "bar"}, 1]}
+  iex> literal(%{"foo" => "bar"})
+  %Type.Map{required: %{%Type.Literal{value: "foo"} => %Type.Literal{value: "bar"}}
+  ```
+
+  *usable in guards*
+  """
+  defmacro literal(value), do: do_literal(value)
+
+  defp do_literal(value) when is_atom(value) or is_integer(value) or value == [] do
+    value
+  end
+  defp do_literal(value) when
+    is_bitstring(value) or is_float(value) or is_list(value) do
+    Macro.escape(%Type.Literal{value: value})
+  end
+  defp do_literal({:%{}, meta, kv}) do
+    requireds = Enum.map(kv, fn {k, v} -> {do_literal(k), do_literal(v)} end)
+    quote do
+      %Type.Map{required: unquote({:%{}, meta, requireds})}
+    end
+  end
+  defp do_literal({a, b}) do
+    e0 = do_literal(a)
+    e1 = do_literal(b)
+    quote do
+      %Type.Tuple{elements: [unquote(e0), unquote(e1)]}
+    end
+  end
+  defp do_literal({:{}, _meta, elements}) do
+    e = Enum.map(elements, &do_literal/1)
+    quote do
+      %Type.Tuple{elements: unquote(e)}
+    end
+  end
+
+  @doc """
   guard that tests if the selected type is remote
 
   ### Example:
