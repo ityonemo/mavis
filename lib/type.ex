@@ -235,6 +235,7 @@ defmodule Type do
   | Type.Union.t
   | Type.Opaque.t
   | Type.Function.Var.t
+  | Type.Literal.t
 
   @typedoc """
   Represents that some but not all members of the type will succeed in
@@ -681,7 +682,7 @@ defmodule Type do
   iex> literal({:ok, "bar", 1})
   %Type.Tuple{elements: [:ok, %Type.Literal{value: "bar"}, 1]}
   iex> literal(%{"foo" => "bar"})
-  %Type.Map{required: %{%Type.Literal{value: "foo"} => %Type.Literal{value: "bar"}}
+  %Type.Map{required: %{%Type.Literal{value: "foo"} => %Type.Literal{value: "bar"}}}
   ```
 
   *usable in guards*

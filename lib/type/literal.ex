@@ -29,10 +29,14 @@ defmodule Type.Literal do
 
   ```
   iex> import Type, only: :macros
+  iex> literal(47.0)
+  %Type.Literal{value: 47.0}
   iex> literal("foo")
   %Type.Literal{value: "foo"}
   iex> literal([:bar, :baz])
   %Type.Literal{value: [:bar, :baz]}
+  iex> inspect literal(47.0)
+  "literal(47.0)"
   ```
 
   ### Key functions:
@@ -120,9 +124,112 @@ defmodule Type.Literal do
   :ok
   iex> Type.usable_as(literal("foo"), binary())
   :ok
-  iex> Type.usable_as(literal("foo"), %Type.Bitstring{unit: 24})
-  {:error, %Type.Message{type: %Type.Literal{value: "foo"}, target: %Type.Bitstring{size: 24}}}
+  iex> Type.usable_as(literal("foo"), %Type.Bitstring{size: 16})
+  {:error, %Type.Message{type: %Type.Literal{value: "foo"}, target: %Type.Bitstring{size: 16}}}
   ```
-
   """
+
+  ## PRIVATE API.  USED AS A CONVENIENCE FUNCTION.
+  def _subtype?(%__MODULE__{value: value}, target = %Type.List{}) when is_list(value) do
+    st_check(value, target)
+  end
+  def _subtype?(%__MODULE__{value: value}, target = %Type.Bitstring{}) when is_bitstring(value) do
+    st_check(value, target)
+  end
+  def _subtype?(%__MODULE__{value: value}, %Type{module: nil, name: :float}) when is_float(value) do
+    true
+  end
+
+  defp st_check(value, target) do
+    value
+    |> Type.of()
+    |> Type.subtype?(target)
+  end
+
+  defimpl Type.Properties do
+    import Type, only: :macros
+    import Type.Helpers
+
+    alias Type.Literal
+
+    ###########################################################################
+    ## COMPARISON
+    def compare(this, other) do
+      this_group = typegroup(this)
+      other_group = Type.typegroup(other)
+      cond do
+        this_group > other_group -> :gt
+        this_group < other_group -> :lt
+        true ->
+          group_compare(this, other)
+      end
+    end
+
+    def typegroup(literal), do: group_of(literal.value)
+
+    @float_group 2
+    @list_group Type.Properties.typegroup(%Type.List{})
+    @bitstring_group Type.Properties.typegroup(%Type.Bitstring{})
+
+    defp group_of(float) when is_float(float), do: @float_group
+    defp group_of(list) when is_list(list), do: @list_group
+    defp group_of(bitstring) when is_bitstring(bitstring), do: @bitstring_group
+
+    group_compare do
+      def group_compare(%{value: rvalue}, %Literal{value: lvalue})
+        when rvalue < lvalue, do: :lt
+      def group_compare(%{value: rvalue}, %Literal{value: lvalue})
+        when rvalue == lvalue, do: :eq
+      def group_compare(%{value: rvalue}, %Literal{value: lvalue})
+        when rvalue > lvalue, do: :gt
+      def group_compare(_, _), do: :lt
+    end
+
+    ###########################################################################
+    ## SUBTYPE
+
+    subtype do
+      def subtype?(literal, target) do
+        Literal._subtype?(literal, target)
+      end
+    end
+
+    ###########################################################################
+    ## USABLE_AS
+
+    alias Type.Message
+
+    usable_as do
+      def usable_as(type, target, meta) do
+        if Literal._subtype?(type, target) do
+          :ok
+        else
+          {:error, Message.make(type, target, meta)}
+        end
+      end
+    end
+
+    intersection do
+      def intersection(_, %Literal{}), do: none()
+      def intersection(literal, type) do
+        if Literal._subtype?(literal, type) do
+          literal
+        else
+          none()
+        end
+      end
+    end
+
+    def normalize(%{value: value}) do
+      Type.of(value)
+    end
+  end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(%{value: value}, opts) do
+      concat(["literal(", to_doc(value, opts), ")"])
+    end
+  end
 end

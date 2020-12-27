@@ -53,6 +53,24 @@ defmodule Type.Union.Merge do
     [atom()]
   end
 
+  # literal struct literals
+  alias Type.Literal
+  def type_merge(%Literal{}, %Literal{}), do: :nomerge
+  def type_merge(type, literal = %Literal{}) do
+    if Literal._subtype?(literal, type) do
+      [type]
+    else
+      :nomerge
+    end
+  end
+  def type_merge(literal = %Literal{}, type) do
+    if Literal._subtype?(literal, type) do
+      [type]
+    else
+      :nomerge
+    end
+  end
+
   # tuples
   alias Type.Tuple
   def type_merge(%Tuple{}, tuple()) do

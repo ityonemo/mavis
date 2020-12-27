@@ -24,7 +24,7 @@ defmodule Type.Helpers do
   @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
 
   # exists to prevent mistakes when generating functions.
-  defmacro __using__(_) do
+  defmacro __using__(_opts) do
     group = __CALLER__.module
     |> Module.split
     |> List.last
@@ -199,6 +199,10 @@ defmodule Type.Helpers do
           :gt -> :gt
           _ -> :lt
         end
+      end
+
+      unless __MODULE__ == Type.Properties.Type.Literal do
+        def group_compare(type1, %Type.Literal{}), do: :gt
       end
 
       unquote(block)
