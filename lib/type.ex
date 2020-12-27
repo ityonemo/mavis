@@ -735,7 +735,7 @@ defmodule Type do
   craft warning and error messages; as well as being filters for user-defined
   exceptions to warning or error rules.
 
-  ### Relationship to `subtype/2`
+  ### Relationship to `subtype?/2`
 
   at first glance, it would seem that the `subtype?/2` function is
   equivalent to `usable_as/3`, but there are cases where the relationship
