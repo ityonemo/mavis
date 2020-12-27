@@ -130,24 +130,18 @@ defmodule Type.Literal do
   """
 
   ## PRIVATE API.  USED AS A CONVENIENCE FUNCTION.
-  def _subtype?(%__MODULE__{value: value}, target = %Type.List{}) when is_list(value) do
-    st_check(value, target)
+  def _normalize(_, :float) do
+    %Type{name: :float}
   end
-  def _subtype?(%__MODULE__{value: value}, target = %Type.Bitstring{}) when is_bitstring(value) do
-    st_check(value, target)
+  def _normalize(value, :bitstring) do
+    %Type.Bitstring{size: :erlang.size(value)}
   end
-  def _subtype?(%__MODULE__{value: value}, target = %Type.Union{}) do
-    st_check(value, target)
-  end
-  def _subtype?(%__MODULE__{value: value}, %Type{module: nil, name: :float}) when is_float(value) do
-    true
-  end
-  def _subtype?(_, _), do: false
+  def _normalize(value, :list) do
+    type = value
+    |> Enum.map(&Type.normalize/1)
+    |> Enum.into(%Type.Union{})
 
-  defp st_check(value, target) do
-    value
-    |> Type.of()
-    |> Type.subtype?(target)
+    %Type.List{type: type}
   end
 
   defimpl Type.Properties do
@@ -192,11 +186,7 @@ defmodule Type.Literal do
     ###########################################################################
     ## SUBTYPE
 
-    subtype do
-      def subtype?(literal, target) do
-        Literal._subtype?(literal, target)
-      end
-    end
+    subtype :usable_as
 
     ###########################################################################
     ## USABLE_AS
@@ -204,19 +194,16 @@ defmodule Type.Literal do
     alias Type.Message
 
     usable_as do
-      def usable_as(type, target, meta) do
-        if Literal._subtype?(type, target) do
-          :ok
-        else
-          {:error, Message.make(type, target, meta)}
-        end
+      def usable_as(%Literal{value: float}, float(), _meta) when is_float(float), do: :ok
+      def usable_as(lhs, rhs = %Literal{}, meta) do
+        {:error, Message.make(lhs, rhs, meta)}
       end
     end
 
     intersection do
       def intersection(_, %Literal{}), do: none()
       def intersection(literal, type) do
-        if Literal._subtype?(literal, type) do
+        if subtype?(literal, type) do
           literal
         else
           none()
@@ -225,7 +212,7 @@ defmodule Type.Literal do
     end
 
     def normalize(%{value: value}) do
-      Type.of(value)
+      Literal._normalize(value)
     end
   end
 
