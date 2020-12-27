@@ -1,4 +1,4 @@
-defmodule TypeTest.LiteralRange.UsableAsTest do
+defmodule TypeTest.LiteralFloat.UsableAsTest do
   use ExUnit.Case, async: true
 
   @moduletag :usable_as

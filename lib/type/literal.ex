@@ -130,6 +130,10 @@ defmodule Type.Literal do
   """
 
   ## PRIVATE API.  USED AS A CONVENIENCE FUNCTION.
+  def _normalize(value) when is_float(value), do: _normalize(value, :float)
+  def _normalize(value) when is_bitstring(value), do: _normalize(value, :bitstring)
+  def _normalize(value) when is_list(value), do: _normalize(value, :list)
+
   def _normalize(_, :float) do
     %Type{name: :float}
   end
@@ -194,7 +198,12 @@ defmodule Type.Literal do
     alias Type.Message
 
     usable_as do
-      def usable_as(%Literal{value: float}, float(), _meta) when is_float(float), do: :ok
+      def usable_as(%{value: float}, float(), _meta) when is_float(float), do: :ok
+      def usable_as(%{value: list}, type = %Type.List{}, meta) when is_list(list) do
+        list
+        |> Literal._normalize(:list)
+        |> Type.usable_as(type, meta)
+      end
       def usable_as(lhs, rhs = %Literal{}, meta) do
         {:error, Message.make(lhs, rhs, meta)}
       end

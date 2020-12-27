@@ -7,7 +7,7 @@ defmodule TypeTest.LiteralFloat.IntersectionTest do
   import Type, only: :macros
 
   describe "the intersection of a literal float" do
-    test "with itself, integer and any is itself" do
+    test "with itself, float and any is itself" do
       assert literal(47.0) == literal(47.0) <~> any()
       assert literal(47.0) == literal(47.0) <~> float()
       assert literal(47.0) == literal(47.0) <~> literal(47.0)

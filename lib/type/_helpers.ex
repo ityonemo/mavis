@@ -152,6 +152,12 @@ defmodule Type.Helpers do
       end
       end
 
+      if __MODULE__ in [Type.Properties.Type.List, Type.Properties.Type.Bitstring] do
+      def intersection(left, right = %Type.Literal{}) do
+        Type.intersection(right, left)
+      end
+      end
+
       unquote(block)
 
       def intersection(left, right) when is_remote(right) do

@@ -687,6 +687,11 @@ defmodule Type do
 
   *usable in guards*
   """
+  defmacro literal(atform = {:@, _meta, _}) do
+    atform
+    |> Macro.expand(__CALLER__)
+    |> do_literal
+  end
   defmacro literal(value), do: do_literal(value)
 
   defp do_literal(value) when is_atom(value) or is_integer(value) or value == [] do
