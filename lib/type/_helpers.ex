@@ -186,8 +186,6 @@ defmodule Type.Helpers do
       end
 
       def group_compare(type1, %Type.Opaque{type: type2}) do
-        type1 |> IO.inspect(label: "185")
-        type2 |> IO.inspect(label: "186")
         case group_compare(type1, type2) do
           :eq -> :gt
           cmp -> cmp

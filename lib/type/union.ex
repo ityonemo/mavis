@@ -63,7 +63,7 @@ defmodule Type.Union do
   # argument 3, which is the stack, contains the remaining types in ASCENDING order.
   @spec fold(Type.t, [Type.t], [Type.t]) :: {[Type.t], [Type.t]}
   defp fold(type, [head | rest], stack) do
-    with order when order in [:gt, :lt] <- Type.compare(head, type),# |> IO.inspect(label: "66"),
+    with order when order in [:gt, :lt] <- Type.compare(head, type),
          retries when is_list(retries) <- type_merge(order, head, type) do
       {unroll(rest, stack), retries}
     else

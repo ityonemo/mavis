@@ -1533,6 +1533,9 @@ defimpl Type.Properties, for: Type do
     def intersection(atom(), module()), do: module()
     def intersection(atom(), node_type()), do: node_type()
     def intersection(atom(), atom) when is_atom(atom), do: atom
+    # other literals
+    def intersection(float(), literal = %Type.Literal{value: value})
+      when is_float(value), do: literal
     # iolist
     def intersection(iolist(), any), do: Type.Iolist.intersection_with(any)
 

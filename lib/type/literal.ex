@@ -136,9 +136,13 @@ defmodule Type.Literal do
   def _subtype?(%__MODULE__{value: value}, target = %Type.Bitstring{}) when is_bitstring(value) do
     st_check(value, target)
   end
+  def _subtype?(%__MODULE__{value: value}, target = %Type.Union{}) do
+    st_check(value, target)
+  end
   def _subtype?(%__MODULE__{value: value}, %Type{module: nil, name: :float}) when is_float(value) do
     true
   end
+  def _subtype?(_, _), do: false
 
   defp st_check(value, target) do
     value
