@@ -6,7 +6,10 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
   import Type, only: :macros
 
+  alias Type.List
+
   @list [:foo, :bar]
+  @ilist ["foo" | "bar"]
 
   describe "the intersection of a literal list" do
     test "with itself, list and any is itself" do
@@ -16,6 +19,18 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
       assert @list == any() <~> @list
       assert @list == list() <~> @list
+
+      assert @ilist == @ilist <~> any()
+      assert @ilist == @ilist <~> list()
+      assert @ilist == @ilist <~> @ilist
+
+      assert @ilist == any() <~> @ilist
+      assert @ilist == list() <~> @ilist
+    end
+
+    test "iolist literals intersect with iolist" do
+      assert @ilist == iolist() <~> @ilist
+      assert @ilist == @ilist <~> iolist()
     end
 
     test "with correctly descriptive list types" do
@@ -24,18 +39,40 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
       assert @list == list(:foo <|> :bar) <~> @list
       assert @list == list(atom()) <~> @list
+
+      assert @ilist == @ilist <~> %List{final: remote(String.t)}
+      assert @ilist == @ilist <~> maybe_improper_list()
+      assert @ilist == @ilist <~> nonempty_maybe_improper_list()
+
+      assert @ilist == %List{final: remote(String.t)} <~> @ilist
+      assert @ilist == maybe_improper_list() <~> @ilist
+      assert @ilist == nonempty_maybe_improper_list() <~> @ilist
+    end
+
+    test "with wrong finals" do
+      assert none() == @ilist <~> list()
+      assert none() == list() <~> @ilist
+
+      assert none() == @list <~> %List{final: remote(String.t)}
+      assert none() == %List{final: remote(String.t)} <~> @list
     end
 
     test "with other literal lists" do
-      assert none() == literal([:foo, "bar"]) <~> @list
-      assert none() == literal([:foo]) <~> @list
-      assert none() == literal([:foo, :bar, :baz]) <~> @list
+      assert none() == [:foo, "bar"] <~> @list
+      assert none() == [:foo] <~> @list
+      assert none() == [:foo, :bar, :baz] <~> @list
+
+      assert none() == @ilist <~> ["foo" | "baz"]
     end
 
     test "with unions works as expected" do
       assert @list == @list <~> (:foo <|> @list)
       assert @list == @list <~> (:foo <|> list())
       assert none() == @list <~> (atom() <|> port())
+
+      assert @ilist == @ilist <~> (:foo <|> @ilist)
+      assert @ilist == @ilist <~> (:foo <|> %List{final: remote(String.t)})
+      assert none() == @ilist <~> (atom() <|> port())
     end
 
     test "with all other types is none" do
