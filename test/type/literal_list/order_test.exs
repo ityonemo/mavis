@@ -11,25 +11,25 @@ defmodule TypeTest.LiteralFloat.OrderTest do
 
   describe "a literal list" do
     test "is bigger than bottom" do
-      assert literal(@list) > none()
+      assert @list > none()
     end
 
     test "is bigger than a smaller integer" do
-      assert literal(@list) > literal([:foo])
-      assert literal(@list) > literal([:baz, :bar])
+      assert @list > literal([:foo])
+      assert @list > literal([:baz, :bar])
     end
 
     test "is smaller than a bigger integer" do
-      assert literal(@list) < literal([:foo, :baz])
+      assert @list < literal([:foo, :baz])
     end
 
     test "is smaller than list, which it is a subset of" do
-      assert literal(@list) < list()
+      assert @list < list()
     end
 
     test "is smaller than things outside of list" do
-      assert literal(@list) < bitstring()
-      assert literal(@list) < any()
+      assert @list < bitstring()
+      assert @list < any()
     end
   end
 end

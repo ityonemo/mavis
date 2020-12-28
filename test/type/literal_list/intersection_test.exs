@@ -10,39 +10,39 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
   describe "the intersection of a literal list" do
     test "with itself, list and any is itself" do
-      assert literal(@list) == literal(@list) <~> any()
-      assert literal(@list) == literal(@list) <~> list()
-      assert literal(@list) == literal(@list) <~> literal(@list)
+      assert @list == @list <~> any()
+      assert @list == @list <~> list()
+      assert @list == @list <~> @list
 
-      assert literal(@list) == any() <~> literal(@list)
-      assert literal(@list) == list() <~> literal(@list)
+      assert @list == any() <~> @list
+      assert @list == list() <~> @list
     end
 
     test "with correctly descriptive list types" do
-      assert literal(@list) == literal(@list) <~> list(:foo <|> :bar)
-      assert literal(@list) == literal(@list) <~> list(atom())
+      assert @list == @list <~> list(:foo <|> :bar)
+      assert @list == @list <~> list(atom())
 
-      assert literal(@list) == list(:foo <|> :bar) <~> literal(@list)
-      assert literal(@list) == list(atom()) <~> literal(@list)
+      assert @list == list(:foo <|> :bar) <~> @list
+      assert @list == list(atom()) <~> @list
     end
 
     test "with other literal lists" do
-      assert none() == literal([:foo, "bar"]) <~> literal(@list)
-      assert none() == literal([:foo]) <~> literal(@list)
-      assert none() == literal([:foo, :bar, :baz]) <~> literal(@list)
+      assert none() == literal([:foo, "bar"]) <~> @list
+      assert none() == literal([:foo]) <~> @list
+      assert none() == literal([:foo, :bar, :baz]) <~> @list
     end
 
     test "with unions works as expected" do
-      assert literal(@list) == literal(@list) <~> (:foo <|> literal(@list))
-      assert literal(@list) == literal(@list) <~> (:foo <|> list())
-      assert none() == literal(@list) <~> (atom() <|> port())
+      assert @list == @list <~> (:foo <|> @list)
+      assert @list == @list <~> (:foo <|> list())
+      assert none() == @list <~> (atom() <|> port())
     end
 
     test "with all other types is none" do
       TypeTest.Targets.except([list()])
       |> Enum.each(fn target ->
-        assert none() == literal(@list) <~> target
-        assert none() == target <~> literal(@list)
+        assert none() == @list <~> target
+        assert none() == target <~> @list
       end)
     end
   end

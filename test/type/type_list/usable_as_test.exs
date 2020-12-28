@@ -23,7 +23,7 @@ defmodule TypeTest.TypeList.UsableAsTest do
     end
 
     test "is not usable as any of the other types" do
-      targets = TypeTest.Targets.except([list()])
+      targets = TypeTest.Targets.except([list(), []])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: list(), target: ^target}} =
           (list() ~> target)

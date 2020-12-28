@@ -189,26 +189,45 @@ defimpl Type.Properties, for: List do
 
   use Type.Helpers
 
+  alias Type.Message
+
   group_compare do
     def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
-    def group_compare(_, _) do
-      raise "any list other than the empty list [] is an invalid type!"
-    end
+    def group_compare(_, %Type.List{}), do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue < lvalue, do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue == lvalue, do: :eq
+    def group_compare(rvalue, lvalue)
+      when rvalue > lvalue, do: :gt
+    def group_compare(_, _), do: :lt
   end
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
     def usable_as([], iolist(), _), do: :ok
-    def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
-      raise "any list other than the empty list [] is an invalid type!"
+    def usable_as([], type = %Type.List{}, meta) do
+      {:error, Message.make([], type, meta)}
+    end
+    def usable_as(list, type = %Type.List{}, meta) do
+      case Type.List.usable_literal(type, list) do
+        :ok -> :ok
+        {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
+        {:error, _} -> {:error, Message.make(list, type, meta)}
+      end
     end
   end
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
     def intersection([], iolist()), do: Type.Iolist.intersection_with([])
-    def intersection(list, _) when is_list(list) and length(list) > 0  do
-      raise "any list other than the empty list [] is an invalid type!"
+    def intersection([], _), do: none()
+    def intersection(rvalue, type = %Type.List{}) do
+      if Type.subtype?(rvalue, type) do
+        rvalue
+      else
+        none()
+      end
     end
   end
 
@@ -286,5 +305,41 @@ defimpl Type.Properties, for: BitString do
 
   def normalize(bitstring) do
     %Type.Bitstring{size: :erlang.bit_size(bitstring)}
+  end
+end
+
+defimpl Type.Properties, for: Float do
+  import Type, only: :macros
+  use Type.Helpers
+
+  group_compare do
+    def group_compare(_, float()), do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue < lvalue, do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue == lvalue, do: :eq
+    def group_compare(rvalue, lvalue)
+      when rvalue > lvalue, do: :gt
+    def group_compare(_, _), do: :lt
+  end
+
+  ###########################################################################
+  ## SUBTYPE
+
+  subtype :usable_as
+
+  ###########################################################################
+  ## USABLE_AS
+
+  usable_as do
+    def usable_as(_value, float(), _meta), do: :ok
+  end
+
+  intersection do
+    def intersection(value, float()), do: value
+  end
+
+  def normalize(float) do
+    float()
   end
 end

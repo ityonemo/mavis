@@ -7,6 +7,7 @@ defmodule Type.Helpers do
   @group_for %{
     "Integer" => 1,
     "Range" => 1,
+    "Float" => 2,
     "Atom" => 3,
     "Function" => 5,
     "Tuple" => 8,
@@ -153,12 +154,6 @@ defmodule Type.Helpers do
       end
       end
 
-      if __MODULE__ in [Type.Properties.Type.List, Type.Properties.Type.Bitstring] do
-      def intersection(left, right = %Type.Literal{}) do
-        Type.intersection(right, left)
-      end
-      end
-
       unquote(block)
 
       def intersection(left, right) when is_remote(right) do
@@ -204,10 +199,6 @@ defmodule Type.Helpers do
           :gt -> :gt
           _ -> :lt
         end
-      end
-
-      unless __MODULE__ == Type.Properties.Type.Literal do
-        def group_compare(type1, %Type.Literal{}), do: :gt
       end
 
       unquote(block)

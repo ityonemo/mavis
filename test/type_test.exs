@@ -16,7 +16,6 @@ defmodule TypeTest do
   doctest Type.Tuple
   doctest Type.Map
   doctest Type.Union
-  doctest Type.Literal
 
   use Type.Operators
 
