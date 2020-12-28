@@ -10,6 +10,11 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
 
   @bitstring "foo"
 
+  def string(size \\ nil) do
+    %Type{module: String, name: :t, params: List.wrap(size)}
+  end
+
+
   describe "the intersection of a literal bitstring" do
     test "with itself, bitstring and any is itself" do
       assert literal(@bitstring) == literal(@bitstring) <~> any()
@@ -28,10 +33,21 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
 
       assert literal(@bitstring) == %Bitstring{size: 24} <~> literal(@bitstring)
       assert literal(@bitstring) == %Bitstring{unit: 8} <~> literal(@bitstring)
+
+      assert literal(@bitstring) == literal(@bitstring) <~> string()
+      assert literal(@bitstring) == literal(@bitstring) <~> string(3)
+      assert literal(@bitstring) == string() <~> literal(@bitstring)
+      assert literal(@bitstring) == string(3) <~> literal(@bitstring)
     end
 
     test "with other literal bitstrings" do
       assert none() == literal("baz") <~> literal(@bitstring)
+    end
+
+    test "with mismatched bitstring types" do
+      assert none() == literal(@bitstring) <~> %Bitstring{size: 21}
+      assert none() == literal(@bitstring) <~> %Bitstring{unit: 7}
+      assert none() == literal(@bitstring) <~> string(4)
     end
 
     test "with unions works as expected" do

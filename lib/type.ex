@@ -1546,7 +1546,16 @@ defimpl Type.Properties, for: Type do
 
     # strings
     def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
-    def intersection(target = %Type{module: String, name: :t}, remote(String.t)), do: target
+    def intersection(specced = %{module: String, name: :t}, remote(String.t)), do: specced
+    def intersection(%{module: String, name: :t, params: params},
+                     target = %Type.Literal{value: value})
+                     when is_binary(value) do
+      case params do
+        [] -> target
+        [v] when v == :erlang.size(value) -> target
+        _ -> none()
+      end
+    end
     def intersection(%Type{module: String, name: :t, params: [lp]},
                      %Type{module: String, name: :t, params: [rp]}) do
       case Type.intersection(lp, rp) do
@@ -1554,7 +1563,7 @@ defimpl Type.Properties, for: Type do
         int_type -> %Type{module: String, name: :t, params: [int_type]}
       end
     end
-    def intersection(%Type{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
+    def intersection(%{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
       lp
       |> case do
         i when is_integer(i) ->
@@ -1569,9 +1578,10 @@ defimpl Type.Properties, for: Type do
         lst -> %Type{module: String, name: :t, params: [Enum.into(lst, %Type.Union{})]}
       end
     end
+    def intersection(%{module: String, name: :t, params: [_]}, _), do: none()
 
     # remote types
-    def intersection(type = %Type{module: module, name: name, params: params}, right)
+    def intersection(type = %{module: module, name: name, params: params}, right)
         when is_remote(type) do
       # deal with errors later.
       # TODO: implement type caching system

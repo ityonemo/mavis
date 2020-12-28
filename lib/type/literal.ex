@@ -199,7 +199,7 @@ defmodule Type.Literal do
 
     usable_as do
       def usable_as(%{value: float}, float(), _meta) when is_float(float), do: :ok
-      def usable_as(%{value: bitstring}, target = %Type.Bitstring{}, meta) do
+      def usable_as(%{value: bitstring}, target = %Type.Bitstring{}, meta) when is_bitstring(bitstring) do
         Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(bitstring)}, target, meta)
       end
       def usable_as(type = %{value: value}, target = %Type.List{}, meta) when is_list(value) do
