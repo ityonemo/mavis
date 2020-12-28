@@ -219,6 +219,7 @@ defmodule Type.Bitstring do
         end
       end
 
+      # special String.t type
       def usable_as(challenge, target = %Type{module: String, name: :t, params: []}, meta) do
         case Type.usable_as(challenge, binary()) do
           :ok ->
@@ -242,6 +243,18 @@ defmodule Type.Bitstring do
             msg = encapsulation_msg(challenge, target)
             {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
           other -> other
+        end
+      end
+
+      # literal bitstrings
+      def usable_as(challenge, target = %Type.Literal{value: value}, meta)
+          when is_bitstring(value) do
+        challenge
+        |> Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(value)}, meta)
+        |> case do
+          {:error, _} -> {:error, Message.make(challenge, target, meta)}
+          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
         end
       end
     end

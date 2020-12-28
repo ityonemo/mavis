@@ -199,16 +199,30 @@ defmodule Type.Literal do
 
     usable_as do
       def usable_as(%{value: float}, float(), _meta) when is_float(float), do: :ok
-      def usable_as(%{value: bitstring}, target = %Type.Bitstring{}, meta) when is_bitstring(bitstring) do
-        Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(bitstring)}, target, meta)
+      def usable_as(type = %{value: bitstring}, target = %Type.Bitstring{}, meta)
+          when is_bitstring(bitstring) do
+        %Type.Bitstring{size: :erlang.bit_size(bitstring)}
+        |> Type.usable_as(target, meta)
+        |> case do
+          {:error, _} -> {:error, Message.make(type, target, meta)}
+          {:maybe, _} -> {:maybe, [Message.make(type, target, meta)]}
+          :ok -> :ok
+        end
+      end
+      def usable_as(type = %{value: binary}, target = %Type{module: String, name: t}, meta)
+          when is_binary(binary) do
+        case target.params do
+          [] -> :ok
+          [v] when :erlang.size(binary) == v -> :ok
+          _ -> {:error, Message.make(type, target, meta)}
+        end
       end
       def usable_as(type = %{value: value}, target = %Type.List{}, meta) when is_list(value) do
         value
         |> Enum.map(&Type.usable_as(&1, target.type, meta))
         |> Enum.reduce(&Type.ternary_and/2)
         |> case do
-          {:error, _} ->
-            {:error, %Type.Message{type: type, target: target, meta: meta}}
+          {:error, _} -> {:error, Message.make(type, target, meta)}
           ok -> ok
         end
       end
