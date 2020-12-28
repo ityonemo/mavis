@@ -151,7 +151,7 @@ defmodule Type.List do
 
     use Type.Helpers
 
-    alias Type.{List, Message, Union}
+    alias Type.{Literal, List, Message, Union}
 
     group_compare do
       def group_compare(%{nonempty: ne}, []), do: if ne, do: :lt, else: :gt
@@ -196,6 +196,18 @@ defmodule Type.List do
           :ok -> :ok
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
+        end
+      end
+
+      def usable_as(challenge, target = %Literal{value: value}, meta) do
+        value
+        |> Enum.map(&Type.usable_as(&1, challenge.type, meta))
+        |> Enum.reduce(&Type.ternary_and/2)
+        |> case do
+          {:error, _} ->
+            {:error, Message.make(challenge, target, meta)}
+          :ok ->
+            {:maybe, [Message.make(challenge, target, meta)]}
         end
       end
     end

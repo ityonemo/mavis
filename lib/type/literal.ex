@@ -199,10 +199,15 @@ defmodule Type.Literal do
 
     usable_as do
       def usable_as(%{value: float}, float(), _meta) when is_float(float), do: :ok
-      def usable_as(%{value: list}, type = %Type.List{}, meta) when is_list(list) do
-        list
-        |> Literal._normalize(:list)
-        |> Type.usable_as(type, meta)
+      def usable_as(type = %{value: value}, target = %Type.List{}, meta) when is_list(value) do
+        value
+        |> Enum.map(&Type.usable_as(&1, target.type, meta))
+        |> Enum.reduce(&Type.ternary_and/2)
+        |> case do
+          {:error, _} ->
+            {:error, %Type.Message{type: type, target: target, meta: meta}}
+          ok -> ok
+        end
       end
       def usable_as(lhs, rhs = %Literal{}, meta) do
         {:error, Message.make(lhs, rhs, meta)}
