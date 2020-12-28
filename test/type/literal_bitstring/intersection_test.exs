@@ -8,54 +8,52 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
 
   alias Type.Bitstring
 
-  @bitstring "foo"
-
   describe "the intersection of a literal bitstring" do
     test "with itself, bitstring and any is itself" do
-      assert literal(@bitstring) == literal(@bitstring) <~> any()
-      assert literal(@bitstring) == literal(@bitstring) <~> bitstring()
-      assert literal(@bitstring) == literal(@bitstring) <~> binary()
-      assert literal(@bitstring) == literal(@bitstring) <~> literal(@bitstring)
+      assert "foo" == "foo" <~> any()
+      assert "foo" == "foo" <~> bitstring()
+      assert "foo" == "foo" <~> binary()
+      assert "foo" == "foo" <~> "foo"
 
-      assert literal(@bitstring) == any() <~> literal(@bitstring)
-      assert literal(@bitstring) == bitstring() <~> literal(@bitstring)
-      assert literal(@bitstring) == binary() <~> literal(@bitstring)
+      assert "foo" == any() <~> "foo"
+      assert "foo" == bitstring() <~> "foo"
+      assert "foo" == binary() <~> "foo"
     end
 
     test "with correctly descriptive bitstring types" do
-      assert literal(@bitstring) == literal(@bitstring) <~> %Bitstring{size: 24}
-      assert literal(@bitstring) == literal(@bitstring) <~> %Bitstring{unit: 8}
+      assert "foo" == "foo" <~> %Bitstring{size: 24}
+      assert "foo" == "foo" <~> %Bitstring{unit: 8}
 
-      assert literal(@bitstring) == %Bitstring{size: 24} <~> literal(@bitstring)
-      assert literal(@bitstring) == %Bitstring{unit: 8} <~> literal(@bitstring)
+      assert "foo" == %Bitstring{size: 24} <~> "foo"
+      assert "foo" == %Bitstring{unit: 8} <~> "foo"
 
-      assert literal(@bitstring) == literal(@bitstring) <~> remote(String.t())
-      assert literal(@bitstring) == literal(@bitstring) <~> remote(String.t(3))
-      assert literal(@bitstring) == remote(String.t()) <~> literal(@bitstring)
-      assert literal(@bitstring) == remote(String.t(3)) <~> literal(@bitstring)
+      assert "foo" == "foo" <~> remote(String.t())
+      assert "foo" == "foo" <~> remote(String.t(3))
+      assert "foo" == remote(String.t()) <~> "foo"
+      assert "foo" == remote(String.t(3)) <~> "foo"
     end
 
     test "with other literal bitstrings" do
-      assert none() == literal("baz") <~> literal(@bitstring)
+      assert none() == literal("baz") <~> "foo"
     end
 
     test "with mismatched bitstring types" do
-      assert none() == literal(@bitstring) <~> %Bitstring{size: 21}
-      assert none() == literal(@bitstring) <~> %Bitstring{unit: 7}
-      assert none() == literal(@bitstring) <~> remote(String.t(4))
+      assert none() == "foo" <~> %Bitstring{size: 21}
+      assert none() == "foo" <~> %Bitstring{unit: 7}
+      assert none() == "foo" <~> remote(String.t(4))
     end
 
     test "with unions works as expected" do
-      assert literal(@bitstring) == literal(@bitstring) <~> (:foo <|> literal(@bitstring))
-      assert literal(@bitstring) == literal(@bitstring) <~> (:foo <|> bitstring())
-      assert none() == literal(@bitstring) <~> (atom() <|> port())
+      assert "foo" == "foo" <~> (:foo <|> "foo")
+      assert "foo" == "foo" <~> (:foo <|> bitstring())
+      assert none() == "foo" <~> (atom() <|> port())
     end
 
     test "with all other types is none" do
       TypeTest.Targets.except([bitstring()])
       |> Enum.each(fn target ->
-        assert none() == literal(@bitstring) <~> target
-        assert none() == target <~> literal(@bitstring)
+        assert none() == "foo" <~> target
+        assert none() == target <~> "foo"
       end)
     end
   end

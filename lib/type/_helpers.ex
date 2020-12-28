@@ -12,7 +12,8 @@ defmodule Type.Helpers do
     "Tuple" => 8,
     "Map" => 9,
     "List" => 10,
-    "Bitstring" => 11
+    "Bitstring" => 11,
+    "BitString" => 11
   }
 
   @doc """

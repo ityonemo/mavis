@@ -115,6 +115,7 @@ defmodule Type.Bitstring do
     use Type.Helpers
 
     group_compare do
+      def group_compare(_, bitstring) when is_bitstring(bitstring), do: :gt
       def group_compare(%Bitstring{unit: 0}, %Bitstring{unit: b}) when b != 0, do: :lt
       def group_compare(%Bitstring{unit: a}, %Bitstring{unit: 0}) when a != 0, do: :gt
       def group_compare(%Bitstring{unit: a}, %Bitstring{unit: b}) when a < b,  do: :gt
@@ -247,14 +248,13 @@ defmodule Type.Bitstring do
       end
 
       # literal bitstrings
-      def usable_as(challenge, target = %Type.Literal{value: value}, meta)
-          when is_bitstring(value) do
+      def usable_as(challenge, bitstring, meta) when is_bitstring(bitstring) do
         challenge
-        |> Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(value)}, meta)
+        |> Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(bitstring)}, meta)
         |> case do
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
+          {:error, _} -> {:error, Message.make(challenge, bitstring, meta)}
+          {:maybe, _} -> {:maybe, [Message.make(challenge, bitstring, meta)]}
+          :ok -> {:maybe, [Message.make(challenge, bitstring, meta)]}
         end
       end
     end
@@ -297,6 +297,9 @@ defmodule Type.Bitstring do
       end
       def intersection(bs, st = %Type{module: String, name: :t}) do
         Type.intersection(st, bs)
+      end
+      def intersection(bs, bitstring) when is_bitstring(bitstring) do
+        Type.intersection(bitstring, bs)
       end
     end
 

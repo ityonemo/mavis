@@ -9,27 +9,25 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
 
   alias Type.Bitstring
 
-  @bitstring "foo"
-
   describe "literal bitstrings are usable as" do
     test "themselves" do
-      assert (literal(@bitstring) ~> literal(@bitstring)) == :ok
+      assert ("foo" ~> "foo") == :ok
     end
 
     test "bitstrings, binaries, and strings" do
-      assert (literal(@bitstring) ~> bitstring()) == :ok
-      assert (literal(@bitstring) ~> binary()) == :ok
-      assert (literal(@bitstring) ~> remote(String.t())) == :ok
-      assert (literal(@bitstring) ~> remote(String.t(3))) == :ok
+      assert ("foo" ~> bitstring()) == :ok
+      assert ("foo" ~> binary()) == :ok
+      assert ("foo" ~> remote(String.t())) == :ok
+      assert ("foo" ~> remote(String.t(3))) == :ok
     end
 
     test "a union with either itself or binary" do
-      assert literal(@bitstring) ~> (binary() <|> :infinity) == :ok
-      assert literal(@bitstring) ~> (literal(@bitstring) <|> :infinity) == :ok
+      assert "foo" ~> (binary() <|> :infinity) == :ok
+      assert "foo" ~> ("foo" <|> :infinity) == :ok
     end
 
     test "any" do
-      assert (literal(@bitstring) ~> any()) == :ok
+      assert ("foo" ~> any()) == :ok
     end
   end
 
@@ -37,43 +35,43 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
 
   describe "bitstrings, binaries, and Strings maybe" do
     test "usable as literal bitstrings" do
-      assert {:maybe, _} = bitstring() ~> literal(@bitstring)
-      assert {:maybe, _} = binary() ~> literal(@bitstring)
-      assert {:maybe, _} = remote(String.t()) ~> literal(@bitstring)
-      assert {:maybe, _} = remote(String.t(3)) ~> literal(@bitstring)
+      assert {:maybe, _} = bitstring() ~> "foo"
+      assert {:maybe, _} = binary() ~> "foo"
+      assert {:maybe, _} = remote(String.t()) ~> "foo"
+      assert {:maybe, _} = remote(String.t(3)) ~> "foo"
     end
   end
 
   describe "literal lists not usable as" do
     test "incorrectly sized binaries or Strings" do
-      assert {:error, %Message{type: literal(@bitstring), target: %Bitstring{size: 21}}} =
-        (literal(@bitstring) ~> %Bitstring{size: 21})
+      assert {:error, %Message{type: "foo", target: %Bitstring{size: 21}}} =
+        ("foo" ~> %Bitstring{size: 21})
 
-      assert {:error, %Message{type: literal(@bitstring), target: %Bitstring{unit: 7}}} =
-        (literal(@bitstring) ~> %Bitstring{unit: 7})
+      assert {:error, %Message{type: "foo", target: %Bitstring{unit: 7}}} =
+        ("foo" ~> %Bitstring{unit: 7})
 
-      assert {:error, %Message{type: literal(@bitstring), target: remote(String.t(4))}} =
-        (literal(@bitstring) ~> remote(String.t(4)))
+      assert {:error, %Message{type: "foo", target: remote(String.t(4))}} =
+        ("foo" ~> remote(String.t(4)))
     end
 
     test "a union with a disjoint categories" do
-      assert {:error, _} = literal(@bitstring) ~> (atom() <|> pid())
+      assert {:error, _} = "foo" ~> (atom() <|> pid())
     end
 
     test "any other type" do
       targets = TypeTest.Targets.except([binary()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: literal(@bitstring), target: ^target}} =
-          (literal(@bitstring) ~> target)
+        assert {:error, %Message{type: "foo", target: ^target}} =
+          ("foo" ~> target)
       end)
     end
   end
 
   describe "lists not" do
     test "usable as literal lists when types don't match " do
-      assert {:error, _} = remote(String.t(4)) ~> literal(@bitstring)
-      assert {:error, _} = %Bitstring{size: 21} ~> literal(@bitstring)
-      assert {:error, _} = %Bitstring{unit: 7} ~> literal(@bitstring)
+      assert {:error, _} = remote(String.t(4)) ~> "foo"
+      assert {:error, _} = %Bitstring{size: 21} ~> "foo"
+      assert {:error, _} = %Bitstring{unit: 7} ~> "foo"
     end
   end
 end

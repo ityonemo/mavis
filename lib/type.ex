@@ -1573,12 +1573,10 @@ defimpl Type.Properties, for: Type do
     # strings
     def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
     def intersection(specced = %{module: String, name: :t}, remote(String.t)), do: specced
-    def intersection(%{module: String, name: :t, params: params},
-                     target = %Type.Literal{value: value})
-                     when is_binary(value) do
+    def intersection(%{module: String, name: :t, params: params}, binary) when is_binary(binary) do
       case params do
-        [] -> target
-        [v] when v == :erlang.size(value) -> target
+        [] -> binary
+        [v] when v == :erlang.size(binary) -> binary
         _ -> none()
       end
     end
