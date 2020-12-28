@@ -89,6 +89,12 @@ defmodule Type do
   - `Range`s (must be increasing)
   - atoms
   - empty list (`[]`)
+  - lists
+  - floats
+  - bitstrings
+
+  Literal maps and tuples are definable using their respective types.
+  See `Type.Map` and `Type.Tuple`
 
   The following types have associated structs:
   - lists: `t:Type.List.t/0`
@@ -226,6 +232,7 @@ defmodule Type do
     module: nil | module,
     params: [t]
   } | integer | Range.t | atom
+  | float | bitstring
   #| Type.AsBoolean.t
   | Type.List.t | []
   | Type.Bitstring.t
@@ -235,7 +242,6 @@ defmodule Type do
   | Type.Union.t
   | Type.Opaque.t
   | Type.Function.Var.t
-  | Type.Literal.t
 
   @typedoc """
   Represents that some but not all members of the type will succeed in
@@ -652,37 +658,46 @@ defmodule Type do
   @doc """
   generates type literals.
 
-  - For bitstrings and lists, this is wrapped in the `Type.Literal`
-  struct.
-  - For singletons (empty list, integers, atoms), this is a no-op.
-  - For other composite values, this gets decomposed to
-  singleton values (possibly including literals themselves.)
-  - note that pids, ports, and references will not work.
+  - For singletons (empty list, integers, atoms, bitstrings, floats),
+    this is a no-op.
+  - For lists, it expands into a list of the elements in their transformed
+    state
+  - For other composite values (maps and tuples), this gets decomposed to the
+    structures as expected singletons
+  - note that pids, ports, and references are not supported.
 
   ### Examples:
 
   ```elixir
   iex> import Type, only: :macros
-  iex> literal("foo")
-  %Type.Literal{value: "foo"}
-  iex> literal(47.0)
-  %Type.Literal{value: 47.0}
-  iex> literal([:foo, :bar])
-  %Type.Literal{value: [:foo, :bar]}
-  iex> literal(%{foo: :bar})
-  %Type.Map{required: %{foo: :bar}}
   iex> literal([])
   []
   iex> literal(47)
   47
   iex> literal(:foo)
   :foo
+  iex> literal("foo")
+  "foo"
+  iex> literal(47.0)
+  47.0
+  iex> literal([:foo, :bar])
+  [:foo, :bar]
+  iex> literal([:foo | :bar])
+  [:foo | :bar]
+  iex> literal([:foo, %{bar: "baz"}])
+  [:foo, %Type.Map{required: %{bar: "baz"}}]
+  iex> literal([["foo"], "bar"])
+  [["foo"], "bar"]
+  iex> literal(%{foo: :bar})
+  %Type.Map{required: %{foo: :bar}}
+  iex> literal(%{foo: %{bar: "baz"}})
+  %Type.Map{required: %{foo: %Type.Map{required: %{bar: "baz"}}}}
   iex> literal({:ok, "bar"})
-  %Type.Tuple{elements: [:ok, %Type.Literal{value: "bar"}]}
+  %Type.Tuple{elements: [:ok, "bar"]}
   iex> literal({:ok, "bar", 1})
-  %Type.Tuple{elements: [:ok, %Type.Literal{value: "bar"}, 1]}
+  %Type.Tuple{elements: [:ok, "bar", 1]}
   iex> literal(%{"foo" => "bar"})
-  %Type.Map{required: %{%Type.Literal{value: "foo"} => %Type.Literal{value: "bar"}}}
+  %Type.Map{required: %{"foo" => "bar"}}
   ```
 
   *usable in guards*
@@ -694,12 +709,23 @@ defmodule Type do
   end
   defmacro literal(value), do: do_literal(value)
 
-  defp do_literal(value) when is_atom(value) or is_integer(value) or value == [] do
+  defp do_literal(value) when
+      is_atom(value) or
+      is_integer(value) or
+      is_float(value) or
+      is_bitstring(value) or
+      value == [] do
     value
   end
-  defp do_literal(value) when
-    is_bitstring(value) or is_float(value) or is_list(value) do
-    Macro.escape(%Type.Literal{value: value})
+  defp do_literal([{:|, _, [head, rest]}]) do
+    quote do
+      [unquote(do_literal(head)) | unquote(do_literal(rest))]
+    end
+  end
+  defp do_literal([head | rest]) do
+    quote do
+      [unquote(do_literal(head)) | unquote(do_literal(rest))]
+    end
   end
   defp do_literal({:%{}, meta, kv}) do
     requireds = Enum.map(kv, fn {k, v} -> {do_literal(k), do_literal(v)} end)
