@@ -15,7 +15,6 @@ defmodule TypeTest.LiteralFloat.SubtypeTest do
     end
 
     test "is a subtype of list and any builtins" do
-      assert Type.subtype?(literal(@list), list())
       assert literal(@list) in list()
       assert literal(@list) in any()
     end
