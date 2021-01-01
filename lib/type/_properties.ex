@@ -189,28 +189,177 @@ defimpl Type.Properties, for: List do
 
   use Type.Helpers
 
+  alias Type.Message
+
   group_compare do
     def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
-    def group_compare(_, _) do
-      raise "any list other than the empty list [] is an invalid type!"
-    end
+    def group_compare(_, %Type.List{}), do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue < lvalue, do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue == lvalue, do: :eq
+    def group_compare(rvalue, lvalue)
+      when rvalue > lvalue, do: :gt
+    def group_compare(_, _), do: :lt
   end
 
   usable_as do
     def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
     def usable_as([], iolist(), _), do: :ok
-    def usable_as(list, _, _) when is_list(list) and length(list) > 0 do
-      raise "any list other than the empty list [] is an invalid type!"
+    def usable_as([], type = %Type.List{}, meta) do
+      {:error, Message.make([], type, meta)}
     end
+    def usable_as(list, iolist(), meta) when is_list(list) do
+      case usable_as_iolist(list) do
+        :ok -> :ok
+        :error -> {:error, Message.make(list, iolist(), meta)}
+      end
+    end
+    def usable_as(list, type = %Type.List{}, meta) when is_list(list) do
+      case Type.List.usable_literal(type, list) do
+        :ok -> :ok
+        {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
+        {:error, _} -> {:error, Message.make(list, type, meta)}
+      end
+    end
+  end
+
+  defp usable_as_iolist([head | rest]) when not is_integer(rest) do
+    case usable_as_iolist(head) do
+      :ok -> usable_as_iolist(rest)
+      error -> error
+    end
+  end
+  defp usable_as_iolist(binary) when is_binary(binary), do: :ok
+  defp usable_as_iolist(integer) when is_integer(integer) and
+      0 < integer and integer < 0x10FFF do
+    :ok
+  end
+  defp usable_as_iolist(_) do
+    :error
   end
 
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
     def intersection([], iolist()), do: Type.Iolist.intersection_with([])
-    def intersection(list, _) when is_list(list) and length(list) > 0  do
-      raise "any list other than the empty list [] is an invalid type!"
+    def intersection([], _), do: none()
+    def intersection(rvalue, iolist()) do
+      if Type.subtype?(rvalue, iolist()), do: rvalue, else: iolist()
+    end
+    def intersection(rvalue, type = %Type.List{}) do
+      if Type.subtype?(rvalue, type), do: rvalue, else: none()
     end
   end
 
   subtype :usable_as
+end
+
+defimpl Type.Properties, for: BitString do
+  import Type, only: :macros
+  use Type.Helpers
+
+  group_compare do
+    def group_compare(_, %Type.Bitstring{}), do: :lt
+    def group_compare(_, %Type{module: String, name: :t}), do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue < lvalue, do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue == lvalue, do: :eq
+    def group_compare(rvalue, lvalue)
+      when rvalue > lvalue, do: :gt
+    def group_compare(_, _), do: :lt
+  end
+
+  ###########################################################################
+  ## SUBTYPE
+
+  subtype :usable_as
+
+  ###########################################################################
+  ## USABLE_AS
+
+  alias Type.Message
+
+  usable_as do
+    def usable_as(bitstring, target = %Type.Bitstring{}, meta)
+        when is_bitstring(bitstring) do
+      %Type.Bitstring{size: :erlang.bit_size(bitstring)}
+      |> Type.usable_as(target, meta)
+      |> case do
+        {:error, _} -> {:error, Message.make(bitstring, target, meta)}
+        {:maybe, _} -> {:maybe, [Message.make(bitstring, target, meta)]}
+        :ok -> :ok
+      end
+    end
+    def usable_as(binary, target = %Type{module: String, name: :t}, meta)
+        when is_binary(binary) do
+      case target.params do
+        [] -> :ok
+        [v] when :erlang.size(binary) == v -> :ok
+        _ -> {:error, Message.make(binary, target, meta)}
+      end
+    end
+  end
+
+  intersection do
+    def intersection(_, bitstring) when is_bitstring(bitstring), do: none()
+    def intersection(binary, rhs = %Type{module: String, name: :t})
+        when is_binary(binary) do
+      case rhs.params do
+        [] -> binary
+        [v] when :erlang.size(binary) == v -> binary
+        _ -> none()
+      end
+    end
+    def intersection(bitstring, type) do
+      bitstring
+      |> normalize
+      |> Type.subtype?(type)
+      |> if do
+        bitstring
+      else
+        none()
+      end
+    end
+  end
+
+  def normalize(bitstring) do
+    %Type.Bitstring{size: :erlang.bit_size(bitstring)}
+  end
+end
+
+defimpl Type.Properties, for: Float do
+  import Type, only: :macros
+  use Type.Helpers
+
+  group_compare do
+    def group_compare(_, float()), do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue < lvalue, do: :lt
+    def group_compare(rvalue, lvalue)
+      when rvalue == lvalue, do: :eq
+    def group_compare(rvalue, lvalue)
+      when rvalue > lvalue, do: :gt
+    def group_compare(_, _), do: :lt
+  end
+
+  ###########################################################################
+  ## SUBTYPE
+
+  subtype :usable_as
+
+  ###########################################################################
+  ## USABLE_AS
+
+  usable_as do
+    def usable_as(_value, float(), _meta), do: :ok
+  end
+
+  intersection do
+    def intersection(value, float()), do: value
+  end
+
+  def normalize(float) do
+    float()
+  end
 end

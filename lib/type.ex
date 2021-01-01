@@ -89,6 +89,12 @@ defmodule Type do
   - `Range`s (must be increasing)
   - atoms
   - empty list (`[]`)
+  - lists
+  - floats
+  - bitstrings
+
+  Literal maps and tuples are definable using their respective types.
+  See `Type.Map` and `Type.Tuple`
 
   The following types have associated structs:
   - lists: `t:Type.List.t/0`
@@ -226,6 +232,7 @@ defmodule Type do
     module: nil | module,
     params: [t]
   } | integer | Range.t | atom
+  | float | bitstring
   #| Type.AsBoolean.t
   | Type.List.t | []
   | Type.Bitstring.t
@@ -649,6 +656,98 @@ defmodule Type do
   end
 
   @doc """
+  generates type literals.
+
+  - For singletons (empty list, integers, atoms, bitstrings, floats),
+    this is a no-op.
+  - For lists, it expands into a list of the elements in their transformed
+    state
+  - For other composite values (maps and tuples), this gets decomposed to the
+    structures as expected singletons
+  - note that pids, ports, and references are not supported.
+
+  ### Examples:
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> literal([])
+  []
+  iex> literal(47)
+  47
+  iex> literal(:foo)
+  :foo
+  iex> literal("foo")
+  "foo"
+  iex> literal(47.0)
+  47.0
+  iex> literal([:foo, :bar])
+  [:foo, :bar]
+  iex> literal([:foo | :bar])
+  [:foo | :bar]
+  iex> literal([:foo, %{bar: "baz"}])
+  [:foo, %Type.Map{required: %{bar: "baz"}}]
+  iex> literal([["foo"], "bar"])
+  [["foo"], "bar"]
+  iex> literal(%{foo: :bar})
+  %Type.Map{required: %{foo: :bar}}
+  iex> literal(%{foo: %{bar: "baz"}})
+  %Type.Map{required: %{foo: %Type.Map{required: %{bar: "baz"}}}}
+  iex> literal({:ok, "bar"})
+  %Type.Tuple{elements: [:ok, "bar"]}
+  iex> literal({:ok, "bar", 1})
+  %Type.Tuple{elements: [:ok, "bar", 1]}
+  iex> literal(%{"foo" => "bar"})
+  %Type.Map{required: %{"foo" => "bar"}}
+  ```
+
+  *usable in guards*
+  """
+  defmacro literal(atform = {:@, _meta, _}) do
+    atform
+    |> Macro.expand(__CALLER__)
+    |> do_literal
+  end
+  defmacro literal(value), do: do_literal(value)
+
+  defp do_literal(value) when
+      is_atom(value) or
+      is_integer(value) or
+      is_float(value) or
+      is_bitstring(value) or
+      value == [] do
+    value
+  end
+  defp do_literal([{:|, _, [head, rest]}]) do
+    quote do
+      [unquote(do_literal(head)) | unquote(do_literal(rest))]
+    end
+  end
+  defp do_literal([head | rest]) do
+    quote do
+      [unquote(do_literal(head)) | unquote(do_literal(rest))]
+    end
+  end
+  defp do_literal({:%{}, meta, kv}) do
+    requireds = Enum.map(kv, fn {k, v} -> {do_literal(k), do_literal(v)} end)
+    quote do
+      %Type.Map{required: unquote({:%{}, meta, requireds})}
+    end
+  end
+  defp do_literal({a, b}) do
+    e0 = do_literal(a)
+    e1 = do_literal(b)
+    quote do
+      %Type.Tuple{elements: [unquote(e0), unquote(e1)]}
+    end
+  end
+  defp do_literal({:{}, _meta, elements}) do
+    e = Enum.map(elements, &do_literal/1)
+    quote do
+      %Type.Tuple{elements: unquote(e)}
+    end
+  end
+
+  @doc """
   guard that tests if the selected type is remote
 
   ### Example:
@@ -735,7 +834,7 @@ defmodule Type do
   craft warning and error messages; as well as being filters for user-defined
   exceptions to warning or error rules.
 
-  ### Relationship to `subtype/2`
+  ### Relationship to `subtype?/2`
 
   at first glance, it would seem that the `subtype?/2` function is
   equivalent to `usable_as/3`, but there are cases where the relationship
@@ -1465,12 +1564,21 @@ defimpl Type.Properties, for: Type do
     def intersection(atom(), module()), do: module()
     def intersection(atom(), node_type()), do: node_type()
     def intersection(atom(), atom) when is_atom(atom), do: atom
+    # other literals
+    def intersection(float(), value) when is_float(value), do: value
     # iolist
     def intersection(iolist(), any), do: Type.Iolist.intersection_with(any)
 
     # strings
     def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
-    def intersection(target = %Type{module: String, name: :t}, remote(String.t)), do: target
+    def intersection(specced = %{module: String, name: :t}, remote(String.t)), do: specced
+    def intersection(%{module: String, name: :t, params: params}, binary) when is_binary(binary) do
+      case params do
+        [] -> binary
+        [v] when v == :erlang.size(binary) -> binary
+        _ -> none()
+      end
+    end
     def intersection(%Type{module: String, name: :t, params: [lp]},
                      %Type{module: String, name: :t, params: [rp]}) do
       case Type.intersection(lp, rp) do
@@ -1478,7 +1586,7 @@ defimpl Type.Properties, for: Type do
         int_type -> %Type{module: String, name: :t, params: [int_type]}
       end
     end
-    def intersection(%Type{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
+    def intersection(%{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
       lp
       |> case do
         i when is_integer(i) ->
@@ -1493,9 +1601,10 @@ defimpl Type.Properties, for: Type do
         lst -> %Type{module: String, name: :t, params: [Enum.into(lst, %Type.Union{})]}
       end
     end
+    def intersection(%{module: String, name: :t, params: [_]}, _), do: none()
 
     # remote types
-    def intersection(type = %Type{module: module, name: name, params: params}, right)
+    def intersection(type = %{module: module, name: name, params: params}, right)
         when is_remote(type) do
       # deal with errors later.
       # TODO: implement type caching system

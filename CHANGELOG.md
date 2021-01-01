@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.7
+- implements literal types
+
 ## 0.0.6
 - deprecates `Type.builtin/1` and switches to macros for each type.
 - renames `Type.select_builtin/1` to `Type.builtin/1` which can serve

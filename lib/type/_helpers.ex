@@ -7,12 +7,14 @@ defmodule Type.Helpers do
   @group_for %{
     "Integer" => 1,
     "Range" => 1,
+    "Float" => 2,
     "Atom" => 3,
     "Function" => 5,
     "Tuple" => 8,
     "Map" => 9,
     "List" => 10,
-    "Bitstring" => 11
+    "Bitstring" => 11,
+    "BitString" => 11
   }
 
   @doc """
@@ -24,7 +26,7 @@ defmodule Type.Helpers do
   @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
 
   # exists to prevent mistakes when generating functions.
-  defmacro __using__(_) do
+  defmacro __using__(_opts) do
     group = __CALLER__.module
     |> Module.split
     |> List.last
@@ -186,8 +188,6 @@ defmodule Type.Helpers do
       end
 
       def group_compare(type1, %Type.Opaque{type: type2}) do
-        type1 |> IO.inspect(label: "185")
-        type2 |> IO.inspect(label: "186")
         case group_compare(type1, type2) do
           :eq -> :gt
           cmp -> cmp

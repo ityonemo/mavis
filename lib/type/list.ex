@@ -146,6 +146,20 @@ defmodule Type.List do
     final: Type.t
   }
 
+  def usable_literal(list, literal, so_far \\ :ok)
+  def usable_literal(list, [head | rest], so_far) do
+    next_result = head
+    |> Type.usable_as(list.type)
+    |> Type.ternary_and(so_far)
+
+    usable_literal(list, rest, next_result)
+  end
+  def usable_literal(list, final, so_far) do
+    final
+    |> Type.usable_as(list.final)
+    |> Type.ternary_and(so_far)
+  end
+
   defimpl Type.Properties do
     import Type, only: :macros
 
@@ -198,10 +212,26 @@ defmodule Type.List do
           {:error, _} -> {:error, Message.make(challenge, target, meta)}
         end
       end
+
+      def usable_as(challenge, target, meta) when is_list(target) do
+        # TODO: make this work with improper lists
+        challenge
+        |> Type.List.usable_literal(target)
+        |> case do
+          {:error, _} ->
+            {:error, Message.make(challenge, target, meta)}
+          {:maybe, _} ->
+            {:maybe, [Message.make(challenge, target, meta)]}
+          :ok ->
+            {:maybe, [Message.make(challenge, target, meta)]}
+        end
+      end
     end
 
     intersection do
-      def intersection(%{nonempty: false}, []), do: []
+      def intersection(type, list) when is_list(list) do
+        Type.intersection(list, type)
+      end
       def intersection(a, b = %List{}) do
         case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
           {none(), _} -> none()
