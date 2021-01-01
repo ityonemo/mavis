@@ -1,4 +1,4 @@
-defmodule TypeTest.LiteralFloat.OrderTest do
+defmodule TypeTest.LiteralList.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :compare

@@ -38,13 +38,13 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     test "acts as if it is a maybe_empty list" do
       nonempty = list(@binary, ...)
       assert nonempty == iolist() <~> nonempty
-      assert nonempty = nonempty <~> iolist()
+      assert nonempty == nonempty <~> iolist()
     end
 
     test "acts as if it can have a final of binary" do
       binfinal = %List{type: @binary, final: @binary}
       assert binfinal == iolist() <~> binfinal
-      assert binfinal = binfinal <~> iolist()
+      assert binfinal == binfinal <~> iolist()
     end
 
     test "intersects to arbitrary depth" do

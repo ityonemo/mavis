@@ -1,4 +1,4 @@
-defmodule TypeTest.LiteralFloat.SubtypeTest do
+defmodule TypeTest.LiteralList.SubtypeTest do
   use ExUnit.Case, async: true
 
   @moduletag :subtype

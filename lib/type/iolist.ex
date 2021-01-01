@@ -18,6 +18,9 @@ defmodule Type.Iolist do
   # INTERSECTIONS
 
   def intersection_with([]), do: []
+  def intersection_with(list) when is_list(list) do
+    Type.intersection(list, iolist())
+  end
   def intersection_with(list = %List{}) do
     # iolist is char | binary | iolist
     type = [@char, @binary, iolist()]

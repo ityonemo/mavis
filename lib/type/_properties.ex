@@ -209,7 +209,13 @@ defimpl Type.Properties, for: List do
     def usable_as([], type = %Type.List{}, meta) do
       {:error, Message.make([], type, meta)}
     end
-    def usable_as(list, type = %Type.List{}, meta) do
+    def usable_as(list, iolist(), meta) when is_list(list) do
+      case usable_as_iolist(list) do
+        :ok -> :ok
+        :error -> {:error, Message.make(list, iolist(), meta)}
+      end
+    end
+    def usable_as(list, type = %Type.List{}, meta) when is_list(list) do
       case Type.List.usable_literal(type, list) do
         :ok -> :ok
         {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
@@ -218,16 +224,30 @@ defimpl Type.Properties, for: List do
     end
   end
 
+  defp usable_as_iolist([head | rest]) when not is_integer(rest) do
+    case usable_as_iolist(head) do
+      :ok -> usable_as_iolist(rest)
+      error -> error
+    end
+  end
+  defp usable_as_iolist(binary) when is_binary(binary), do: :ok
+  defp usable_as_iolist(integer) when is_integer(integer) and
+      0 < integer and integer < 0x10FFF do
+    :ok
+  end
+  defp usable_as_iolist(_) do
+    :error
+  end
+
   intersection do
     def intersection([], %Type.List{nonempty: false, final: []}), do: []
     def intersection([], iolist()), do: Type.Iolist.intersection_with([])
     def intersection([], _), do: none()
+    def intersection(rvalue, iolist()) do
+      if Type.subtype?(rvalue, iolist()), do: rvalue, else: iolist()
+    end
     def intersection(rvalue, type = %Type.List{}) do
-      if Type.subtype?(rvalue, type) do
-        rvalue
-      else
-        none()
-      end
+      if Type.subtype?(rvalue, type), do: rvalue, else: none()
     end
   end
 

@@ -21,11 +21,9 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert @list == list() <~> @list
 
       assert @ilist == @ilist <~> any()
-      assert @ilist == @ilist <~> list()
+      assert @ilist == any() <~> @ilist
       assert @ilist == @ilist <~> @ilist
 
-      assert @ilist == any() <~> @ilist
-      assert @ilist == list() <~> @ilist
     end
 
     test "iolist literals intersect with iolist" do
