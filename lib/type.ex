@@ -570,7 +570,7 @@ defmodule Type do
     end)
     |> Enum.map(&(&1))
     |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
-    
+
     struct_of(:"Type.Map", map_list)
   end
 
@@ -795,21 +795,6 @@ defmodule Type do
   defguard is_primitive(type) when is_struct(type) and
     :erlang.map_get(:__struct__, type) == Type and
     :erlang.map_get(:module, type) == nil
-
-  @doc """
-  guard that tests if the selected type is a singleton type.  This is
-  a type that has only one value associated with it.
-
-  ### Example:
-  ```
-  iex> Type.is_singleton(:foo)
-  true
-  iex> Type.is_singleton(%Type{name: :any})
-  false
-  ```
-  """
-  @doc guard: true
-  defguard is_singleton(type) when is_atom(type) or is_integer(type) or type == []
 
   @spec usable_as(t, t, keyword) :: ternary
   @doc """
@@ -1083,6 +1068,23 @@ defmodule Type do
   ```
   """
   defdelegate compare(a, b), to: Type.Properties
+
+  @doc """
+  Performs subtraction of types.  The resulting type must comprise all members
+  of the first parameter and none of the second.
+
+  ## Examples
+  ```
+  iex> import Type, only: :macros
+  iex> Type.subtract(0..10, 3)
+  %Type.Union{of: [1..2, 3..10]}
+  iex> Type.subtract(atom(), :foo)
+  %Type.Subtraction{base: atom(), exclude: :foo}
+  iex> Type.subtract("string", "string")
+  none()
+  ```
+  """
+  defdelegate subtract(a, b), to: Type.Properties
 
   @typedoc """
   type of group assignments

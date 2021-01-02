@@ -5,8 +5,8 @@ defmodule Type.Operators do
 
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
-      import Type.Operators, only: [<~>: 2, <|>: 2, ~>: 2, >: 2, <: 2, <=: 2, >=: 2, in: 2]
+      import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
+      import Type.Operators, only: [<~>: 2, <|>: 2, ~>: 2, >: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
     end
   end
 
@@ -39,4 +39,9 @@ defmodule Type.Operators do
   shortcut for `Type.subtype?/2`
   """
   defdelegate a in b, to: Type, as: :subtype?
+
+  @doc """
+  shortcut for `Type.subtract/2`
+  """
+  defdelegate a - b, to: Type, as: :subtract
 end
