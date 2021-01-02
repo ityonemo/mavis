@@ -212,7 +212,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
   end
 
   describe "the subtraction from module" do
-    test "of any, atom, and itself is itself" do
+    test "of any, atom, and itself is none" do
       assert none() == module() - any()
       assert none() == module() - atom()
       assert none() == module() - module()
@@ -229,7 +229,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
   end
 
   describe "the subtraction from node" do
-    test "of any, atom, and itself is itself" do
+    test "of any, atom, and itself is none" do
       assert none() == node_type() - any()
       assert none() == node_type() - atom()
       assert none() == node_type() - node_type()
@@ -245,7 +245,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
   end
 
   describe "the subtraction from atom" do
-    test "of any, atom is itself" do
+    test "of any, atom is none" do
       assert none() == atom() - any()
       assert none() == atom() - atom()
     end
@@ -277,10 +277,67 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert atom() == atom() - (integer() <|> pid())
     end
 
-    test "of all other types is none" do
+    test "of all other types is unchanged" do
       TypeTest.Targets.except([:foo, atom()])
       |> Enum.each(fn target ->
         assert atom() == atom() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from reference" do
+    test "of any, reference is none" do
+      assert none() == reference() - any()
+      assert none() == reference() - reference()
+    end
+
+    test "of unions works as expected" do
+      assert none() == reference() - (reference() <|> :foo <|> 10..12)
+      assert reference() == reference() - (integer() <|> pid())
+    end
+
+    test "of all other types is unchanged" do
+      TypeTest.Targets.except([reference()])
+      |> Enum.each(fn target ->
+        assert reference() == reference() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from port" do
+    test "of any, port is none" do
+      assert none() == port() - any()
+      assert none() == port() - port()
+    end
+
+    test "of unions works as expected" do
+      assert none() == port() - (port() <|> :foo <|> 10..12)
+      assert port() == port() - (integer() <|> pid())
+    end
+
+    test "of all other types is none" do
+      TypeTest.Targets.except([port()])
+      |> Enum.each(fn target ->
+        assert port() == port() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from pid" do
+    test "of any, pid is none" do
+      assert none() == pid() - any()
+      assert none() == pid() - pid()
+    end
+
+    test "of unions works as expected" do
+      assert none() == pid() - (pid() <|> :foo <|> 10..12)
+      assert pid() == pid() - (integer() <|> port())
+    end
+
+    test "of all other types is unchanged" do
+      TypeTest.Targets.except([pid()])
+      |> Enum.each(fn target ->
+        assert pid() == pid() - target
       end)
     end
   end
