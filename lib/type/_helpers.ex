@@ -281,6 +281,13 @@ defmodule Type.Helpers do
     end
   end
 
+  defmacro subtract(do: block) do
+    quote do
+      def subtract(a, a), do: none()
+      unquote(block)
+    end
+  end
+
   @doc false
   def lexical_compare(left = %{module: m, name: n}, right) do
     with {:m, ^m} <- {:m, right.module},
