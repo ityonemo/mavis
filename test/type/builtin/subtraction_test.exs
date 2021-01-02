@@ -228,19 +228,60 @@ defmodule TypeTest.Builtin.SubtractionTest do
     end
   end
 
-  describe "the intersection of node" do
-    test "with any, atom, and itself is itself" do
+  describe "the subtraction from node" do
+    test "of any, atom, and itself is itself" do
       assert none() == node_type() - any()
       assert none() == node_type() - atom()
       assert none() == node_type() - node_type()
     end
 
-    test "with an atom that has node form is itself" do
+    test "of an atom that has node form is itself" do
       assert %Type.Subtraction{
-        base: module(),
+        base: node_type(),
         exclude: :nonode@nohost
-      } == module() - :nonode@nohost
+      } == node_type() - :nonode@nohost
       assert node_type() == node_type() - :foobar
+    end
+  end
+
+  describe "the subtraction from atom" do
+    test "of any, atom is itself" do
+      assert none() == atom() - any()
+      assert none() == atom() - atom()
+    end
+
+    test "of an actual atom is the atom" do
+      assert %Type.Subtraction{
+        base: atom(),
+        exclude: :foo
+      } == atom() - :foo
+    end
+
+    test "of an atom subtypes is the correct subtraction" do
+      assert %Type.Subtraction{
+        base: atom(),
+        exclude: module()
+      } == atom() - module()
+
+      assert %Type.Subtraction{
+        base: atom(),
+        exclude: node_type()
+      } == atom() - node_type()
+    end
+
+    test "of unions works as expected" do
+      assert %Type.Subtraction{
+        base: atom(),
+        exclude: :foo
+      } == atom() - (float() <|> :foo <|> 10..12)
+      assert atom() == atom() - (integer() <|> pid())
+    end
+
+    test "of all other types is none" do
+      TypeTest.Targets.except([:foo, atom()])
+      |> Enum.each(fn target ->
+        assert atom() == atom() - target
+      end)
     end
   end
 
