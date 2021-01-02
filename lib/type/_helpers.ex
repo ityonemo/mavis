@@ -283,8 +283,16 @@ defmodule Type.Helpers do
 
   defmacro subtract(do: block) do
     quote do
-      def subtract(a, a), do: none()
+      def subtract(type, type), do: none()
+      def subtract(type, any()), do: none()
       unquote(block)
+      def subtract(ltype, rtype) do
+        case Type.intersection(ltype, rtype) do
+          ^ltype -> none()
+          none() -> ltype
+          type -> %Type.Subtraction{base: ltype, exclude: type}
+        end
+      end
     end
   end
 
