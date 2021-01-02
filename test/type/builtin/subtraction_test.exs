@@ -129,19 +129,84 @@ defmodule TypeTest.Builtin.SubtractionTest do
     test "of unions works as expected" do
       assert %Type.Subtraction{
         base: pos_integer(),
-        exclude: (1 <|> (10..47))} ==
-          non_neg_integer() - ((10..47) <|> (-47..1) <|> :foo)
+        exclude: (1 <|> 10..47)} ==
+          non_neg_integer() - (10..47 <|> -47..1 <|> :foo)
 
       assert %Type.Subtraction{
         base: pos_integer(),
         exclude: 10..47} ==
-          non_neg_integer() - ((10..47) <|> (-47..0) <|> :foo)
+          non_neg_integer() - (10..47 <|> -47..0 <|> :foo)
     end
 
     test "of all other types is unchanged" do
       TypeTest.Targets.except([0, 47, pos_integer(), non_neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
         assert non_neg_integer() == non_neg_integer() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from integer" do
+    test "of any, integer is none" do
+      assert none() == integer() - any()
+      assert none() == integer() - integer()
+    end
+
+    test "of integer subtypes is as expected" do
+      assert non_neg_integer() == integer() - neg_integer()
+      assert neg_integer() <|> pos_integer() == integer() - 0
+      assert 0 <|> neg_integer() == integer() - pos_integer()
+    end
+
+    test "of non-spanning ranges is as expected" do
+      assert %Type.Subtraction{
+        base: integer(),
+        exclude: 1..47
+      } == integer() - (1..47)
+    end
+
+    test "of spanning ranges can get strange" do
+      assert %Type.Subtraction{
+        base: neg_integer() <|> pos_integer,
+        exclude: -47..-1 <|> 1..47
+      } == integer() - (-47..47)
+    end
+
+    test "of all other types is unchanged" do
+      TypeTest.Targets.except([-47, 0, 47, neg_integer(), pos_integer(), non_neg_integer(), integer(), -10..10])
+      |> Enum.each(fn target ->
+        assert integer() == integer() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from float" do
+    test "with any, float is none" do
+      assert none() == float() - any()
+      assert none() == float() - float()
+    end
+
+    test "with single float values causes subtraction" do
+      assert %Type.Subtraction{
+        base: float(),
+        exclude: 47.0
+      } == float() - 47.0
+    end
+
+    test "with unions works as expected" do
+      assert none() == float() - (float() <|> 15..16)
+      assert float() == float() - (:foo <|> pid())
+
+      assert %Type.Subtraction{
+        base: float(),
+        exclude: 47.0
+      } == float() - (47.0 <|> :foo)
+    end
+
+    test "with all other types is none" do
+      TypeTest.Targets.except([float()])
+      |> Enum.each(fn target ->
+        assert none() == float() <~> target
       end)
     end
   end
