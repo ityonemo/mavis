@@ -165,6 +165,20 @@ defmodule Type.Union do
       end
     end
 
+    subtract do
+      def subtract(%{of: types}, subtrahend) do
+        {s, w} = types
+        |> Enum.map(&Type.subtract(&1, subtrahend))
+        |> Enum.reject(&(&1 == none()))
+        |> Enum.split_with(&match?(%Type.Subtraction{}, &1))
+
+        base = Enum.into(w ++ Enum.map(s, &(&1.base)), %Type.Union{})
+        exclude = s |> Enum.map(&(&1.exclude)) |> Enum.into(%Type.Union{})
+
+        if s == [], do: base, else: %Type.Subtraction{base: base, exclude: exclude}
+      end
+    end
+
     def normalize(%{of: types}) do
       types
       |> Enum.map(&Type.normalize/1)

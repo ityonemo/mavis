@@ -32,7 +32,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert neg_integer() == neg_integer() - 47
     end
 
-    test "with ranges trim as expected" do
+    test "of ranges trim as expected" do
       assert %Type.Subtraction{base: neg_integer(), exclude: -47..-10} ==
         neg_integer() - (-47..-10)
       assert %Type.Subtraction{base: neg_integer(), exclude: -47..-1} ==
@@ -42,14 +42,14 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert neg_integer() == neg_integer() - (1..47)
     end
 
-    test "with unions works as expected" do
+    test "of unions works as expected" do
       assert %Type.Subtraction{
         base: neg_integer(),
         exclude: (-1 <|> (-47..-10))} ==
           neg_integer() - ((-47..-10) <|> (-1..47) <|> :foo)
     end
 
-    test "with all other types is unaffected" do
+    test "of all other types is unaffected" do
       TypeTest.Targets.except([-47, neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
         assert neg_integer() == neg_integer() - target
@@ -65,13 +65,13 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert none() == pos_integer() - pos_integer()
     end
 
-    test "with integers yields a subtraction only for positive integers" do
+    test "of integers yields a subtraction only for positive integers" do
       assert %Type.Subtraction{base: pos_integer(), exclude: 47} ==
         pos_integer() - 47
       assert pos_integer() == pos_integer() - -47
     end
 
-    test "with ranges trim as expected" do
+    test "of ranges trim as expected" do
       assert %Type.Subtraction{base: pos_integer(), exclude: 10..47} ==
         pos_integer() - (10..47)
       assert %Type.Subtraction{base: pos_integer(), exclude: 1..47} ==
@@ -81,17 +81,67 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert pos_integer() == pos_integer() - (-47..-1)
     end
 
-    test "with unions works as expected" do
+    test "of unions works as expected" do
       assert %Type.Subtraction{
         base: pos_integer(),
         exclude: (1 <|> (10..47))} ==
           pos_integer() - ((10..47) <|> (-47..1) <|> :foo)
     end
 
-    test "with all other types is unaffected" do
+    test "of all other types is unaffected" do
       TypeTest.Targets.except([47, pos_integer(), non_neg_integer(), integer(), -10..10])
       |> Enum.each(fn target ->
         assert pos_integer() == pos_integer() - target
+      end)
+    end
+  end
+
+  describe "the subtraction from non_neg_integer" do
+    test "of any, integer, and non_neg_integer is none" do
+      assert none() == non_neg_integer() - any()
+      assert none() == non_neg_integer() - integer()
+      assert none() == non_neg_integer() - non_neg_integer()
+    end
+
+    test "of pos_integer is 0" do
+      assert 0 == non_neg_integer() - pos_integer()
+    end
+
+    test "of integers yields the integer only for negative integers" do
+      assert %Type.Subtraction{base: non_neg_integer(), exclude: 47} ==
+        non_neg_integer() - 47
+      assert pos_integer() == non_neg_integer() - 0
+      assert non_neg_integer() == non_neg_integer() - -47
+    end
+
+    test "of ranges trim as expected" do
+      assert %Type.Subtraction{base: non_neg_integer(), exclude: 10..47} ==
+        non_neg_integer() - (10..47)
+      assert %Type.Subtraction{base: non_neg_integer(), exclude: 1..47} ==
+        non_neg_integer() - (1..47)
+      assert %Type.Subtraction{base: pos_integer(), exclude: 1} ==
+        non_neg_integer() - (-47..1)
+
+      assert pos_integer() == non_neg_integer() - (-47..0)
+      assert non_neg_integer() == non_neg_integer() - (-47..-1)
+    end
+
+    test "of unions works as expected" do
+      assert %Type.Subtraction{
+        base: pos_integer(),
+        exclude: (1 <|> (10..47))} ==
+          non_neg_integer() - ((10..47) <|> (-47..1) <|> :foo)
+
+      assert %Type.Subtraction{
+        base: pos_integer(),
+        exclude: 10..47} ==
+          non_neg_integer() - ((10..47) <|> (-47..0) <|> :foo)
+    end
+
+    test "of all other types is unchanged" do
+      TypeTest.Targets.except([0, 47, pos_integer(), non_neg_integer(), integer(), -10..10])
+      |> Enum.each(fn target ->
+        assert non_neg_integer() == non_neg_integer() - target
       end)
     end
   end
