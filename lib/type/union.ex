@@ -166,7 +166,9 @@ defmodule Type.Union do
     end
 
     def normalize(%{of: types}) do
-      %Union{of: Enum.map(types, &Type.normalize/1)}
+      types
+      |> Enum.map(&Type.normalize/1)
+      |> Enum.into(%Type.Union{})
     end
   end
 
