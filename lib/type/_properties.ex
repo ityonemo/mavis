@@ -12,7 +12,10 @@ defprotocol Type.Properties do
   def typegroup(type)
 
   @spec intersection(Type.t, Type.t) :: Type.t
-  def intersection(type, type)
+  def intersection(ltype, rtype)
+
+  @spec subtract(Type.t, Type.t) :: Type.t
+  def subtract(ltype, rtype)
 
   @spec normalize(Type.t) :: Type.t
   def normalize(type)
