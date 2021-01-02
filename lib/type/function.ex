@@ -432,9 +432,20 @@ defmodule Type.Function do
     end
 
     def normalize(function = %{params: i}) when is_integer(i) do
-      %{function | params: List.duplicate(any(), i)}
+      %Function{
+        params: List.duplicate(any(), i),
+        return: Type.normalize(function.return)
+      }
     end
-    def normalize(function), do: super(function)
+    def normalize(function = %{params: list}) when is_list(list) do
+      %Function{
+        params: Enum.map(list, &Type.normalize/1),
+        return: Type.normalize(function.return)
+      }
+    end
+    def normalize(function = %{params: :any}) do
+      %{function | return: Type.normalize(function.return)}
+    end
   end
 
   defimpl Inspect do

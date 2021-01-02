@@ -196,6 +196,10 @@ defmodule Type.Map do
     optional: optional
   }
 
+  @type t(key, value) :: %__MODULE__{
+    required: %{optional(key) => value},
+    optional: %{}}
+
   @doc """
   the full union of all possible key values for the passed map.
 
@@ -574,6 +578,19 @@ defmodule Type.Map do
         {:error, _msg} -> {:maybe, [Message.make(challenge, target, meta)]}
         any -> any
       end)
+    end
+
+    def normalize(%{required: required, optional: optional}) do
+      {requireds, optionals} = required
+      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+      |> Enum.split_with(&(is_atom(elem(&1, 0)) or is_integer(elem(&1, 0))))
+
+      optionals = optional
+      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+      |> Kernel.++(optionals)
+      |> Enum.into(%{})
+
+      %Type.Map{required: Enum.into(requireds, %{}), optional: optionals}
     end
 
   end

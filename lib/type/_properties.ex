@@ -252,6 +252,18 @@ defimpl Type.Properties, for: List do
   end
 
   subtype :usable_as
+
+  def normalize([]), do: []
+  def normalize(list), do: normalize(list, [])
+  def normalize([head | rest], so_far) do
+    normalize(rest, [Type.normalize(head) | so_far])
+  end
+  def normalize(type, so_far) do
+    %Type.List{
+      type: Enum.into(so_far, %Type.Union{}),
+      nonempty: true,
+      final: Type.normalize(type)}
+  end
 end
 
 defimpl Type.Properties, for: BitString do
@@ -323,6 +335,13 @@ defimpl Type.Properties, for: BitString do
     end
   end
 
+  def normalize(binary) when is_binary(binary) do
+    if String.valid?(binary) do
+      remote(String.t())
+    else
+      %Type.Bitstring{size: :erlang.bit_size(binary)}
+    end
+  end
   def normalize(bitstring) do
     %Type.Bitstring{size: :erlang.bit_size(bitstring)}
   end
@@ -359,7 +378,5 @@ defimpl Type.Properties, for: Float do
     def intersection(value, float()), do: value
   end
 
-  def normalize(float) do
-    float()
-  end
+  def normalize(_float), do: float()
 end

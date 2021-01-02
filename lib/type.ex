@@ -231,17 +231,21 @@ defmodule Type do
     name: atom,
     module: nil | module,
     params: [t]
-  } | integer | Range.t | atom
-  | float | bitstring
+  } | integer | Range.t | float
+  | atom
   #| Type.AsBoolean.t
-  | Type.List.t | []
-  | Type.Bitstring.t
+  | Type.Function.t
   | Type.Tuple.t
   | Type.Map.t
-  | Type.Function.t
+  | Type.List.t | [] | list
+  | Type.Bitstring.t | bitstring
   | Type.Union.t
   | Type.Opaque.t
   | Type.Function.Var.t
+
+  @type literal ::
+    integer | float | atom | bitstring | [] | [literal] |
+    Type.Map.t(literal, literal) | Type.Tuple.t(literal)
 
   @typedoc """
   Represents that some but not all members of the type will succeed in
@@ -566,7 +570,7 @@ defmodule Type do
     end)
     |> Enum.map(&(&1))
     |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
-
+    
     struct_of(:"Type.Map", map_list)
   end
 
