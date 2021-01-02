@@ -81,10 +81,12 @@ defimpl Type.Properties, for: Range do
     def intersection(_..a,  pos_integer()) when a > 1, do: 1..a
   end
 
-  def subtract(a..b, c) when c < a or c > b, do: a..b
-  def subtract(a..b, a), do: rangeresolve(a + 1, b)
-  def subtract(a..b, b), do: rangeresolve(a, b - 1)
-  def subtract(a..b, c), do: Type.union(rangeresolve(a, c - 1), rangeresolve(c + 1, b))
+  subtract do
+    def subtract(a..b, c) when c < a or c > b, do: a..b
+    def subtract(a..b, a), do: rangeresolve(a + 1, b)
+    def subtract(a..b, b), do: rangeresolve(a, b - 1)
+    def subtract(a..b, c), do: Type.union(rangeresolve(a, c - 1), rangeresolve(c + 1, b))
+  end
 
   defp rangeresolve(a, a), do: a
   defp rangeresolve(a, b) when a < b, do: a..b

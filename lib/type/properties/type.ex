@@ -286,8 +286,11 @@ defimpl Type.Properties, for: Type do
     end
     def subtype?(a, b) when is_primitive(a), do: usable_as(a, b, []) == :ok
   end
-  def subtract(atom(), a) when is_atom(a) do
-    %Type.Subtraction{base: atom(), exclude: a}
+
+  subtract do
+    def subtract(atom(), a) when is_atom(a) do
+      %Type.Subtraction{base: atom(), exclude: a}
+    end
   end
 
   # downconverts an arity/1 String.t(_) type to String.t()
