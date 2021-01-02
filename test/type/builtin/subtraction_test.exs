@@ -211,4 +211,37 @@ defmodule TypeTest.Builtin.SubtractionTest do
     end
   end
 
+  describe "the subtraction from module" do
+    test "of any, atom, and itself is itself" do
+      assert none() == module() - any()
+      assert none() == module() - atom()
+      assert none() == module() - module()
+    end
+
+    test "of an atom that is not a module is no change" do
+      assert %Type.Subtraction{
+        base: module(),
+        exclude: Kernel
+      } == module() - Kernel
+
+      assert module() == module() - :foobar
+    end
+  end
+
+  describe "the intersection of node" do
+    test "with any, atom, and itself is itself" do
+      assert none() == node_type() - any()
+      assert none() == node_type() - atom()
+      assert none() == node_type() - node_type()
+    end
+
+    test "with an atom that has node form is itself" do
+      assert %Type.Subtraction{
+        base: module(),
+        exclude: :nonode@nohost
+      } == module() - :nonode@nohost
+      assert node_type() == node_type() - :foobar
+    end
+  end
+
 end
