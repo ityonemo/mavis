@@ -1,4 +1,4 @@
-defmodule TypeTest.LiteralBitstring.IntersectionTest do
+defmodule TypeTest.LiteralBitstring.SubtractionTest do
   use ExUnit.Case, async: true
   use Type.Operators
 

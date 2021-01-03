@@ -11,9 +11,6 @@ defmodule TypeTest.LiteralFloat.IntersectionTest do
       assert 47.0 == 47.0 <~> any()
       assert 47.0 == 47.0 <~> float()
       assert 47.0 == 47.0 <~> 47.0
-
-      assert 47.0 == any() <~> 47.0
-      assert 47.0 == float() <~> 47.0
     end
 
     test "with other literal floats" do
