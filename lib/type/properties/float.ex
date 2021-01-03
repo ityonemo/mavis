@@ -29,5 +29,8 @@ defimpl Type.Properties, for: Float do
     def intersection(value, float()), do: value
   end
 
+  subtract do
+  end
+
   def normalize(_float), do: float()
 end

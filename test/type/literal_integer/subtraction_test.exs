@@ -28,8 +28,8 @@ defmodule TypeTest.LiteralInteger.SubtractionTest do
     end
 
     test "of ranges is correct" do
-      assert none() == 47 - 0..50
-      assert 47 == 47 - 0..10
+      assert none() == 47 - (0..50)
+      assert 47 == 47 - (0..10)
     end
 
     test "of unions works as expected" do
@@ -38,7 +38,7 @@ defmodule TypeTest.LiteralInteger.SubtractionTest do
     end
 
     test "of all other types is none" do
-      TypeTest.Targets.except([integer(), pos_integer(), non_neg_integer()])
+      TypeTest.Targets.except([47, integer(), pos_integer(), non_neg_integer()])
       |> Enum.each(fn target ->
         assert 47 == 47 - target
       end)

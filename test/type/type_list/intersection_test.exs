@@ -29,7 +29,7 @@ defmodule TypeTest.TypeList.IntersectionTest do
     end
 
     test "doesn't intersect with anything else" do
-      TypeTest.Targets.except([list(), []])
+      TypeTest.Targets.except([list(), [], ["foo", "bar"]])
       |> Enum.each(fn target ->
         assert none() == list() <~> target
       end)

@@ -24,7 +24,7 @@ defmodule TypeTest.LiteralFloat.SubtractionTest do
     end
 
     test "of all other types is none" do
-      TypeTest.Targets.except([float()])
+      TypeTest.Targets.except([float(), 47.0])
       |> Enum.each(fn target ->
         assert 47.0 == 47.0 - target
       end)

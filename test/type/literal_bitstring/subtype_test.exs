@@ -43,7 +43,7 @@ defmodule TypeTest.LiteralBinary.SubtypeTest do
     end
 
     test "is not a subtype of other types" do
-      TypeTest.Targets.except([binary()])
+      TypeTest.Targets.except([binary(), "foo"])
       |> Enum.each(fn target ->
         refute "foo" in target
       end)

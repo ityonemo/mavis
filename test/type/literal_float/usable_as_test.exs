@@ -44,7 +44,7 @@ defmodule TypeTest.LiteralFloat.UsableAsTest do
     end
 
     test "any other type" do
-      targets = TypeTest.Targets.except([float()])
+      targets = TypeTest.Targets.except([float(), 47.0])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: 47.0, target: ^target}} =
           (47.0 ~> target)

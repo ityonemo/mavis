@@ -11,7 +11,7 @@ defmodule TypeTest.NormalizationTest do
 
   describe "all mainline types" do
     test "do not get changed by normalization" do
-      TypeTest.Targets.except()
+      TypeTest.Targets.except([47.0, "foo", <<0::7>>, ["foo", "bar"]])
       |> Enum.each(fn target ->
         assert target == Type.normalize(target)
       end)

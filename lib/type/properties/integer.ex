@@ -26,7 +26,7 @@ defimpl Type.Properties, for: Integer do
   end
 
   intersection do
-    def intersection(i, a..b) when a <= i and i <= b, do: i
+    def intersection(i, a..b) when a <= i and i <= b, do: i 
     def intersection(i, neg_integer()) when i < 0, do: i
     def intersection(i, pos_integer()) when i > 0, do: i
   end

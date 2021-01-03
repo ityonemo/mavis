@@ -27,7 +27,7 @@ defmodule TypeTest.LiteralFloat.SubtypeTest do
     end
 
     test "is not a subtype of other types" do
-      TypeTest.Targets.except([float()])
+      TypeTest.Targets.except([float(), 47.0])
       |> Enum.each(fn target ->
         refute 47.0 in target
       end)

@@ -66,7 +66,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "intersects with nothing else" do
-      TypeTest.Targets.except([[], list()])
+      TypeTest.Targets.except([[], list(), ["foo", "bar"]])
       |> Enum.each(fn target ->
         assert none() == iolist() <~> target
       end)

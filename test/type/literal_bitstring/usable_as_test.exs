@@ -59,7 +59,7 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
     end
 
     test "any other type" do
-      targets = TypeTest.Targets.except([binary()])
+      targets = TypeTest.Targets.except([binary(), "foo"])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: "foo", target: ^target}} =
           ("foo" ~> target)

@@ -41,7 +41,7 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([bitstring()])
+      TypeTest.Targets.except([bitstring(), "foo"])
       |> Enum.each(fn target ->
         assert none() == "foo" <~> target
       end)
