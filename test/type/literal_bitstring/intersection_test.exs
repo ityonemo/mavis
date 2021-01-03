@@ -14,27 +14,18 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
       assert "foo" == "foo" <~> bitstring()
       assert "foo" == "foo" <~> binary()
       assert "foo" == "foo" <~> "foo"
-
-      assert "foo" == any() <~> "foo"
-      assert "foo" == bitstring() <~> "foo"
-      assert "foo" == binary() <~> "foo"
     end
 
     test "with correctly descriptive bitstring types" do
       assert "foo" == "foo" <~> %Bitstring{size: 24}
       assert "foo" == "foo" <~> %Bitstring{unit: 8}
 
-      assert "foo" == %Bitstring{size: 24} <~> "foo"
-      assert "foo" == %Bitstring{unit: 8} <~> "foo"
-
       assert "foo" == "foo" <~> remote(String.t())
       assert "foo" == "foo" <~> remote(String.t(3))
-      assert "foo" == remote(String.t()) <~> "foo"
-      assert "foo" == remote(String.t(3)) <~> "foo"
     end
 
     test "with other literal bitstrings" do
-      assert none() == literal("baz") <~> "foo"
+      assert none() == "baz" <~> "foo"
     end
 
     test "with mismatched bitstring types" do

@@ -23,6 +23,13 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert @empty_bitstring == @empty_bitstring <~> @basic_binary
     end
 
+    test "with a literal bitstring is the literal bitstring" do
+      assert <<0::7>> == bitstring() <~> <<0::7>>
+
+      assert "foo" == bitstring() <~> "foo"
+      assert "foo" == binary() <~> "foo"
+    end
+
     test "with any fixed size string is none" do
       assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 0}
       assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 8}
@@ -53,10 +60,18 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
     end
   end
 
-  describe "other combinations" do
+  describe "other combinations of bitstrings:" do
     test "disparate unit sizes" do
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 3}
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 6}
+    end
+
+    test "literals" do
+      assert "foo" == %Bitstring{size: 24} <~> "foo"
+      assert "foo" == %Bitstring{unit: 8} <~> "foo"
+
+      assert "foo" == remote(String.t()) <~> "foo"
+      assert "foo" == remote(String.t(3)) <~> "foo"
     end
 
     test "different offsets" do

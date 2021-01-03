@@ -38,10 +38,12 @@ defimpl Type.Properties, for: BitString do
     end
     def usable_as(binary, target = %Type{module: String, name: :t}, meta)
         when is_binary(binary) do
-      case target.params do
-        [] -> :ok
-        [v] when :erlang.size(binary) == v -> :ok
-        _ -> {:error, Message.make(binary, target, meta)}
+      case {target.params, String.valid?(binary)} do
+        {l, _} when length(l) > 1 -> raise "invalid type #{inspect target}"
+        {[], true} -> :ok
+        {[v], true} when :erlang.size(binary) == v -> :ok
+        _ ->
+          {:error, Message.make(binary, target, meta)}
       end
     end
   end
@@ -50,15 +52,16 @@ defimpl Type.Properties, for: BitString do
     def intersection(_, bitstring) when is_bitstring(bitstring), do: none()
     def intersection(binary, rhs = %Type{module: String, name: :t})
         when is_binary(binary) do
-      case rhs.params do
-        [] -> binary
-        [v] when :erlang.size(binary) == v -> binary
+
+      case {rhs.params, String.valid?(binary)} do
+        {l, _} when length(l) > 1 -> raise "invalid type #{inspect rhs}"
+        {[], true} -> binary
+        {[v], true} when :erlang.size(binary) == v -> binary
         _ -> none()
       end
     end
     def intersection(bitstring, type) do
-      bitstring
-      |> normalize
+      %Type.Bitstring{size: :erlang.bit_size(bitstring)}
       |> Type.subtype?(type)
       |> if do
         bitstring
