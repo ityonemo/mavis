@@ -105,6 +105,7 @@ defimpl Type.Properties, for: Range do
         {false, _, _, false} -> Type.union(rangeresolve(a, c - 1), rangeresolve(d + 1, b))
       end
     end
+    def subtract(a..b, _), do: a..b
   end
 
   defp rangeresolve(a, a), do: a
