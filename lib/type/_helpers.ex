@@ -285,6 +285,9 @@ defmodule Type.Helpers do
     quote do
       def subtract(type, type), do: none()
       def subtract(type, any()), do: none()
+      def subtract(base, %Type.Union{of: types}) do
+        Enum.reduce(types, base, &Type.subtract(&2, &1))
+      end
       unquote(block)
       def subtract(ltype, rtype) do
         case Type.intersection(ltype, rtype) do

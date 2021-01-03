@@ -82,10 +82,29 @@ defimpl Type.Properties, for: Range do
   end
 
   subtract do
-    def subtract(a..b, c) when c < a or c > b, do: a..b
+    # basic types
+    def subtract(_..b, neg_integer()) when b < 0, do: none()
+    def subtract(a..b, neg_integer()) when a >= 0, do: a..b
+    def subtract(_..b, neg_integer()), do: rangeresolve(0, b)
+    def subtract(a.._, pos_integer()) when a > 0, do: none()
+    def subtract(a..b, pos_integer()) when b <= 0, do: a..b
+    def subtract(a.._, pos_integer()), do: rangeresolve(a, 0)
+    # integers
+    def subtract(a..b, c) when is_integer(c) and (c < a or c > b), do: a..b
     def subtract(a..b, a), do: rangeresolve(a + 1, b)
     def subtract(a..b, b), do: rangeresolve(a, b - 1)
-    def subtract(a..b, c), do: Type.union(rangeresolve(a, c - 1), rangeresolve(c + 1, b))
+    def subtract(a..b, c) when is_integer(c) do
+      Type.union(rangeresolve(a, c - 1), rangeresolve(c + 1, b))
+    end
+    def subtract(a..b, c..d) do
+      case {a >= c, a > d, b < c, b <= d} do
+        {_,     x, y, _} when x or y -> a..b
+        {false, _, _, true}  -> rangeresolve(a, c - 1)
+        {true,  _, _, true}  -> none()
+        {true,  _, _, false} -> rangeresolve(d + 1, b)
+        {false, _, _, false} -> Type.union(rangeresolve(a, c - 1), rangeresolve(d + 1, b))
+      end
+    end
   end
 
   defp rangeresolve(a, a), do: a

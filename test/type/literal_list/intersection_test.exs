@@ -12,6 +12,9 @@ defmodule TypeTest.LiteralList.IntersectionTest do
   @ilist ["foo" | "bar"]
 
   describe "the intersection of a literal list" do
+
+    test "reorganize for lhs only"
+
     test "with itself, list and any is itself" do
       assert @list == @list <~> any()
       assert @list == @list <~> list()

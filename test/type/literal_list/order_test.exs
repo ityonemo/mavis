@@ -15,12 +15,12 @@ defmodule TypeTest.LiteralList.OrderTest do
     end
 
     test "is bigger than a smaller integer" do
-      assert @list > literal([:foo])
-      assert @list > literal([:baz, :bar])
+      assert @list > [:foo]
+      assert @list > [:baz, :bar]
     end
 
     test "is smaller than a bigger integer" do
-      assert @list < literal([:foo, :baz])
+      assert @list < [:foo, :baz]
     end
 
     test "is smaller than list, which it is a subset of" do
