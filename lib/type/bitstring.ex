@@ -182,6 +182,8 @@ defmodule Type.Bitstring do
         cond do
           unit_b == 0 ->
             {:maybe, [Message.make(challenge, target, meta)]}
+          unit_a == 0 ->
+            :ok
           unit_a < unit_b ->
             {:maybe, [Message.make(challenge, target, meta)]}
           true ->
@@ -319,6 +321,53 @@ defmodule Type.Bitstring do
     end
 
     defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
+
+    subtract do
+      def subtract(%{size: 0, unit: 0}, ""), do: none()
+      # when the target type has unit 0
+      def subtract(%{size: s1, unit: u1}, %Bitstring{size: s2, unit: 0}) when
+          s2 >= s1 and rem(s1, u1) == rem(s2, u1) do
+
+        if s1 != s2 do
+          for sz when rem(sz, u1) == rem(s1, u1) <- s1..s2 do
+            %Bitstring{size: sz, unit: 0}
+          end
+        end
+        |> List.wrap()
+        |> Kernel.++([%Bitstring{size: s2 + u1, unit: u1}])
+        |> Enum.into(%Type.Union{})
+      end
+      def subtract(t, %Bitstring{unit: 0}), do: t
+      def subtract(%{size: s1, unit: 0}, %Bitstring{size: s2, unit: u2}) when
+          s2 <= s1 and rem(s1, u2) == rem(s2, u2), do: none()
+      def subtract(t = %{size: _, unit: 0}, %Bitstring{}), do: t
+
+      def subtract(%{size: s1, unit: u1}, %Bitstring{size: s2, unit: u2}) do
+        # pick the common size as lcm(u2, u1)
+        common_unit = lcm(u1, u2)
+        (0..common_unit - 1)
+        |> Enum.filter(&(rem(s1, u1) == rem(&1, u1)))
+        |> Enum.reject(&(rem(s2, u2) == rem(&1, u2)))
+        |> Enum.map(&%Bitstring{size: &1, unit: common_unit})
+        |> Kernel.++(residuals(s1, s2, u2))
+        |> Enum.into(%Type.Union{})
+      end
+
+      def subtract(t = %{size: s1, unit: u1}, bitstring) when
+        is_bitstring(bitstring) and
+        (:erlang.bit_size(bitstring) < s1 or
+        rem(:erlang.bit_size(bitstring) - s1, u1) != 0), do: t
+
+      # error guards
+      def subtract(_, %Bitstring{}), do: raise "unreachable"
+
+      defp residuals(s1, s2, u2) when s1 < s2 do
+        for i when rem(i, u2) == rem(s2, u2) <- s1..(s2 - 1) do
+          %Bitstring{size: i}
+        end
+      end
+      defp residuals(_, _, _), do: []
+    end
 
     subtype :usable_as
   end

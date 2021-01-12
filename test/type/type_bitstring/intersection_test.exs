@@ -23,6 +23,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert @empty_bitstring == @empty_bitstring <~> @basic_binary
     end
 
+    test "move this away from here VV"
     test "with a literal bitstring is the literal bitstring" do
       assert <<0::7>> == bitstring() <~> <<0::7>>
 

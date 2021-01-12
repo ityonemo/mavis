@@ -62,4 +62,11 @@ defmodule TypeTest.TypeBitstring.SubtypeTest do
       refute %Bitstring{size: 4, unit: 8} in @basic_binary
     end
   end
+
+  describe "corner cases" do
+    test "fixed size binaries" do
+      assert %Bitstring{size: 10} in %Bitstring{size: 10, unit: 4}
+      assert %Bitstring{size: 10} in %Bitstring{size: 10, unit: 17}
+    end
+  end
 end

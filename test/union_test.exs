@@ -238,9 +238,9 @@ defmodule TypeTest.UnionTest do
     end
   end
 
-  describe "for binaries" do
+  describe "for bitstrings" do
     alias Type.Bitstring
-    test "a binary with a smaller minsize gets unioned in" do
+    test "bitstrings with a smaller minsize gets unioned in" do
       assert %Bitstring{unit: 1} ==
         %Bitstring{size: 1, unit: 1} <|> %Bitstring{unit: 1}
 
@@ -251,23 +251,23 @@ defmodule TypeTest.UnionTest do
         %Bitstring{size: 16, unit: 8} <|> %Bitstring{size: 8, unit: 8}
     end
 
-    test "the special case of a zero binary gets unioned in" do
+    test "the special case of a zero bitstring gets unioned in" do
       assert %Bitstring{unit: 1} ==
         %Bitstring{size: 1, unit: 1} <|> %Bitstring{}
       assert %Bitstring{unit: 8} ==
         %Bitstring{size: 8, unit: 8} <|> %Bitstring{}
     end
 
-    test "binaries with divisible minsizes are unioned" do
+    test "bitstrings with divisible minsizes are unioned" do
       assert %Bitstring{unit: 4} ==
         %Bitstring{unit: 4} <|> %Bitstring{unit: 8}
     end
 
-    test "binaries with incompatible units are not unioned" do
+    test "bitstrings with incompatible units are not unioned" do
       assert %Type.Union{} = %Bitstring{unit: 8} <|> %Bitstring{unit: 9}
     end
 
-    test "binaries with out of phase minsizes are not unioned" do
+    test "bitstrings with out of phase minsizes are not unioned" do
       assert %Type.Union{} =
         %Bitstring{size: 4, unit: 8} <|> %Bitstring{size: 8}
     end
