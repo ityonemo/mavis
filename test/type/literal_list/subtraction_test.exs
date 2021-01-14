@@ -2,7 +2,7 @@ defmodule TypeTest.LiteralList.SubtractionTest do
   use ExUnit.Case, async: true
   use Type.Operators
 
-  @moduletag :intersection
+  @moduletag :subtraction
 
   import Type, only: :macros
 

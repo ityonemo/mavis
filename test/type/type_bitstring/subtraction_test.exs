@@ -10,7 +10,6 @@ defmodule TypeTest.TypeBitstring.SubtractionTest do
 
   @empty_bitstring %Bitstring{size: 0, unit: 0}
 
-  test "go through and make sure that all @moduletags are correct"
   test "go through and verify all describe and test strings"
 
   describe "the subtraction from empty bitstring" do
@@ -19,7 +18,7 @@ defmodule TypeTest.TypeBitstring.SubtractionTest do
       assert none() == @empty_bitstring - @empty_bitstring
     end
 
-    test "of any string with size 0 is none" do
+    test "of any string with unit 0 is none" do
       assert none() == @empty_bitstring - bitstring()
       assert none() == @empty_bitstring - binary()
     end
@@ -67,8 +66,6 @@ defmodule TypeTest.TypeBitstring.SubtractionTest do
         bitstring() - %Bitstring{size: 4, unit: 3}
     end
   end
-
-  test "empty bitstring literal stuff"
 
   describe "the subtraction from basic binary" do
     test "of itself, bitstring and any is none" do
@@ -127,17 +124,9 @@ defmodule TypeTest.TypeBitstring.SubtractionTest do
 
         Enum.each(0..100, fn m ->
           refute %Bitstring{size: size2 + m * unit2} in difference
-
           bs1val = %Bitstring{size: size1 + m * unit1}
 
           consistent = (bs1val in difference) or (bs1val in %Bitstring{size: size2, unit: unit2})
-
-          unless consistent do
-            bs1val |> IO.inspect(label: "136")
-            difference |> IO.inspect(label: "137")
-            (bs1val in difference) |> IO.inspect(label: "138")
-          end
-
           assert consistent
         end)
       end
