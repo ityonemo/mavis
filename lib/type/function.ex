@@ -409,14 +409,19 @@ defmodule Type.Function do
       def intersection(a, b = %Function{params: :any}) do
         intersection(b, a)
       end
+      def intersection(lf = %Function{params: i}, rf = %Function{params: rp})
+          when length(rp) == i do
+
+        case Type.intersection(lf.return, rf.return) do
+          none() -> none()
+          return -> %Function{params: rp, return: return}
+        end
+      end
       def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
-
-        return = Type.intersection(lr, rr)
-
-        if return == none() do
-          none()
-        else
-          %Function{params: p, return: return}
+        case Type.intersection(lr, rr) do
+          none() -> none()
+          return ->
+            %Function{params: p, return: return}
         end
       end
     end
@@ -428,6 +433,31 @@ defmodule Type.Function do
       def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
           when p_c == p_t do
         Type.subtype?(challenge.return, target.return)
+      end
+    end
+
+    subtract do
+      def subtract(%{params: p, return: r1}, %Function{params: p, return: r2}) do
+        case Type.subtract(r1, r2) do
+          none() -> none()
+          %Type.Subtraction{base: b, exclude: e} ->
+            %Type.Subtraction{
+              base: %Function{params: p, return: b},
+              exclude: %Function{params: p, return: e}}
+          type ->
+            %Function{params: p, return: type}
+        end
+      end
+      def subtract(lf = %{params: p}, rf = %Function{params: l}) when length(p) == l do
+        case Type.subtract(lf.return, rf.return) do
+          none() -> none()
+          %Type.Subtraction{base: b, exclude: e} ->
+            %Type.Subtraction{
+              base: %Function{params: p, return: b},
+              exclude: %Function{params: p, return: e}}
+          type ->
+            %Function{params: p, return: type}
+        end
       end
     end
 

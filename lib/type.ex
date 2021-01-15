@@ -242,6 +242,7 @@ defmodule Type do
   | Type.Union.t
   | Type.Opaque.t
   | Type.Function.Var.t
+  | Type.Subtraction.t
 
   @type literal ::
     integer | float | atom | bitstring | [] | [literal] |

@@ -90,6 +90,27 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
     end
   end
 
+  describe "an n-arity function" do
+    @three_arity %Function{params: 3, return: any()}
+    test "intersects with itself, any, and the any function" do
+      assert @three_arity = @three_arity <~> @three_arity
+      assert @three_arity = @three_arity <~> any()
+      assert @three_arity = @three_arity <~> @any_function
+    end
+
+    test "intersects with a function with the same arity" do
+      assert %Function{params: 3, return: integer()} ==
+        @three_arity <~> %Function{params: 3, return: integer()}
+      assert %Function{params: [any(), any(), any()], return: any()} ==
+        @three_arity <~> %Function{params: [any(), any(), any()], return: any()}
+    end
+
+    test "has no intersection with a function of another arity" do
+      assert none() == @three_arity <~> %Function{params: 2, return: any()}
+      assert none() == @three_arity <~> %Function{params: [], return: any()}
+    end
+  end
+
   describe "a function with defined parameters" do
     test "intersects with self and the any function" do
       # zero arity
