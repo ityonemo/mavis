@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.List
+  alias Type.NonemptyList
 
   @list [:foo, :bar]
   @ilist ["foo" | "bar"]

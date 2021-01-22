@@ -68,30 +68,28 @@ defmodule Type.Union.Merge do
   end
 
   # lists
-  alias Type.List
+  alias Type.NonemptyList
   # matching finals
-  def type_merge(%List{type: tl, nonempty: nl, final: final},
-                  %List{type: tr, nonempty: nr, final: final}) do
-    [%List{type: Type.union(tl, tr), nonempty: nl and nr, final: final}]
+  def type_merge(%NonemptyList{type: tl, final: final},
+                  %NonemptyList{type: tr, final: final}) do
+    [%NonemptyList{type: Type.union(tl, tr), final: final}]
   end
   # matching types
-  def type_merge(%List{type: type, nonempty: nl, final: fl},
-                  %List{type: type, nonempty: nr, final: fr}) do
+  def type_merge(%NonemptyList{type: type, final: fl},
+                  %NonemptyList{type: type, final: fr}) do
 
-    [%List{type: type, nonempty: nl and nr, final: Type.union(fl, fr)}]
+    [%NonemptyList{type: type, final: Type.union(fl, fr)}]
   end
-  def type_merge([], %List{type: type, final: final}) do
-    # technically this shouldn't be necessary since all nonempty lists must
-    # be able to have final []
-    [%List{type: type, final: Type.union(final, [])}]
+  def type_merge([], %NonemptyList{type: type, final: final}) do
+    [%NonemptyList{type: type, final: Type.union(final, [])}]
   end
-  def type_merge(%List{type: type, final: final, nonempty: true}, []) do
-    [%List{type: type, final: Type.union(final, []), nonempty: false}]
+  def type_merge(%NonemptyList{type: type, final: final}, []) do
+    [%NonemptyList{type: type, final: Type.union(final, [])}]
   end
-  def type_merge(l1 = %List{}, l2 = %List{}) do
+  def type_merge(l1 = %NonemptyList{}, l2 = %NonemptyList{}) do
     if merge = Tuple.merge([l1.type, l1.final], [l2.type, l2.final], true) do
       [type, final] = merge
-      [%List{type: type, final: final, nonempty: l1.nonempty and l2.nonempty}]
+      [%NonemptyList{type: type, final: final}]
     else
       :nomerge
     end

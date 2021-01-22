@@ -6,7 +6,7 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "normal list" do
     test "intersects with any and self" do

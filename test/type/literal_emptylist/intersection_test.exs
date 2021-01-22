@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "the intersection of a literal empty list" do
     test "with itself, general lists and any is itself" do

@@ -57,25 +57,23 @@ defmodule Type.Spec do
   def parse({:type, _, nil, []}, _), do: []
   # overrides
   def parse({:type, _, :list, [type]}, assigns) do
-    %Type.List{type: parse(type, assigns)}
+    %Type.NonemptyList{type: parse(type, assigns)}
   end
   def parse({:type, _, :nonempty_list, [type]}, assigns) do
-    %Type.List{type: parse(type, assigns), nonempty: true}
+    %Type.NonemptyList{type: parse(type, assigns)}
   end
 
   def parse({:type, _, :maybe_improper_list, [type, final]}, assigns) do
-    %Type.List{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])}
+    %Type.NonemptyList{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
-    %Type.List{
+    %Type.NonemptyList{
       type: parse(type, assigns),
-      nonempty: true,
       final: parse(final, assigns)}
   end
   def parse({:type, _, :nonempty_maybe_improper_list, [type, final]}, assigns) do
-    %Type.List{
+    %Type.NonemptyList{
       type: parse(type, assigns),
-      nonempty: true,
       final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :binary, [size, unit]}, assigns) do
@@ -88,10 +86,10 @@ defmodule Type.Spec do
   end
   # overridden remote types
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _) do
-    %Type.List{type: 0..0x10FFFF}
+    %Type.NonemptyList{type: 0..0x10FFFF}
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _) do
-    %Type.List{type: 0..0x10FFFF, nonempty: true}
+    %Type.NonemptyList{type: 0..0x10FFFF}
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
     list(tuple({atom(), any()}))

@@ -39,7 +39,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "is maybe usable as a list that are nonempty: true are subtypes of iolists" do
-      assert {:maybe, _} = iolist() ~> %List{type: @ltype, final: @final, nonempty: true}
+      assert {:maybe, _} = iolist() ~> %List{type: @ltype, final: @final}
     end
 
     test "is maybe usable as an empty list" do
@@ -80,7 +80,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "that are nonempty: true are usable as iolists" do
-      assert :ok = %List{type: @ltype, final: @final, nonempty: true} ~> iolist()
+      assert :ok = %List{type: @ltype, final: @final} ~> iolist()
     end
 
     test "overly large domains are maybe usable" do

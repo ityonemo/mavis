@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralEmptyList.SubtractionTest do
 
   import Type, only: :macros
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "the subtraction from a literal empty list" do
     test "of itself, general lists and any is itself" do

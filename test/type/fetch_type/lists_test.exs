@@ -8,7 +8,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
 
   @source TypeTest.TypeExample.Lists
 
-  alias Type.List
+  alias Type.NonemptyList
 
   test "literal/0 is empty list" do
     assert {:ok, []} == Type.fetch_type(@source, :literal_0)
@@ -54,12 +54,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "nonempty_improper_list/2" do
-    assert {:ok, %List{type: integer(), nonempty: true, final: nil}} ==
+    assert {:ok, %List{type: integer(), final: nil}} ==
       Type.fetch_type(@source, :nonempty_improper_list_2)
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, %List{type: integer(), nonempty: true, final: (nil <|> [])}} ==
+    assert {:ok, %List{type: integer(), final: (nil <|> [])}} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_2)
   end
 
@@ -92,7 +92,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "nonempty_maybe_improper_list/0" do
-    assert {:ok, %List{final: any(), nonempty: true}} ==
+    assert {:ok, %List{final: any()}} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_0)
   end
 end

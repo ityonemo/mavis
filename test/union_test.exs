@@ -212,7 +212,7 @@ defmodule TypeTest.UnionTest do
   end
 
   describe "for the list type" do
-    alias Type.List
+    alias Type.NonemptyList
     test "lists with the same end type get merged" do
       assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
       assert list(@any) == list(@any) <|> list(:bar)

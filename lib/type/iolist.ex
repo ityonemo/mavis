@@ -32,7 +32,7 @@ defmodule Type.Iolist do
     if final == none() or type == none() do
       none()
     else
-      %List{type: type, final: final, nonempty: list.nonempty}
+      %List{type: type, final: final}
     end
   end
   def intersection_with(_), do: none()
@@ -68,7 +68,7 @@ defmodule Type.Iolist do
   alias Type.Message
 
   # USABLE_AS
-  def usable_as_list(target = %List{nonempty: true}, meta) do
+  def usable_as_list(target = %List{}, meta) do
     u1 = Type.usable_as(@ltype, target.type, meta)
     u2 = Type.usable_as(@final, target.final, meta)
 
@@ -92,7 +92,7 @@ defmodule Type.Iolist do
     end
   end
 
-  def usable_as_iolist(challenge = %{nonempty: nonempty}, meta) do
+  def usable_as_iolist(challenge = %{}, meta) do
     case Type.usable_as(challenge.type, @ltype, meta) do
       {:error, _} when not nonempty ->
         {:maybe, [Message.make(challenge.type, @ltype, meta)]}

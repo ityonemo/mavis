@@ -45,7 +45,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "is not a subtype of a list that are nonempty: true are subtypes of iolists" do
-      refute iolist() in %List{type: @ltype, final: @final, nonempty: true}
+      refute iolist() in %List{type: @ltype, final: @final}
     end
 
     test "are not subtypes of other types" do
@@ -69,7 +69,7 @@ defmodule TypeTest.TypeIolist.SubtypeTest do
     end
 
     test "that are nonempty: true are subtypes of iolists" do
-      assert %List{type: @ltype, final: @final, nonempty: true} in iolist()
+      assert %List{type: @ltype, final: @final} in iolist()
     end
   end
 end

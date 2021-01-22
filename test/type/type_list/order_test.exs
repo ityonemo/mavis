@@ -7,7 +7,7 @@ defmodule TypeTest.TypeList.OrderTest do
 
   use Type.Operators
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "a nonempty true list" do
     test "is bigger than bottom and reference" do

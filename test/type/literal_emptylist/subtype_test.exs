@@ -5,7 +5,7 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
 
   import Type, only: :macros
 
-  alias Type.List
+  alias Type.NonemptyList
 
   use Type.Operators
 
@@ -14,7 +14,7 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
       assert [] in []
     end
 
-    test "is a subtype of generic Type.List" do
+    test "is a subtype of generic Type.NonemptyList" do
       assert [] in list()
     end
 

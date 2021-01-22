@@ -7,7 +7,7 @@ defmodule TypeTest.TypeList.SubtypeTest do
 
   use Type.Operators
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "the basic list" do
     test "is a subtype of itself and any" do

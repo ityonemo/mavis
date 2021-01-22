@@ -9,7 +9,7 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
 
   @source TypeTest.SpecExample.Lists
 
-  alias Type.List
+  alias Type.NonemptyList
 
   test "literal/0 is empty list" do
     assert {:ok, identity_for([])} == Type.fetch_spec(@source, :literal_0_spec, 1)
@@ -64,12 +64,12 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "nonempty_improper_list/2" do
-    assert {:ok, identity_for(%List{type: integer(), nonempty: true, final: nil})} ==
+    assert {:ok, identity_for(%List{type: integer(), final: nil})} ==
       Type.fetch_spec(@source, :nonempty_improper_list_2_spec, 1)
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, identity_for(%List{type: integer(), nonempty: true, final: (nil <|> [])})} ==
+    assert {:ok, identity_for(%List{type: integer(), final: (nil <|> [])})} ==
       Type.fetch_spec(@source, :nonempty_maybe_improper_list_2_spec, 1)
   end
 
@@ -104,7 +104,7 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "nonempty_maybe_improper_list/0" do
-    assert {:ok, identity_for(%List{final: any(), nonempty: true})} ==
+    assert {:ok, identity_for(%List{final: any()})} ==
       Type.fetch_spec(@source, :nonempty_maybe_improper_list_0_spec, 1)
   end
 end
