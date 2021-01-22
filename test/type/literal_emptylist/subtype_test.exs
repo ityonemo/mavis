@@ -33,7 +33,7 @@ defmodule TypeTest.LiteralEmptylist.SubtypeTest do
 
     test "is not a subtype of nonempty lists or list with different finals" do
       refute [] in list(...)
-      refute [] in %List{final: :foo}
+      refute [] in %NonemptyList{final: :foo}
     end
 
     test "is not a subtype of other types" do

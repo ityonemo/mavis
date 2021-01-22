@@ -50,10 +50,10 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "list finals" do
     test "are reduced" do
-      assert %List{final: pos_integer()} ==
-        %List{final: pos_integer()} <~> %List{final: integer()}
-      assert %List{final: pos_integer()} ==
-        %List{final: integer()} <~> %List{final: pos_integer()}
+      assert %NonemptyList{final: pos_integer()} ==
+        %NonemptyList{final: pos_integer()} <~> %NonemptyList{final: integer()}
+      assert %NonemptyList{final: pos_integer()} ==
+        %NonemptyList{final: integer()} <~> %NonemptyList{final: pos_integer()}
     end
   end
 end

@@ -18,7 +18,7 @@ defmodule TypeTest.TypeList.OrderTest do
     test "is bigger than a list which is a subclass" do
       assert list(...) > list(integer(), ...)
       # because the final is more general
-      assert %List{type: any(), final: any()} >
+      assert %NonemptyList{type: any(), final: any()} >
         list(any(), ...)
     end
 
@@ -26,7 +26,7 @@ defmodule TypeTest.TypeList.OrderTest do
       assert list(integer(), ...) < list(...)
       assert list(integer(), ...) < list(integer())
       # because the final is more general
-      assert list(...) < %List{type: any(), final: any()}
+      assert list(...) < %NonemptyList{type: any(), final: any()}
     end
 
     test "is smaller than maybe-empty lists, empty list, bitstrings or top" do
@@ -51,7 +51,7 @@ defmodule TypeTest.TypeList.OrderTest do
     test "is bigger than a list which is a subclass" do
       assert list() > list(integer())
       # because the final is more general
-      assert %List{type: any(), final: any()} > list()
+      assert %NonemptyList{type: any(), final: any()} > list()
     end
 
     test "is smaller than a union containing it" do
@@ -61,7 +61,7 @@ defmodule TypeTest.TypeList.OrderTest do
     test "is smaller than a list which is a superclass" do
       assert list(integer()) < list()
       # because the final is more general
-      assert list() < %List{type: any(), final: any()}
+      assert list() < %NonemptyList{type: any(), final: any()}
     end
 
     test "is smaller than maybe-empty lists, bitstrings or top" do

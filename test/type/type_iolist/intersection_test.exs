@@ -6,7 +6,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, List}
+  alias Type.{Bitstring, NonemptyList}
 
   @any any()
   @char 0..0x10FFFF
@@ -42,7 +42,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "acts as if it can have a final of binary" do
-      binfinal = %List{type: @binary, final: @binary}
+      binfinal = %NonemptyList{type: @binary, final: @binary}
       assert binfinal == iolist() <~> binfinal
       assert binfinal == binfinal <~> iolist()
     end

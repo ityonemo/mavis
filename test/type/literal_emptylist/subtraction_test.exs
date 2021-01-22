@@ -17,7 +17,7 @@ defmodule TypeTest.LiteralEmptyList.SubtractionTest do
     end
 
     test "of nonempty, or odd-termination final lists is not ok" do
-      assert [] == [] - %List{final: :foo}
+      assert [] == [] - %NonemptyList{final: :foo}
       assert [] == [] - list(...)
     end
 

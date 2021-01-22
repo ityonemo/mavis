@@ -255,7 +255,7 @@ defmodule TypeTest do
     end
 
     test "list macro with a single ..." do
-      assert %Type.NonemptyList{nonempty: true} = list(...)
+      assert %Type.NonemptyList{} = list(...)
     end
 
     test "list macro with a type and ..." do

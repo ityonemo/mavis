@@ -7,7 +7,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, List, Message}
+  alias Type.{Bitstring, NonemptyList, Message}
 
   describe "empty list are usable as" do
     test "themselves" do
@@ -36,7 +36,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     end
 
     test "a list with a different final" do
-      final_list = %List{final: %Bitstring{size: 0, unit: 8}}
+      final_list = %NonemptyList{final: %Bitstring{size: 0, unit: 8}}
       assert {:error, %Message{type: [], target: ^final_list}} =
         ([] ~> final_list)
     end

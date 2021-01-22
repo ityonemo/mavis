@@ -17,7 +17,7 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
     end
 
     test "with nonempty, or odd-termination final lists is not ok" do
-      assert none() == [] <~> %List{final: :foo}
+      assert none() == [] <~> %NonemptyList{final: :foo}
       assert none() == [] <~> list(...)
     end
 

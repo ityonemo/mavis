@@ -217,10 +217,10 @@ defmodule TypeTest.UnionTest do
       assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
       assert list(@any) == list(@any) <|> list(:bar)
 
-      assert %List{type: (:foo <|> :bar), final: :end} ==
-        (%List{type: :foo, final: :end} <|> %List{type: :bar, final: :end})
-      assert %List{type: @any, final: :end} ==
-        (%List{type: @any, final: :end} <|> %List{type: :bar, final: :end})
+      assert %NonemptyList{type: (:foo <|> :bar), final: :end} ==
+        (%NonemptyList{type: :foo, final: :end} <|> %NonemptyList{type: :bar, final: :end})
+      assert %NonemptyList{type: @any, final: :end} ==
+        (%NonemptyList{type: @any, final: :end} <|> %NonemptyList{type: :bar, final: :end})
     end
 
     test "nonempty: true lists get merged into nonempty: true lists" do

@@ -6,7 +6,7 @@ defmodule TypeTest.TypeList.UsableAsTest do
   import Type, only: :macros
   use Type.Operators
 
-  alias Type.{List, Message}
+  alias Type.{NonemptyList, Message}
 
   describe "the trivial list type" do
     test "is usable as itself and any" do
@@ -76,20 +76,20 @@ defmodule TypeTest.TypeList.UsableAsTest do
 
   describe "for lists with 'final' specs" do
     test "it's okay if the final usable" do
-      assert :ok = %List{type: integer(), final: 1} ~>
-        %List{type: integer(), final: integer()}
+      assert :ok = %NonemptyList{type: integer(), final: 1} ~>
+        %NonemptyList{type: integer(), final: integer()}
     end
 
     test "it's maybe if the final is maybe usable" do
       assert {:maybe, _} =
-        %List{type: integer(), final: integer()} ~>
-          %List{type: integer(), final: 5}
+        %NonemptyList{type: integer(), final: integer()} ~>
+          %NonemptyList{type: integer(), final: 5}
     end
 
     test "it's error if the final is not usable" do
       assert {:error, _} =
-        %List{type: integer(), final: integer()} ~>
-          %List{type: integer(), final: atom()}
+        %NonemptyList{type: integer(), final: integer()} ~>
+          %NonemptyList{type: integer(), final: atom()}
     end
   end
 end
