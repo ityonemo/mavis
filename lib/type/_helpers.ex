@@ -12,6 +12,7 @@ defmodule Type.Helpers do
     "Function" => 5,
     "Tuple" => 8,
     "Map" => 9,
+    "NonemptyList" => 10,
     "List" => 10,
     "Bitstring" => 11,
     "BitString" => 11

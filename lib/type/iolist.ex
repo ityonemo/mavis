@@ -8,7 +8,7 @@ defmodule Type.Iolist do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, List}
+  alias Type.{Bitstring, NonemptyList}
 
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}
@@ -21,7 +21,7 @@ defmodule Type.Iolist do
   def intersection_with(list) when is_list(list) do
     Type.intersection(list, iolist())
   end
-  def intersection_with(list = %List{}) do
+  def intersection_with(list = %NonemptyList{}) do
     # iolist is char | binary | iolist
     type = [@char, @binary, iolist()]
     |> Enum.map(&Type.intersection(&1, list.type))
@@ -32,7 +32,7 @@ defmodule Type.Iolist do
     if final == none() or type == none() do
       none()
     else
-      %List{type: type, final: final}
+      %NonemptyList{type: type, final: final}
     end
   end
   def intersection_with(_), do: none()
@@ -68,7 +68,7 @@ defmodule Type.Iolist do
   alias Type.Message
 
   # USABLE_AS
-  def usable_as_list(target = %List{}, meta) do
+  def usable_as_list(target = %NonemptyList{}, meta) do
     u1 = Type.usable_as(@ltype, target.type, meta)
     u2 = Type.usable_as(@final, target.final, meta)
 
@@ -93,16 +93,6 @@ defmodule Type.Iolist do
   end
 
   def usable_as_iolist(challenge = %{}, meta) do
-    case Type.usable_as(challenge.type, @ltype, meta) do
-      {:error, _} when not nonempty ->
-        {:maybe, [Message.make(challenge.type, @ltype, meta)]}
-      any -> any
-    end
-    |> Type.ternary_and(Type.usable_as(challenge.final, @final, meta))
-    |> case do
-      :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(challenge, iolist(), meta)]}
-      {:error, _} -> {:error, Message.make(challenge, iolist(), meta)}
-    end
+    raise "foo"
   end
 end

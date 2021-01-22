@@ -155,7 +155,7 @@ defmodule Type.NonemptyList do
 
     use Type.Helpers
 
-    alias Type.{List, Message, Union}
+    alias Type.{NonemptyList, Message, Union}
 
     group_compare do
       def group_compare(a, b) do
@@ -171,23 +171,7 @@ defmodule Type.NonemptyList do
         Type.Iolist.usable_as_iolist(challenge, meta)
       end
 
-      def usable_as(challenge = %{},
-                    target = %List{}, meta)
-          when (c_ne or t_ne) do
-        u1 = Type.usable_as(challenge.type, target.type, meta)
-        u2 = Type.usable_as(challenge.final, target.final, meta)
-
-        case Type.ternary_and(u1, u2) do
-          :ok when t_ne and not c_ne ->
-            {:maybe, [Message.make(challenge, target, meta)]}
-          :ok -> :ok
-          # TODO: make this report the internal error as well.
-          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-        end
-      end
-
-      def usable_as(challenge, target = %List{}, meta) do
+      def usable_as(challenge, target = %NonemptyList{}, meta) do
         case Type.usable_as(challenge.type, target.type, meta) do
           {:error, _} -> {:maybe, [Message.make(challenge.type, target.type, meta)]}
           any -> any
@@ -203,7 +187,7 @@ defmodule Type.NonemptyList do
       def usable_as(challenge, target, meta) when is_list(target) do
         # TODO: make this work with improper lists
         challenge
-        |> Type.NonemptyList.usable_literal(target)
+        |> NonemptyList.usable_literal(target)
         |> case do
           {:error, _} ->
             {:error, Message.make(challenge, target, meta)}
@@ -219,12 +203,12 @@ defmodule Type.NonemptyList do
       def intersection(type, list) when is_list(list) do
         Type.intersection(list, type)
       end
-      def intersection(a, b = %List{}) do
+      def intersection(a, b = %NonemptyList{}) do
         case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
           {none(), _} -> none()
           {_, none()} -> none()
           {type, final} ->
-            %List{type: type, final: final}
+            %NonemptyList{type: type, final: final}
         end
       end
       def intersection(a, iolist()), do: Type.Iolist.intersection_with(a)
@@ -234,7 +218,7 @@ defmodule Type.NonemptyList do
       # can't simply forward to usable_as, because any of the encapsulated
       # types might have a usable_as rule that isn't strictly subtype?
       def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
-      def subtype?(challenge, target = %List{}) do
+      def subtype?(challenge, target = %NonemptyList{}) do
         (Type.subtype?(challenge.type, target.type) and
           Type.subtype?(challenge.final, target.final))
       end
@@ -254,7 +238,7 @@ defmodule Type.NonemptyList do
 
     # override for charlist
     def inspect(list = %{final: [], type: 0..1114111}, _) do
-      "#{nonempty_prefix list}charlist()"
+      "nonempty_charlist()"
     end
     def inspect(%{final: [], type: any()}, _), do: "list(...)"
     def inspect(%{final: [], type: any()}, _), do: "list()"
@@ -304,17 +288,17 @@ defmodule Type.NonemptyList do
       end
     end
     def inspect(list = %{type: any(), final: any()}, _) do
-      "#{nonempty_prefix list}maybe_improper_list()"
+      "nonempty_maybe_improper_list()"
     end
     def inspect(list, opts), do: render_improper(list, opts)
 
     defp render_basic(list, opts) do
-      concat(["list(", to_doc(list.type, opts), nonempty_suffix, ")"])
+      concat(["list(", to_doc(list.type, opts), "...)"])
     end
 
     defp render_maybe_improper(list, opts) do
       improper_final = Enum.into(list.final.of -- [[]], %Type.Union{})
-      concat(["#{nonempty_prefix list}maybe_improper_list(",
+      concat(["nonempty_maybe_improper_list(",
               to_doc(list.type, opts), ", ",
               to_doc(improper_final, opts), ")"])
     end
