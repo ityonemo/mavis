@@ -374,7 +374,7 @@ defmodule Type do
                final: []},
              "%Type.NonemptyList{type: tuple({atom(), any()})}"
   defbuiltin :list,
-             %Type.NonemptyList{type: any(), final: []},
+             %Type.Union{of: [%Type.NonemptyList{}, []]},
              "%Type.NonemptyList{type: any()}"
   defbuiltin :maybe_improper_list,
              %Type.NonemptyList{type: any(), final: any()},

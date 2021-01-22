@@ -207,6 +207,16 @@ defmodule Type.Union do
 
     def inspect(%{of: types}, opts) do
       cond do
+        [] in types ->
+          {lists, nonlists} = Enum.split_with(types -- [[]], &match?(%Type.NonemptyList{}, &1))
+
+          lists
+          |> Enum.map(&emptify(&1, opts))
+          |> Enum.intersperse(["|"])
+          |> Enum.flat_map(&Function.identity/1)
+          |> Kernel.++(Enum.map(nonlists, &(to_doc(&1, opts))))
+          |> concat
+
         # override for boolean
         rest = type_has(types, [true, false]) ->
           override(rest, :boolean, opts)
@@ -248,6 +258,17 @@ defmodule Type.Union do
 
         true -> normal_inspect(types, opts)
       end
+    end
+
+    defp emptify(%Type.NonemptyList{type: any(), final: []}, _opts) do
+      ["list()"]
+    end
+    defp emptify(%Type.NonemptyList{type: t, final: []}, opts) do
+      ["list(", to_doc(t, opts), ")"]
+    end
+    defp emptify(%Type.NonemptyList{type: ltype, final: %Type.Union{of: ftypes}}, opts) do
+      ftype = Type.union(ftypes -- [[]])
+      ["nonempty_maybe_improper_list(", to_doc(ltype, opts), ", ", to_doc(ftype, opts), ")"]
     end
 
     defp type_has(types, query) do

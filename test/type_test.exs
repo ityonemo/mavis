@@ -329,4 +329,9 @@ defmodule TypeTest do
       refute TypeTest.TestJson.valid_json?(%{"foo" => ["bar", :baz]})
     end
   end
+
+  # stray tasks
+  test "unions of multiple list types inspect with both being completed" do
+    assert "" == inspect %Type.Union{of: [%Type.NonemptyList{type: atom()}, %Type.NonemptyList{type: integer()}, []]}
+  end
 end

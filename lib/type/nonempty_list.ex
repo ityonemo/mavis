@@ -1,8 +1,18 @@
 defmodule Type.NonemptyList do
   @moduledoc """
-  Represents nonempty lists.  The empty list is represented by the
-  literal `[]`.  Lists that are optionally nonempty are unions of the
-  empty list and the list.
+  Represents nonempty lists.  The empty list is represented by the literal
+  `[]`.
+
+  Lists that are optionally nonempty are unions of the empty list and
+  the list:
+
+  ```elixir
+  iex> list()
+  %Type.Union{of: [%Type.NonemptyList{}, []]}
+  ```
+  The documentation for this module will encompass usage of both
+  nonempty and maybe-nonempty lists.
+
 
   There are two fields for the struct defined by this module.
 
@@ -15,7 +25,7 @@ defmodule Type.NonemptyList do
   The `Type` module lets you specify a list using "shortcut form" via the
   `Type.list/1` and `Type.list/2` macros:
 
-  ```
+  ```elixir
   iex> import Type, only: :macros
   iex> list(pos_integer())
   %Type.NonemptyList{type: %Type{name: :pos_integer}}
@@ -27,20 +37,25 @@ defmodule Type.NonemptyList do
 
   ### Examples:
 
-  - The "any proper list" type is `%Type.NonemptyList{}`.  Note this is distinct from `[]`
+  - A the general nonempty list
     ```
     iex> inspect %Type.NonemptyList{}
-    "list()"
-    ```
-  - a list of a given type
-    ```elixir
-    iex> inspect %Type.NonemptyList{type: %Type{name: :integer}}
-    "list(integer())"
+    "list(...)"
     ```
   - a nonempty list of a given type
     ```elixir
     iex> inspect %Type.NonemptyList{type: %Type{name: :integer}}
     "list(integer(), ...)"
+    ```
+  - the general list is a union of nonempty list with empty list
+    ```elixir
+    iex> inspect %Type.Union{of: [%Type.NonemptyList{}, []]}
+    "list()"
+    ```
+  - a general list of a given type
+    ```elixir
+    iex> inspect %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :integer}}, []]}
+    "list(integer())"
     ```
   - an improper list must be nonempty, and looks like the following:
     ```elixir
@@ -48,11 +63,21 @@ defmodule Type.NonemptyList do
     ...>                            final: %Type{module: String, name: :t}}
     "nonempty_improper_list(String.t(), String.t())"
     ```
-  - a maybe improper list should have empty list as a subtype of the final field.
+  - a nonempty maybe improper list should have empty list as a subtype of the final field.
     ```elixir
     iex> inspect %Type.NonemptyList{type: %Type{module: String, name: :t},
     ...>                    final: %Type.Union{of: [[], %Type{module: String, name: :t}]}}
-    "maybe_improper_list(String.t(), String.t())"
+    "nonempty_maybe_improper_list(String.t(), String.t())"
+    ```
+  - a maybe improper list should have empty list as a subtype of the final field. AND be
+    a union with the empty list singleton.
+    ```elixir
+    iex> inspect %Type.Union{of: [
+    ...>                      %Type.NonemptyList{
+    ...>                        type: %Type{module: String, name: :t},
+    ...>                        final: %Type.Union{of: [%Type{module: String, name: :t}, []]}},
+    ...>                        []]}
+    "nonempty_maybe_improper_list(String.t(), String.t())"
     ```
 
   ### Key functions:
@@ -241,12 +266,11 @@ defmodule Type.NonemptyList do
       "nonempty_charlist()"
     end
     def inspect(%{final: [], type: any()}, _), do: "list(...)"
-    def inspect(%{final: [], type: any()}, _), do: "list()"
     # keyword list literal syntax
     def inspect(%{
         final: [],
         type: tuple({k, v})}, opts) when is_atom(k) do
-      concat(["list(", "#{k}: ", to_doc(v, opts), ")"])
+      concat(["list(", "#{k}: ", to_doc(v, opts), ", ...)"])
     end
     def inspect(list = %{
         final: [],
@@ -260,7 +284,7 @@ defmodule Type.NonemptyList do
             ["#{atom}: ", to_doc(type, opts)]
           end)
           |> Enum.intersperse(", "),
-          ")"]
+          "...)"]
         |> List.flatten
         |> concat
       else
@@ -269,10 +293,10 @@ defmodule Type.NonemptyList do
     end
     # keyword syntax
     def inspect(list(tuple({atom(), any()})), _) do
-      "keyword()"
+      "keyword(...)"
     end
     def inspect(list(tuple({atom(), type})), opts) do
-      concat(["keyword(", to_doc(type, opts), ")"])
+      concat(["keyword(", to_doc(type, opts), "...)"])
     end
 
     ##########################################################
@@ -293,7 +317,7 @@ defmodule Type.NonemptyList do
     def inspect(list, opts), do: render_improper(list, opts)
 
     defp render_basic(list, opts) do
-      concat(["list(", to_doc(list.type, opts), "...)"])
+      concat(["list(", to_doc(list.type, opts), ", ...)"])
     end
 
     defp render_maybe_improper(list, opts) do
