@@ -210,7 +210,7 @@ defmodule TypeTest do
     end
 
     test "list" do
-      assert %Type.NonemptyList{type: any()} == list()
+      assert %Type.Union{of: [%Type.NonemptyList{type: any()}, []]} == list()
     end
 
     test "nonempty_list" do
@@ -249,8 +249,8 @@ defmodule TypeTest do
 
   describe "list macro" do
     test "list macro with a single type" do
-      assert %Type.NonemptyList{type: :foo} = list(:foo)
-      assert %Type.NonemptyList{type: %Type.Union{of: [:foo, :bar]}} =
+      assert %Type.Union{of: [%Type.NonemptyList{type: :foo}, []]} = list(:foo)
+      assert %Type.Union{of: [%Type.NonemptyList{type: %Type.Union{of: [:foo, :bar]}}, []]} =
         list(%Type.Union{of: [:foo, :bar]})
     end
 
@@ -332,6 +332,7 @@ defmodule TypeTest do
 
   # stray tasks
   test "unions of multiple list types inspect with both being completed" do
-    assert "" == inspect %Type.Union{of: [%Type.NonemptyList{type: atom()}, %Type.NonemptyList{type: integer()}, []]}
+    assert "list(atom()) | list(integer())" ==
+      inspect %Type.Union{of: [%Type.NonemptyList{type: atom()}, %Type.NonemptyList{type: integer()}, []]}
   end
 end

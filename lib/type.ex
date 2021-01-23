@@ -375,7 +375,7 @@ defmodule Type do
              "%Type.NonemptyList{type: tuple({atom(), any()})}"
   defbuiltin :list,
              %Type.Union{of: [%Type.NonemptyList{}, []]},
-             "%Type.NonemptyList{type: any()}"
+             "%Type.Union{of: [%Type.NonemptyList{}, []]}"
   defbuiltin :maybe_improper_list,
              %Type.NonemptyList{type: any(), final: any()},
              "%Type.NonemptyList{type: any(), final: any()}"
@@ -464,7 +464,7 @@ defmodule Type do
   iex> list(...)
   %Type.NonemptyList{type: %Type{name: :any}}
   iex> list(1..10)
-  %Type.NonemptyList{type: 1..10}
+  %Type.Union{of: [%Type.NonemptyList{type: 1..10}, []]}
   iex> list(1..10, ...)
   %Type.NonemptyList{type: 1..10}
   ```
@@ -498,7 +498,7 @@ defmodule Type do
     end
   end
   defmacro list(ast) do
-    quote do %Type.NonemptyList{type: unquote(ast)} end
+    quote do %Type.Union{of: [%Type.NonemptyList{type: unquote(ast)}, []]} end
   end
   defmacro list(ast, {:..., _, _}) do
     quote do %Type.NonemptyList{type: unquote(ast)} end

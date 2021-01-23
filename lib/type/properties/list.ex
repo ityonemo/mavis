@@ -6,18 +6,26 @@ defimpl Type.Properties, for: List do
   alias Type.Message
 
   group_compare do
+    def group_compare(_, %Type.NonemptyList{}), do: :lt
+    def group_compare(left, right) when is_list(right) do
+      cond do
+        left < right -> :lt
+        left == right -> :eq
+        true -> :gt
+      end
+    end
   end
 
   usable_as do
     def usable_as([], iolist(), _), do: :ok
-    def usable_as([], type = %Type.NonemptyList{}, meta) do
-      {:error, Message.make([], type, meta)}
-    end
     def usable_as(list, iolist(), meta) when is_list(list) do
       case usable_as_iolist(list) do
         :ok -> :ok
         :error -> {:error, Message.make(list, iolist(), meta)}
       end
+    end
+    def usable_as([], type = %Type.NonemptyList{}, meta) do
+      {:error, Message.make([], type, meta)}
     end
     def usable_as(list, type = %Type.NonemptyList{}, meta) when is_list(list) do
       case Type.NonemptyList.usable_literal(type, list) do
@@ -44,7 +52,7 @@ defimpl Type.Properties, for: List do
   end
 
   intersection do
-    def intersection([], %Type.NonemptyList{final: []}), do: []
+    def intersection([], %Type.NonemptyList{}), do: none()
     def intersection([], iolist()), do: Type.Iolist.intersection_with([])
     def intersection([], _), do: none()
     def intersection(rvalue, iolist()) do

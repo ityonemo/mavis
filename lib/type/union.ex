@@ -212,7 +212,7 @@ defmodule Type.Union do
 
           lists
           |> Enum.map(&emptify(&1, opts))
-          |> Enum.intersperse(["|"])
+          |> Enum.intersperse([" | "])
           |> Enum.flat_map(&Function.identity/1)
           |> Kernel.++(Enum.map(nonlists, &(to_doc(&1, opts))))
           |> concat

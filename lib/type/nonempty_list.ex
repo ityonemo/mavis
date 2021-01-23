@@ -28,7 +28,7 @@ defmodule Type.NonemptyList do
   ```elixir
   iex> import Type, only: :macros
   iex> list(pos_integer())
-  %Type.NonemptyList{type: %Type{name: :pos_integer}}
+  %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :pos_integer}}, []]}
   iex> list(...)
   %Type.NonemptyList{type: %Type{name: :any}}
   iex> list(pos_integer(), ...)
@@ -84,13 +84,14 @@ defmodule Type.NonemptyList do
 
   #### comparison
 
-  literal lists are ordered by erlang term order; and list types are ordered by the type
-  order of their content types, followed by the type order of their finals.
+  literal lists are ordered by erlang term order; and precede all abstract
+  list types.  Abstract list types are ordered by the type order of their
+  content types, followed by the type order of their finals.
 
   ```elixir
   iex> import Type, only: :macros
   iex> Type.compare(list(...), [])
-  :lt
+  :gt
   iex> Type.compare(list(), [])
   :gt
   iex> Type.compare(list(integer()), list(atom()))
@@ -144,9 +145,10 @@ defmodule Type.NonemptyList do
   iex> Type.usable_as(list(1..10), list(integer()))
   :ok
   iex> Type.usable_as(list(1..10), list(atom())) # note it might be the empty list
-  {:maybe, [%Type.Message{type: %Type.NonemptyList{type: 1..10}, target: %Type.NonemptyList{type: %Type{name: :atom}}}]}
+  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.NonemptyList{type: 1..10}, []]},
+                          target: %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :atom}}, []]}}]}
   iex> Type.usable_as(list(), list(...))
-  {:maybe, [%Type.Message{type: %Type.NonemptyList{}, target: %Type.NonemptyList{}}]}
+  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.NonemptyList{}, []]}, target: %Type.NonemptyList{}}]}
   ```
 
   """
@@ -183,6 +185,7 @@ defmodule Type.NonemptyList do
     alias Type.{NonemptyList, Message, Union}
 
     group_compare do
+      def group_compare(_, lst) when is_list(lst), do: :gt
       def group_compare(a, b) do
         case Type.compare(a.type, b.type) do
           :eq -> Type.compare(a.final, b.final)

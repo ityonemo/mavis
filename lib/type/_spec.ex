@@ -57,7 +57,7 @@ defmodule Type.Spec do
   def parse({:type, _, nil, []}, _), do: []
   # overrides
   def parse({:type, _, :list, [type]}, assigns) do
-    %Type.NonemptyList{type: parse(type, assigns)}
+    list(parse(type, assigns))
   end
   def parse({:type, _, :nonempty_list, [type]}, assigns) do
     %Type.NonemptyList{type: parse(type, assigns)}
