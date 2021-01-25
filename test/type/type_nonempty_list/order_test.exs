@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeList.OrderTest do
+defmodule TypeTest.TypeNonemptyList.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :compare

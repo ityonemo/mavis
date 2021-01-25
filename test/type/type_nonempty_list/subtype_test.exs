@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeList.SubtypeTest do
+defmodule TypeTest.TypeNonemptyList.SubtypeTest do
   use ExUnit.Case, async: true
 
   @moduletag :subtype

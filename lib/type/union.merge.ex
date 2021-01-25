@@ -69,29 +69,21 @@ defmodule Type.Union.Merge do
 
   # lists
   alias Type.NonemptyList
-  # matching finals
-  def type_merge(%NonemptyList{type: tl, final: final},
-                  %NonemptyList{type: tr, final: final}) do
-    [%NonemptyList{type: Type.union(tl, tr), final: final}]
-  end
-  # matching types
+  # matching types with different finals.
   def type_merge(%NonemptyList{type: type, final: fl},
                   %NonemptyList{type: type, final: fr}) do
 
     [%NonemptyList{type: type, final: Type.union(fl, fr)}]
   end
-  def type_merge([], %NonemptyList{type: type, final: final}) do
-    [%NonemptyList{type: type, final: Type.union(final, [])}]
-  end
-  def type_merge(%NonemptyList{type: type, final: final}, []) do
-    [%NonemptyList{type: type, final: Type.union(final, [])}]
-  end
-  def type_merge(l1 = %NonemptyList{}, l2 = %NonemptyList{}) do
-    if merge = Tuple.merge([l1.type, l1.final], [l2.type, l2.final], true) do
-      [type, final] = merge
-      [%NonemptyList{type: type, final: final}]
-    else
-      :nomerge
+  def type_merge(%NonemptyList{type: t1, final: f}, %NonemptyList{type: t2, final: f}) do
+    # check if the types are mergable
+    case Type.intersection(t1, t2) do
+      ^t1 ->
+        %NonemptyList{type: t1, final: f}
+      ^t2 ->
+        %NonemptyList{type: t2, final: f}
+      _ ->
+        :nomerge
     end
   end
 

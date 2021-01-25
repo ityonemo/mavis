@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeList.UsableAsTest do
+defmodule TypeTest.TypeNonemptyList.UsableAsTest do
   use ExUnit.Case, async: true
 
   @moduletag :usable_as

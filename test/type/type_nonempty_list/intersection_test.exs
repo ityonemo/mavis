@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeList.IntersectionTest do
+defmodule TypeTest.TypeNonemptyList.IntersectionTest do
   use ExUnit.Case, async: true
   use Type.Operators
 
@@ -7,6 +7,8 @@ defmodule TypeTest.TypeList.IntersectionTest do
   import Type, only: :macros
 
   alias Type.NonemptyList
+
+  test "go through the doctests and double check that list examples are there too"
 
   describe "normal list" do
     test "intersects with any and self" do

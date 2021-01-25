@@ -13,7 +13,6 @@ defmodule Type.NonemptyList do
   The documentation for this module will encompass usage of both
   nonempty and maybe-nonempty lists.
 
-
   There are two fields for the struct defined by this module.
 
   - `type` the type for all elements of the list, except the final element
@@ -108,20 +107,24 @@ defmodule Type.NonemptyList do
   iex> import Type, only: :macros
   iex> Type.intersection(list(...), list())
   %Type.NonemptyList{}
-  iex> Type.intersection(list(1..20), list(10..30))
+  iex> Type.intersection(list(1..20, ...), list(10..30, ...))
   %Type.NonemptyList{type: 10..20}
+  iex> inspect Type.intersection(list(1..20), list(10..30))
+  "list(10..20)"
   ```
 
   #### union
 
-  The union of two list types is the union of their contents.
+  The union of two list types is the union of their contents.  Note
+  that that even partially disjoint unions cannot be merged (see the
+  last example).
 
   ```elixir
   iex> import Type, only: :macros
   iex> Type.union(list(...), list())
-  %Type.NonemptyList{}
-  iex> Type.union(list(1..10), list(10..20))
-  %Type.NonemptyList{type: 1..20}
+  %Type.Union{of: [%Type.NonemptyList{}, []]}
+  iex> inspect Type.union(list(1..10), list(10..20))
+  "list(10..20) | list(1..10)"
   ```
 
   #### subtype?
