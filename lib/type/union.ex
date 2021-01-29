@@ -62,6 +62,9 @@ defmodule Type.Union do
   # folds argument 1 into the list of argument2.
   # argument 3, which is the stack, contains the remaining types in ASCENDING order.
   @spec fold(Type.t, [Type.t], [Type.t]) :: {[Type.t], [Type.t]}
+  defp fold(type, [type | rest], stack) do
+    fold(type, rest, stack)
+  end
   defp fold(type, [head | rest], stack) do
     with order when order in [:gt, :lt] <- Type.compare(head, type),
          retries when is_list(retries) <- type_merge(order, head, type) do
@@ -266,9 +269,19 @@ defmodule Type.Union do
     defp emptify(%Type.NonemptyList{type: t, final: []}, opts) do
       ["list(", to_doc(t, opts), ")"]
     end
+    defp emptify(%Type.NonemptyList{type: any(), final: any()}, _opts) do
+      ["maybe_improper_list()"]
+    end
     defp emptify(%Type.NonemptyList{type: ltype, final: %Type.Union{of: ftypes}}, opts) do
       ftype = Type.union(ftypes -- [[]])
-      ["nonempty_maybe_improper_list(", to_doc(ltype, opts), ", ", to_doc(ftype, opts), ")"]
+      ["maybe_improper_list(", to_doc(ltype, opts), ", ", to_doc(ftype, opts), ")"]
+    end
+    defp emptify(%Type.NonemptyList{type: ltype, final: rtype}, opts) do
+      if Type.subtype?([], rtype) do
+        ["maybe_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
+      else
+        ["nonempty_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
+      end
     end
 
     defp type_has(types, query) do

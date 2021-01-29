@@ -57,12 +57,13 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
       assert three_in == three_in <~> iolist()
     end
 
-    test "if the list is different, there's no intersection" do
-      assert none() == iolist() <~> list(atom())
+    test "if the list is different, there is only an empty list intersection" do
+      assert [] == iolist() <~> list(atom())
+      assert none() == iolist() <~> list(atom(), ...)
     end
 
     test "if the final is different, there's no interesction" do
-      assert none() == iolist() <~> list(atom())
+      assert none() == iolist() <~> %NonemptyList{type: atom(), final: atom()}
     end
 
     test "intersects with nothing else" do

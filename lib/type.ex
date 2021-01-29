@@ -272,6 +272,12 @@ defmodule Type do
   """
   @type ternary :: :ok | maybe | error
 
+  @doc "guard for when a ternary value is an error"
+  defguard is_error(t) when elem(t, 0) == :error
+
+  @doc "guard for when a ternary value is not an error"
+  defguard is_not_error(t) when t == :ok or (elem(t, 0) == :maybe)
+
   @typedoc """
   output type for `c:Type.Inference.Api.infer/1` and `c:Type.Inference.Api.infer/3`
   """
@@ -377,7 +383,7 @@ defmodule Type do
              %Type.Union{of: [%Type.NonemptyList{}, []]},
              "%Type.Union{of: [%Type.NonemptyList{}, []]}"
   defbuiltin :maybe_improper_list,
-             %Type.NonemptyList{type: any(), final: any()},
+             %Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]},
              "%Type.NonemptyList{type: any(), final: any()}"
   defbuiltin :binary,
              %Type.Bitstring{size: 0, unit: 8},
@@ -502,6 +508,50 @@ defmodule Type do
   end
   defmacro list(ast, {:..., _, _}) do
     quote do %Type.NonemptyList{type: unquote(ast)} end
+  end
+
+  @doc """
+  ```elixir
+  iex> raise "this needs to be tested and docc'd"
+  ```
+  """
+  defmacro nonempty_list(type) do
+    quote do %Type.NonemptyList{type: unquote(type)} end
+  end
+
+  @doc """
+  ```elixir
+  iex> raise "this needs to be tested and docc'd"
+  ```
+  """
+  defmacro maybe_improper_list(type1, type2) do
+    quote do
+      %Type.Union{of: [
+        %Type.NonemptyList{type: unquote(type1), final: unquote(type2)},
+        []]}
+    end
+  end
+
+  @doc """
+  ```elixir
+  iex> raise "this needs to be tested and docc'd"
+  ```
+  """
+  defmacro nonempty_improper_list(type1, type2) do
+    quote do
+      %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+    end
+  end
+
+  @doc """
+  ```elixir
+  iex> raise "this needs to be tested and docc'd"
+  ```
+  """
+  defmacro nonempty_maybe_improper_list(type1, type2) do
+    quote do
+      %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+    end
   end
 
   @doc """

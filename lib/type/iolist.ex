@@ -62,7 +62,6 @@ defmodule Type.Iolist do
 
   def supertype_of_iolist?(list) do
     Type.subtype?(@ltype, list.type) and Type.subtype?(@final, list.final)
-      and not list.nonempty
   end
 
   alias Type.Message

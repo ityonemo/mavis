@@ -215,6 +215,7 @@ defmodule TypeTest.UnionTest do
     alias Type.NonemptyList
     test "you can't naively union lists" do
       assert %Type.Union{} = list(:foo) <|> list(:bar)
+      assert %Type.Union{} = list(:foo, ...) <|> list(:bar, ...)
     end
 
     test "lists of supersets CAN be merged" do
@@ -224,14 +225,11 @@ defmodule TypeTest.UnionTest do
     end
 
     test "lists with the same end type get merged" do
-      assert %NonemptyList{type: (:foo <|> :bar), final: :end} ==
-        (%NonemptyList{type: :foo, final: :end} <|> %NonemptyList{type: :bar, final: :end})
       assert %NonemptyList{type: @any, final: :end} ==
         (%NonemptyList{type: @any, final: :end} <|> %NonemptyList{type: :bar, final: :end})
     end
 
-    test "nonempty: true lists get merged into nonempty: true lists" do
-      assert list(:foo <|> :bar, ...) == list(:foo, ...) <|> list(:bar, ...)
+    test "nonempty lists get merged into nonempty lists" do
       assert list(@any, ...) == list(@any, ...) <|> list(:bar, ...)
     end
 

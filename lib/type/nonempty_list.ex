@@ -202,12 +202,19 @@ defmodule Type.NonemptyList do
         Type.Iolist.usable_as_iolist(challenge, meta)
       end
 
+      # nonempty lists are not usable as empty lists.
+      def usable_as(challenge, [], meta) do
+        {:error, Message.make(challenge, [], meta)}
+      end
+
       def usable_as(challenge, target = %NonemptyList{}, meta) do
         case Type.usable_as(challenge.type, target.type, meta) do
-          {:error, _} -> {:maybe, [Message.make(challenge.type, target.type, meta)]}
-          any -> any
+          error when Type.is_error(error) -> error
+          type_result ->
+            challenge.final
+            |> Type.usable_as(target.final, meta)
+            |> Type.ternary_and(type_result)
         end
-        |> Type.ternary_and(Type.usable_as(challenge.final, target.final, meta))
         |> case do
           :ok -> :ok
           {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}

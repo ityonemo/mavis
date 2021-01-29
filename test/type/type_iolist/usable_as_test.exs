@@ -16,7 +16,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
   describe "the iolist" do
     test "is usable as itself, general maybe improper list, and any" do
       assert :ok == iolist() ~> iolist()
-      assert :ok == iolist() ~> %NonemptyList{final: any()}
+      assert :ok == iolist() ~> maybe_improper_list()
       assert :ok == iolist() ~> any()
     end
 

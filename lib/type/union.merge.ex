@@ -79,9 +79,9 @@ defmodule Type.Union.Merge do
     # check if the types are mergable
     case Type.intersection(t1, t2) do
       ^t1 ->
-        %NonemptyList{type: t1, final: f}
+        [%NonemptyList{type: t2, final: f}]
       ^t2 ->
-        %NonemptyList{type: t2, final: f}
+        [%NonemptyList{type: t1, final: f}]
       _ ->
         :nomerge
     end
