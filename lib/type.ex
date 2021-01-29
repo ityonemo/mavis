@@ -511,8 +511,13 @@ defmodule Type do
   end
 
   @doc """
+  Creates a `t:nonempty_list/1`
+
+  * usable in guards *
+
   ```elixir
-  iex> raise "this needs to be tested and docc'd"
+  iex> nonempty_list(1..10)
+  %Type.NonemptyList{type: 1..10}
   ```
   """
   defmacro nonempty_list(type) do
@@ -520,21 +525,31 @@ defmodule Type do
   end
 
   @doc """
+  Creates a `t:maybe_improper_list/1`
+
+  **NOTE**: not usable in guards
+
   ```elixir
-  iex> raise "this needs to be tested and docc'd"
+  iex> maybe_improper_list(:foo, :bar)
+  %Type.Union{of: [%Type.NonemptyList{type: :foo, final: %Type.Union{of: [[], :bar]}},[]]}
   ```
   """
   defmacro maybe_improper_list(type1, type2) do
     quote do
       %Type.Union{of: [
-        %Type.NonemptyList{type: unquote(type1), final: unquote(type2)},
+        %Type.NonemptyList{type: unquote(type1), final: Type.union(unquote(type2), [])},
         []]}
     end
   end
 
   @doc """
+  Creates a `t:nonempty_improper_list/2`
+
+  * usable in guards *
+
   ```elixir
-  iex> raise "this needs to be tested and docc'd"
+  iex> nonempty_improper_list(:foo, :bar)
+  %Type.NonemptyList{type: :foo, final: :bar}
   ```
   """
   defmacro nonempty_improper_list(type1, type2) do
@@ -544,13 +559,25 @@ defmodule Type do
   end
 
   @doc """
+  Creates a `t:nonempty_maybe_improper_list/2`.
+
+  * usable in guards *
+
   ```elixir
-  iex> raise "this needs to be tested and docc'd"
+  iex> nonempty_maybe_improper_list(:foo, :bar)
+  %Type.NonemptyList{type: :foo, final: %Type.Union{of: [[], :bar]}}
   ```
   """
   defmacro nonempty_maybe_improper_list(type1, type2) do
-    quote do
-      %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+    if __CALLER__.context do
+      # match or guard
+      quote do
+        %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+      end
+    else
+      quote do
+        %Type.NonemptyList{type: unquote(type1), final: Type.union(unquote(type2), [])}
+      end
     end
   end
 

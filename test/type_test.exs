@@ -218,13 +218,14 @@ defmodule TypeTest do
     end
 
     test "maybe_improper_list" do
-      assert %Type.NonemptyList{type: any(), final: any()} ==
-        maybe_improper_list()
+      assert %Type.Union{of: [
+        %Type.NonemptyList{type: any(), final: any()},
+        []]} == maybe_improper_list()
     end
 
     test "nonempty_maybe_improper_list" do
       assert %Type.NonemptyList{type: any(), final: any()} ==
-        builtin(:nonempty_maybe_improper_list)
+        nonempty_maybe_improper_list()
     end
 
     test "mfa" do

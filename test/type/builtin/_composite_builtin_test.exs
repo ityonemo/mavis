@@ -171,10 +171,10 @@ defmodule TypeTest.CompositeBuiltinTest do
 
   describe "list/0 type" do
     test "works in use" do
-      assert %Type.NonemptyList{type: any()} == list()
+      assert %Type.Union{of: [%Type.NonemptyList{type: any()}, []]} == list()
     end
     test "works in matches" do
-      assert list() = %Type.NonemptyList{type: any()}
+      assert list() = %Type.Union{of: [%Type.NonemptyList{type: any()}, []]}
     end
   end
 
@@ -187,12 +187,41 @@ defmodule TypeTest.CompositeBuiltinTest do
     end
   end
 
-  describe "maybe_improper_list/0 type" do
+  describe "nonempty_list/1 type" do
     test "works in use" do
-      assert %Type.NonemptyList{type: any(), final: any()} == maybe_improper_list()
+      assert %Type.NonemptyList{type: :foo} == nonempty_list(:foo)
     end
     test "works in matches" do
-      assert maybe_improper_list() = %Type.NonemptyList{type: any(), final: any()}
+      assert nonempty_list(a) = %Type.NonemptyList{type: :foo}
+      assert a == :foo
+    end
+  end
+
+  describe "maybe_improper_list/0 type" do
+    test "works in use" do
+      assert %Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]} == maybe_improper_list()
+    end
+    test "works in matches" do
+      assert maybe_improper_list() = %Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]}
+    end
+  end
+
+  describe "maybe_improper_list/2 type" do
+    test "works in use" do
+      assert %Type.Union{of: [%Type.NonemptyList{type: :foo, final: %Type.Union{of: [[], :bar]}}, []]} ==
+        maybe_improper_list(:foo, :bar)
+    end
+  end
+
+  describe "nonempty_improper_list/2 type" do
+    test "works in use" do
+      assert %Type.NonemptyList{type: :foo, final: :bar} ==
+        nonempty_improper_list(:foo, :bar)
+    end
+    test "works in a match" do
+      assert nonempty_improper_list(a, b) = %Type.NonemptyList{type: :foo, final: :bar}
+      assert a == :foo
+      assert b == :bar
     end
   end
 
@@ -202,6 +231,14 @@ defmodule TypeTest.CompositeBuiltinTest do
     end
     test "works in matches" do
       assert nonempty_maybe_improper_list() = %Type.NonemptyList{type: any(), final: any()}
+    end
+  end
+
+  describe "nonempty_maybe_improper_list/2 type" do
+    test "works in matches" do
+      assert nonempty_maybe_improper_list(a, b) = %Type.NonemptyList{type: :foo, final: :bar}
+      assert a == :foo
+      assert b == :bar
     end
   end
 
