@@ -76,7 +76,7 @@ defmodule Type.NonemptyList do
     ...>                        type: %Type{module: String, name: :t},
     ...>                        final: %Type.Union{of: [%Type{module: String, name: :t}, []]}},
     ...>                        []]}
-    "nonempty_maybe_improper_list(String.t(), String.t())"
+    "maybe_improper_list(String.t(), String.t())"
     ```
 
   ### Key functions:

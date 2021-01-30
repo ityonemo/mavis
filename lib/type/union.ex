@@ -263,11 +263,19 @@ defmodule Type.Union do
       end
     end
 
-    defp emptify(%Type.NonemptyList{type: any(), final: []}, _opts) do
-      ["list()"]
-    end
     defp emptify(%Type.NonemptyList{type: t, final: []}, opts) do
-      ["list(", to_doc(t, opts), ")"]
+      case t do
+        any() ->
+          ["list()"]
+        0..1114111 ->
+          ["charlist()"]
+        tuple({atom(), any()}) ->
+          ["keyword()"]
+        tuple({atom(), kwt}) ->
+          ["keyword(", to_doc(kwt, opts), ")"]
+        _ ->
+          ["list(", to_doc(t, opts), ")"]
+      end
     end
     defp emptify(%Type.NonemptyList{type: any(), final: any()}, _opts) do
       ["maybe_improper_list()"]

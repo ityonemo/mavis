@@ -59,17 +59,17 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "maybe_improper_list/2" do
-    assert {:ok, identity_for(%NonemptyList{type: integer(), final: (nil <|> [])})} ==
+    assert {:ok, identity_for(maybe_improper_list(integer(), nil))} ==
       Type.fetch_spec(@source, :maybe_improper_list_2_spec, 1)
   end
 
   test "nonempty_improper_list/2" do
-    assert {:ok, identity_for(%NonemptyList{type: integer(), final: nil})} ==
+    assert {:ok, identity_for(nonempty_improper_list(integer(), nil))} ==
       Type.fetch_spec(@source, :nonempty_improper_list_2_spec, 1)
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, identity_for(%NonemptyList{type: integer(), final: (nil <|> [])})} ==
+    assert {:ok, identity_for(nonempty_maybe_improper_list(integer(), nil))} ==
       Type.fetch_spec(@source, :nonempty_maybe_improper_list_2_spec, 1)
   end
 
@@ -99,12 +99,12 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
   end
 
   test "maybe_improper_list/0" do
-    assert {:ok, identity_for(%NonemptyList{final: any()})} ==
+    assert {:ok, identity_for(maybe_improper_list())} ==
       Type.fetch_spec(@source, :maybe_improper_list_0_spec, 1)
   end
 
   test "nonempty_maybe_improper_list/0" do
-    assert {:ok, identity_for(%NonemptyList{final: any()})} ==
+    assert {:ok, identity_for(nonempty_maybe_improper_list())} ==
       Type.fetch_spec(@source, :nonempty_maybe_improper_list_0_spec, 1)
   end
 end

@@ -49,17 +49,17 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "maybe_improper_list/2" do
-    assert {:ok, %NonemptyList{type: integer(), final: (nil <|> [])}} ==
+    assert {:ok, maybe_improper_list(integer(), nil)} ==
       Type.fetch_type(@source, :maybe_improper_list_2)
   end
 
   test "nonempty_improper_list/2" do
-    assert {:ok, %NonemptyList{type: integer(), final: nil}} ==
+    assert {:ok, nonempty_improper_list(integer(), nil)} ==
       Type.fetch_type(@source, :nonempty_improper_list_2)
   end
 
   test "nonempty_maybe_improper_list/2" do
-    assert {:ok, %NonemptyList{type: integer(), final: (nil <|> [])}} ==
+    assert {:ok, nonempty_maybe_improper_list(integer(), nil)} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_2)
   end
 
@@ -87,12 +87,12 @@ defmodule TypeTest.Type.FetchType.ListsTest do
   end
 
   test "maybe_improper_list/0" do
-    assert {:ok, %NonemptyList{final: any()}} ==
+    assert {:ok, maybe_improper_list()} ==
       Type.fetch_type(@source, :maybe_improper_list_0)
   end
 
   test "nonempty_maybe_improper_list/0" do
-    assert {:ok, %NonemptyList{final: any()}} ==
+    assert {:ok, nonempty_maybe_improper_list()} ==
       Type.fetch_type(@source, :nonempty_maybe_improper_list_0)
   end
 end

@@ -22,15 +22,6 @@ defmodule TypeTest.Type.Inspect.ListsTest do
     assert "list(integer(), ...)" == inspect_type(@source, :nonempty_typed)
   end
 
-  test "keyword/1 literal list" do
-    assert "list(foo: integer())" == inspect_type(@source, :keyword_literal)
-  end
-
-  test "keyword/2 literal list" do
-    assert "list(bar: float(), foo: integer())" ==
-      inspect_type(@source, :keyword_2_literal)
-  end
-
   test "list/0" do
     assert "list()" == inspect_type(@source, :list_0)
   end
@@ -71,7 +62,7 @@ defmodule TypeTest.Type.Inspect.ListsTest do
       inspect_type(@source, :keyword_1)
   end
 
-  # NB: nonempty_list/0 outputs the literal "[...]
+  # NB: nonempty_list/0 outputs the literal "[...]"
 
   test "maybe_improper_list/0" do
     assert "maybe_improper_list()" ==

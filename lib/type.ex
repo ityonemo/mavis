@@ -384,7 +384,7 @@ defmodule Type do
              "%Type.Union{of: [%Type.NonemptyList{}, []]}"
   defbuiltin :maybe_improper_list,
              %Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]},
-             "%Type.NonemptyList{type: any(), final: any()}"
+             "%Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]}"
   defbuiltin :binary,
              %Type.Bitstring{size: 0, unit: 8},
              "%Type.Bitstring{unit: 8}"
