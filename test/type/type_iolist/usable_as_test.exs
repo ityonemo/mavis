@@ -20,6 +20,11 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
       assert :ok == iolist() ~> any()
     end
 
+    @explicit_iolist %Type.NonemptyList{
+      final: binary() <|> [],
+      type: binary() <|> char() <|> iolist()
+    } <|> []
+
     test "is usable as itself defined recursively" do
       assert :ok == iolist() ~> %NonemptyList{type: @ltype, final: @final}
       assert :ok == iolist() ~>

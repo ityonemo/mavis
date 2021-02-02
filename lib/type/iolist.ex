@@ -78,20 +78,12 @@ defmodule Type.Iolist do
       {:error, _} -> {:error, Message.make(iolist(), target, meta)}
     end
   end
-  def usable_as_list(target, meta) do
-    case Type.usable_as(@ltype, target.type, meta) do
-      {:error, _} -> {:maybe, [Message.make(@ltype, target.type, meta)]}
-      any -> any
-    end
-    |> Type.ternary_and(Type.usable_as(@final, target.final, meta))
-    |> case do
-      :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(iolist(), target, meta)]}
-      {:error, _} -> {:error, Message.make(iolist(), target, meta)}
-    end
-  end
 
-  def usable_as_iolist(challenge = %{}, meta) do
-    raise "foo"
+  @final_type Type.union(binary(), [])
+  @inner_type Type.union([binary(), char(), iolist()])
+  def usable_as_iolist(%NonemptyList{final: final, type: type}, meta) do
+    final
+    |> Type.usable_as(@final_type, meta)
+    |> Type.ternary_and(Type.usable_as(type, @inner_type, meta))
   end
 end
