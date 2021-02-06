@@ -68,11 +68,8 @@ defimpl Type.Properties, for: Type do
     end
 
     # iolist
-    def usable_as(iolist(), [], meta) do
-      {:maybe, [Message.make(iolist(), [], meta)]}
-    end
-    def usable_as(iolist(), list = %Type.NonemptyList{}, meta) do
-      Type.Iolist.usable_as_list(list, meta)
+    def usable_as(iolist(), type, meta) do
+      Type.Iolist.iolist_usable_as(type, meta)
     end
 
     # any

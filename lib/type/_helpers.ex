@@ -72,7 +72,7 @@ defmodule Type.Helpers do
   """
   defmacro usable_as(do: block) do
     quote do
-      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, type, _meta), do: :ok
 
       if __MODULE__ == Type.Properties.Type do
       def usable_as(none(), target, meta) do

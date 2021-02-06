@@ -396,6 +396,16 @@ defmodule Type do
              "%Type.Bitstring{unit: 1}"
   defbuiltin :term, any(), "%Type{name: :any}"
 
+  # nonstandard builtins (useful just for this library)
+  defbuiltin :nonempty_iolist,
+             %Type.NonemptyList{
+               type: %Type.Union{of: [binary(), iolist(), byte()]},
+               final: %Type.Union{of: [binary(), []]}},
+             "%Type.NonemptyList{type: %Type.Union{of: [binary(), iolist(), byte()]}, final: []}"
+  defbuiltin :explicit_iolist,
+             %Type.Union{of: [nonempty_iolist(), []]},
+             "%Type.Union{of: [nonempty_iolist(), []]}"
+
   @doc """
   use this for when you must use a runtime value to obtain a builtin type struct
 

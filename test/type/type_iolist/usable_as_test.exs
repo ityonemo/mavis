@@ -8,10 +8,17 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
 
   alias Type.{Bitstring, NonemptyList}
 
-  @char 0..0x10FFFF
-  @binary %Bitstring{size: 0, unit: 8}
-  @ltype @char <|> @binary <|> iolist()
-  @final [] <|> @binary
+  @ltype byte() <|> binary() <|> iolist()
+  @final [] <|> binary()
+
+  describe "nonempty_iolist" do
+    test "is usable as itself, general nonempty_maybe_improper_list, iolist, and any" do
+      assert :ok == nonempty_iolist() ~> nonempty_iolist()
+      assert :ok == nonempty_iolist() ~> nonempty_maybe_improper_list()
+      assert :ok == nonempty_iolist() ~> iolist()
+      assert :ok == nonempty_iolist() ~> any()
+    end
+  end
 
   describe "the iolist" do
     test "is usable as itself, general maybe improper list, and any" do
@@ -20,27 +27,19 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
       assert :ok == iolist() ~> any()
     end
 
-    @explicit_iolist %Type.NonemptyList{
-      final: binary() <|> [],
-      type: binary() <|> char() <|> iolist()
-    } <|> []
-
     test "is usable as itself defined recursively" do
-      assert :ok == iolist() ~> %NonemptyList{type: @ltype, final: @final}
-      assert :ok == iolist() ~>
-        %NonemptyList{type: %NonemptyList{type: @ltype, final: @final} <|> @char <|> @binary,
-              final: @final}
+      assert :ok == iolist() ~> explicit_iolist()
     end
 
     test "is maybe usable as a list missing iolist, binary, or char are subtypes of iolists" do
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: @char <|> iolist(), final: @final}
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: @binary <|> iolist(), final: @final}
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: @char <|> @binary, final: @final}
+      assert {:maybe, _} = iolist() ~> %NonemptyList{type: byte() <|> iolist(), final: @final}
+      assert {:maybe, _} = iolist() ~> %NonemptyList{type: binary() <|> iolist(), final: @final}
+      assert {:maybe, _} = iolist() ~> %NonemptyList{type: byte() <|> binary(), final: @final}
     end
 
-    test "is maybe usable as a list missing a final component are subtypes of iolists" do
+    test "is maybe usable as a list missing a final component" do
       assert {:maybe, _} = iolist() ~> list(@ltype)
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: @ltype, final: @binary}
+      #assert {:maybe, _} = iolist() ~> nonempty_improper_list(@ltype, binary())
     end
 
     test "is maybe usable as a list that are nonempty: true are subtypes of iolists" do
@@ -61,7 +60,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "are not usable as other types" do
-      TypeTest.Targets.except([[], list()])
+      TypeTest.Targets.except([[], list(), ["foo", "bar"]])
       |> Enum.each(fn target ->
         assert {:error, _} = iolist() ~> target
       end)
@@ -74,14 +73,14 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "missing iolist, binary, or char are usable as iolists" do
-      assert :ok = %NonemptyList{type: @char <|> iolist(), final: @final} ~> iolist()
-      assert :ok = %NonemptyList{type: @binary <|> iolist(), final: @final} ~> iolist()
-      assert :ok = %NonemptyList{type: @char <|> @binary, final: @final} ~> iolist()
+      assert :ok = %NonemptyList{type: byte() <|> iolist(), final: @final} ~> iolist()
+      assert :ok = %NonemptyList{type: binary() <|> iolist(), final: @final} ~> iolist()
+      assert :ok = %NonemptyList{type: byte() <|> binary(), final: @final} ~> iolist()
     end
 
     test "missing a final component are usable as iolists" do
       assert :ok = list(@ltype) ~> iolist()
-      assert :ok = %NonemptyList{type: @ltype, final: @binary} ~> iolist()
+      assert :ok = %NonemptyList{type: @ltype, final: binary()} ~> iolist()
     end
 
     test "that are nonempty: true are usable as iolists" do

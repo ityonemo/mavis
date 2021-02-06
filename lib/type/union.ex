@@ -127,6 +127,7 @@ defmodule Type.Union do
       Type.Properties.typegroup(first)
     end
 
+    def usable_as(type, type, _meta), do: :ok
     def usable_as(challenge, target, meta) do
       challenge.of
       |> Enum.map(&Type.usable_as(&1, target, meta))
