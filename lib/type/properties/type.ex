@@ -262,8 +262,8 @@ defimpl Type.Properties, for: Type do
   end
 
   subtype do
-    def subtype?(iolist(), list = %Type.NonemptyList{}) do
-      Type.Iolist.supertype_of_iolist?(list)
+    def subtype?(iolist(), maybe_iolist = %Type.Union{}) do
+      Type.Iolist.supertype_of_iolist?(maybe_iolist)
     end
     def subtype?(%Type{module: String, name: :t, params: p}, right) do
       case p do

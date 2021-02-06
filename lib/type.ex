@@ -401,7 +401,7 @@ defmodule Type do
              %Type.NonemptyList{
                type: %Type.Union{of: [binary(), iolist(), byte()]},
                final: %Type.Union{of: [binary(), []]}},
-             "%Type.NonemptyList{type: %Type.Union{of: [binary(), iolist(), byte()]}, final: []}"
+             "%Type.NonemptyList{type: %Type.Union{of: [binary(), iolist(), byte()]}, final: %Type.Union{of: [binary(), []]}}"
   defbuiltin :explicit_iolist,
              %Type.Union{of: [nonempty_iolist(), []]},
              "%Type.Union{of: [nonempty_iolist(), []]}"

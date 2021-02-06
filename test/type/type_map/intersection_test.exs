@@ -8,7 +8,7 @@ defmodule TypeTest.TypeMap.IntersectionTest do
 
   alias Type.Map
 
-  @any any()
+
   @any_map map()
 
   describe "the empty map" do
@@ -34,7 +34,7 @@ defmodule TypeTest.TypeMap.IntersectionTest do
 
   describe "a map with a single optional type" do
     test "intersects with empty map" do
-      int_any_map = map(%{integer() => @any})
+      int_any_map = map(%{integer() => any()})
 
       assert int_any_map == int_any_map <~> @any_map
       assert int_any_map == int_any_map <~> int_any_map

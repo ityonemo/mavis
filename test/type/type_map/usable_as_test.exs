@@ -8,7 +8,7 @@ defmodule TypeTest.TypeMap.UsableAsTest do
 
   alias Type.Map
 
-  @any any()
+
   @any_map map()
   @empty_map %Map{}
 
@@ -16,15 +16,15 @@ defmodule TypeTest.TypeMap.UsableAsTest do
     test "is usable as itself, any map, and any" do
       assert :ok = @empty_map ~> @empty_map
       assert :ok = @empty_map ~> @any_map
-      assert :ok = @empty_map ~> @any
+      assert :ok = @empty_map ~> any()
     end
 
     test "is usable as map with optional types" do
-      assert :ok = @empty_map ~> map(%{optional(:foo) => @any})
+      assert :ok = @empty_map ~> map(%{optional(:foo) => any()})
     end
 
     test "is not usable as a map with required types" do
-      assert {:error, _} = @empty_map ~> map(%{foo: @any})
+      assert {:error, _} = @empty_map ~> map(%{foo: any()})
     end
   end
 
@@ -48,7 +48,7 @@ defmodule TypeTest.TypeMap.UsableAsTest do
 
     test "is not usable as a map without the type in its preimage" do
       assert {:error, _} = map(%{foo: :bar}) ~> map(%{baz: :quux})
-      assert {:error, _} = map(%{foo: :bar}) ~> map(%{integer() => @any})
+      assert {:error, _} = map(%{foo: :bar}) ~> map(%{integer() => any()})
     end
   end
 

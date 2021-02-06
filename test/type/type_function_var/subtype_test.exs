@@ -9,18 +9,18 @@ defmodule TypeTest.TypeFunctionVar.SubtypeTest do
 
   alias Type.Function.Var
 
-  @any any()
+
   @any_var %Var{name: :foo}
   @int_var %Var{name: :foo, constraint: integer()}
 
   describe "the any variable" do
     test "is a subtype of itself and any" do
       assert @any_var in @any_var
-      assert @any_var in @any
+      assert @any_var in any()
     end
 
     test "any is a subtype of any variable" do
-      assert @any in @any_var
+      assert any() in @any_var
     end
 
     test "are not subtypes of other types" do

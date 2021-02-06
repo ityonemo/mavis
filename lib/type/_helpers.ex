@@ -224,7 +224,7 @@ defmodule Type.Helpers do
   defmacro subtype(do: block) do
 
     might_be_union = Enum.map(
-      [Union, Function.Var],
+      [Union, Function.Var, nil],
       &Module.concat(Type.Properties.Type, &1))
 
     quote do

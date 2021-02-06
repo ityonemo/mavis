@@ -8,7 +8,7 @@ defmodule Type.Iolist do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, NonemptyList, Union}
+  alias Type.{Bitstring, NonemptyList}
 
   @ltype Type.union([byte(), binary(), iolist()])
   @final Type.union([], binary())
@@ -53,13 +53,12 @@ defmodule Type.Iolist do
   end
 
   # SUBTYPE
-
   def subtype_of_iolist?(list) do
     Type.subtype?(list.type, @ltype) and Type.subtype?(list.final, @final)
   end
 
-  def supertype_of_iolist?(list) do
-    Type.subtype?(@ltype, list.type) and Type.subtype?(@final, list.final)
+  def supertype_of_iolist?(union) do
+    Type.subtype?(explicit_iolist(), union)
   end
 
   alias Type.Message

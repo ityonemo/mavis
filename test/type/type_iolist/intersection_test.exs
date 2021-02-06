@@ -8,14 +8,14 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
   alias Type.{Bitstring, NonemptyList}
 
-  @any any()
+
   @char 0..0x10FFFF
   @binary %Bitstring{size: 0, unit: 8}
 
   describe "iolist" do
     test "intersects with any, and self" do
-      assert iolist() == iolist() <~> @any
-      assert iolist() == @any <~> iolist()
+      assert iolist() == iolist() <~> any()
+      assert iolist() == any() <~> iolist()
 
       assert iolist() == iolist() <~> iolist()
     end

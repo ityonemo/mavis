@@ -599,17 +599,17 @@ defmodule Type.Map do
     import Inspect.Algebra
     import Type, only: :macros
 
-    @any %{%Type{name: :any} => %Type{name: :any}}
+    @anymap %{any() => any()}
 
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
       |> Map.from_struct
-      |> Enum.reject(&(elem(&1, 1) == any()))
+      |> Enum.reject(&(elem(&1, 1) == @anymap))
       |> inner_content(opts)
 
       concat(["map(%#{inspect struct}{", inner, "})"])
     end
-    def inspect(%{optional: @any}, _opts) do
+    def inspect(%{optional: @anymap}, _opts) do
       "map()"
     end
 

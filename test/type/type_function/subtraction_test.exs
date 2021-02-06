@@ -7,7 +7,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
   import Type, only: :macros
   alias Type.Function
 
-  @any any()
+
   @any_function %Function{params: :any, return: any()}
   @zero_arity_any %Function{params: [], return: any()}
   @one_arity_any %Function{params: [any()], return: any()}
