@@ -11,7 +11,7 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
 
   alias Type.Function.Var
 
-  @any any()
+
   @any_var %Var{name: :foo}
   @bar_var %Var{name: :bar}
   @int_var %Var{name: :foo, constraint: integer()}
@@ -19,8 +19,8 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
   describe "any variables" do
     test "are usable as itself and any" do
       assert :ok = @any_var ~> @any_var
-      assert :ok = @any_var ~> @any
-      assert :ok = @any ~> @any_var
+      assert :ok = @any_var ~> any()
+      assert :ok = any() ~> @any_var
       assert :ok = @bar_var ~> @any_var
     end
   end
@@ -28,7 +28,7 @@ defmodule TypeTest.TypeFunctionVar.UsableAsTest do
   describe "integer variables" do
     test "are usable as itself and any" do
       assert :ok = @int_var ~> @int_var
-      assert :ok = @int_var ~> @any
+      assert :ok = @int_var ~> any()
       assert :ok = integer() ~> @int_var
     end
 

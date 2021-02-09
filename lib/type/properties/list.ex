@@ -6,31 +6,29 @@ defimpl Type.Properties, for: List do
   alias Type.Message
 
   group_compare do
-    def group_compare([], %Type.List{nonempty: ne}), do: (if ne, do: :gt, else: :lt)
-    def group_compare(_, %Type.List{}), do: :lt
-    def group_compare(rvalue, lvalue)
-      when rvalue < lvalue, do: :lt
-    def group_compare(rvalue, lvalue)
-      when rvalue == lvalue, do: :eq
-    def group_compare(rvalue, lvalue)
-      when rvalue > lvalue, do: :gt
-    def group_compare(_, _), do: :lt
+    def group_compare(_, %Type.NonemptyList{}), do: :lt
+    def group_compare(left, right) when is_list(right) do
+      cond do
+        left < right -> :lt
+        left == right -> :eq
+        true -> :gt
+      end
+    end
   end
 
   usable_as do
-    def usable_as([], %Type.List{nonempty: false, final: []}, _meta), do: :ok
     def usable_as([], iolist(), _), do: :ok
-    def usable_as([], type = %Type.List{}, meta) do
-      {:error, Message.make([], type, meta)}
-    end
     def usable_as(list, iolist(), meta) when is_list(list) do
       case usable_as_iolist(list) do
         :ok -> :ok
         :error -> {:error, Message.make(list, iolist(), meta)}
       end
     end
-    def usable_as(list, type = %Type.List{}, meta) when is_list(list) do
-      case Type.List.usable_literal(type, list) do
+    def usable_as([], type = %Type.NonemptyList{}, meta) do
+      {:error, Message.make([], type, meta)}
+    end
+    def usable_as(list, type = %Type.NonemptyList{}, meta) when is_list(list) do
+      case Type.NonemptyList.usable_literal(type, list) do
         :ok -> :ok
         {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
         {:error, _} -> {:error, Message.make(list, type, meta)}
@@ -54,13 +52,13 @@ defimpl Type.Properties, for: List do
   end
 
   intersection do
-    def intersection([], %Type.List{nonempty: false, final: []}), do: []
+    def intersection([], %Type.NonemptyList{}), do: none()
     def intersection([], iolist()), do: Type.Iolist.intersection_with([])
     def intersection([], _), do: none()
     def intersection(rvalue, iolist()) do
       if Type.subtype?(rvalue, iolist()), do: rvalue, else: iolist()
     end
-    def intersection(rvalue, type = %Type.List{}) do
+    def intersection(rvalue, type = %Type.NonemptyList{}) do
       if Type.subtype?(rvalue, type), do: rvalue, else: none()
     end
   end
@@ -76,9 +74,8 @@ defimpl Type.Properties, for: List do
     normalize(rest, [Type.normalize(head) | so_far])
   end
   def normalize(type, so_far) do
-    %Type.List{
+    %Type.NonemptyList{
       type: Enum.into(so_far, %Type.Union{}),
-      nonempty: true,
       final: Type.normalize(type)}
   end
 end

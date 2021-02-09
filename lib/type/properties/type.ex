@@ -68,11 +68,8 @@ defimpl Type.Properties, for: Type do
     end
 
     # iolist
-    def usable_as(iolist(), [], meta) do
-      {:maybe, [Message.make(iolist(), [], meta)]}
-    end
-    def usable_as(iolist(), list = %Type.List{}, meta) do
-      Type.Iolist.usable_as_list(list, meta)
+    def usable_as(iolist(), type, meta) do
+      Type.Iolist.iolist_usable_as(type, meta)
     end
 
     # any
@@ -265,8 +262,8 @@ defimpl Type.Properties, for: Type do
   end
 
   subtype do
-    def subtype?(iolist(), list = %Type.List{}) do
-      Type.Iolist.supertype_of_iolist?(list)
+    def subtype?(iolist(), maybe_iolist = %Type.Union{}) do
+      Type.Iolist.supertype_of_iolist?(maybe_iolist)
     end
     def subtype?(%Type{module: String, name: :t, params: p}, right) do
       case p do

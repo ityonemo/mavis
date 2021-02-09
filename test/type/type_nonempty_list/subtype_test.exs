@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeList.SubtypeTest do
+defmodule TypeTest.TypeNonemptyList.SubtypeTest do
   use ExUnit.Case, async: true
 
   @moduletag :subtype
@@ -7,7 +7,7 @@ defmodule TypeTest.TypeList.SubtypeTest do
 
   use Type.Operators
 
-  alias Type.List
+  alias Type.NonemptyList
 
   describe "the basic list" do
     test "is a subtype of itself and any" do
@@ -36,7 +36,7 @@ defmodule TypeTest.TypeList.SubtypeTest do
     end
 
     test "is not a subtype if the inner type is the same but with a different final" do
-      refute list(atom()) in %List{type: atom(), final: integer()}
+      refute list(atom()) in %NonemptyList{type: atom(), final: integer()}
     end
 
     test "is not a subtype of other types" do
@@ -69,16 +69,16 @@ defmodule TypeTest.TypeList.SubtypeTest do
 
   describe "a list with final defined" do
     test "is a subtype of itself and any" do
-      assert %List{final: integer()} in %List{final: integer()}
-      assert %List{final: integer()} in any()
+      assert %NonemptyList{final: integer()} in %NonemptyList{final: integer()}
+      assert %NonemptyList{final: integer()} in any()
     end
 
     test "if subtype if final is a subtype" do
-      assert %List{final: 47} in %List{final: integer()}
+      assert %NonemptyList{final: 47} in %NonemptyList{final: integer()}
     end
 
     test "is not a subtype if final is not a subtype" do
-      refute %List{final: integer()} in %List{final: 47}
+      refute %NonemptyList{final: integer()} in %NonemptyList{final: 47}
     end
   end
 end

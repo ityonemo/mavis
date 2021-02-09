@@ -9,14 +9,14 @@ defmodule TypeTest.TypeFunctionVar.OrderTest do
 
   alias Type.Function.Var
 
-  @any any()
+
   @any_var %Var{name: :foo}
   @bar_var %Var{name: :bar}
 
   describe "the any variable" do
     test "is smaller than the pure type" do
-      assert @any_var < @any
-      assert @any > @any_var
+      assert @any_var < any()
+      assert any() > @any_var
     end
 
     test "is bigger than all other types" do

@@ -12,6 +12,7 @@ defmodule Type.Helpers do
     "Function" => 5,
     "Tuple" => 8,
     "Map" => 9,
+    "NonemptyList" => 10,
     "List" => 10,
     "Bitstring" => 11,
     "BitString" => 11
@@ -71,7 +72,7 @@ defmodule Type.Helpers do
   """
   defmacro usable_as(do: block) do
     quote do
-      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, type, _meta), do: :ok
 
       if __MODULE__ == Type.Properties.Type do
       def usable_as(none(), target, meta) do
@@ -223,7 +224,7 @@ defmodule Type.Helpers do
   defmacro subtype(do: block) do
 
     might_be_union = Enum.map(
-      [Union, Function.Var],
+      [Union, Function.Var, nil],
       &Module.concat(Type.Properties.Type, &1))
 
     quote do

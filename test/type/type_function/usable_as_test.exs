@@ -8,8 +8,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
 
   alias Type.{Function, Message}
 
-  @any %Type{name: :any}
-  @any_fn %Function{params: :any, return: @any}
+  @any_fn %Function{params: :any, return: any()}
   @any_atom_fn %Function{params: :any, return: atom()}
 
   test "the any/any function is not usable as any other type" do
@@ -23,7 +22,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
   describe "the any/any function" do
     test "is usable as itself and any" do
       assert :ok = @any_fn ~> @any_fn
-      assert :ok = @any_fn ~> @any
+      assert :ok = @any_fn ~> any()
     end
 
     test "is maybe usable with an any param'd function" do

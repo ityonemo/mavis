@@ -13,8 +13,8 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
       assert [] > pid()
     end
 
-    test "is bigger than any nonempty: true list" do
-      assert [] > list(...)
+    test "is bigger than any nonempty list" do
+      assert [] < list(...)
     end
 
     test "is smaller than a union containing it" do

@@ -65,7 +65,7 @@ defmodule Mavis.MixProject do
           Type.Bitstring,
           Type.Function,
           Type.Function.Var,
-          Type.List,
+          Type.NonemptyList,
           Type.Map,
           Type.Opaque,
           Type.Tuple,

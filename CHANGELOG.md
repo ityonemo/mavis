@@ -2,6 +2,7 @@
 
 ## 0.0.7
 - implements literal types
+- splits apart lists and makes them unions of `t:Type.NonemptyList.t` and `[]`
 
 ## 0.0.6
 - deprecates `Type.builtin/1` and switches to macros for each type.

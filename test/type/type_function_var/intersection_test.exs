@@ -7,13 +7,13 @@ defmodule TypeTest.TypeFunctionVar.IntersectionTest do
   import Type, only: :macros
   alias Type.Function.Var
 
-  @any any()
+
   @any_var %Var{name: :foo}
 
   describe "the default variable" do
     test "intersects with any and self" do
-      assert @any_var == @any_var <~> @any
-      assert @any_var == @any <~> @any_var
+      assert @any_var == @any_var <~> any()
+      assert @any_var == any() <~> @any_var
 
       assert @any_var == @any_var <~> @any_var
     end

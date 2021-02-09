@@ -11,7 +11,7 @@ defmodule TypeTest do
   # tests on types
   doctest Type.Bitstring
   doctest Type.Function
-  doctest Type.List
+  doctest Type.NonemptyList
   doctest Type.NoInference
   doctest Type.Tuple
   doctest Type.Map
@@ -41,7 +41,7 @@ defmodule TypeTest do
       assert 7 == Type.typegroup(pid())
       assert 8 == Type.typegroup(%Type.Tuple{elements: :any})
       assert 9 == Type.typegroup(%Type.Map{})
-      assert 10 == Type.typegroup(%Type.List{})
+      assert 10 == Type.typegroup(%Type.NonemptyList{})
       assert 11 == Type.typegroup(%Type.Bitstring{size: 0, unit: 0})
       assert 12 == Type.typegroup(any())
     end
@@ -94,7 +94,7 @@ defmodule TypeTest do
     end
 
     test "assigns improper lists correctly" do
-      assert %Type.List{type: 1, nonempty: true, final: 1} == Type.of([1, 1 | 1])
+      assert %Type.NonemptyList{type: 1, final: 1} == Type.of([1, 1 | 1])
     end
 
     test "assigns maps correctly" do
@@ -177,11 +177,11 @@ defmodule TypeTest do
     end
 
     test "charlist" do
-      assert %Type.List{type: char()} == charlist()
+      assert %Type.NonemptyList{type: char()} == charlist()
     end
 
     test "nonempty_charlist" do
-      assert %Type.List{type: char(), nonempty: true} ==
+      assert %Type.NonemptyList{type: char()} ==
         nonempty_charlist()
     end
 
@@ -205,26 +205,27 @@ defmodule TypeTest do
     end
 
     test "keyword" do
-      assert %Type.List{type: %Type.Tuple{elements: [atom(), any()]}}
+      assert %Type.NonemptyList{type: %Type.Tuple{elements: [atom(), any()]}}
         == keyword()
     end
 
     test "list" do
-      assert %Type.List{type: any()} == list()
+      assert %Type.Union{of: [%Type.NonemptyList{type: any()}, []]} == list()
     end
 
     test "nonempty_list" do
-      assert %Type.List{type: any(), nonempty: true} == nonempty_list()
+      assert %Type.NonemptyList{type: any()} == nonempty_list()
     end
 
     test "maybe_improper_list" do
-      assert %Type.List{type: any(), final: any()} ==
-        maybe_improper_list()
+      assert %Type.Union{of: [
+        %Type.NonemptyList{type: any(), final: any()},
+        []]} == maybe_improper_list()
     end
 
     test "nonempty_maybe_improper_list" do
-      assert %Type.List{type: any(), nonempty: true, final: any()} ==
-        builtin(:nonempty_maybe_improper_list)
+      assert %Type.NonemptyList{type: any(), final: any()} ==
+        nonempty_maybe_improper_list()
     end
 
     test "mfa" do
@@ -249,23 +250,23 @@ defmodule TypeTest do
 
   describe "list macro" do
     test "list macro with a single type" do
-      assert %Type.List{type: :foo} = list(:foo)
-      assert %Type.List{type: %Type.Union{of: [:foo, :bar]}} =
+      assert %Type.Union{of: [%Type.NonemptyList{type: :foo}, []]} = list(:foo)
+      assert %Type.Union{of: [%Type.NonemptyList{type: %Type.Union{of: [:foo, :bar]}}, []]} =
         list(%Type.Union{of: [:foo, :bar]})
     end
 
     test "list macro with a single ..." do
-      assert %Type.List{nonempty: true} = list(...)
+      assert %Type.NonemptyList{} = list(...)
     end
 
     test "list macro with a type and ..." do
-      assert %Type.List{type: :foo, nonempty: true} = list(:foo, ...)
-      assert %Type.List{type: %Type.Union{of: [:foo, :bar]}, nonempty: true} =
+      assert %Type.NonemptyList{type: :foo} = list(:foo, ...)
+      assert %Type.NonemptyList{type: %Type.Union{of: [:foo, :bar]}} =
         list(%Type.Union{of: [:foo, :bar]}, ...)
     end
 
     test "list macro that is a k/v" do
-      assert %Type.List{type: %Type.Union{of: [
+      assert %Type.NonemptyList{type: %Type.Union{of: [
         tuple({:foo, float()}),
         tuple({:bar, integer()})
       ]}} ==
@@ -328,5 +329,11 @@ defmodule TypeTest do
       refute TypeTest.TestJson.valid_json?(%{foo: "bar"})
       refute TypeTest.TestJson.valid_json?(%{"foo" => ["bar", :baz]})
     end
+  end
+
+  # stray tasks
+  test "unions of multiple list types inspect with both being completed" do
+    assert "list(atom()) | list(integer())" ==
+      inspect %Type.Union{of: [%Type.NonemptyList{type: atom()}, %Type.NonemptyList{type: integer()}, []]}
   end
 end

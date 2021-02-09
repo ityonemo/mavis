@@ -130,14 +130,14 @@ defmodule TypeTest.UnionTest do
     assert atom() = (atom() <|> :bar)
   end
 
-  @any any()
+
   @anytuple tuple()
   @min_2_tuple tuple({any(), any(), ...})
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
       assert @anytuple == (@anytuple <|> tuple({}))
-      assert @anytuple == (@anytuple <|> tuple({@any}))
+      assert @anytuple == (@anytuple <|> tuple({any()}))
       assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
     end
 
@@ -179,12 +179,12 @@ defmodule TypeTest.UnionTest do
     end
 
     test "tuples are merged if their elements can transitively merge" do
-      assert tuple({@any, :bar}) == (tuple({@any, :bar}) <|> tuple({:foo, :bar}))
+      assert tuple({any(), :bar}) == (tuple({any(), :bar}) <|> tuple({:foo, :bar}))
 
-      assert tuple({:bar, @any}) == (tuple({:bar, @any}) <|> tuple({:bar, :foo}))
+      assert tuple({:bar, any()}) == (tuple({:bar, any()}) <|> tuple({:bar, :foo}))
 
-      assert (tuple({:foo, @any}) <|> tuple({@any, :bar})) ==
-        (tuple({@any, :bar}) <|> tuple({:foo, @any}) <|> tuple({:foo, :bar}))
+      assert (tuple({:foo, any()}) <|> tuple({any(), :bar})) ==
+        (tuple({any(), :bar}) <|> tuple({:foo, any()}) <|> tuple({:foo, :bar}))
 
       assert tuple({1..2, 1..2}) == (tuple({1, 2}) <|> tuple({2, 1}) <|> tuple({1, 1}) <|> tuple({2, 2}))
     end
@@ -212,20 +212,25 @@ defmodule TypeTest.UnionTest do
   end
 
   describe "for the list type" do
-    alias Type.List
-    test "lists with the same end type get merged" do
-      assert list(:foo <|> :bar) == list(:foo) <|> list(:bar)
-      assert list(@any) == list(@any) <|> list(:bar)
-
-      assert %List{type: (:foo <|> :bar), final: :end} ==
-        (%List{type: :foo, final: :end} <|> %List{type: :bar, final: :end})
-      assert %List{type: @any, final: :end} ==
-        (%List{type: @any, final: :end} <|> %List{type: :bar, final: :end})
+    alias Type.NonemptyList
+    test "you can't naively union lists" do
+      assert %Type.Union{} = list(:foo) <|> list(:bar)
+      assert %Type.Union{} = list(:foo, ...) <|> list(:bar, ...)
     end
 
-    test "nonempty: true lists get merged into nonempty: true lists" do
-      assert list(:foo <|> :bar, ...) == list(:foo, ...) <|> list(:bar, ...)
-      assert list(@any, ...) == list(@any, ...) <|> list(:bar, ...)
+    test "lists of supersets CAN be merged" do
+      assert list(:foo <|> :bar) == list(:foo <|> :bar) <|> list(:bar)
+      assert list(any()) == list(any()) <|> list(atom())
+      assert list(atom()) == list(atom()) <|> list(:foo)
+    end
+
+    test "lists with the same end type get merged" do
+      assert %NonemptyList{type: any(), final: :end} ==
+        (%NonemptyList{type: any(), final: :end} <|> %NonemptyList{type: :bar, final: :end})
+    end
+
+    test "nonempty lists get merged into nonempty lists" do
+      assert list(any(), ...) == list(any(), ...) <|> list(:bar, ...)
     end
 
     test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
@@ -234,7 +239,7 @@ defmodule TypeTest.UnionTest do
 
     test "nonempty: true lists get merged into nonempty: false lists" do
       assert list(:foo) = list(:foo) <|> list(:foo, ...)
-      assert list(@any) = list(@any) <|> list(:foo, ...)
+      assert list(any()) = list(any()) <|> list(:foo, ...)
     end
   end
 

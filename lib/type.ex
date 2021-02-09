@@ -97,7 +97,7 @@ defmodule Type do
   See `Type.Map` and `Type.Tuple`
 
   The following types have associated structs:
-  - lists: `t:Type.List.t/0`
+  - lists: `t:Type.NonemptyList.t/0`
   - bitstrings/binaries: `t:Type.Bitstring.t/0`
   - tuples: `t:Type.Tuple.t/0`
   - maps: `t:Type.Map.t/0`
@@ -237,7 +237,7 @@ defmodule Type do
   | Type.Function.t
   | Type.Tuple.t
   | Type.Map.t
-  | Type.List.t | [] | list
+  | Type.NonemptyList.t | [] | list
   | Type.Bitstring.t | bitstring
   | Type.Union.t
   | Type.Opaque.t
@@ -271,6 +271,12 @@ defmodule Type do
   output type for `Type.usable_as/3`
   """
   @type ternary :: :ok | maybe | error
+
+  @doc "guard for when a ternary value is an error"
+  defguard is_error(t) when elem(t, 0) == :error
+
+  @doc "guard for when a ternary value is not an error"
+  defguard is_not_error(t) when t == :ok or (elem(t, 0) == :maybe)
 
   @typedoc """
   output type for `c:Type.Inference.Api.infer/1` and `c:Type.Inference.Api.infer/3`
@@ -357,29 +363,28 @@ defmodule Type do
              %Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}},
              "%Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}}"
   defbuiltin :nonempty_charlist,
-             %Type.List{type: 0..0x10_FFFF, final: [], nonempty: true},
-             "%Type.List{type: 0..0x10_FFFF, nonempty: true}"
+             %Type.NonemptyList{type: 0..0x10_FFFF, final: []},
+             "%Type.NonemptyList{type: 0..0x10_FFFF}"
   defbuiltin :nonempty_list,
-             %Type.List{type: any(), final: [], nonempty: true},
-             "%Type.List{type: any(), nonempty: true}"
+             %Type.NonemptyList{type: any(), final: []},
+             "%Type.NonemptyList{type: any()}"
   defbuiltin :nonempty_maybe_improper_list,
-             %Type.List{type: any(), final: any(), nonempty: true},
-             "%Type.List{type: any(), final: any(), nonempty: true}"
+             %Type.NonemptyList{type: any(), final: any()},
+             "%Type.NonemptyList{type: any(), final: any()}"
   defbuiltin :charlist,
-             %Type.List{type: 0..0x10_FFFF, final: [], nonempty: false},
-             "%Type.List{type: 0..0x10_FFFF}"
+             %Type.NonemptyList{type: 0..0x10_FFFF, final: []},
+             "%Type.NonemptyList{type: 0..0x10_FFFF}"
   defbuiltin :keyword,
-             %Type.List{
+             %Type.NonemptyList{
                type: %Type.Tuple{elements: [atom(), any()]},
-               final: [],
-               nonempty: false},
-             "%Type.List{type: tuple({atom(), any()})}"
+               final: []},
+             "%Type.NonemptyList{type: tuple({atom(), any()})}"
   defbuiltin :list,
-             %Type.List{type: any(), final: [], nonempty: false},
-             "%Type.List{type: any()}"
+             %Type.Union{of: [%Type.NonemptyList{}, []]},
+             "%Type.Union{of: [%Type.NonemptyList{}, []]}"
   defbuiltin :maybe_improper_list,
-             %Type.List{type: any(), final: any(), nonempty: false},
-             "%Type.List{type: any(), final: any()}"
+             %Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]},
+             "%Type.Union{of: [%Type.NonemptyList{type: any(), final: any()}, []]}"
   defbuiltin :binary,
              %Type.Bitstring{size: 0, unit: 8},
              "%Type.Bitstring{unit: 8}"
@@ -390,6 +395,16 @@ defmodule Type do
              %Type.Bitstring{size: 0, unit: 1},
              "%Type.Bitstring{unit: 1}"
   defbuiltin :term, any(), "%Type{name: :any}"
+
+  # nonstandard builtins (useful just for this library)
+  defbuiltin :nonempty_iolist,
+             %Type.NonemptyList{
+               type: %Type.Union{of: [binary(), iolist(), byte()]},
+               final: %Type.Union{of: [binary(), []]}},
+             "%Type.NonemptyList{type: %Type.Union{of: [binary(), iolist(), byte()]}, final: %Type.Union{of: [binary(), []]}}"
+  defbuiltin :explicit_iolist,
+             %Type.Union{of: [nonempty_iolist(), []]},
+             "%Type.Union{of: [nonempty_iolist(), []]}"
 
   @doc """
   use this for when you must use a runtime value to obtain a builtin type struct
@@ -463,11 +478,11 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> list(...)
-  %Type.List{type: %Type{name: :any}, nonempty: true}
+  %Type.NonemptyList{type: %Type{name: :any}}
   iex> list(1..10)
-  %Type.List{type: 1..10}
+  %Type.Union{of: [%Type.NonemptyList{type: 1..10}, []]}
   iex> list(1..10, ...)
-  %Type.List{type: 1..10, nonempty: true}
+  %Type.NonemptyList{type: 1..10}
   ```
 
   if it's passed a keyword list, it is interpreted as a keyword list.
@@ -475,18 +490,18 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> list(foo: pos_integer())
-  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
+  %Type.NonemptyList{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
 
   * usable in guards *
   """
   @doc type: true
   defmacro list({:..., _, _}) do
-    Macro.escape(%Type.List{type: any(), nonempty: true})
+    Macro.escape(%Type.NonemptyList{type: any()})
   end
   defmacro list([{k, v}]) when is_atom(k) do
     quote do
-      %Type.List{type: unquote(struct_of(:"Type.Tuple", elements: [k, v]))}
+      %Type.NonemptyList{type: unquote(struct_of(:"Type.Tuple", elements: [k, v]))}
     end
   end
   defmacro list(lst) when is_list(lst) do
@@ -495,14 +510,85 @@ defmodule Type do
     |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", elements: [k, v]) end)
 
     quote do
-      %Type.List{type: unquote(struct_of(:"Type.Union", of: tuples))}
+      %Type.NonemptyList{type: unquote(struct_of(:"Type.Union", of: tuples))}
     end
   end
   defmacro list(ast) do
-    quote do %Type.List{type: unquote(ast)} end
+    quote do %Type.Union{of: [%Type.NonemptyList{type: unquote(ast)}, []]} end
   end
   defmacro list(ast, {:..., _, _}) do
-    quote do %Type.List{type: unquote(ast), nonempty: true} end
+    quote do %Type.NonemptyList{type: unquote(ast)} end
+  end
+
+  @doc """
+  Creates a `t:nonempty_list/1`
+
+  * usable in guards *
+
+  ```elixir
+  iex> nonempty_list(1..10)
+  %Type.NonemptyList{type: 1..10}
+  ```
+  """
+  defmacro nonempty_list(type) do
+    quote do %Type.NonemptyList{type: unquote(type)} end
+  end
+
+  @doc """
+  Creates a `t:maybe_improper_list/1`
+
+  **NOTE**: not usable in guards
+
+  ```elixir
+  iex> maybe_improper_list(:foo, :bar)
+  %Type.Union{of: [%Type.NonemptyList{type: :foo, final: %Type.Union{of: [[], :bar]}},[]]}
+  ```
+  """
+  defmacro maybe_improper_list(type1, type2) do
+    quote do
+      %Type.Union{of: [
+        %Type.NonemptyList{type: unquote(type1), final: Type.union(unquote(type2), [])},
+        []]}
+    end
+  end
+
+  @doc """
+  Creates a `t:nonempty_improper_list/2`
+
+  * usable in guards *
+
+  ```elixir
+  iex> nonempty_improper_list(:foo, :bar)
+  %Type.NonemptyList{type: :foo, final: :bar}
+  ```
+  """
+  defmacro nonempty_improper_list(type1, type2) do
+    quote do
+      %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+    end
+  end
+
+  @doc """
+  Creates a `t:nonempty_maybe_improper_list/2`.
+
+  * usable in guards *
+
+  ```elixir
+  iex> nonempty_maybe_improper_list(:foo, :bar)
+  %Type.NonemptyList{type: :foo, final: %Type.Union{of: [[], :bar]}}
+  ```
+  """
+  defmacro nonempty_maybe_improper_list(type1, type2) do
+    if __CALLER__.context do
+      # match or guard
+      quote do
+        %Type.NonemptyList{type: unquote(type1), final: unquote(type2)}
+      end
+    else
+      quote do
+        %Type.NonemptyList{type: unquote(type1), final: Type.union(unquote(type2), [])}
+      end
+    end
   end
 
   @doc """
@@ -1044,10 +1130,9 @@ defmodule Type do
       dictionary ordering intrenally within an arity group.
     - minimum size tuples, in descending order of size.
   - group 9 (`t:Type.Map.t/0`): maps
-  - group 10 (`t:Type.List.t/0`):
-    - `nonempty: true` list
-    - empty list literal
-    - `nonempty: false` lists
+  - group 10: lists
+    - list literals (in erlang term order)
+    - `t:Type.NonemptyList.t/0`
   - group 11 (`t:Type.Bitstring.t/0`): bitstrings and binaries
   - group 12: `t:any/0`
 
@@ -1332,10 +1417,10 @@ defmodule Type do
     of_list(rest, Type.union(Type.of(head), so_far))
   end
   defp of_list([], so_far) do
-    %Type.List{type: so_far, nonempty: true}
+    %Type.NonemptyList{type: so_far}
   end
   defp of_list(non_list, so_far) do
-    %Type.List{type: so_far, nonempty: true, final: Type.of(non_list)}
+    %Type.NonemptyList{type: so_far, final: Type.of(non_list)}
   end
 
   defp of_bitstring(bitstring, bits_so_far \\ 0)
