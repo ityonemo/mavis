@@ -8,10 +8,6 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
   alias Type.{Bitstring, NonemptyList}
 
-
-  @char 0..0x10FFFF
-  @binary %Bitstring{size: 0, unit: 8}
-
   describe "iolist" do
     test "intersects with any, and self" do
       assert iolist() == iolist() <~> any()
@@ -25,34 +21,34 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
       assert [] == [] <~> iolist()
     end
 
-    test "intersects with a charlist" do
-      assert list(@char) == iolist() <~> list(@char)
-      assert list(@char) == list(@char) <~> iolist()
+    test "intersects with a byte list" do
+      assert list(byte()) == iolist() <~> list(byte())
+      assert list(byte()) == list(byte()) <~> iolist()
     end
 
     test "intersects with a binary list" do
-      assert list(@binary) == iolist() <~> list(@binary)
-      assert list(@binary) == list(@binary) <~> iolist()
+      assert list(binary()) == iolist() <~> list(binary())
+      assert list(binary()) == list(binary()) <~> iolist()
     end
 
     test "acts as if it is a maybe_empty list" do
-      nonempty = list(@binary, ...)
+      nonempty = list(binary(), ...)
       assert nonempty == iolist() <~> nonempty
       assert nonempty == nonempty <~> iolist()
     end
 
     test "acts as if it can have a final of binary" do
-      binfinal = %NonemptyList{type: @binary, final: @binary}
+      binfinal = %NonemptyList{type: binary(), final: binary()}
       assert binfinal == iolist() <~> binfinal
       assert binfinal == binfinal <~> iolist()
     end
 
     test "intersects to arbitrary depth" do
-      two_in = list(list(@binary))
+      two_in = list(list(binary()))
       assert two_in == iolist() <~> two_in
       assert two_in == two_in <~> iolist()
 
-      three_in = list(list(list(@binary)))
+      three_in = list(list(list(binary())))
       assert three_in == iolist() <~> three_in
       assert three_in == three_in <~> iolist()
     end
