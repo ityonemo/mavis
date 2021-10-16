@@ -135,6 +135,10 @@ defmodule Type.Tuple do
 
   @type t :: %__MODULE__{
     elements: [Type.t],
+    fixed: boolean
+  }
+  @type t(type) :: %__MODULE__{
+    elements: [type],
     fixed: true
   }
 
@@ -188,7 +192,7 @@ defmodule Type.Tuple do
     Enum.at(elements, index)
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     use Type.Helpers
@@ -307,6 +311,9 @@ defmodule Type.Tuple do
 
     def normalize(%Tuple{fixed: false}) do
       %Tuple{elements: [], fixed: false}
+    end
+    def normalize(%Tuple{elements: elements}) do
+      %Tuple{elements: Enum.map(elements, &Type.normalize/1)}
     end
     def normalize(type), do: super(type)
   end

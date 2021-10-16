@@ -338,7 +338,7 @@ defmodule Type.Function do
     |> Enum.map(&Enum.reverse/1)
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     use Type.Helpers
@@ -409,14 +409,19 @@ defmodule Type.Function do
       def intersection(a, b = %Function{params: :any}) do
         intersection(b, a)
       end
+      def intersection(lf = %Function{params: i}, rf = %Function{params: rp})
+          when length(rp) == i do
+
+        case Type.intersection(lf.return, rf.return) do
+          none() -> none()
+          return -> %Function{params: rp, return: return}
+        end
+      end
       def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
-
-        return = Type.intersection(lr, rr)
-
-        if return == none() do
-          none()
-        else
-          %Function{params: p, return: return}
+        case Type.intersection(lr, rr) do
+          none() -> none()
+          return ->
+            %Function{params: p, return: return}
         end
       end
     end
@@ -431,10 +436,46 @@ defmodule Type.Function do
       end
     end
 
-    def normalize(function = %{params: i}) when is_integer(i) do
-      %{function | params: List.duplicate(any(), i)}
+    subtract do
+      def subtract(%{params: p, return: r1}, %Function{params: p, return: r2}) do
+        case Type.subtract(r1, r2) do
+          none() -> none()
+          %Type.Subtraction{base: b, exclude: e} ->
+            %Type.Subtraction{
+              base: %Function{params: p, return: b},
+              exclude: %Function{params: p, return: e}}
+          type ->
+            %Function{params: p, return: type}
+        end
+      end
+      def subtract(lf = %{params: p}, rf = %Function{params: l}) when length(p) == l do
+        case Type.subtract(lf.return, rf.return) do
+          none() -> none()
+          %Type.Subtraction{base: b, exclude: e} ->
+            %Type.Subtraction{
+              base: %Function{params: p, return: b},
+              exclude: %Function{params: p, return: e}}
+          type ->
+            %Function{params: p, return: type}
+        end
+      end
     end
-    def normalize(function), do: super(function)
+
+    def normalize(function = %{params: i}) when is_integer(i) do
+      %Function{
+        params: List.duplicate(any(), i),
+        return: Type.normalize(function.return)
+      }
+    end
+    def normalize(function = %{params: list}) when is_list(list) do
+      %Function{
+        params: Enum.map(list, &Type.normalize/1),
+        return: Type.normalize(function.return)
+      }
+    end
+    def normalize(function = %{params: :any}) do
+      %{function | return: Type.normalize(function.return)}
+    end
   end
 
   defimpl Inspect do

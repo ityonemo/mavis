@@ -22,7 +22,7 @@ defmodule TypeTest.Remote.IntersectionTest do
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([@empty_bitstring])
+      TypeTest.Targets.except([@empty_bitstring, "foo"])
       |> Enum.each(fn target ->
         assert none() == remote(String.t()) <~> target
       end)

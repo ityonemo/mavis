@@ -158,13 +158,17 @@ defmodule TypeTest.Builtin.IntersectionTest do
       assert float() == float() <~> float()
     end
 
+    test "with a float literal is the literal" do
+      assert 47.0 == float() <~> 47.0
+    end
+
     test "with unions works as expected" do
       assert float() == float() <~> (float() <|> 15..16)
       assert none() == float() <~> (:foo <|> pid())
     end
 
     test "with all other types is none" do
-      TypeTest.Targets.except([float()])
+      TypeTest.Targets.except([float(), 47.0])
       |> Enum.each(fn target ->
         assert none() == float() <~> target
       end)

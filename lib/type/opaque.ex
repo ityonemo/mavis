@@ -16,7 +16,7 @@ defmodule Type.Opaque do
 
   import Type, only: :macros
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     import Type.Helpers
@@ -54,7 +54,7 @@ defmodule Type.Opaque do
     end
 
     def typegroup(%{type: opaque}) do
-      Type.Properties.typegroup(opaque)
+      Type.Algebra.typegroup(opaque)
     end
 
     usable_as do

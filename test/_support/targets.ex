@@ -5,10 +5,11 @@ defmodule TypeTest.Targets do
   alias Type.{Bitstring, Function}
 
   @example_list [-47, neg_integer(), 0, 47, -10..10,
-  pos_integer(), float(), :foo, atom(),
+  pos_integer(), float(), 47.0, :foo, atom(),
   reference(), %Function{params: [], return: 0}, port(),
   pid(), tuple({}), map(),
-  [], list(), %Bitstring{size: 0, unit: 0}]
+  [], ["foo", "bar"], list(),
+  "foo", <<0::7>>, %Bitstring{size: 0, unit: 0}]
 
   def except(list \\ []) do
     Enum.reject(@example_list, &(&1 in list))

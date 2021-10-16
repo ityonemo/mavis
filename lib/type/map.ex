@@ -196,6 +196,10 @@ defmodule Type.Map do
     optional: optional
   }
 
+  @type t(key, value) :: %__MODULE__{
+    required: %{optional(key) => value},
+    optional: %{}}
+
   @doc """
   the full union of all possible key values for the passed map.
 
@@ -354,7 +358,7 @@ defmodule Type.Map do
               required: still_requireds}
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
 
     import Type, only: :macros
     alias Type.{Map, Message}
@@ -576,23 +580,36 @@ defmodule Type.Map do
       end)
     end
 
+    def normalize(%{required: required, optional: optional}) do
+      {requireds, optionals} = required
+      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+      |> Enum.split_with(&(is_atom(elem(&1, 0)) or is_integer(elem(&1, 0))))
+
+      optionals = optional
+      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+      |> Kernel.++(optionals)
+      |> Enum.into(%{})
+
+      %Type.Map{required: Enum.into(requireds, %{}), optional: optionals}
+    end
+
   end
 
   defimpl Inspect do
     import Inspect.Algebra
     import Type, only: :macros
 
-    @any %{%Type{name: :any} => %Type{name: :any}}
+    @anymap %{any() => any()}
 
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
       |> Map.from_struct
-      |> Enum.reject(&(elem(&1, 1) == any()))
+      |> Enum.reject(&(elem(&1, 1) == @anymap))
       |> inner_content(opts)
 
       concat(["map(%#{inspect struct}{", inner, "})"])
     end
-    def inspect(%{optional: @any}, _opts) do
+    def inspect(%{optional: @anymap}, _opts) do
       "map()"
     end
 

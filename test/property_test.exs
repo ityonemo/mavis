@@ -9,19 +9,19 @@ defmodule TypeTest.PropertyTest do
               term2 <- term() do
       cond do
         is_float(term1) and is_integer(term2) ->
-          Type.of(term1) > Type.of(term2)
+          assert Type.of(term1) > Type.of(term2)
 
         is_integer(term1) and is_float(term2) ->
-          Type.of(term2) > Type.of(term1)
+          assert Type.of(term2) > Type.of(term1)
 
         term1 === term2 ->
-          Type.of(term1) == Type.of(term2)
+          assert Type.of(term1) == Type.of(term2)
 
         term1 < term2 ->
-          Type.of(term1) <= Type.of(term2)
+          assert Type.of(term1) <= Type.of(term2)
 
         term1 > term2 ->
-          Type.of(term1) >= Type.of(term2)
+          assert Type.of(term1) >= Type.of(term2)
       end
     end
   end

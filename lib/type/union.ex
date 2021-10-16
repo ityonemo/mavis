@@ -62,6 +62,9 @@ defmodule Type.Union do
   # folds argument 1 into the list of argument2.
   # argument 3, which is the stack, contains the remaining types in ASCENDING order.
   @spec fold(Type.t, [Type.t], [Type.t]) :: {[Type.t], [Type.t]}
+  defp fold(type, [type | rest], stack) do
+    fold(type, rest, stack)
+  end
   defp fold(type, [head | rest], stack) do
     with order when order in [:gt, :lt] <- Type.compare(head, type),
          retries when is_list(retries) <- type_merge(order, head, type) do
@@ -82,7 +85,7 @@ defmodule Type.Union do
 
   defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
     import Type.Helpers
 
@@ -121,9 +124,10 @@ defmodule Type.Union do
     end
 
     def typegroup(%{of: [first | _]}) do
-      Type.Properties.typegroup(first)
+      Type.Algebra.typegroup(first)
     end
 
+    def usable_as(type, type, _meta), do: :ok
     def usable_as(challenge, target, meta) do
       challenge.of
       |> Enum.map(&Type.usable_as(&1, target, meta))
@@ -165,8 +169,24 @@ defmodule Type.Union do
       end
     end
 
+    subtract do
+      def subtract(%{of: types}, subtrahend) do
+        {s, w} = types
+        |> Enum.map(&Type.subtract(&1, subtrahend))
+        |> Enum.reject(&(&1 == none()))
+        |> Enum.split_with(&match?(%Type.Subtraction{}, &1))
+
+        base = Enum.into(w ++ Enum.map(s, &(&1.base)), %Type.Union{})
+        exclude = s |> Enum.map(&(&1.exclude)) |> Enum.into(%Type.Union{})
+
+        if s == [], do: base, else: %Type.Subtraction{base: base, exclude: exclude}
+      end
+    end
+
     def normalize(%{of: types}) do
-      %Union{of: Enum.map(types, &Type.normalize/1)}
+      types
+      |> Enum.map(&Type.normalize/1)
+      |> Enum.into(%Type.Union{})
     end
   end
 
@@ -191,6 +211,16 @@ defmodule Type.Union do
 
     def inspect(%{of: types}, opts) do
       cond do
+        [] in types ->
+          {lists, nonlists} = Enum.split_with(types -- [[]], &match?(%Type.NonemptyList{}, &1))
+
+          lists
+          |> Enum.map(&emptify(&1, opts))
+          |> Enum.intersperse([" | "])
+          |> Enum.flat_map(&Function.identity/1)
+          |> Kernel.++(Enum.map(nonlists, &(to_doc(&1, opts))))
+          |> concat
+
         # override for boolean
         rest = type_has(types, [true, false]) ->
           override(rest, :boolean, opts)
@@ -231,6 +261,35 @@ defmodule Type.Union do
           concat(["#{range.first}..-1", " | ", type])
 
         true -> normal_inspect(types, opts)
+      end
+    end
+
+    defp emptify(%Type.NonemptyList{type: t, final: []}, opts) do
+      case t do
+        any() ->
+          ["list()"]
+        0..1114111 ->
+          ["charlist()"]
+        tuple({atom(), any()}) ->
+          ["keyword()"]
+        tuple({atom(), kwt}) ->
+          ["keyword(", to_doc(kwt, opts), ")"]
+        _ ->
+          ["list(", to_doc(t, opts), ")"]
+      end
+    end
+    defp emptify(%Type.NonemptyList{type: any(), final: any()}, _opts) do
+      ["maybe_improper_list()"]
+    end
+    defp emptify(%Type.NonemptyList{type: ltype, final: %Type.Union{of: ftypes}}, opts) do
+      ftype = Type.union(ftypes -- [[]])
+      ["maybe_improper_list(", to_doc(ltype, opts), ", ", to_doc(ftype, opts), ")"]
+    end
+    defp emptify(%Type.NonemptyList{type: ltype, final: rtype}, opts) do
+      if Type.subtype?([], rtype) do
+        ["maybe_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
+      else
+        ["nonempty_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
       end
     end
 

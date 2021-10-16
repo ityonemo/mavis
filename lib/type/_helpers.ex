@@ -12,6 +12,7 @@ defmodule Type.Helpers do
     "Function" => 5,
     "Tuple" => 8,
     "Map" => 9,
+    "NonemptyList" => 10,
     "List" => 10,
     "Bitstring" => 11,
     "BitString" => 11
@@ -57,7 +58,7 @@ defmodule Type.Helpers do
   end
 
   @doc """
-  Wraps the `Type.Properties.usable_as/3` function headers in common prologue and
+  Wraps the `Type.Algebra.usable_as/3` function headers in common prologue and
   fallback clauses.  This prevents errors from being made in code that must be common to all types.
 
   Prologue function matches:
@@ -71,9 +72,9 @@ defmodule Type.Helpers do
   """
   defmacro usable_as(do: block) do
     quote do
-      def usable_as(type, type, meta), do: :ok
+      def usable_as(type, type, _meta), do: :ok
 
-      if __MODULE__ == Type.Properties.Type do
+      if __MODULE__ == Type.Algebra.Type do
       def usable_as(none(), target, meta) do
         {:error, Type.Message.make(none(), target, meta)}
       end
@@ -117,7 +118,7 @@ defmodule Type.Helpers do
   end
 
   @doc """
-  Wraps the `Type.Properties.intersection/2` function headers in a common prologue.
+  Wraps the `Type.Algebra.intersection/2` function headers in a common prologue.
   This prevents errors from being made in code that must be common to all types.
 
   Prologue function matches:
@@ -133,19 +134,19 @@ defmodule Type.Helpers do
       def intersection(type, type), do: type
       def intersection(type, any()), do: type
 
-      if __MODULE__ == Type.Properties.Type do
+      if __MODULE__ == Type.Algebra.Type do
       def intersection(any(), type) do
         type
       end
       end
 
-      unless __MODULE__ == Type.Properties.Type.Union do
+      unless __MODULE__ == Type.Algebra.Type.Union do
       def intersection(type, union = %Type.Union{}) do
         Type.intersection(union, type)
       end
       end
 
-      unless __MODULE__ == Type.Properties.Type.Function.Var do
+      unless __MODULE__ == Type.Algebra.Type.Function.Var do
       def intersection(left, right = %Type.Function.Var{}) do
         case Type.intersection(left, right.constraint) do
           none() -> none()
@@ -206,7 +207,7 @@ defmodule Type.Helpers do
   end
 
   @doc """
-  Wraps the `Type.Properties.subtype?/2` function headers in a common prologue.
+  Wraps the `Type.Algebra.subtype?/2` function headers in a common prologue.
   This prevents errors from being made in code that must be common to all types.
 
   Prologue function matches:
@@ -223,8 +224,8 @@ defmodule Type.Helpers do
   defmacro subtype(do: block) do
 
     might_be_union = Enum.map(
-      [Union, Function.Var],
-      &Module.concat(Type.Properties.Type, &1))
+      [Union, Function.Var, nil],
+      &Module.concat(Type.Algebra.Type, &1))
 
     quote do
       def subtype?(a, a), do: true
@@ -235,7 +236,7 @@ defmodule Type.Helpers do
         end
       end
 
-      if __MODULE__ == Type.Properties.Type do
+      if __MODULE__ == Type.Algebra.Type do
         def subtype?(none(), _), do: false
       end
 
@@ -271,13 +272,31 @@ defmodule Type.Helpers do
         subtype?(a, c)
       end
 
-      unless __MODULE__ == Type.Properties.Range do
+      unless __MODULE__ == Type.Algebra.Range do
         def subtype?(a, %Type.Union{of: types}) do
           Enum.any?(types, &Type.subtype?(a, &1))
         end
       end
 
       def subtype?(a, b), do: usable_as(a, b, []) == :ok
+    end
+  end
+
+  defmacro subtract(do: block) do
+    quote do
+      def subtract(type, type), do: none()
+      def subtract(type, any()), do: none()
+      def subtract(base, %Type.Union{of: types}) do
+        Enum.reduce(types, base, &Type.subtract(&2, &1))
+      end
+      unquote(block)
+      def subtract(ltype, rtype) do
+        case Type.intersection(ltype, rtype) do
+          ^ltype -> none()
+          none() -> ltype
+          type -> %Type.Subtraction{base: ltype, exclude: type}
+        end
+      end
     end
   end
 

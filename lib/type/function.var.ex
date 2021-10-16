@@ -53,7 +53,7 @@ defmodule Type.Function.Var do
     %{t | required: Enum.map(rmap, &resolve(&1, map)),
           optional: Enum.map(omap, &resolve(&1, map))}
   end
-  def resolve(t = %Type.List{type: type, final: final}, map) do
+  def resolve(t = %Type.NonemptyList{type: type, final: final}, map) do
     %{t | type: Enum.map(type, &resolve(&1, map)), final: resolve(final, map)}
   end
   def resolve(t = %Type.Union{of: types}, map) do
@@ -85,7 +85,7 @@ defimpl Inspect, for: Type.Function.Var do
   end
 end
 
-defimpl Type.Properties, for: Type.Function.Var do
+defimpl Type.Algebra, for: Type.Function.Var do
 
   alias Type.Function.Var
 

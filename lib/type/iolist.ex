@@ -8,12 +8,10 @@ defmodule Type.Iolist do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, List}
+  alias Type.{Bitstring, NonemptyList}
 
-  @char 0..0x10FFFF
-  @binary %Bitstring{size: 0, unit: 8}
-  @ltype Type.union([@char, @binary, iolist()])
-  @final Type.union([], @binary)
+  @ltype Type.union([byte(), binary(), iolist()])
+  @final Type.union([], binary())
 
   # INTERSECTIONS
 
@@ -21,9 +19,9 @@ defmodule Type.Iolist do
   def intersection_with(list) when is_list(list) do
     Type.intersection(list, iolist())
   end
-  def intersection_with(list = %List{}) do
-    # iolist is char | binary | iolist
-    type = [@char, @binary, iolist()]
+  def intersection_with(list = %NonemptyList{}) do
+    # iolist is byte | binary | iolist
+    type = [byte(), binary(), iolist()]
     |> Enum.map(&Type.intersection(&1, list.type))
     |> Type.union
 
@@ -32,7 +30,7 @@ defmodule Type.Iolist do
     if final == none() or type == none() do
       none()
     else
-      %List{type: type, final: final, nonempty: list.nonempty}
+      %NonemptyList{type: type, final: final}
     end
   end
   def intersection_with(_), do: none()
@@ -55,51 +53,29 @@ defmodule Type.Iolist do
   end
 
   # SUBTYPE
-
   def subtype_of_iolist?(list) do
     Type.subtype?(list.type, @ltype) and Type.subtype?(list.final, @final)
   end
 
-  def supertype_of_iolist?(list) do
-    Type.subtype?(@ltype, list.type) and Type.subtype?(@final, list.final)
-      and not list.nonempty
+  def supertype_of_iolist?(union) do
+    Type.subtype?(explicit_iolist(), union)
   end
 
   alias Type.Message
 
   # USABLE_AS
-  def usable_as_list(target = %List{nonempty: true}, meta) do
-    u1 = Type.usable_as(@ltype, target.type, meta)
-    u2 = Type.usable_as(@final, target.final, meta)
+  def iolist_usable_as(explicit_iolist(), _meta), do: :ok
+  def iolist_usable_as(target, meta) do
+    Type.usable_as(explicit_iolist(), target, meta)
+  end
+
+  @final_type Type.union(binary(), [])
+  @inner_type Type.union([binary(), byte(), iolist()])
+  def usable_as_iolist(challenge = %NonemptyList{final: final, type: type}, meta) do
+    u1 = Type.usable_as(final, @final_type, meta)
+    u2 = Type.usable_as(type, @inner_type, meta)
 
     case Type.ternary_and(u1, u2) do
-      :ok -> {:maybe, [Message.make(iolist(), target, meta)]}
-      # TODO: make this report the internal error as well.
-      {:maybe, _} -> {:maybe, [Message.make(iolist(), target, meta)]}
-      {:error, _} -> {:error, Message.make(iolist(), target, meta)}
-    end
-  end
-  def usable_as_list(target, meta) do
-    case Type.usable_as(@ltype, target.type, meta) do
-      {:error, _} -> {:maybe, [Message.make(@ltype, target.type, meta)]}
-      any -> any
-    end
-    |> Type.ternary_and(Type.usable_as(@final, target.final, meta))
-    |> case do
-      :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(iolist(), target, meta)]}
-      {:error, _} -> {:error, Message.make(iolist(), target, meta)}
-    end
-  end
-
-  def usable_as_iolist(challenge = %{nonempty: nonempty}, meta) do
-    case Type.usable_as(challenge.type, @ltype, meta) do
-      {:error, _} when not nonempty ->
-        {:maybe, [Message.make(challenge.type, @ltype, meta)]}
-      any -> any
-    end
-    |> Type.ternary_and(Type.usable_as(challenge.final, @final, meta))
-    |> case do
       :ok -> :ok
       {:maybe, _} -> {:maybe, [Message.make(challenge, iolist(), meta)]}
       {:error, _} -> {:error, Message.make(challenge, iolist(), meta)}
