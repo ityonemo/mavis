@@ -180,91 +180,91 @@ defmodule Type.NonemptyList do
     |> Type.ternary_and(so_far)
   end
 
-  defimpl Type.Algebra do
-    import Type, only: :macros
-
-    use Type.Helpers
-
-    alias Type.{NonemptyList, Message, Union}
-
-    group_compare do
-      def group_compare(_, lst) when is_list(lst), do: :gt
-      def group_compare(a, b) do
-        case Type.compare(a.type, b.type) do
-          :eq -> Type.compare(a.final, b.final)
-          ordered -> ordered
-        end
-      end
-    end
-
-    usable_as do
-      def usable_as(challenge, iolist(), meta) do
-        Type.Iolist.usable_as_iolist(challenge, meta)
-      end
-
-      # nonempty lists are not usable as empty lists.
-      def usable_as(challenge, [], meta) do
-        {:error, Message.make(challenge, [], meta)}
-      end
-
-      def usable_as(challenge, target = %NonemptyList{}, meta) do
-        case Type.usable_as(challenge.type, target.type, meta) do
-          error when Type.is_error(error) -> error
-          type_result ->
-            challenge.final
-            |> Type.usable_as(target.final, meta)
-            |> Type.ternary_and(type_result)
-        end
-        |> case do
-          :ok -> :ok
-          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-        end
-      end
-
-      def usable_as(challenge, target, meta) when is_list(target) do
-        # TODO: make this work with improper lists
-        challenge
-        |> NonemptyList.usable_literal(target)
-        |> case do
-          {:error, _} ->
-            {:error, Message.make(challenge, target, meta)}
-          {:maybe, _} ->
-            {:maybe, [Message.make(challenge, target, meta)]}
-          :ok ->
-            {:maybe, [Message.make(challenge, target, meta)]}
-        end
-      end
-    end
-
-    intersection do
-      def intersection(type, list) when is_list(list) do
-        Type.intersection(list, type)
-      end
-      def intersection(a, b = %NonemptyList{}) do
-        case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
-          {none(), _} -> none()
-          {_, none()} -> none()
-          {type, final} ->
-            %NonemptyList{type: type, final: final}
-        end
-      end
-      def intersection(a, iolist()), do: Type.Iolist.intersection_with(a)
-    end
-
-    subtype do
-      # can't simply forward to usable_as, because any of the encapsulated
-      # types might have a usable_as rule that isn't strictly subtype?
-      def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
-      def subtype?(challenge, target = %NonemptyList{}) do
-        (Type.subtype?(challenge.type, target.type) and
-          Type.subtype?(challenge.final, target.final))
-      end
-      def subtype?(challenge, %Union{of: types}) do
-        Enum.any?(types, &Type.subtype?(challenge, &1))
-      end
-    end
-  end
+  #defimpl Type.Algebra do
+  #  import Type, only: :macros
+#
+  #  use Type.Helpers
+#
+  #  alias Type.{NonemptyList, Message, Union}
+#
+  #  group_compare do
+  #    def group_compare(_, lst) when is_list(lst), do: :gt
+  #    def group_compare(a, b) do
+  #      case Type.compare(a.type, b.type) do
+  #        :eq -> Type.compare(a.final, b.final)
+  #        ordered -> ordered
+  #      end
+  #    end
+  #  end
+#
+  #  usable_as do
+  #    def usable_as(challenge, iolist(), meta) do
+  #      Type.Iolist.usable_as_iolist(challenge, meta)
+  #    end
+#
+  #    # nonempty lists are not usable as empty lists.
+  #    def usable_as(challenge, [], meta) do
+  #      {:error, Message.make(challenge, [], meta)}
+  #    end
+#
+  #    def usable_as(challenge, target = %NonemptyList{}, meta) do
+  #      case Type.usable_as(challenge.type, target.type, meta) do
+  #        error when Type.is_error(error) -> error
+  #        type_result ->
+  #          challenge.final
+  #          |> Type.usable_as(target.final, meta)
+  #          |> Type.ternary_and(type_result)
+  #      end
+  #      |> case do
+  #        :ok -> :ok
+  #        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+  #        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+  #      end
+  #    end
+#
+  #    def usable_as(challenge, target, meta) when is_list(target) do
+  #      # TODO: make this work with improper lists
+  #      challenge
+  #      |> NonemptyList.usable_literal(target)
+  #      |> case do
+  #        {:error, _} ->
+  #          {:error, Message.make(challenge, target, meta)}
+  #        {:maybe, _} ->
+  #          {:maybe, [Message.make(challenge, target, meta)]}
+  #        :ok ->
+  #          {:maybe, [Message.make(challenge, target, meta)]}
+  #      end
+  #    end
+  #  end
+#
+  #  intersection do
+  #    def intersection(type, list) when is_list(list) do
+  #      Type.intersection(list, type)
+  #    end
+  #    def intersection(a, b = %NonemptyList{}) do
+  #      case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
+  #        {none(), _} -> none()
+  #        {_, none()} -> none()
+  #        {type, final} ->
+  #          %NonemptyList{type: type, final: final}
+  #      end
+  #    end
+  #    def intersection(a, iolist()), do: Type.Iolist.intersection_with(a)
+  #  end
+#
+  #  subtype do
+  #    # can't simply forward to usable_as, because any of the encapsulated
+  #    # types might have a usable_as rule that isn't strictly subtype?
+  #    def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
+  #    def subtype?(challenge, target = %NonemptyList{}) do
+  #      (Type.subtype?(challenge.type, target.type) and
+  #        Type.subtype?(challenge.final, target.final))
+  #    end
+  #    def subtype?(challenge, %Union{of: types}) do
+  #      Enum.any?(types, &Type.subtype?(challenge, &1))
+  #    end
+  #  end
+  #end
 
   defimpl Inspect do
     import Inspect.Algebra

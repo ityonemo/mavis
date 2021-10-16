@@ -338,145 +338,145 @@ defmodule Type.Function do
     |> Enum.map(&Enum.reverse/1)
   end
 
-  defimpl Type.Algebra do
-    import Type, only: :macros
-
-    use Type.Helpers
-
-    group_compare do
-      def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
-        Type.compare(r1, r2)
-      end
-      def group_compare(%{params: :any}, _),           do: :gt
-      def group_compare(_, %{params: :any}),           do: :lt
-      def group_compare(%{params: p1}, %{params: p2})
-          when length(p1) < length(p2),                do: :gt
-      def group_compare(%{params: p1}, %{params: p2})
-          when length(p1) > length(p2),                do: :lt
-      def group_compare(f1, f2) do
-        [f1.return | f1.params]
-        |> Enum.zip([f2.return | f2.params])
-        |> Enum.each(fn {t1, t2} ->
-          compare = Type.compare(t1, t2)
-          unless compare == :eq do
-            throw compare
-          end
-        end)
-        :eq
-      catch
-        compare when compare in [:gt, :lt] -> compare
-      end
-    end
-
-    alias Type.{Function, Message}
-
-    usable_as do
-      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-          when cparam == :any or tparam == :any do
-        case Type.usable_as(challenge.return, target.return, meta) do
-          :ok -> :ok
-          # TODO: add meta-information here.
-          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-        end
-      end
-
-      def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
-          when length(cparam) == length(tparam) do
-        [challenge.return | tparam]           # note that the target parameters and the challenge
-        |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
-        |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-        |> Enum.reduce(&Type.ternary_and/2)
-        |> case do
-          :ok -> :ok
-          # TODO: add meta-information here.
-          {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-          {:error, _} -> {:error, Message.make(challenge, target, meta)}
-        end
-      end
-    end
-
-    intersection do
-      def intersection(%{params: :any, return: ret}, target = %Function{}) do
-        new_ret = Type.intersection(ret, target.return)
-
-        if new_ret == none() do
-          none()
-        else
-          %Function{params: target.params, return: new_ret}
-        end
-      end
-      def intersection(a, b = %Function{params: :any}) do
-        intersection(b, a)
-      end
-      def intersection(lf = %Function{params: i}, rf = %Function{params: rp})
-          when length(rp) == i do
-
-        case Type.intersection(lf.return, rf.return) do
-          none() -> none()
-          return -> %Function{params: rp, return: return}
-        end
-      end
-      def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
-        case Type.intersection(lr, rr) do
-          none() -> none()
-          return ->
-            %Function{params: p, return: return}
-        end
-      end
-    end
-
-    subtype do
-      def subtype?(challenge, target = %Function{params: :any}) do
-        Type.subtype?(challenge.return, target.return)
-      end
-      def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
-          when p_c == p_t do
-        Type.subtype?(challenge.return, target.return)
-      end
-    end
-
-    subtract do
-      def subtract(%{params: p, return: r1}, %Function{params: p, return: r2}) do
-        case Type.subtract(r1, r2) do
-          none() -> none()
-          %Type.Subtraction{base: b, exclude: e} ->
-            %Type.Subtraction{
-              base: %Function{params: p, return: b},
-              exclude: %Function{params: p, return: e}}
-          type ->
-            %Function{params: p, return: type}
-        end
-      end
-      def subtract(lf = %{params: p}, rf = %Function{params: l}) when length(p) == l do
-        case Type.subtract(lf.return, rf.return) do
-          none() -> none()
-          %Type.Subtraction{base: b, exclude: e} ->
-            %Type.Subtraction{
-              base: %Function{params: p, return: b},
-              exclude: %Function{params: p, return: e}}
-          type ->
-            %Function{params: p, return: type}
-        end
-      end
-    end
-
-    def normalize(function = %{params: i}) when is_integer(i) do
-      %Function{
-        params: List.duplicate(any(), i),
-        return: Type.normalize(function.return)
-      }
-    end
-    def normalize(function = %{params: list}) when is_list(list) do
-      %Function{
-        params: Enum.map(list, &Type.normalize/1),
-        return: Type.normalize(function.return)
-      }
-    end
-    def normalize(function = %{params: :any}) do
-      %{function | return: Type.normalize(function.return)}
-    end
-  end
+  #defimpl Type.Algebra do
+  #  import Type, only: :macros
+#
+  #  use Type.Helpers
+#
+  #  group_compare do
+  #    def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
+  #      Type.compare(r1, r2)
+  #    end
+  #    def group_compare(%{params: :any}, _),           do: :gt
+  #    def group_compare(_, %{params: :any}),           do: :lt
+  #    def group_compare(%{params: p1}, %{params: p2})
+  #        when length(p1) < length(p2),                do: :gt
+  #    def group_compare(%{params: p1}, %{params: p2})
+  #        when length(p1) > length(p2),                do: :lt
+  #    def group_compare(f1, f2) do
+  #      [f1.return | f1.params]
+  #      |> Enum.zip([f2.return | f2.params])
+  #      |> Enum.each(fn {t1, t2} ->
+  #        compare = Type.compare(t1, t2)
+  #        unless compare == :eq do
+  #          throw compare
+  #        end
+  #      end)
+  #      :eq
+  #    catch
+  #      compare when compare in [:gt, :lt] -> compare
+  #    end
+  #  end
+#
+  #  alias Type.{Function, Message}
+#
+  #  usable_as do
+  #    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+  #        when cparam == :any or tparam == :any do
+  #      case Type.usable_as(challenge.return, target.return, meta) do
+  #        :ok -> :ok
+  #        # TODO: add meta-information here.
+  #        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+  #        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+  #      end
+  #    end
+#
+  #    def usable_as(challenge = %{params: cparam}, target = %Function{params: tparam}, meta)
+  #        when length(cparam) == length(tparam) do
+  #      [challenge.return | tparam]           # note that the target parameters and the challenge
+  #      |> Enum.zip([target.return | cparam]) # parameters are swapped here.  this is important!
+  #      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
+  #      |> Enum.reduce(&Type.ternary_and/2)
+  #      |> case do
+  #        :ok -> :ok
+  #        # TODO: add meta-information here.
+  #        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+  #        {:error, _} -> {:error, Message.make(challenge, target, meta)}
+  #      end
+  #    end
+  #  end
+#
+  #  intersection do
+  #    def intersection(%{params: :any, return: ret}, target = %Function{}) do
+  #      new_ret = Type.intersection(ret, target.return)
+#
+  #      if new_ret == none() do
+  #        none()
+  #      else
+  #        %Function{params: target.params, return: new_ret}
+  #      end
+  #    end
+  #    def intersection(a, b = %Function{params: :any}) do
+  #      intersection(b, a)
+  #    end
+  #    def intersection(lf = %Function{params: i}, rf = %Function{params: rp})
+  #        when length(rp) == i do
+#
+  #      case Type.intersection(lf.return, rf.return) do
+  #        none() -> none()
+  #        return -> %Function{params: rp, return: return}
+  #      end
+  #    end
+  #    def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
+  #      case Type.intersection(lr, rr) do
+  #        none() -> none()
+  #        return ->
+  #          %Function{params: p, return: return}
+  #      end
+  #    end
+  #  end
+#
+  #  subtype do
+  #    def subtype?(challenge, target = %Function{params: :any}) do
+  #      Type.subtype?(challenge.return, target.return)
+  #    end
+  #    def subtype?(challenge = %{params: p_c}, target = %Function{params: p_t})
+  #        when p_c == p_t do
+  #      Type.subtype?(challenge.return, target.return)
+  #    end
+  #  end
+#
+  #  subtract do
+  #    def subtract(%{params: p, return: r1}, %Function{params: p, return: r2}) do
+  #      case Type.subtract(r1, r2) do
+  #        none() -> none()
+  #        %Type.Subtraction{base: b, exclude: e} ->
+  #          %Type.Subtraction{
+  #            base: %Function{params: p, return: b},
+  #            exclude: %Function{params: p, return: e}}
+  #        type ->
+  #          %Function{params: p, return: type}
+  #      end
+  #    end
+  #    def subtract(lf = %{params: p}, rf = %Function{params: l}) when length(p) == l do
+  #      case Type.subtract(lf.return, rf.return) do
+  #        none() -> none()
+  #        %Type.Subtraction{base: b, exclude: e} ->
+  #          %Type.Subtraction{
+  #            base: %Function{params: p, return: b},
+  #            exclude: %Function{params: p, return: e}}
+  #        type ->
+  #          %Function{params: p, return: type}
+  #      end
+  #    end
+  #  end
+#
+  #  def normalize(function = %{params: i}) when is_integer(i) do
+  #    %Function{
+  #      params: List.duplicate(any(), i),
+  #      return: Type.normalize(function.return)
+  #    }
+  #  end
+  #  def normalize(function = %{params: list}) when is_list(list) do
+  #    %Function{
+  #      params: Enum.map(list, &Type.normalize/1),
+  #      return: Type.normalize(function.return)
+  #    }
+  #  end
+  #  def normalize(function = %{params: :any}) do
+  #    %{function | return: Type.normalize(function.return)}
+  #  end
+  #end
 
   defimpl Inspect do
     import Inspect.Algebra

@@ -54,6 +54,16 @@ defmodule Type.Helpers do
       # for most types, normalization is not necessary.
       def normalize(type), do: type
       defoverridable normalize: 1
+
+      defimpl Type.Algebra do
+        defdelegate usable_as(subject, target, meta), to: module
+        defdelegate subtype?(subject, target), to: module
+        defdelegate compare(a, b), to: module
+        defdelegate typegroup(type), to: module
+        defdelegate intersection(ltype, rtype), to: module
+        defdelegate subtract(ltype, rtype), to: module
+        defdelegate normalize(type), to: module
+      end
     end
   end
 

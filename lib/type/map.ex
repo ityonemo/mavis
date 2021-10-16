@@ -358,243 +358,243 @@ defmodule Type.Map do
               required: still_requireds}
   end
 
-  defimpl Type.Algebra do
-
-    import Type, only: :macros
-    alias Type.{Map, Message}
-
-    use Type.Helpers
-
-    ##############################################################
-    ## comparison
-    group_compare do
-      def group_compare(m1, m2) do
-        preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
-        if preimage_cmp != :eq do
-          preimage_cmp
-        else
-            m1
-            |> Map.resegment(Map.resegment(m2))
-            |> Enum.each(fn segment ->
-              req_order = required_ordering(m1, m2, segment)
-              req_order != :eq && throw req_order
-
-              val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
-              val_order != :eq && throw val_order
-            end)
-        end
-      catch
-        valtype when valtype in [:gt, :lt] -> valtype
-      end
-    end
-
-    defp required_ordering(m1, m2, segment) do
-      case {Map.required_key?(m1, segment), Map.required_key?(m2, segment)} do
-        {false, true} -> :gt
-        {true, false} -> :lt
-        _ -> :eq
-      end
-    end
-
-    intersection do
-      def intersection(map, tgt = %Map{}) do
-        # find the intersection of the preimages
-        preimage_intersection = map
-        |> Map.preimage
-        |> Type.intersection(Map.preimage(tgt))
-
-        # required properties can fail.
-        case evaluate_requireds(map, tgt, preimage_intersection) do
-          {:ok, requireds} ->
-            optionals = map
-            |> evaluate_optionals(tgt)
-            |> Elixir.Map.drop(Elixir.Map.keys(requireds))
-
-            %Type.Map{required: requireds, optional: optionals}
-          :empty ->
-            none()
-        end
-      end
-    end
-
-    defp evaluate_requireds(map, tgt, preimage_intersection) do
-      # union the required keys from the map and the target.  This
-      # is the full set of required keys from all of the maps.
-      all_req_keys = Elixir.Map.keys(map.required)
-      |> Kernel.++(Elixir.Map.keys(tgt.required))
-      |> Enum.uniq
-
-      # check that all required keys exist in the preimage intersection, if
-      # it doesn't then we can do an early edit.
-      if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
-        req_kv = all_req_keys
-        |> Enum.map(fn rq_key ->
-          val_type = Map.apply(map, rq_key)
-          |> Type.intersection(Map.apply(tgt, rq_key))
-
-          val_type == none() && throw :empty
-
-          {rq_key, val_type}
-        end)
-        |> Enum.into(%{})
-
-        {:ok, req_kv}
-      else
-        :empty
-      end
-    catch
-      :empty -> :empty
-    end
-
-    defp evaluate_optionals(map, tgt) do
-      # apply the intersected preimages to the first map.
-      # this gives us a list of preimage segments, each of
-      # which has a consistent image type.
-      map
-      |> Map.resegment(Map.resegment(tgt))
-      |> Enum.flat_map(fn segment ->
-        map
-        |> Map.apply(segment)
-        |> Type.intersection(Map.apply(tgt, segment))
-        |> case do
-          none() -> []
-          image -> [{segment, image}]
-        end
-      end)
-      |> Enum.into(%{})
-    end
-
-    subtype do
-      def subtype?(challenge, target = %Map{}) do
-        # check to make sure that all segments are
-        # subtypes as expected.
-        segments = Map.resegment(challenge, Map.resegment(target))
-
-        segment_union = Enum.into(segments, %Type.Union{})
-
-        # make sure that each part of the challenge is represented
-        # in the segments
-        challenge
-        |> Map.keytypes
-        |> Enum.all?(&Type.subtype?(&1, segment_union))
-        |> Kernel.||(throw false)
-
-        Enum.each(segments, fn segment ->
-          challenge
-          |> Map.apply(segment)
-          |> Type.subtype?(Map.apply(target, segment))
-          |> Kernel.||(throw false)
-        end)
-        # check that all required bits of b are
-        # required in a.  Note that we already know that
-        # the subset situation is valid from the above code.
-        target.required
-        |> Elixir.Map.keys
-        |> Enum.all?(fn key ->
-          :erlang.is_map_key(key, challenge.required)
-        end)
-      catch
-        false -> false
-      end
-    end
-
-    usable_as do
-      def usable_as(challenge, target = %Map{}, meta) do
-        (check_preimages(challenge, target, meta)
-         ++ check_target_required(challenge, target, meta)
-         ++ check_challenge_required(challenge, target, meta)
-         ++ check_challenge_optional(challenge, target, meta))
-        |> Enum.reduce(:ok, &Type.ternary_and/2)
-      end
-    end
-
-    defp check_preimages(challenge, target, meta) do
-      challenge_preimage = challenge.optional
-      |> Elixir.Map.keys
-      |> Enum.into(%Type.Union{})
-
-      target_preimage = target.optional
-      |> Elixir.Map.keys
-      |> Enum.into(%Type.Union{})
-
-      is_preimage = Type.intersection(challenge_preimage, target_preimage)
-
-      if is_preimage == challenge_preimage do
-        [:ok]
-      else
-        [{:maybe, [Message.make(challenge, target, meta)]}]
-      end
-    end
-
-    defp check_target_required(challenge, target, meta) do
-      # checks that the challenge map can supply all of the required
-      # keys that the target needs; if they are optional, then it's a
-      # maybe; in either case the image of the challenger key must be
-      # usable as the image of the target key.
-      target.required
-      |> Enum.map(fn {key, _} ->
-        target_image = Map.apply(target, key)
-        challenge_image = Map.apply(challenge, key)
-        cond do
-          :erlang.is_map_key(key, challenge.required) ->
-            Type.usable_as(challenge_image, target_image, meta)
-
-          challenge_image != none() ->
-            Type.ternary_and(
-              {:maybe, [Message.make(challenge, target, meta)]},
-              Type.usable_as(challenge_image, target_image, meta))
-
-          true ->
-            {:error, Message.make(challenge, target, meta)}
-        end
-      end)
-    end
-
-    defp check_challenge_required(challenge, target, meta) do
-      challenge.required
-      |> Enum.map(fn {key, value} ->
-        cond do
-          :erlang.is_map_key(key, target.required) ->
-            Type.usable_as(value, target.required[key], meta)
-          (target_value = Map.apply(target, key)) != none() ->
-            Type.usable_as(value, target_value, meta)
-          true ->
-            {:error, Message.make(challenge, target, meta)}
-        end
-      end)
-    end
-
-    defp check_challenge_optional(challenge, target, meta) do
-      challenge.optional
-      |> Enum.flat_map(fn {key_type, value_type} ->
-        target
-        |> Map.resegment([key_type])
-        |> Enum.map(&{&1, value_type})
-      end)
-      |> Enum.map(fn {segment, value_type} ->
-        Type.usable_as(value_type, Map.apply(target, segment), meta)
-      end)
-      |> Enum.map(fn
-        {:error, _msg} -> {:maybe, [Message.make(challenge, target, meta)]}
-        any -> any
-      end)
-    end
-
-    def normalize(%{required: required, optional: optional}) do
-      {requireds, optionals} = required
-      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
-      |> Enum.split_with(&(is_atom(elem(&1, 0)) or is_integer(elem(&1, 0))))
-
-      optionals = optional
-      |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
-      |> Kernel.++(optionals)
-      |> Enum.into(%{})
-
-      %Type.Map{required: Enum.into(requireds, %{}), optional: optionals}
-    end
-
-  end
-
+  #defimpl Type.Algebra do
+#
+  #  import Type, only: :macros
+  #  alias Type.{Map, Message}
+#
+  #  use Type.Helpers
+#
+  #  ##############################################################
+  #  ## comparison
+  #  group_compare do
+  #    def group_compare(m1, m2) do
+  #      preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
+  #      if preimage_cmp != :eq do
+  #        preimage_cmp
+  #      else
+  #          m1
+  #          |> Map.resegment(Map.resegment(m2))
+  #          |> Enum.each(fn segment ->
+  #            req_order = required_ordering(m1, m2, segment)
+  #            req_order != :eq && throw req_order
+#
+  #            val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
+  #            val_order != :eq && throw val_order
+  #          end)
+  #      end
+  #    catch
+  #      valtype when valtype in [:gt, :lt] -> valtype
+  #    end
+  #  end
+#
+  #  defp required_ordering(m1, m2, segment) do
+  #    case {Map.required_key?(m1, segment), Map.required_key?(m2, segment)} do
+  #      {false, true} -> :gt
+  #      {true, false} -> :lt
+  #      _ -> :eq
+  #    end
+  #  end
+#
+  #  intersection do
+  #    def intersection(map, tgt = %Map{}) do
+  #      # find the intersection of the preimages
+  #      preimage_intersection = map
+  #      |> Map.preimage
+  #      |> Type.intersection(Map.preimage(tgt))
+#
+  #      # required properties can fail.
+  #      case evaluate_requireds(map, tgt, preimage_intersection) do
+  #        {:ok, requireds} ->
+  #          optionals = map
+  #          |> evaluate_optionals(tgt)
+  #          |> Elixir.Map.drop(Elixir.Map.keys(requireds))
+#
+  #          %Type.Map{required: requireds, optional: optionals}
+  #        :empty ->
+  #          none()
+  #      end
+  #    end
+  #  end
+#
+  #  defp evaluate_requireds(map, tgt, preimage_intersection) do
+  #    # union the required keys from the map and the target.  This
+  #    # is the full set of required keys from all of the maps.
+  #    all_req_keys = Elixir.Map.keys(map.required)
+  #    |> Kernel.++(Elixir.Map.keys(tgt.required))
+  #    |> Enum.uniq
+#
+  #    # check that all required keys exist in the preimage intersection, if
+  #    # it doesn't then we can do an early edit.
+  #    if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
+  #      req_kv = all_req_keys
+  #      |> Enum.map(fn rq_key ->
+  #        val_type = Map.apply(map, rq_key)
+  #        |> Type.intersection(Map.apply(tgt, rq_key))
+#
+  #        val_type == none() && throw :empty
+#
+  #        {rq_key, val_type}
+  #      end)
+  #      |> Enum.into(%{})
+#
+  #      {:ok, req_kv}
+  #    else
+  #      :empty
+  #    end
+  #  catch
+  #    :empty -> :empty
+  #  end
+#
+  #  defp evaluate_optionals(map, tgt) do
+  #    # apply the intersected preimages to the first map.
+  #    # this gives us a list of preimage segments, each of
+  #    # which has a consistent image type.
+  #    map
+  #    |> Map.resegment(Map.resegment(tgt))
+  #    |> Enum.flat_map(fn segment ->
+  #      map
+  #      |> Map.apply(segment)
+  #      |> Type.intersection(Map.apply(tgt, segment))
+  #      |> case do
+  #        none() -> []
+  #        image -> [{segment, image}]
+  #      end
+  #    end)
+  #    |> Enum.into(%{})
+  #  end
+#
+  #  subtype do
+  #    def subtype?(challenge, target = %Map{}) do
+  #      # check to make sure that all segments are
+  #      # subtypes as expected.
+  #      segments = Map.resegment(challenge, Map.resegment(target))
+#
+  #      segment_union = Enum.into(segments, %Type.Union{})
+#
+  #      # make sure that each part of the challenge is represented
+  #      # in the segments
+  #      challenge
+  #      |> Map.keytypes
+  #      |> Enum.all?(&Type.subtype?(&1, segment_union))
+  #      |> Kernel.||(throw false)
+#
+  #      Enum.each(segments, fn segment ->
+  #        challenge
+  #        |> Map.apply(segment)
+  #        |> Type.subtype?(Map.apply(target, segment))
+  #        |> Kernel.||(throw false)
+  #      end)
+  #      # check that all required bits of b are
+  #      # required in a.  Note that we already know that
+  #      # the subset situation is valid from the above code.
+  #      target.required
+  #      |> Elixir.Map.keys
+  #      |> Enum.all?(fn key ->
+  #        :erlang.is_map_key(key, challenge.required)
+  #      end)
+  #    catch
+  #      false -> false
+  #    end
+  #  end
+#
+  #  usable_as do
+  #    def usable_as(challenge, target = %Map{}, meta) do
+  #      (check_preimages(challenge, target, meta)
+  #       ++ check_target_required(challenge, target, meta)
+  #       ++ check_challenge_required(challenge, target, meta)
+  #       ++ check_challenge_optional(challenge, target, meta))
+  #      |> Enum.reduce(:ok, &Type.ternary_and/2)
+  #    end
+  #  end
+#
+  #  defp check_preimages(challenge, target, meta) do
+  #    challenge_preimage = challenge.optional
+  #    |> Elixir.Map.keys
+  #    |> Enum.into(%Type.Union{})
+#
+  #    target_preimage = target.optional
+  #    |> Elixir.Map.keys
+  #    |> Enum.into(%Type.Union{})
+#
+  #    is_preimage = Type.intersection(challenge_preimage, target_preimage)
+#
+  #    if is_preimage == challenge_preimage do
+  #      [:ok]
+  #    else
+  #      [{:maybe, [Message.make(challenge, target, meta)]}]
+  #    end
+  #  end
+#
+  #  defp check_target_required(challenge, target, meta) do
+  #    # checks that the challenge map can supply all of the required
+  #    # keys that the target needs; if they are optional, then it's a
+  #    # maybe; in either case the image of the challenger key must be
+  #    # usable as the image of the target key.
+  #    target.required
+  #    |> Enum.map(fn {key, _} ->
+  #      target_image = Map.apply(target, key)
+  #      challenge_image = Map.apply(challenge, key)
+  #      cond do
+  #        :erlang.is_map_key(key, challenge.required) ->
+  #          Type.usable_as(challenge_image, target_image, meta)
+#
+  #        challenge_image != none() ->
+  #          Type.ternary_and(
+  #            {:maybe, [Message.make(challenge, target, meta)]},
+  #            Type.usable_as(challenge_image, target_image, meta))
+#
+  #        true ->
+  #          {:error, Message.make(challenge, target, meta)}
+  #      end
+  #    end)
+  #  end
+#
+  #  defp check_challenge_required(challenge, target, meta) do
+  #    challenge.required
+  #    |> Enum.map(fn {key, value} ->
+  #      cond do
+  #        :erlang.is_map_key(key, target.required) ->
+  #          Type.usable_as(value, target.required[key], meta)
+  #        (target_value = Map.apply(target, key)) != none() ->
+  #          Type.usable_as(value, target_value, meta)
+  #        true ->
+  #          {:error, Message.make(challenge, target, meta)}
+  #      end
+  #    end)
+  #  end
+#
+  #  defp check_challenge_optional(challenge, target, meta) do
+  #    challenge.optional
+  #    |> Enum.flat_map(fn {key_type, value_type} ->
+  #      target
+  #      |> Map.resegment([key_type])
+  #      |> Enum.map(&{&1, value_type})
+  #    end)
+  #    |> Enum.map(fn {segment, value_type} ->
+  #      Type.usable_as(value_type, Map.apply(target, segment), meta)
+  #    end)
+  #    |> Enum.map(fn
+  #      {:error, _msg} -> {:maybe, [Message.make(challenge, target, meta)]}
+  #      any -> any
+  #    end)
+  #  end
+#
+  #  def normalize(%{required: required, optional: optional}) do
+  #    {requireds, optionals} = required
+  #    |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+  #    |> Enum.split_with(&(is_atom(elem(&1, 0)) or is_integer(elem(&1, 0))))
+#
+  #    optionals = optional
+  #    |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
+  #    |> Kernel.++(optionals)
+  #    |> Enum.into(%{})
+#
+  #    %Type.Map{required: Enum.into(requireds, %{}), optional: optionals}
+  #  end
+#
+  #end
+#
   defimpl Inspect do
     import Inspect.Algebra
     import Type, only: :macros

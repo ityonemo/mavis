@@ -85,110 +85,110 @@ defmodule Type.Union do
 
   defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
-  defimpl Type.Algebra do
-    import Type, only: :macros
-    import Type.Helpers
-
-    alias Type.Union
-
-    def compare(union, %Type.Function.Var{constraint: type}) do
-      case Type.compare(union, type) do
-        :eq -> :gt
-        order -> order
-      end
-    end
-    def compare(union, %Type.Opaque{type: type}) do
-      case Type.compare(union, type) do
-        :eq -> :gt
-        order -> order
-      end
-    end
-    def compare(%{of: llist}, %Union{of: rlist}) do
-      union_list_compare(llist, rlist)
-    end
-    def compare(%{of: [first | _]}, type) do
-      case Type.compare(first, type) do
-        :eq -> :gt
-        order -> order
-      end
-    end
-
-    defp union_list_compare([], []), do: :eq
-    defp union_list_compare([], _), do: :lt
-    defp union_list_compare(_, []), do: :gt
-    defp union_list_compare([lh | lrest], [rh | rrest]) do
-      case Type.compare(lh, rh) do
-        :eq -> union_list_compare(lrest, rrest)
-        order -> order
-      end
-    end
-
-    def typegroup(%{of: [first | _]}) do
-      Type.Algebra.typegroup(first)
-    end
-
-    def usable_as(type, type, _meta), do: :ok
-    def usable_as(challenge, target, meta) do
-      challenge.of
-      |> Enum.map(&Type.usable_as(&1, target, meta))
-      |> Enum.reduce(fn
-        # TO BE REPLACED WITH SOMETHING MORE SOPHISTICATED.
-        :ok, :ok                 -> :ok
-        :ok, {:maybe, _}         -> {:maybe, nil}
-        :ok, {:error, _}         -> {:maybe, nil}
-        {:maybe, _}, :ok         -> {:maybe, nil}
-        {:error, _}, :ok         -> {:maybe, nil}
-        {:maybe, _}, {:maybe, _} -> {:maybe, nil}
-        {:maybe, _}, {:error, _} -> {:maybe, nil}
-        {:error, _}, {:maybe, _} -> {:maybe, nil}
-        {:error, _}, {:error, _} -> {:error, nil}
-      end)
-      |> case do
-        :ok -> :ok
-        {:maybe, _} -> {:maybe, [Type.Message.make(challenge, target, meta)]}
-        {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
-      end
-    end
-
-    intersection do
-      def intersection(lunion, runion = %Type.Union{}) do
-        lunion.of
-        |> Enum.map(&Type.intersection(runion, &1))
-        |> Type.union
-      end
-      def intersection(union = %{}, ritem) do
-        union.of
-        |> Enum.map(&Type.intersection(&1, ritem))
-        |> Type.union
-      end
-    end
-
-    subtype do
-      def subtype?(%{of: types}, target) do
-        Enum.all?(types, &Type.subtype?(&1, target))
-      end
-    end
-
-    subtract do
-      def subtract(%{of: types}, subtrahend) do
-        {s, w} = types
-        |> Enum.map(&Type.subtract(&1, subtrahend))
-        |> Enum.reject(&(&1 == none()))
-        |> Enum.split_with(&match?(%Type.Subtraction{}, &1))
-
-        base = Enum.into(w ++ Enum.map(s, &(&1.base)), %Type.Union{})
-        exclude = s |> Enum.map(&(&1.exclude)) |> Enum.into(%Type.Union{})
-
-        if s == [], do: base, else: %Type.Subtraction{base: base, exclude: exclude}
-      end
-    end
-
-    def normalize(%{of: types}) do
-      types
-      |> Enum.map(&Type.normalize/1)
-      |> Enum.into(%Type.Union{})
-    end
-  end
+  #defimpl Type.Algebra do
+  #  import Type, only: :macros
+  #  import Type.Helpers
+#
+  #  alias Type.Union
+#
+  #  def compare(union, %Type.Function.Var{constraint: type}) do
+  #    case Type.compare(union, type) do
+  #      :eq -> :gt
+  #      order -> order
+  #    end
+  #  end
+  #  def compare(union, %Type.Opaque{type: type}) do
+  #    case Type.compare(union, type) do
+  #      :eq -> :gt
+  #      order -> order
+  #    end
+  #  end
+  #  def compare(%{of: llist}, %Union{of: rlist}) do
+  #    union_list_compare(llist, rlist)
+  #  end
+  #  def compare(%{of: [first | _]}, type) do
+  #    case Type.compare(first, type) do
+  #      :eq -> :gt
+  #      order -> order
+  #    end
+  #  end
+#
+  #  defp union_list_compare([], []), do: :eq
+  #  defp union_list_compare([], _), do: :lt
+  #  defp union_list_compare(_, []), do: :gt
+  #  defp union_list_compare([lh | lrest], [rh | rrest]) do
+  #    case Type.compare(lh, rh) do
+  #      :eq -> union_list_compare(lrest, rrest)
+  #      order -> order
+  #    end
+  #  end
+#
+  #  def typegroup(%{of: [first | _]}) do
+  #    Type.Algebra.typegroup(first)
+  #  end
+#
+  #  def usable_as(type, type, _meta), do: :ok
+  #  def usable_as(challenge, target, meta) do
+  #    challenge.of
+  #    |> Enum.map(&Type.usable_as(&1, target, meta))
+  #    |> Enum.reduce(fn
+  #      # TO BE REPLACED WITH SOMETHING MORE SOPHISTICATED.
+  #      :ok, :ok                 -> :ok
+  #      :ok, {:maybe, _}         -> {:maybe, nil}
+  #      :ok, {:error, _}         -> {:maybe, nil}
+  #      {:maybe, _}, :ok         -> {:maybe, nil}
+  #      {:error, _}, :ok         -> {:maybe, nil}
+  #      {:maybe, _}, {:maybe, _} -> {:maybe, nil}
+  #      {:maybe, _}, {:error, _} -> {:maybe, nil}
+  #      {:error, _}, {:maybe, _} -> {:maybe, nil}
+  #      {:error, _}, {:error, _} -> {:error, nil}
+  #    end)
+  #    |> case do
+  #      :ok -> :ok
+  #      {:maybe, _} -> {:maybe, [Type.Message.make(challenge, target, meta)]}
+  #      {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
+  #    end
+  #  end
+#
+  #  intersection do
+  #    def intersection(lunion, runion = %Type.Union{}) do
+  #      lunion.of
+  #      |> Enum.map(&Type.intersection(runion, &1))
+  #      |> Type.union
+  #    end
+  #    def intersection(union = %{}, ritem) do
+  #      union.of
+  #      |> Enum.map(&Type.intersection(&1, ritem))
+  #      |> Type.union
+  #    end
+  #  end
+#
+  #  subtype do
+  #    def subtype?(%{of: types}, target) do
+  #      Enum.all?(types, &Type.subtype?(&1, target))
+  #    end
+  #  end
+#
+  #  subtract do
+  #    def subtract(%{of: types}, subtrahend) do
+  #      {s, w} = types
+  #      |> Enum.map(&Type.subtract(&1, subtrahend))
+  #      |> Enum.reject(&(&1 == none()))
+  #      |> Enum.split_with(&match?(%Type.Subtraction{}, &1))
+#
+  #      base = Enum.into(w ++ Enum.map(s, &(&1.base)), %Type.Union{})
+  #      exclude = s |> Enum.map(&(&1.exclude)) |> Enum.into(%Type.Union{})
+#
+  #      if s == [], do: base, else: %Type.Subtraction{base: base, exclude: exclude}
+  #    end
+  #  end
+#
+  #  def normalize(%{of: types}) do
+  #    types
+  #    |> Enum.map(&Type.normalize/1)
+  #    |> Enum.into(%Type.Union{})
+  #  end
+  #end
 
   defimpl Collectable do
     alias Type.Union
