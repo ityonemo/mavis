@@ -192,7 +192,7 @@ defmodule Type.Tuple do
     Enum.at(elements, index)
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     use Type.Helpers

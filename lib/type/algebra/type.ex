@@ -1,5 +1,5 @@
 
-defimpl Type.Properties, for: Type do
+defimpl Type.Algebra, for: Type do
   # LUT for builtin types groups.
   @groups_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,

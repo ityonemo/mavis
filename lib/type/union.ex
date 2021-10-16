@@ -85,7 +85,7 @@ defmodule Type.Union do
 
   defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
     import Type.Helpers
 
@@ -124,7 +124,7 @@ defmodule Type.Union do
     end
 
     def typegroup(%{of: [first | _]}) do
-      Type.Properties.typegroup(first)
+      Type.Algebra.typegroup(first)
     end
 
     def usable_as(type, type, _meta), do: :ok

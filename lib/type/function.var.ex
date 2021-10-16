@@ -85,7 +85,7 @@ defimpl Inspect, for: Type.Function.Var do
   end
 end
 
-defimpl Type.Properties, for: Type.Function.Var do
+defimpl Type.Algebra, for: Type.Function.Var do
 
   alias Type.Function.Var
 

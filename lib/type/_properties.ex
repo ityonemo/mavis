@@ -1,4 +1,4 @@
-defprotocol Type.Properties do
+defprotocol Type.Algebra do
   @spec usable_as(Type.t, Type.t, keyword) :: Type.ternary
   def usable_as(subject, target, meta)
 

@@ -1,4 +1,4 @@
-defimpl Type.Properties, for: Atom do
+defimpl Type.Algebra, for: Atom do
   import Type, only: :macros
 
   use Type.Helpers
@@ -13,14 +13,14 @@ defimpl Type.Properties, for: Atom do
   usable_as do
     def usable_as(_, atom(), _), do: :ok
     def usable_as(atom, node_type(), meta) do
-      if Type.Properties.Type.valid_node?(atom) do
+      if Type.Algebra.Type.valid_node?(atom) do
         :ok
       else
         {:error, Message.make(atom, node_type(), meta)}
       end
     end
     def usable_as(atom, module(), meta) do
-      if Type.Properties.Type.valid_module?(atom) do
+      if Type.Algebra.Type.valid_module?(atom) do
         :ok
       else
         {:maybe, [Message.make(atom, module(), meta)]}
@@ -31,10 +31,10 @@ defimpl Type.Properties, for: Atom do
   intersection do
     def intersection(atom, atom()), do: atom
     def intersection(atom, node_type()) do
-      if Type.Properties.Type.valid_node?(atom), do: atom, else: none()
+      if Type.Algebra.Type.valid_node?(atom), do: atom, else: none()
     end
     def intersection(atom, module()) do
-      if Type.Properties.Type.valid_module?(atom), do: atom, else: none()
+      if Type.Algebra.Type.valid_module?(atom), do: atom, else: none()
     end
   end
 

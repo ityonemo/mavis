@@ -358,7 +358,7 @@ defmodule Type.Map do
               required: still_requireds}
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
 
     import Type, only: :macros
     alias Type.{Map, Message}

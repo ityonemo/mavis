@@ -1,4 +1,4 @@
-defimpl Type.Properties, for: Range do
+defimpl Type.Algebra, for: Range do
   import Type, only: :macros
 
   use Type.Helpers

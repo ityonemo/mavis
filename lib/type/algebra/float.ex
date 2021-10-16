@@ -1,4 +1,4 @@
-defimpl Type.Properties, for: Float do
+defimpl Type.Algebra, for: Float do
   import Type, only: :macros
   use Type.Helpers
 

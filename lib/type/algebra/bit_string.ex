@@ -1,5 +1,5 @@
 
-defimpl Type.Properties, for: BitString do
+defimpl Type.Algebra, for: BitString do
   import Type, only: :macros
   use Type.Helpers
 

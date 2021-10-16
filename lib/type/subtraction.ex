@@ -7,7 +7,7 @@ defmodule Type.Subtraction do
     exclude: Type.t
   }
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     def subtract(a, b) do
       raise "unimplemented"
     end

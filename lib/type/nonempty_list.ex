@@ -180,7 +180,7 @@ defmodule Type.NonemptyList do
     |> Type.ternary_and(so_far)
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     use Type.Helpers

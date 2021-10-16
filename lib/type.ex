@@ -957,7 +957,7 @@ defmodule Type do
     \"""]}]}
   ```
   """
-  defdelegate usable_as(challenge, target, meta \\ []), to: Type.Properties
+  defdelegate usable_as(challenge, target, meta \\ []), to: Type.Algebra
 
   @spec subtype?(t, t) :: boolean
   @doc """
@@ -1000,7 +1000,7 @@ defmodule Type do
   false
   ```
   """
-  defdelegate subtype?(type, target), to: Type.Properties
+  defdelegate subtype?(type, target), to: Type.Algebra
 
   @spec union(t, t) :: t
   @spec union([t], preserve_nones: true) :: t
@@ -1071,7 +1071,7 @@ defmodule Type do
   0..10
   ```
   """
-  defdelegate intersection(a, b), to: Type.Properties
+  defdelegate intersection(a, b), to: Type.Algebra
 
   @spec intersection([Type.t]) :: Type.t
   @doc """
@@ -1153,7 +1153,7 @@ defmodule Type do
   :gt
   ```
   """
-  defdelegate compare(a, b), to: Type.Properties
+  defdelegate compare(a, b), to: Type.Algebra
 
   @doc """
   Performs subtraction of types.  The resulting type must comprise all members
@@ -1170,7 +1170,7 @@ defmodule Type do
   none()
   ```
   """
-  defdelegate subtract(a, b), to: Type.Properties
+  defdelegate subtract(a, b), to: Type.Algebra
 
   @typedoc """
   type of group assignments
@@ -1186,7 +1186,7 @@ defmodule Type do
   *NB: group assignments may change.*
   """
   @spec typegroup(t) :: group
-  defdelegate typegroup(type), to: Type.Properties
+  defdelegate typegroup(type), to: Type.Algebra
 
   @spec ternary_and(ternary, ternary) :: ternary
   @doc false
@@ -1519,7 +1519,7 @@ defmodule Type do
     Type.subtype?(type, Type.union(type_list))
   end
 
-  defdelegate normalize(type), to: Type.Properties
+  defdelegate normalize(type), to: Type.Algebra
 end
 
 defimpl Inspect, for: Type do

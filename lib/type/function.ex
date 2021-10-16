@@ -338,7 +338,7 @@ defmodule Type.Function do
     |> Enum.map(&Enum.reverse/1)
   end
 
-  defimpl Type.Properties do
+  defimpl Type.Algebra do
     import Type, only: :macros
 
     use Type.Helpers
