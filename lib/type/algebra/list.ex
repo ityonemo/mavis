@@ -6,9 +6,9 @@ defimpl Type.Algebra, for: List do
   Helpers.typegroup_fun()
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
 
+  def compare_internal(_, %Type.List{}), do: :lt
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
-  def compare_internal(a, b), do: :eq
 
 #  use Type.Helpers
 #

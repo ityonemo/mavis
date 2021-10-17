@@ -7,7 +7,7 @@ defmodule TypeTest.LiteralBitstring.OrderTest do
 
   use Type.Operators
 
-  describe "a literal list" do
+  describe "a literal bitstring" do
     test "is bigger than bottom" do
       assert "foo" > none()
     end
@@ -25,7 +25,7 @@ defmodule TypeTest.LiteralBitstring.OrderTest do
       assert "foo" < binary()
       assert "foo" < remote(String.t())
       assert "foo" < remote(String.t(3))
-      
+
       assert bitstring() > "foo"
       assert binary() > "foo"
       assert remote(String.t()) > "foo"

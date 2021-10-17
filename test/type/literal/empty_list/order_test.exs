@@ -8,12 +8,12 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
   use Type.Operators
 
   describe "an empty list literal" do
-    test "is bigger than bottom and integers" do
+    test "is bigger than bottom and pid" do
       assert [] > none()
       assert [] > pid()
     end
 
-    test "is bigger than any nonempty list" do
+    test "is smaller than any nonempty list" do
       assert [] < list(...)
     end
 

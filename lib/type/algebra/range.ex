@@ -3,30 +3,29 @@ defimpl Type.Algebra, for: Range do
   require Helpers
 
   Helpers.typegroup_fun
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
 
-#
-#  use Type.Helpers
-#
-#  group_compare do
-#    def group_compare(_, pos_integer()),              do: :lt
-#    def group_compare(_..last, neg_integer()),        do: (if last >= 0, do: :gt, else: :lt)
-#    def group_compare(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
-#    def group_compare(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
-#    def group_compare(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
-#    def group_compare(first..last, %Type.Union{of: [init | types]}) do
-#      case List.last(types) do
-#        _..b when b < last -> :gt
-#        _..b ->
-#          # the range is bigger if it's bigger than the biggest union
-#          raise "foo bar"
-#          Type.compare(init, first) && (last >= b)
-#        i when i < last -> :gt
-#        i when is_integer(i) ->
-#          Type.compare(init, first) && (last >= i)
-#        _ -> :lt
-#      end
-#    end
-#  end
+  import Type
+
+  def compare_internal(_, pos_integer()),                      do: :lt
+  def compare_internal(_..last, neg_integer()),                do: (if last >= 0, do: :gt, else: :lt)
+  def compare_internal(first1..last, first2..last),            do: (if first1 < first2, do: :gt, else: :lt)
+  def compare_internal(_..last1, _..last2),                    do: (if last1 > last2, do: :gt, else: :lt)
+  def compare_internal(_..last, right) when is_integer(right), do: (if last >= right, do: :gt, else: :lt)
+  def compare_internal(first..last, %Type.Union{of: [init | types]}) do
+    case List.last(types) do
+      _..b when b < last -> :gt
+      _..b ->
+        # the range is bigger if it's bigger than the biggest union
+        raise "foo bar"
+        Type.compare(init, first) && (last >= b)
+      i when i < last -> :gt
+      i when is_integer(i) ->
+        Type.compare(init, first) && (last >= i)
+      _ -> :lt
+    end
+  end
+
 #
 #  usable_as do
 #    def usable_as(a.._, pos_integer(), _) when a > 0,      do: :ok

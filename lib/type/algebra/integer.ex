@@ -6,9 +6,11 @@ defimpl Type.Algebra, for: Integer do
   Helpers.typegroup_fun()
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
 
-  def compare_internal(a, b) when a < b, do: :lt
+  import Type, only: :macros
+  def compare_internal(a, neg_integer()) when a >= 0, do: :gt
+  def compare_internal(a, _..rg) when a > rg, do: :gt
   def compare_internal(a, b) when a > b, do: :gt
-  def compare_internal(a, b), do: :eq
+  def compare_internal(_, _), do: :lt
 
 #  use Type.Helpers
 #

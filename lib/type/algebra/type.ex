@@ -13,6 +13,7 @@ defimpl Type.Algebra, for: Type do
   def typegroup(%Type{module: nil, name: name}) when name in @builtins do
     @group_for[name]
   end
+  def typegroup(%Type{module: String, name: :t}), do: 11
 
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
 
@@ -21,6 +22,7 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(pos_integer(), _a.._b), do: :gt
   def compare_internal(neg_integer(), integer) when integer < 0, do: :gt
   def compare_internal(neg_integer(), a.._) when a < 0, do: :gt
+  def compare_internal(%{module: String, name: :t}, binary) when is_binary(binary), do: :gt
   def compare_internal(_, _), do: :lt
 
 #

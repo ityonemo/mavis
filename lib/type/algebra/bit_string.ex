@@ -1,6 +1,24 @@
 
 defimpl Type.Algebra, for: BitString do
-  import Type, only: :macros
+
+  alias Type.Helpers
+  require Helpers
+
+  Helpers.typegroup_fun()
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
+
+  def compare_internal(_, %Type.Bitstring{}), do: :lt
+  def compare_internal(_, %Type{module: String, name: :t}), do: :lt
+  def compare_internal(lstring, rstring) when lstring < rstring, do: :lt
+  def compare_internal(lstring, rstring) when lstring > rstring, do: :gt
+  def compare_internal(lstring, rstring), do: :eq
+
+  def intersection(_, _) do
+    require Type
+    Type.none()
+  end
+
 #  use Type.Helpers
 #
 #  group_compare do

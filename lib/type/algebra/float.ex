@@ -1,5 +1,14 @@
 defimpl Type.Algebra, for: Float do
-  import Type, only: :macros
+
+  alias Type.Helpers
+  require Helpers
+
+  Helpers.typegroup_fun()
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+
+  def compare_internal(a, b) when a < b, do: :lt
+  def compare_internal(a, b) when a > b, do: :gt
+
 #  use Type.Helpers
 #
 #  group_compare do
