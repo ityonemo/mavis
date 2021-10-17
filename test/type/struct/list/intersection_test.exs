@@ -3,6 +3,7 @@ defmodule TypeTest.TypeList.IntersectionTest do
   use Type.Operators
 
   @moduletag :intersection
+  @moduletag :skip # until it's rewritten
 
   import Type, only: :macros
 

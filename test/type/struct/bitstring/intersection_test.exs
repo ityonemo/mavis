@@ -25,6 +25,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert @empty_bitstring == @empty_bitstring <~> @basic_binary
     end
 
+    @tag :skip
     test "with a literal bitstring is the literal bitstring" do
       assert <<0::7>> == bitstring() <~> <<0::7>>
 
@@ -38,6 +39,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 8}
     end
 
+    @tag :skip
     test "with all other types is none" do
       TypeTest.Targets.except([@empty_bitstring])
       |> Enum.each(fn target ->
@@ -71,6 +73,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 6}
     end
 
+    @tag :skip
     test "literals" do
       assert "foo" == %Bitstring{size: 24} <~> "foo"
       assert "foo" == %Bitstring{unit: 8} <~> "foo"
@@ -84,7 +87,7 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
         %Bitstring{size: 7, unit: 8} <~> %Bitstring{size: 15, unit: 8}
     end
 
-    @tag :skip
+    @tag :skip # until intersections with unions are validated
     test "with unions" do
       assert @basic_binary == @basic_binary <~> (@basic_bitstring <|> atom())
       assert none() == @basic_binary <~> (atom() <|> port())

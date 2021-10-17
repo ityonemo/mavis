@@ -158,6 +158,10 @@ defmodule Type.Bitstring do
   def intersection(bs, bitstring) when is_bitstring(bitstring) do
     Type.intersection(bitstring, bs)
   end
+  def intersection(_, _) do
+    require Type
+    Type.none()
+  end
 
   defp sizeup(asz, bsz, aun, bun) do
     a_mod_b = rem(aun, bun)

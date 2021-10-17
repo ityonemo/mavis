@@ -44,7 +44,7 @@ defmodule Type.Helpers do
       def compare(same, same), do: :eq
       def compare(ltype, rtype) do
         lgroup = typegroup(ltype)
-        rgroup = Type.typegroup(rtype) 
+        rgroup = Type.typegroup(rtype)
         cond do
           lgroup < rgroup -> :lt
           lgroup > rgroup -> :gt

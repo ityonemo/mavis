@@ -25,6 +25,13 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(%{module: String, name: :t}, binary) when is_binary(binary), do: :gt
   def compare_internal(_, _), do: :lt
 
+  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
+
+  def intersection_internal(_, _) do
+    require Type
+    Type.none()
+  end
+
 #
 #  import Type, only: :macros
 #
