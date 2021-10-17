@@ -6,7 +6,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, NonemptyList}
+  alias Type.{Bitstring, List}
 
   describe "iolist" do
     test "intersects with any, and self" do
@@ -38,7 +38,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "acts as if it can have a final of binary" do
-      binfinal = %NonemptyList{type: binary(), final: binary()}
+      binfinal = %List{type: binary(), final: binary()}
       assert binfinal == iolist() <~> binfinal
       assert binfinal == binfinal <~> iolist()
     end
@@ -59,7 +59,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "if the final is different, there's no interesction" do
-      assert none() == iolist() <~> %NonemptyList{type: atom(), final: atom()}
+      assert none() == iolist() <~> %List{type: atom(), final: atom()}
     end
 
     test "intersects with nothing else" do

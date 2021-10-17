@@ -142,6 +142,33 @@ defmodule Type.Tuple do
     fixed: true
   }
 
+  alias Type.Helpers
+  use Type.Helpers
+
+  def compare(%{fixed: false}, %{fixed: true}), do: :gt
+  def compare(%{fixed: true}, %{fixed: false}), do: :lt
+  def compare(%{elements: e1, fixed: false}, %{elements: e2})
+    when length(e1) > length(e2), do: :lt
+  def compare(%{elements: e1, fixed: false}, %{elements: e2})
+    when length(e1) < length(e2), do: :gt
+  def compare(%{elements: e1, fixed: true}, %{elements: e2})
+    when length(e1) > length(e2), do: :gt
+  def compare(%{elements: e1, fixed: true}, %{elements: e2})
+    when length(e1) < length(e2), do: :lt
+  def compare(tuple1, tuple2) do
+    tuple1.elements
+    |> Enum.zip(tuple2.elements)
+    |> Enum.each(fn {t1, t2} ->
+      compare = Type.compare(t1, t2)
+      unless compare == :eq do
+        throw compare
+      end
+    end)
+    :eq
+  catch
+    compare when compare in [:gt, :lt] -> compare
+  end
+
   @doc """
   a utility function which takes two type lists and ascertains if they
   can be merged as tuples.
@@ -199,31 +226,6 @@ defmodule Type.Tuple do
 #
   #  alias Type.{Message, Tuple, Union}
 #
-  #  group_compare do
-  #    def group_compare(%{fixed: false}, %{fixed: true}), do: :gt
-  #    def group_compare(%{fixed: true}, %{fixed: false}), do: :lt
-  #    def group_compare(%{elements: e1, fixed: false}, %{elements: e2})
-  #      when length(e1) > length(e2), do: :lt
-  #    def group_compare(%{elements: e1, fixed: false}, %{elements: e2})
-  #      when length(e1) < length(e2), do: :gt
-  #    def group_compare(%{elements: e1, fixed: true}, %{elements: e2})
-  #      when length(e1) > length(e2), do: :gt
-  #    def group_compare(%{elements: e1, fixed: true}, %{elements: e2})
-  #      when length(e1) < length(e2), do: :lt
-  #    def group_compare(tuple1, tuple2) do
-  #      tuple1.elements
-  #      |> Enum.zip(tuple2.elements)
-  #      |> Enum.each(fn {t1, t2} ->
-  #        compare = Type.compare(t1, t2)
-  #        unless compare == :eq do
-  #          throw compare
-  #        end
-  #      end)
-  #      :eq
-  #    catch
-  #      compare when compare in [:gt, :lt] -> compare
-  #    end
-  #  end
 #
   #  usable_as do
   #    def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: true}, meta)

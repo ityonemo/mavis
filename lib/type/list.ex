@@ -1,4 +1,4 @@
-defmodule Type.NonemptyList do
+defmodule Type.List do
   @moduledoc """
   Represents nonempty lists.  The empty list is represented by the literal
   `[]`.
@@ -8,7 +8,7 @@ defmodule Type.NonemptyList do
 
   ```elixir
   iex> list()
-  %Type.Union{of: [%Type.NonemptyList{}, []]}
+  %Type.Union{of: [%Type.List{}, []]}
   ```
   The documentation for this module will encompass usage of both
   nonempty and maybe-nonempty lists.
@@ -27,44 +27,44 @@ defmodule Type.NonemptyList do
   ```elixir
   iex> import Type, only: :macros
   iex> list(pos_integer())
-  %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :pos_integer}}, []]}
+  %Type.Union{of: [%Type.List{type: %Type{name: :pos_integer}}, []]}
   iex> list(...)
-  %Type.NonemptyList{type: %Type{name: :any}}
+  %Type.List{type: %Type{name: :any}}
   iex> list(pos_integer(), ...)
-  %Type.NonemptyList{type: %Type{name: :pos_integer}}
+  %Type.List{type: %Type{name: :pos_integer}}
   ```
 
   ### Examples:
 
   - A the general nonempty list
     ```
-    iex> inspect %Type.NonemptyList{}
+    iex> inspect %Type.List{}
     "list(...)"
     ```
   - a nonempty list of a given type
     ```elixir
-    iex> inspect %Type.NonemptyList{type: %Type{name: :integer}}
+    iex> inspect %Type.List{type: %Type{name: :integer}}
     "list(integer(), ...)"
     ```
   - the general list is a union of nonempty list with empty list
     ```elixir
-    iex> inspect %Type.Union{of: [%Type.NonemptyList{}, []]}
+    iex> inspect %Type.Union{of: [%Type.List{}, []]}
     "list()"
     ```
   - a general list of a given type
     ```elixir
-    iex> inspect %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :integer}}, []]}
+    iex> inspect %Type.Union{of: [%Type.List{type: %Type{name: :integer}}, []]}
     "list(integer())"
     ```
   - an improper list must be nonempty, and looks like the following:
     ```elixir
-    iex> inspect %Type.NonemptyList{type: %Type{module: String, name: :t},
+    iex> inspect %Type.List{type: %Type{module: String, name: :t},
     ...>                            final: %Type{module: String, name: :t}}
     "nonempty_improper_list(String.t(), String.t())"
     ```
   - a nonempty maybe improper list should have empty list as a subtype of the final field.
     ```elixir
-    iex> inspect %Type.NonemptyList{type: %Type{module: String, name: :t},
+    iex> inspect %Type.List{type: %Type{module: String, name: :t},
     ...>                    final: %Type.Union{of: [[], %Type{module: String, name: :t}]}}
     "nonempty_maybe_improper_list(String.t(), String.t())"
     ```
@@ -72,7 +72,7 @@ defmodule Type.NonemptyList do
     a union with the empty list singleton.
     ```elixir
     iex> inspect %Type.Union{of: [
-    ...>                      %Type.NonemptyList{
+    ...>                      %Type.List{
     ...>                        type: %Type{module: String, name: :t},
     ...>                        final: %Type.Union{of: [%Type{module: String, name: :t}, []]}},
     ...>                        []]}
@@ -95,7 +95,7 @@ defmodule Type.NonemptyList do
   :gt
   iex> Type.compare(list(integer()), list(atom()))
   :lt
-  iex> Type.compare(%Type.NonemptyList{final: integer()}, %Type.NonemptyList{final: atom()})
+  iex> Type.compare(%Type.List{final: integer()}, %Type.List{final: atom()})
   :lt
   ```
 
@@ -106,9 +106,9 @@ defmodule Type.NonemptyList do
   ```elixir
   iex> import Type, only: :macros
   iex> Type.intersection(list(...), list())
-  %Type.NonemptyList{}
+  %Type.List{}
   iex> Type.intersection(list(1..20, ...), list(10..30, ...))
-  %Type.NonemptyList{type: 10..20}
+  %Type.List{type: 10..20}
   iex> inspect Type.intersection(list(1..20), list(10..30))
   "list(10..20)"
   ```
@@ -122,7 +122,7 @@ defmodule Type.NonemptyList do
   ```elixir
   iex> import Type, only: :macros
   iex> Type.union(list(...), list())
-  %Type.Union{of: [%Type.NonemptyList{}, []]}
+  %Type.Union{of: [%Type.List{}, []]}
   iex> inspect Type.union(list(1..10), list(10..20))
   "list(10..20) | list(1..10)"
   ```
@@ -148,10 +148,10 @@ defmodule Type.NonemptyList do
   iex> Type.usable_as(list(1..10), list(integer()))
   :ok
   iex> Type.usable_as(list(1..10), list(atom())) # note it might be the empty list
-  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.NonemptyList{type: 1..10}, []]},
-                          target: %Type.Union{of: [%Type.NonemptyList{type: %Type{name: :atom}}, []]}}]}
+  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{type: 1..10}, []]},
+                          target: %Type.Union{of: [%Type.List{type: %Type{name: :atom}}, []]}}]}
   iex> Type.usable_as(list(), list(...))
-  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.NonemptyList{}, []]}, target: %Type.NonemptyList{}}]}
+  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{}, []]}, target: %Type.List{}}]}
   ```
 
   """
@@ -165,6 +165,16 @@ defmodule Type.NonemptyList do
     type: Type.t,
     final: Type.t
   }
+
+  use Type.Helpers
+
+  def compare(_, lst) when is_list(lst), do: :gt
+  def compare(a, b) do
+    case Type.compare(a.type, b.type) do
+      :eq -> Type.compare(a.final, b.final)
+      ordered -> ordered
+    end
+  end
 
   def usable_literal(list, literal, so_far \\ :ok)
   def usable_literal(list, [head | rest], so_far) do
@@ -185,16 +195,10 @@ defmodule Type.NonemptyList do
 #
   #  use Type.Helpers
 #
-  #  alias Type.{NonemptyList, Message, Union}
+  #  alias Type.{List, Message, Union}
 #
   #  group_compare do
-  #    def group_compare(_, lst) when is_list(lst), do: :gt
-  #    def group_compare(a, b) do
-  #      case Type.compare(a.type, b.type) do
-  #        :eq -> Type.compare(a.final, b.final)
-  #        ordered -> ordered
-  #      end
-  #    end
+
   #  end
 #
   #  usable_as do
@@ -207,7 +211,7 @@ defmodule Type.NonemptyList do
   #      {:error, Message.make(challenge, [], meta)}
   #    end
 #
-  #    def usable_as(challenge, target = %NonemptyList{}, meta) do
+  #    def usable_as(challenge, target = %List{}, meta) do
   #      case Type.usable_as(challenge.type, target.type, meta) do
   #        error when Type.is_error(error) -> error
   #        type_result ->
@@ -225,7 +229,7 @@ defmodule Type.NonemptyList do
   #    def usable_as(challenge, target, meta) when is_list(target) do
   #      # TODO: make this work with improper lists
   #      challenge
-  #      |> NonemptyList.usable_literal(target)
+  #      |> List.usable_literal(target)
   #      |> case do
   #        {:error, _} ->
   #          {:error, Message.make(challenge, target, meta)}
@@ -241,12 +245,12 @@ defmodule Type.NonemptyList do
   #    def intersection(type, list) when is_list(list) do
   #      Type.intersection(list, type)
   #    end
-  #    def intersection(a, b = %NonemptyList{}) do
+  #    def intersection(a, b = %List{}) do
   #      case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
   #        {none(), _} -> none()
   #        {_, none()} -> none()
   #        {type, final} ->
-  #          %NonemptyList{type: type, final: final}
+  #          %List{type: type, final: final}
   #      end
   #    end
   #    def intersection(a, iolist()), do: Type.Iolist.intersection_with(a)
@@ -256,7 +260,7 @@ defmodule Type.NonemptyList do
   #    # can't simply forward to usable_as, because any of the encapsulated
   #    # types might have a usable_as rule that isn't strictly subtype?
   #    def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
-  #    def subtype?(challenge, target = %NonemptyList{}) do
+  #    def subtype?(challenge, target = %List{}) do
   #      (Type.subtype?(challenge.type, target.type) and
   #        Type.subtype?(challenge.final, target.final))
   #    end

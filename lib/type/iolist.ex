@@ -8,7 +8,7 @@ defmodule Type.Iolist do
 
   import Type, only: :macros
 
-  alias Type.{Bitstring, NonemptyList}
+  alias Type.{Bitstring, List}
 
   #@ltype Type.union([byte(), binary(), iolist()])
   #@final Type.union([], binary())
@@ -19,7 +19,7 @@ defmodule Type.Iolist do
   def intersection_with(list) when is_list(list) do
     Type.intersection(list, iolist())
   end
-  def intersection_with(list = %NonemptyList{}) do
+  def intersection_with(list = %List{}) do
     # iolist is byte | binary | iolist
     type = [byte(), binary(), iolist()]
     |> Enum.map(&Type.intersection(&1, list.type))
@@ -30,7 +30,7 @@ defmodule Type.Iolist do
     if final == none() or type == none() do
       none()
     else
-      %NonemptyList{type: type, final: final}
+      %List{type: type, final: final}
     end
   end
   def intersection_with(_), do: none()
@@ -71,7 +71,7 @@ defmodule Type.Iolist do
 
 #  @final_type Type.union(binary(), [])
 #  @inner_type Type.union([binary(), byte(), iolist()])
-  def usable_as_iolist(challenge = %NonemptyList{final: final, type: type}, meta) do
+  def usable_as_iolist(challenge = %List{final: final, type: type}, meta) do
     u1 = Type.usable_as(final, @final_type, meta)
     u2 = Type.usable_as(type, @inner_type, meta)
 

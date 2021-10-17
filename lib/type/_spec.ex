@@ -60,20 +60,20 @@ defmodule Type.Spec do
     list(parse(type, assigns))
   end
   def parse({:type, _, :nonempty_list, [type]}, assigns) do
-    %Type.NonemptyList{type: parse(type, assigns)}
+    %Type.List{type: parse(type, assigns)}
   end
   def parse({:type, _, :maybe_improper_list, [type, final]}, assigns) do
     %Type.Union{of: [
-      %Type.NonemptyList{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])},
+      %Type.List{ type: parse(type, assigns), final: Type.union(parse(final, assigns), [])},
       []]}
   end
   def parse({:type, _, :nonempty_improper_list, [type, final]}, assigns) do
-    %Type.NonemptyList{
+    %Type.List{
       type: parse(type, assigns),
       final: parse(final, assigns)}
   end
   def parse({:type, _, :nonempty_maybe_improper_list, [type, final]}, assigns) do
-    %Type.NonemptyList{
+    %Type.List{
       type: parse(type, assigns),
       final: Type.union(parse(final, assigns), [])}
   end

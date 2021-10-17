@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralEmptyList.SubtractionTest do
 
   import Type, only: :macros
 
-  alias Type.NonemptyList
+  alias Type.List
 
   describe "the subtraction from a literal empty list" do
     test "of itself, general lists and any is itself" do
@@ -17,7 +17,7 @@ defmodule TypeTest.LiteralEmptyList.SubtractionTest do
     end
 
     test "of nonempty, or odd-termination final lists is not ok" do
-      assert [] == [] - %NonemptyList{final: :foo}
+      assert [] == [] - %List{final: :foo}
       assert [] == [] - list(...)
     end
 

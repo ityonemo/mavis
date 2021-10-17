@@ -9,7 +9,7 @@ defmodule TypeTest.Type.FetchSpec.ListsTest do
 
   @source TypeTest.SpecExample.Lists
 
-  alias Type.NonemptyList
+  alias Type.List
 
   test "literal/0 is empty list" do
     assert {:ok, identity_for([])} == Type.fetch_spec(@source, :literal_0_spec, 1)

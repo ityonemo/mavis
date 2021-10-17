@@ -8,7 +8,7 @@ defmodule TypeTest.Type.FetchType.ListsTest do
 
   @source TypeTest.TypeExample.Lists
 
-  alias Type.NonemptyList
+  alias Type.List
 
   test "literal/0 is empty list" do
     assert {:ok, []} == Type.fetch_type(@source, :literal_0)

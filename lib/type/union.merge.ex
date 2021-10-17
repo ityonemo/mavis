@@ -68,20 +68,20 @@ defmodule Type.Union.Merge do
   end
 
   # lists
-  alias Type.NonemptyList
+  alias Type.List
   # matching types with different finals.
-  def type_merge(%NonemptyList{type: type, final: fl},
-                  %NonemptyList{type: type, final: fr}) do
+  def type_merge(%List{type: type, final: fl},
+                  %List{type: type, final: fr}) do
 
-    [%NonemptyList{type: type, final: Type.union(fl, fr)}]
+    [%List{type: type, final: Type.union(fl, fr)}]
   end
-  def type_merge(%NonemptyList{type: t1, final: f}, %NonemptyList{type: t2, final: f}) do
+  def type_merge(%List{type: t1, final: f}, %List{type: t2, final: f}) do
     # check if the types are mergable
     case Type.intersection(t1, t2) do
       ^t1 ->
-        [%NonemptyList{type: t2, final: f}]
+        [%List{type: t2, final: f}]
       ^t2 ->
-        [%NonemptyList{type: t1, final: f}]
+        [%List{type: t1, final: f}]
       _ ->
         :nomerge
     end

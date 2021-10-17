@@ -1,12 +1,21 @@
 defimpl Type.Algebra, for: List do
-  import Type, only: :macros
+
+  alias Type.Helpers
+  require Helpers
+
+  Helpers.typegroup_fun()
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+
+  def compare_internal(a, b) when a < b, do: :lt
+  def compare_internal(a, b) when a > b, do: :gt
+  def compare_internal(a, b), do: :eq
 
 #  use Type.Helpers
 #
 #  alias Type.Message
 #
 #  group_compare do
-#    def group_compare(_, %Type.NonemptyList{}), do: :lt
+#    def group_compare(_, %Type.List{}), do: :lt
 #    def group_compare(left, right) when is_list(right) do
 #      cond do
 #        left < right -> :lt
@@ -24,11 +33,11 @@ defimpl Type.Algebra, for: List do
 #        :error -> {:error, Message.make(list, iolist(), meta)}
 #      end
 #    end
-#    def usable_as([], type = %Type.NonemptyList{}, meta) do
+#    def usable_as([], type = %Type.List{}, meta) do
 #      {:error, Message.make([], type, meta)}
 #    end
-#    def usable_as(list, type = %Type.NonemptyList{}, meta) when is_list(list) do
-#      case Type.NonemptyList.usable_literal(type, list) do
+#    def usable_as(list, type = %Type.List{}, meta) when is_list(list) do
+#      case Type.List.usable_literal(type, list) do
 #        :ok -> :ok
 #        {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
 #        {:error, _} -> {:error, Message.make(list, type, meta)}
@@ -52,13 +61,13 @@ defimpl Type.Algebra, for: List do
 #  end
 #
 #  intersection do
-#    def intersection([], %Type.NonemptyList{}), do: none()
+#    def intersection([], %Type.List{}), do: none()
 #    def intersection([], iolist()), do: Type.Iolist.intersection_with([])
 #    def intersection([], _), do: none()
 #    def intersection(rvalue, iolist()) do
 #      if Type.subtype?(rvalue, iolist()), do: rvalue, else: iolist()
 #    end
-#    def intersection(rvalue, type = %Type.NonemptyList{}) do
+#    def intersection(rvalue, type = %Type.List{}) do
 #      if Type.subtype?(rvalue, type), do: rvalue, else: none()
 #    end
 #  end
@@ -74,7 +83,7 @@ defimpl Type.Algebra, for: List do
 #    normalize(rest, [Type.normalize(head) | so_far])
 #  end
 #  def normalize(type, so_far) do
-#    %Type.NonemptyList{
+#    %Type.List{
 #      type: Enum.into(so_far, %Type.Union{}),
 #      final: Type.normalize(type)}
 #  end

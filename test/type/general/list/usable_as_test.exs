@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeNonemptyList.UsableAsTest do
+defmodule TypeTest.TypeList.UsableAsTest do
   use ExUnit.Case, async: true
 
   @moduletag :usable_as
@@ -6,7 +6,7 @@ defmodule TypeTest.TypeNonemptyList.UsableAsTest do
   import Type, only: :macros
   use Type.Operators
 
-  alias Type.{NonemptyList, Message}
+  alias Type.{List, Message}
 
   describe "the trivial list type" do
     test "is usable as itself and any" do
@@ -76,20 +76,20 @@ defmodule TypeTest.TypeNonemptyList.UsableAsTest do
 
   describe "for lists with 'final' specs" do
     test "it's okay if the final usable" do
-      assert :ok = %NonemptyList{type: integer(), final: 1} ~>
-        %NonemptyList{type: integer(), final: integer()}
+      assert :ok = %List{type: integer(), final: 1} ~>
+        %List{type: integer(), final: integer()}
     end
 
     test "it's maybe if the final is maybe usable" do
       assert {:maybe, _} =
-        %NonemptyList{type: integer(), final: integer()} ~>
-          %NonemptyList{type: integer(), final: 5}
+        %List{type: integer(), final: integer()} ~>
+          %List{type: integer(), final: 5}
     end
 
     test "it's error if the final is not usable" do
       assert {:error, _} =
-        %NonemptyList{type: integer(), final: integer()} ~>
-          %NonemptyList{type: integer(), final: atom()}
+        %List{type: integer(), final: integer()} ~>
+          %List{type: integer(), final: atom()}
     end
   end
 end

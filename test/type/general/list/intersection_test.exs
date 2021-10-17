@@ -1,4 +1,4 @@
-defmodule TypeTest.TypeNonemptyList.IntersectionTest do
+defmodule TypeTest.TypeList.IntersectionTest do
   use ExUnit.Case, async: true
   use Type.Operators
 
@@ -6,7 +6,7 @@ defmodule TypeTest.TypeNonemptyList.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.NonemptyList
+  alias Type.List
 
   test "go through the doctests and double check that list examples are there too"
 
@@ -52,10 +52,10 @@ defmodule TypeTest.TypeNonemptyList.IntersectionTest do
 
   describe "list finals" do
     test "are reduced" do
-      assert %NonemptyList{final: pos_integer()} ==
-        %NonemptyList{final: pos_integer()} <~> %NonemptyList{final: integer()}
-      assert %NonemptyList{final: pos_integer()} ==
-        %NonemptyList{final: integer()} <~> %NonemptyList{final: pos_integer()}
+      assert %List{final: pos_integer()} ==
+        %List{final: pos_integer()} <~> %List{final: integer()}
+      assert %List{final: pos_integer()} ==
+        %List{final: integer()} <~> %List{final: pos_integer()}
     end
   end
 end

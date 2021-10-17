@@ -7,7 +7,7 @@ defmodule TypeTest.TypeIolist.OrderTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, NonemptyList}
+  alias Type.{Bitstring, List}
 
   @ltype byte() <|> binary() <|> iolist()
   @final [] <|> binary()
@@ -24,14 +24,14 @@ defmodule TypeTest.TypeIolist.OrderTest do
       assert iolist() > list(iolist() <|> binary())
       assert iolist() > list(byte() <|> binary())
       assert iolist() > list(@ltype)
-      assert iolist() > %NonemptyList{type: @ltype, final: binary()}
+      assert iolist() > %List{type: @ltype, final: binary()}
     end
 
     test "is equal to manually defined iolists with recursion" do
       assert :eq == Type.compare(iolist(),
-        %NonemptyList{type: @ltype, final: @final})
+        %List{type: @ltype, final: @final})
       assert :eq == Type.compare(iolist(),
-        %NonemptyList{type: %NonemptyList{type: @ltype, final: @final} <|> byte() <|> binary(),
+        %List{type: %List{type: @ltype, final: @final} <|> byte() <|> binary(),
               final: @final})
     end
 
@@ -40,8 +40,8 @@ defmodule TypeTest.TypeIolist.OrderTest do
     end
 
     test "is smaller than `strange iolists` which are superclasses" do
-      assert iolist() < %NonemptyList{type: @ltype <|> nil, final: @final}
-      assert iolist() < %NonemptyList{type: @ltype, final: @final <|> nil}
+      assert iolist() < %List{type: @ltype <|> nil, final: @final}
+      assert iolist() < %List{type: @ltype, final: @final <|> nil}
     end
 
     test "is smaller than arbitrary lists, bitstrings or top" do

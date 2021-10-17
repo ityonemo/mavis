@@ -212,7 +212,7 @@ defmodule TypeTest.UnionTest do
   end
 
   describe "for the list type" do
-    alias Type.NonemptyList
+    alias Type.List
     test "you can't naively union lists" do
       assert %Type.Union{} = list(:foo) <|> list(:bar)
       assert %Type.Union{} = list(:foo, ...) <|> list(:bar, ...)
@@ -225,8 +225,8 @@ defmodule TypeTest.UnionTest do
     end
 
     test "lists with the same end type get merged" do
-      assert %NonemptyList{type: any(), final: :end} ==
-        (%NonemptyList{type: any(), final: :end} <|> %NonemptyList{type: :bar, final: :end})
+      assert %List{type: any(), final: :end} ==
+        (%List{type: any(), final: :end} <|> %List{type: :bar, final: :end})
     end
 
     test "nonempty lists get merged into nonempty lists" do

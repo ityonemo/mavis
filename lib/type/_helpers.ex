@@ -10,7 +10,6 @@ defmodule Type.Helpers do
     Type.Function => 5,
     Type.Tuple => 8,
     Type.Map => 9,
-    Type.NonemptyList => 10,
     Type.List => 10,
     List => 10,
     Type.Bitstring => 11,
@@ -45,7 +44,7 @@ defmodule Type.Helpers do
       def compare(same, same), do: :eq
       def compare(ltype, rtype) do
         lgroup = typegroup(ltype)
-        rgroup = Type.typegroup(rtype)
+        rgroup = Type.typegroup(rtype) 
         cond do
           lgroup < rgroup -> :lt
           lgroup > rgroup -> :gt

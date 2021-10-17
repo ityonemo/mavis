@@ -32,6 +32,12 @@ defmodule Type.Union do
 
   def typegroup(%{of: [first | _]}), do: Type.typegroup(first)
 
+  # note that this only gets called when the first items match
+  def compare(%{of: [first | _]}, right) do
+    result = Type.compare(first, right)
+    if result == :eq, do: :gt, else: result
+  end
+
   @spec collapse(t) :: Type.t
   @doc false
   def collapse(%__MODULE__{of: []}) do
@@ -216,7 +222,7 @@ defmodule Type.Union do
     def inspect(%{of: types}, opts) do
       cond do
         [] in types ->
-          {lists, nonlists} = Enum.split_with(types -- [[]], &match?(%Type.NonemptyList{}, &1))
+          {lists, nonlists} = Enum.split_with(types -- [[]], &match?(%Type.List{}, &1))
 
           lists
           |> Enum.map(&emptify(&1, opts))
@@ -268,7 +274,7 @@ defmodule Type.Union do
       end
     end
 
-    defp emptify(%Type.NonemptyList{type: t, final: []}, opts) do
+    defp emptify(%Type.List{type: t, final: []}, opts) do
       case t do
         any() ->
           ["list()"]
@@ -282,14 +288,14 @@ defmodule Type.Union do
           ["list(", to_doc(t, opts), ")"]
       end
     end
-    defp emptify(%Type.NonemptyList{type: any(), final: any()}, _opts) do
+    defp emptify(%Type.List{type: any(), final: any()}, _opts) do
       ["maybe_improper_list()"]
     end
-    defp emptify(%Type.NonemptyList{type: ltype, final: %Type.Union{of: ftypes}}, opts) do
+    defp emptify(%Type.List{type: ltype, final: %Type.Union{of: ftypes}}, opts) do
       ftype = Type.union(ftypes -- [[]])
       ["maybe_improper_list(", to_doc(ltype, opts), ", ", to_doc(ftype, opts), ")"]
     end
-    defp emptify(%Type.NonemptyList{type: ltype, final: rtype}, opts) do
+    defp emptify(%Type.List{type: ltype, final: rtype}, opts) do
       if Type.subtype?([], rtype) do
         ["maybe_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
       else

@@ -6,7 +6,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
   import Type, only: :macros
   use Type.Operators
 
-  alias Type.{Bitstring, NonemptyList}
+  alias Type.{Bitstring, List}
 
   @ltype byte() <|> binary() <|> iolist()
   @final [] <|> binary()
@@ -32,9 +32,9 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "is maybe usable as a list missing iolist, binary, or char are subtypes of iolists" do
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: byte() <|> iolist(), final: @final}
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: binary() <|> iolist(), final: @final}
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: byte() <|> binary(), final: @final}
+      assert {:maybe, _} = iolist() ~> %List{type: byte() <|> iolist(), final: @final}
+      assert {:maybe, _} = iolist() ~> %List{type: binary() <|> iolist(), final: @final}
+      assert {:maybe, _} = iolist() ~> %List{type: byte() <|> binary(), final: @final}
     end
 
     test "is maybe usable as a list missing a final component" do
@@ -43,7 +43,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "is maybe usable as a list that are nonempty: true are subtypes of iolists" do
-      assert {:maybe, _} = iolist() ~> %NonemptyList{type: @ltype, final: @final}
+      assert {:maybe, _} = iolist() ~> %List{type: @ltype, final: @final}
     end
 
     test "is maybe usable as an empty list" do
@@ -56,7 +56,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
 
     test "is not usable as a nonempty list with totally different types, or final" do
       assert {:error, _} = iolist() ~> list(atom(), ...)
-      assert {:error, _} = iolist() ~> %NonemptyList{type: atom(), final: atom()}
+      assert {:error, _} = iolist() ~> %List{type: atom(), final: atom()}
     end
 
     test "are not usable as other types" do
@@ -73,23 +73,23 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "missing iolist, binary, or char are usable as iolists" do
-      assert :ok = %NonemptyList{type: byte() <|> iolist(), final: @final} ~> iolist()
-      assert :ok = %NonemptyList{type: binary() <|> iolist(), final: @final} ~> iolist()
-      assert :ok = %NonemptyList{type: byte() <|> binary(), final: @final} ~> iolist()
+      assert :ok = %List{type: byte() <|> iolist(), final: @final} ~> iolist()
+      assert :ok = %List{type: binary() <|> iolist(), final: @final} ~> iolist()
+      assert :ok = %List{type: byte() <|> binary(), final: @final} ~> iolist()
     end
 
     test "missing a final component are usable as iolists" do
       assert :ok = list(@ltype) ~> iolist()
-      assert :ok = %NonemptyList{type: @ltype, final: binary()} ~> iolist()
+      assert :ok = %List{type: @ltype, final: binary()} ~> iolist()
     end
 
     test "that are nonempty: true are usable as iolists" do
-      assert :ok = %NonemptyList{type: @ltype, final: @final} ~> iolist()
+      assert :ok = %List{type: @ltype, final: @final} ~> iolist()
     end
 
     test "overly large domains are maybe usable" do
       assert {:maybe, _} = list(any()) ~> iolist()
-      assert {:maybe, _} = %NonemptyList{type: @ltype, final: any()} ~> iolist()
+      assert {:maybe, _} = %List{type: @ltype, final: any()} ~> iolist()
     end
 
     test "any is maybe usable" do
@@ -102,7 +102,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
 
     test "with either incompatible final terms or nonempty are not usable as iolists" do
       assert {:error, _} = list(atom(), ...) ~> iolist()
-      assert {:error, _} = %NonemptyList{type: any(), final: atom()} ~>
+      assert {:error, _} = %List{type: any(), final: atom()} ~>
         iolist()
     end
   end

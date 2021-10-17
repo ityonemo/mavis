@@ -6,7 +6,7 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
 
   import Type, only: :macros
 
-  alias Type.NonemptyList
+  alias Type.List
 
   describe "the intersection of a literal empty list" do
     test "with itself, general lists and any is itself" do
@@ -17,7 +17,7 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
     end
 
     test "with nonempty, or odd-termination final lists is not ok" do
-      assert none() == [] <~> %NonemptyList{final: :foo}
+      assert none() == [] <~> %List{final: :foo}
       assert none() == [] <~> list(...)
     end
 
