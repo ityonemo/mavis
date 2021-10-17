@@ -1,6 +1,9 @@
 
 defimpl Type.Algebra, for: Type do
 
+  alias Type.Helpers
+  require Helpers
+
   @group_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
     float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
@@ -10,6 +13,15 @@ defimpl Type.Algebra, for: Type do
   def typegroup(%Type{module: nil, name: name}) when name in @builtins do
     @group_for[name]
   end
+
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+
+  import Type, only: :macros
+  def compare_internal(pos_integer(), integer) when is_integer(integer), do: :gt
+  def compare_internal(pos_integer(), _a.._b), do: :gt
+  def compare_internal(neg_integer(), integer) when integer < 0, do: :gt
+  def compare_internal(neg_integer(), a.._) when a < 0, do: :gt
+  def compare_internal(_, _), do: :lt
 
 #
 #  import Type, only: :macros

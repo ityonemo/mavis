@@ -1,7 +1,8 @@
 defimpl Type.Algebra, for: Range do
-  import Type, only: :macros
+  alias Type.Helpers
+  require Helpers
 
-  def compare(_, _) do end
+  Helpers.typegroup_fun
 
 #
 #  use Type.Helpers

@@ -5,10 +5,13 @@ defimpl Type.Algebra, for: Atom do
   require Helpers
   Helpers.typegroup_fun()
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
-  def compare_internal(_, _), do: raise "unimplemented"
+  def compare_internal(latom, ratom) when latom < ratom, do: :lt
+  def compare_internal(latom, ratom) when latom > ratom, do: :gt
+  def compare_internal(latom, ratom), do: :eq
 
-
+  def intersection_internal(_, _), do: raise "unimplemented"
 
 #  use Type.Helpers
 #

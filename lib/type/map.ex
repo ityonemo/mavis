@@ -186,8 +186,6 @@ defmodule Type.Map do
 
   defstruct [required: %{}, optional: %{}]
 
-  #import Type, only: :macros
-
   @type required :: %{optional(integer | atom) => Type.t}
   @type optional :: %{optional(Type.t) => Type.t}
 
@@ -199,6 +197,34 @@ defmodule Type.Map do
   @type t(key, value) :: %__MODULE__{
     required: %{optional(key) => value},
     optional: %{}}
+
+  use Type.Helpers
+
+  def compare(lmap, rmap) do
+    preimage_cmp = Type.compare(preimage(lmap), preimage(rmap))
+    if preimage_cmp != :eq do
+      preimage_cmp
+    else
+        lmap
+        |> resegment(resegment(rmap))
+        |> Enum.each(fn segment ->
+          req_order = required_ordering(lmap, rmap, segment)
+          req_order != :eq && throw req_order
+          val_order = Type.compare(map_apply(lmap, segment), map_apply(rmap, segment))
+          val_order != :eq && throw val_order
+        end)
+    end
+  catch
+    valtype when valtype in [:gt, :lt] -> valtype
+  end
+
+  defp required_ordering(lmap, rmap, segment) do
+    case {required_key?(lmap, segment), required_key?(rmap, segment)} do
+      {false, true} -> :gt
+      {true, false} -> :lt
+      _ -> :eq
+    end
+  end
 
   @doc """
   the full union of all possible key values for the passed map.
@@ -258,15 +284,15 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(map(%{0..3 => 1..10, pos_integer() => 0..5}), 1..3)
+  iex> Map.map_apply(map(%{0..3 => 1..10, pos_integer() => 0..5}), 1..3)
   1..5
   ```
   """
-  def apply(map, singleton) when is_integer(singleton) or is_atom(singleton) do
+  def map_apply(map, singleton) when is_integer(singleton) or is_atom(singleton) do
     # optimization for the singleton case.
     segment_apply(map, singleton)
   end
-  def apply(map, preimage_clamp) do
+  def map_apply(map, preimage_clamp) do
     import Type, only: :macros
 
     map
@@ -364,37 +390,6 @@ defmodule Type.Map do
   #  alias Type.{Map, Message}
 #
   #  use Type.Helpers
-#
-  #  ##############################################################
-  #  ## comparison
-  #  group_compare do
-  #    def group_compare(m1, m2) do
-  #      preimage_cmp = Type.compare(Map.preimage(m1), Map.preimage(m2))
-  #      if preimage_cmp != :eq do
-  #        preimage_cmp
-  #      else
-  #          m1
-  #          |> Map.resegment(Map.resegment(m2))
-  #          |> Enum.each(fn segment ->
-  #            req_order = required_ordering(m1, m2, segment)
-  #            req_order != :eq && throw req_order
-#
-  #            val_order = Type.compare(Map.apply(m1, segment), Map.apply(m2, segment))
-  #            val_order != :eq && throw val_order
-  #          end)
-  #      end
-  #    catch
-  #      valtype when valtype in [:gt, :lt] -> valtype
-  #    end
-  #  end
-#
-  #  defp required_ordering(m1, m2, segment) do
-  #    case {Map.required_key?(m1, segment), Map.required_key?(m2, segment)} do
-  #      {false, true} -> :gt
-  #      {true, false} -> :lt
-  #      _ -> :eq
-  #    end
-  #  end
 #
   #  intersection do
   #    def intersection(map, tgt = %Map{}) do

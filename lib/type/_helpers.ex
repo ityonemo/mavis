@@ -1,8 +1,10 @@
 defmodule Type.Helpers do
   @typegroups %{
     Type.Integer => 1,
-    Type.Range => 1,
+    Integer => 1,
+    Range => 1,
     Type.Float => 2,
+    Float => 2,
     Type.Atom => 3,
     Atom => 3,
     Type.Function => 5,
@@ -10,7 +12,9 @@ defmodule Type.Helpers do
     Type.Map => 9,
     Type.NonemptyList => 10,
     Type.List => 10,
-    Type.Bitstring => 11
+    List => 10,
+    Type.Bitstring => 11,
+    BitString => 11,
   }
 
   defmacro typegroup_fun() do
@@ -56,6 +60,18 @@ defmodule Type.Helpers do
     end
   end
 
+  defmacro algebra_intersection_fun(module, call \\ :intersection) do
+    quote do
+      def intersection(ltype, rtype) do
+        case compare(ltype, rtype) do
+          :gt -> unquote(module).unquote(call)(ltype, rtype)
+          :lt -> intersection(ltype, rtype)
+          :eq -> ltype
+        end
+      end
+    end
+  end
+
   defmacro __using__(_opts) do
     module = __CALLER__.module
     quote bind_quoted: [module: module] do
@@ -69,18 +85,10 @@ defmodule Type.Helpers do
 
         import Helpers
         Helpers.algebra_compare_fun(unquote(module))
+        Helpers.algebra_intersection_fun(unquote(module))
 
         defdelegate usable_as(subject, target, meta), to: module
         defdelegate subtype?(subject, target), to: module
-
-        def intersection(ltype, rtype) do
-          case compare(ltype, rtype) do
-            :gt -> unquote(module).intersection(ltype, rtype)
-            :lt -> intersection(ltype, rtype)
-            :eq -> ltype
-          end
-        end
-
         defdelegate subtract(ltype, rtype), to: module
         defdelegate normalize(type), to: module
       end
