@@ -288,17 +288,17 @@ defmodule Type.Function do
   defp apply_reduce(_,               {:error, msg}),         do: {:error, msg}
 
   defp match_vars(plist, vlist) do
-    plist
-    |> Enum.zip(vlist)
-    |> Enum.filter(&match?({%Type.Function.Var{}, _}, &1))
-    |> Enum.into(%{})
+  #  plist
+  #  |> Enum.zip(vlist)
+  #  |> Enum.filter(&match?({%Type.Function.Var{}, _}, &1))
+  #  |> Enum.into(%{})
   end
 
   defp substitute_vars({:ok, result}, match) do
-    {:ok, Type.Function.Var.resolve(result, match)}
+#    {:ok, Type.Function.Var.resolve(result, match)}
   end
   defp substitute_vars({:maybe, result, msg}, match) do
-    {:maybe, Type.Function.Var.resolve(result, match), msg}
+#    {:maybe, Type.Function.Var.resolve(result, match), msg}
   end
   defp substitute_vars(error, _), do: error
 
@@ -489,24 +489,24 @@ defmodule Type.Function do
       concat(basic_inspect(arity, return, opts) ++ [")"])
     end
     def inspect(%{params: params, return: return}, opts) do
-
-      # check if any of the params or the returns have *when* statements
-      # TODO: nested variables
-
-      [return | params]
-      |> Enum.filter(&match?(%Type.Function.Var{}, &1))
-      |> case do
-        [] -> basic_inspect(params, return, opts)
-        free_vars ->
-          when_list = free_vars
-          |> Enum.uniq
-          |> Enum.map(&Inspect.inspect(&1, %{opts | custom_options: [show_constraints: true]}))
-          |> Enum.intersperse(", ")
-
-          basic_inspect(params, return, opts) ++ [" when " | when_list]
-      end
-      |> Kernel.++([")"])
-      |> concat
+#
+#      # check if any of the params or the returns have *when* statements
+#      # TODO: nested variables
+#
+#      [return | params]
+#      |> Enum.filter(&match?(%Type.Function.Var{}, &1))
+#      |> case do
+#        [] -> basic_inspect(params, return, opts)
+#        free_vars ->
+#          when_list = free_vars
+#          |> Enum.uniq
+#          |> Enum.map(&Inspect.inspect(&1, %{opts | custom_options: [show_constraints: true]}))
+#          |> Enum.intersperse(", ")
+#
+#          basic_inspect(params, return, opts) ++ [" when " | when_list]
+#      end
+#      |> Kernel.++([")"])
+#      |> concat
     end
 
     defp basic_inspect(params, return, opts) do

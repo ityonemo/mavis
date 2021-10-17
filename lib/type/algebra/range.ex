@@ -1,5 +1,8 @@
 defimpl Type.Algebra, for: Range do
-#  import Type, only: :macros
+  import Type, only: :macros
+
+  def compare(_, _) do end
+
 #
 #  use Type.Helpers
 #

@@ -9,18 +9,18 @@ defmodule Type.Spec do
   def parse(spec, assigns \\ %{})
 
   # fix assigns
-  def parse({:var, _, name}, assigns) when is_map_key(assigns, name) do
-    assigns[name]
-  end
-  def parse({:var, _, :_}, _assigns) do
-    any()
-  end
-  def parse({:var, _, name}, assigns) when is_map_key(assigns, {name, :subtype_of}) do
-    %Type.Function.Var{name: name, constraint: assigns[{name, :subtype_of}]}
-  end
-  def parse({:var, _, name}, _assigns) do
-    %Type.Function.Var{name: name}
-  end
+  #def parse({:var, _, name}, assigns) when is_map_key(assigns, name) do
+  #  assigns[name]
+  #end
+  #def parse({:var, _, :_}, _assigns) do
+  #  any()
+  #end
+  #def parse({:var, _, name}, assigns) when is_map_key(assigns, {name, :subtype_of}) do
+  #  %Type.Function.Var{name: name, constraint: assigns[{name, :subtype_of}]}
+  #end
+  #def parse({:var, _, name}, _assigns) do
+  #  %Type.Function.Var{name: name}
+  #end
 
   # general types
   def parse({:type, _, :range, [first, last]}, assigns), do: parse(first, assigns)..parse(last, assigns)

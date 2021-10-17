@@ -1,66 +1,86 @@
-# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
-
 defmodule Type.Helpers do
-  #######################################################################
-  ## boilerplate for preventing mistakes
-
-  @group_for %{
-    "Integer" => 1,
-    "Range" => 1,
-    "Float" => 2,
-    "Atom" => 3,
-    "Function" => 5,
-    "Tuple" => 8,
-    "Map" => 9,
-    "NonemptyList" => 10,
-    "List" => 10,
-    "Bitstring" => 11,
-    "BitString" => 11
+  @typegroups %{
+    Type.Integer => 1,
+    Type.Range => 1,
+    Type.Float => 2,
+    Type.Atom => 3,
+    Atom => 3,
+    Type.Function => 5,
+    Type.Tuple => 8,
+    Type.Map => 9,
+    Type.NonemptyList => 10,
+    Type.List => 10,
+    Type.Bitstring => 11
   }
 
-  @doc """
-  Type modules should implement this function to perform comparisons against
-  all other types in their type group.
+  defmacro typegroup_fun() do
+    module = __CALLER__.module
+    cond do
+      typegroup = @typegroups[module] ->
+        quote do
+          def typegroup(_), do: unquote(typegroup)
+        end
+      typegroup = @typegroups[get_algebra(module)] ->
+        quote do
+          def typegroup(_), do: unquote(typegroup)
+        end
+      true -> nil
+    end
+  end
 
-  See `Type.typegroup/1`
-  """
-  @callback group_compare(Type.t, Type.t) :: :lt | :gt | :eq
+  defp get_algebra(module) do
+    case Module.split(module) do
+      ["Type", "Algebra" | rest] ->
+        Module.concat(rest)
+      _ -> nil
+    end
+  end
 
-  # exists to prevent mistakes when generating functions.
-  defmacro __using__(_opts) do
-    group = __CALLER__.module
-    |> Module.split
-    |> List.last
-    |> :erlang.map_get(@group_for)
-
-    quote bind_quoted: [group: group] do
-      @behaviour Type.Helpers
-
-      import Type.Helpers
-
-      @group group
-      def typegroup(_), do: @group
-
-      def compare(this, other) do
-        other_group = Type.typegroup(other)
+  defmacro algebra_compare_fun(module, call \\ :compare) do
+    quote do
+      def compare(same, same), do: :eq
+      def compare(ltype, rtype) do
+        lgroup = typegroup(ltype)
+        rgroup = Type.typegroup(rtype)
         cond do
-          @group > other_group -> :gt
-          @group < other_group -> :lt
+          lgroup < rgroup -> :lt
+          lgroup > rgroup -> :gt
+          match?(%Type.Union{}, rtype) ->
+            %{of: [first | _]} = rtype
+            result = Type.compare(ltype, first)
+            if result == :eq, do: :lt, else: result
           true ->
-            group_compare(this, other)
+            unquote(module).unquote(call)(ltype, rtype)
         end
       end
+    end
+  end
 
-      # for most types, normalization is not necessary.
-      def normalize(type), do: type
-      defoverridable normalize: 1
+  defmacro __using__(_opts) do
+    module = __CALLER__.module
+    quote bind_quoted: [module: module] do
+      alias Type.Helpers
+      import Helpers
+      @behaviour Helpers
+      Helpers.typegroup_fun()
 
       defimpl Type.Algebra do
+        defdelegate typegroup(type), to: module
+
+        import Helpers
+        Helpers.algebra_compare_fun(unquote(module))
+
         defdelegate usable_as(subject, target, meta), to: module
         defdelegate subtype?(subject, target), to: module
-        defdelegate compare(a, b), to: module
-        defdelegate typegroup(type), to: module
-        defdelegate intersection(ltype, rtype), to: module
+
+        def intersection(ltype, rtype) do
+          case compare(ltype, rtype) do
+            :gt -> unquote(module).intersection(ltype, rtype)
+            :lt -> intersection(ltype, rtype)
+            :eq -> ltype
+          end
+        end
+
         defdelegate subtract(ltype, rtype), to: module
         defdelegate normalize(type), to: module
       end

@@ -10,8 +10,8 @@ defmodule Type.Iolist do
 
   alias Type.{Bitstring, NonemptyList}
 
-  @ltype Type.union([byte(), binary(), iolist()])
-  @final Type.union([], binary())
+  #@ltype Type.union([byte(), binary(), iolist()])
+  #@final Type.union([], binary())
 
   # INTERSECTIONS
 
@@ -69,8 +69,8 @@ defmodule Type.Iolist do
     Type.usable_as(explicit_iolist(), target, meta)
   end
 
-  @final_type Type.union(binary(), [])
-  @inner_type Type.union([binary(), byte(), iolist()])
+#  @final_type Type.union(binary(), [])
+#  @inner_type Type.union([binary(), byte(), iolist()])
   def usable_as_iolist(challenge = %NonemptyList{final: final, type: type}, meta) do
     u1 = Type.usable_as(final, @final_type, meta)
     u2 = Type.usable_as(type, @inner_type, meta)

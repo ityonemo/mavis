@@ -1,5 +1,14 @@
 defimpl Type.Algebra, for: Atom do
-  import Type, only: :macros
+
+  alias Type.Helpers
+
+  require Helpers
+  Helpers.typegroup_fun()
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+
+  def compare_internal(_, _), do: raise "unimplemented"
+
+
 
 #  use Type.Helpers
 #
@@ -43,4 +52,3 @@ defimpl Type.Algebra, for: Atom do
 #
 #  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
-
