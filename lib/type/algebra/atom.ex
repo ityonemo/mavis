@@ -14,7 +14,19 @@ defimpl Type.Algebra, for: Atom do
   def compare_internal(latom, ratom) when latom > ratom, do: :gt
 
   def intersection_internal(atom, Type.atom()), do: atom
-  def intersection_internal(_, _), do: Type.none()
+  def intersection_internal(atom, Type.node_type()) do
+    if valid_node?(atom), do: atom, else: Type.none()
+  end
+  def intersection_internal(a, b) do
+    Type.none()
+  end
+
+  defp valid_node?(atom) do
+    node_parts = atom
+    |> Atom.to_string
+    |> String.split("@")
+    match?([<<_::8>> <> _, <<_::8>> <> _], node_parts)
+  end
 
   def subtype_internal(_, Type.atom()), do: true
   def subtype_internal(_, _), do: false

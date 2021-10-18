@@ -73,7 +73,7 @@ defmodule Type.Helpers do
       def intersection(ltype, rtype) do
         case compare(ltype, rtype) do
           :gt -> unquote(module).unquote(call)(ltype, rtype)
-          :lt -> intersection(ltype, rtype)
+          :lt -> Type.intersection(rtype, ltype)
           :eq -> ltype
         end
       end
