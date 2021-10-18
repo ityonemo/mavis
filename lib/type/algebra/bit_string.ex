@@ -14,7 +14,7 @@ defimpl Type.Algebra, for: BitString do
   def compare_internal(lstring, rstring) when lstring > rstring, do: :gt
   def compare_internal(lstring, rstring), do: :eq
 
-  def intersection(_, _) do
+  def intersection_internal(_, _) do
     require Type
     Type.none()
   end

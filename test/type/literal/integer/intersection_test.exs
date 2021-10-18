@@ -7,12 +7,14 @@ defmodule TypeTest.LiteralInteger.IntersectionTest do
   import Type, only: :macros
 
   describe "the intersection of a literal integer" do
+    @tag :skip
     test "with itself, integer and any is itself" do
       assert 47 == 47 <~> any()
       assert 47 == 47 <~> integer()
       assert 47 == 47 <~> 47
     end
 
+    @tag :skip
     test "with integer types is correct" do
       assert -47 == -47 <~> neg_integer()
       assert none() == -47 <~> pos_integer()
@@ -27,16 +29,19 @@ defmodule TypeTest.LiteralInteger.IntersectionTest do
       assert 47 == 47 <~> non_neg_integer()
     end
 
+    @tag :skip
     test "with ranges is correct" do
       assert 47 == 47 <~> 0..50
       assert none() == 42 <~> 0..10
     end
 
+    @tag :skip
     test "with unions works as expected" do
       assert 47 == 47 <~> (integer() <|> :infinity)
       assert none() == 47 <~> (atom() <|> port())
     end
 
+    @tag :skip
     test "with all other types is none" do
       TypeTest.Targets.except([integer(), pos_integer(), non_neg_integer()])
       |> Enum.each(fn target ->

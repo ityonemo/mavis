@@ -1,13 +1,18 @@
 defimpl Type.Algebra, for: Float do
 
+  require Type
+
   alias Type.Helpers
   require Helpers
 
   Helpers.typegroup_fun()
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
+
+  def intersection_internal(_, _), do: Type.none()
 
 #  use Type.Helpers
 #

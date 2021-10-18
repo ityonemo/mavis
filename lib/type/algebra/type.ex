@@ -3,6 +3,7 @@ defimpl Type.Algebra, for: Type do
 
   alias Type.Helpers
   require Helpers
+  require Type
 
   @group_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
@@ -27,8 +28,8 @@ defimpl Type.Algebra, for: Type do
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
+  def intersection_internal(Type.any(), type), do: type
   def intersection_internal(_, _) do
-    require Type
     Type.none()
   end
 

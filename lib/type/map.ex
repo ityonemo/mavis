@@ -226,6 +226,79 @@ defmodule Type.Map do
     end
   end
 
+  def intersection(lmap, rmap = %__MODULE__{}) do
+    require Type
+    # find the intersection of the preimages
+    preimage_intersection = lmap
+    |> preimage
+    |> Type.intersection(preimage(rmap))
+
+    # required properties can fail.
+    case evaluate_requireds(lmap, rmap, preimage_intersection) do
+      {:ok, requireds} ->
+        optionals = lmap
+        |> evaluate_optionals(rmap)
+        |> Map.drop(Map.keys(requireds))
+        %__MODULE__{required: requireds, optional: optionals}
+      :empty ->
+        Type.none()
+    end
+  end
+  def intersection(_, _) do
+    require Type
+    Type.none()
+  end
+
+  defp evaluate_requireds(map, tgt, preimage_intersection) do
+    require Type
+    # union the required keys from the map and the target.  This
+    # is the full set of required keys from all of the maps.
+    all_req_keys = Map.keys(map.required)
+    |> Kernel.++(Map.keys(tgt.required))
+    |> Enum.uniq
+
+    # check that all required keys exist in the preimage intersection, if
+    # it doesn't then we can do an early edit.
+    if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
+      req_kv = all_req_keys
+      |> Enum.map(fn rq_key ->
+        val_type = map_apply(map, rq_key)
+        |> Type.intersection(map_apply(tgt, rq_key))
+
+        val_type == Type.none() && throw :empty
+
+        {rq_key, val_type}
+      end)
+      |> Enum.into(%{})
+
+      {:ok, req_kv}
+    else
+      :empty
+    end
+  catch
+    :empty -> :empty
+  end
+
+  defp evaluate_optionals(map, tgt) do
+    # apply the intersected preimages to the first map.
+    # this gives us a list of preimage segments, each of
+    # which has a consistent image type.
+    require Type
+
+    map
+    |> resegment(resegment(tgt))
+    |> Enum.flat_map(fn segment ->
+      map
+      |> map_apply(segment)
+      |> Type.intersection(map_apply(tgt, segment))
+      |> case do
+        Type.none() -> []
+        image -> [{segment, image}]
+      end
+    end)
+    |> Enum.into(%{})
+  end
+
   @doc """
   the full union of all possible key values for the passed map.
 
@@ -384,81 +457,6 @@ defmodule Type.Map do
               required: still_requireds}
   end
 
-  #defimpl Type.Algebra do
-#
-  #  import Type, only: :macros
-  #  alias Type.{Map, Message}
-#
-  #  use Type.Helpers
-#
-  #  intersection do
-  #    def intersection(map, tgt = %Map{}) do
-  #      # find the intersection of the preimages
-  #      preimage_intersection = map
-  #      |> Map.preimage
-  #      |> Type.intersection(Map.preimage(tgt))
-#
-  #      # required properties can fail.
-  #      case evaluate_requireds(map, tgt, preimage_intersection) do
-  #        {:ok, requireds} ->
-  #          optionals = map
-  #          |> evaluate_optionals(tgt)
-  #          |> Elixir.Map.drop(Elixir.Map.keys(requireds))
-#
-  #          %Type.Map{required: requireds, optional: optionals}
-  #        :empty ->
-  #          none()
-  #      end
-  #    end
-  #  end
-#
-  #  defp evaluate_requireds(map, tgt, preimage_intersection) do
-  #    # union the required keys from the map and the target.  This
-  #    # is the full set of required keys from all of the maps.
-  #    all_req_keys = Elixir.Map.keys(map.required)
-  #    |> Kernel.++(Elixir.Map.keys(tgt.required))
-  #    |> Enum.uniq
-#
-  #    # check that all required keys exist in the preimage intersection, if
-  #    # it doesn't then we can do an early edit.
-  #    if Enum.all?(all_req_keys, &Type.subtype?(&1, preimage_intersection)) do
-  #      req_kv = all_req_keys
-  #      |> Enum.map(fn rq_key ->
-  #        val_type = Map.apply(map, rq_key)
-  #        |> Type.intersection(Map.apply(tgt, rq_key))
-#
-  #        val_type == none() && throw :empty
-#
-  #        {rq_key, val_type}
-  #      end)
-  #      |> Enum.into(%{})
-#
-  #      {:ok, req_kv}
-  #    else
-  #      :empty
-  #    end
-  #  catch
-  #    :empty -> :empty
-  #  end
-#
-  #  defp evaluate_optionals(map, tgt) do
-  #    # apply the intersected preimages to the first map.
-  #    # this gives us a list of preimage segments, each of
-  #    # which has a consistent image type.
-  #    map
-  #    |> Map.resegment(Map.resegment(tgt))
-  #    |> Enum.flat_map(fn segment ->
-  #      map
-  #      |> Map.apply(segment)
-  #      |> Type.intersection(Map.apply(tgt, segment))
-  #      |> case do
-  #        none() -> []
-  #        image -> [{segment, image}]
-  #      end
-  #    end)
-  #    |> Enum.into(%{})
-  #  end
-#
   #  subtype do
   #    def subtype?(challenge, target = %Map{}) do
   #      # check to make sure that all segments are

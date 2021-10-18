@@ -169,6 +169,60 @@ defmodule Type.Tuple do
     compare when compare in [:gt, :lt] -> compare
   end
 
+  def intersection(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: false})
+    when length(e1) < length(e2) do
+    require Type
+    Type.none()
+  end
+
+  def intersection(%{elements: e1, fixed: false}, %__MODULE__{elements: e2, fixed: true})
+    when length(e2) < length(e1) do
+    require Type
+    Type.none()
+  end
+
+  def intersection(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true})
+    when length(e1) != length(e2) do
+    require Type
+    Type.none()
+  end
+
+  def intersection(%{elements: e1, fixed: f1}= a, %__MODULE__{elements: e2, fixed: f2}= b) do
+    require Type
+
+    elements = e1
+    |> zipfill(e2, Type.any())
+    |> Enum.map(fn {t1, t2} ->
+      case Type.intersection(t1, t2) do
+        Type.none() -> throw :mismatch
+        any -> any
+      end
+    end)
+    %__MODULE__{elements: elements, fixed: f1 or f2}
+  catch
+    :mismatch ->
+      require Type
+      Type.none()
+  end
+  def intersection(_, _) do
+    require Type
+    Type.none()
+  end
+
+  # like Enum.zip, but only works on lists, and fills up the other
+  # list with a value, instead of stopping when one list is exhausted.
+  defp zipfill(lst1, lst2, fill, so_far \\ [])
+  defp zipfill([h1 | t1], [h2 | t2], fill, so_far) do
+    zipfill(t1, t2, fill, [{h1, h2} | so_far])
+  end
+  defp zipfill([], [h2 | t2], fill, so_far) do
+    zipfill([], t2, fill, [{fill, h2} | so_far])
+  end
+  defp zipfill([h1 | t1], [], fill, so_far) do
+    zipfill(t1, [], fill, [{h1, fill} | so_far])
+  end
+  defp zipfill([], [], _fill, so_far), do: Enum.reverse(so_far)
+
   @doc """
   a utility function which takes two type lists and ascertains if they
   can be merged as tuples.
@@ -256,43 +310,7 @@ defmodule Type.Tuple do
   #    end
   #  end
 #
-  #  intersection do
-  #    def intersection(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
-  #      when length(e1) < length(e2), do: none()
-  #    def intersection(%{elements: e1, fixed: false}, %Tuple{elements: e2, fixed: true})
-  #      when length(e2) < length(e1), do: none()
-  #    def intersection(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: true})
-  #      when length(e1) != length(e2), do: none()
-  #    def intersection(%{elements: e1, fixed: f1}, %Tuple{elements: e2, fixed: f2}) do
-  #      elements = e1
-  #      |> zipfill(e2, any())
-  #      |> Enum.map(fn {t1, t2} ->
-  #        case Type.intersection(t1, t2) do
-  #          none() -> throw :mismatch
-  #          any -> any
-  #        end
-  #      end)
 #
-  #      %Tuple{elements: elements, fixed: f1 or f2}
-  #    catch
-  #      :mismatch ->
-  #        none()
-  #    end
-  #  end
-#
-  #  # like Enum.zip, but only works on lists, and fills up the other
-  #  # list with a value, instead of stopping when one list is exhausted.
-  #  defp zipfill(lst1, lst2, fill, so_far \\ [])
-  #  defp zipfill([h1 | t1], [h2 | t2], fill, so_far) do
-  #    zipfill(t1, t2, fill, [{h1, h2} | so_far])
-  #  end
-  #  defp zipfill([], [h2 | t2], fill, so_far) do
-  #    zipfill([], t2, fill, [{fill, h2} | so_far])
-  #  end
-  #  defp zipfill([h1 | t1], [], fill, so_far) do
-  #    zipfill(t1, [], fill, [{h1, fill} | so_far])
-  #  end
-  #  defp zipfill([], [], _fill, so_far), do: Enum.reverse(so_far)
 #
   #  subtype do
   #    def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})

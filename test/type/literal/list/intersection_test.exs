@@ -13,8 +13,10 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
   describe "the intersection of a literal list" do
 
+    @tag :skip
     test "reorganize for lhs only"
 
+    @tag :skip
     test "with itself, list and any is itself" do
       assert @list == @list <~> any()
       assert @list == @list <~> list()
@@ -29,11 +31,13 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
     end
 
+    @tag :skip
     test "iolist literals intersect with iolist" do
       assert @ilist == iolist() <~> @ilist
       assert @ilist == @ilist <~> iolist()
     end
 
+    @tag :skip
     test "with correctly descriptive list types" do
       assert @list == @list <~> list(:foo <|> :bar)
       assert @list == @list <~> list(atom())
@@ -50,6 +54,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert @ilist == nonempty_maybe_improper_list() <~> @ilist
     end
 
+    @tag :skip
     test "with wrong finals" do
       assert none() == @ilist <~> list()
       assert none() == list() <~> @ilist
@@ -58,6 +63,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert none() == %List{final: remote(String.t)} <~> @list
     end
 
+    @tag :skip
     test "with other literal lists" do
       assert none() == [:foo, "bar"] <~> @list
       assert none() == [:foo] <~> @list
@@ -66,6 +72,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert none() == @ilist <~> ["foo" | "baz"]
     end
 
+    @tag :skip
     test "with unions works as expected" do
       assert @list == @list <~> (:foo <|> @list)
       assert @list == @list <~> (:foo <|> list())
@@ -76,6 +83,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert none() == @ilist <~> (atom() <|> port())
     end
 
+    @tag :skip
     test "with all other types is none" do
       TypeTest.Targets.except([list()])
       |> Enum.each(fn target ->

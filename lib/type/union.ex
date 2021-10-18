@@ -38,6 +38,18 @@ defmodule Type.Union do
     if result == :eq, do: :gt, else: result
   end
 
+  def intersection(lunion, runion = %Type.Union{}) do
+    lunion.of
+    |> Enum.map(&Type.intersection(runion, &1))
+    |> Type.union
+  end
+  
+  def intersection(union = %{}, ritem) do
+    union.of
+    |> Enum.map(&Type.intersection(&1, ritem))
+    |> Type.union
+  end
+
   @spec collapse(t) :: Type.t
   @doc false
   def collapse(%__MODULE__{of: []}) do
@@ -157,19 +169,6 @@ defmodule Type.Union do
 #  #      :ok -> :ok
 #  #      {:maybe, _} -> {:maybe, [Type.Message.make(challenge, target, meta)]}
 #  #      {:error, _} -> {:error, Type.Message.make(challenge, target, meta)}
-#  #    end
-#  #  end
-##
-#  #  intersection do
-#  #    def intersection(lunion, runion = %Type.Union{}) do
-#  #      lunion.of
-#  #      |> Enum.map(&Type.intersection(runion, &1))
-#  #      |> Type.union
-#  #    end
-#  #    def intersection(union = %{}, ritem) do
-#  #      union.of
-#  #      |> Enum.map(&Type.intersection(&1, ritem))
-#  #      |> Type.union
 #  #    end
 #  #  end
 ##

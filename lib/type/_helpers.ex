@@ -60,7 +60,16 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_intersection_fun(module, call \\ :intersection) do
+    unions_clause = unless module == Type.Union do
+      quote do
+        def intersection(ltype, rtype = %Type.Union{}) do
+          Type.intersection(rtype, ltype)
+        end
+      end
+    end
+
     quote do
+      unquote(unions_clause)
       def intersection(ltype, rtype) do
         case compare(ltype, rtype) do
           :gt -> unquote(module).unquote(call)(ltype, rtype)
@@ -68,6 +77,13 @@ defmodule Type.Helpers do
           :eq -> ltype
         end
       end
+    end
+  end
+
+  defmacro algebra_subtype_fun(module, call \\ :subtype?) do
+    quote do
+      def subtype?(type, type), do: true
+      def subtype?(ltype, rtype), do: unquote(module).unquote(call)(ltype, rtype)
     end
   end
 
