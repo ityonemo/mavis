@@ -14,9 +14,6 @@ defmodule TypeTest.LiteralList.IntersectionTest do
   describe "the intersection of a literal list" do
 
     @tag :skip
-    test "reorganize for lhs only"
-
-    @tag :skip
     test "with itself, list and any is itself" do
       assert @list == @list <~> any()
       assert @list == @list <~> list()
@@ -31,7 +28,6 @@ defmodule TypeTest.LiteralList.IntersectionTest do
 
     end
 
-    @tag :skip
     test "iolist literals intersect with iolist" do
       assert @ilist == iolist() <~> @ilist
       assert @ilist == @ilist <~> iolist()
@@ -63,7 +59,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert none() == %List{final: remote(String.t)} <~> @list
     end
 
-    @tag :skip
+    #@tag :skip
     test "with other literal lists" do
       assert none() == [:foo, "bar"] <~> @list
       assert none() == [:foo] <~> @list

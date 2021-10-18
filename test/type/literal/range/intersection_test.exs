@@ -7,14 +7,12 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
   import Type, only: :macros
 
   describe "the intersection of a literal range" do
-    @tag :skip
     test "with itself, integer and any is itself" do
       assert -47..47 == -47..47 <~> any()
       assert -47..47 == -47..47 <~> integer()
       assert -47..47 == -47..47 <~> -47..47
     end
 
-    @tag :skip
     test "with integer subsets" do
       # negative ranges
       assert -47..-1        == -47..-1 <~> neg_integer()
@@ -35,7 +33,6 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert 1..47          == 1..47 <~> non_neg_integer()
     end
 
-    @tag :skip
     test "with other ranges" do
       # disjoint left
       assert none() == 1..10 <~> 11..12
@@ -66,14 +63,12 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert none() == -1..0 <~>  1..10
     end
 
-    @tag :skip
     test "with integers" do
       assert none() == 1..10 <~> -42
       assert 47 == 0..255 <~> 47
       assert none() == 1..10 <~> 42
     end
 
-    @tag :skip
     test "with unions works as expected" do
       assert (1 <|> 9..10) == 1..10 <~> (0..1 <|> 9..15)
       assert none() == 1..10 <~> (atom() <|> port())

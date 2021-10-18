@@ -28,6 +28,8 @@ defimpl Type.Algebra, for: Range do
   def intersection_internal(a..b, i) when a <= i and i <= b, do: i
   def intersection_internal(a.._, _..a), do: a
   def intersection_internal(_..a, a.._), do: a
+  def intersection_internal(-1.._, neg_integer()), do: -1
+  def intersection_internal(a.._, neg_integer()) when a < 0, do: a..-1
   def intersection_internal(a..b, c..d) do
     case {a >= c, a > d, b < c, b <= d} do
       {_,     x, y, _} when x or y -> none()
@@ -37,12 +39,6 @@ defimpl Type.Algebra, for: Range do
       {false, _, _, false} -> c..d
     end
   end
-  def intersection_internal(a..b,  neg_integer()) when b < 0, do: a..b
-  def intersection_internal(-1.._, neg_integer()), do: -1
-  def intersection_internal(a.._,  neg_integer()) when a < 0, do: a..-1
-  def intersection_internal(a..b,  pos_integer()) when a > 0, do: a..b
-  def intersection_internal(_..1,  pos_integer()), do: 1
-  def intersection_internal(_..a,  pos_integer()) when a > 1, do: 1..a
   def intersection_internal(_, _), do: Type.none()
 
 #

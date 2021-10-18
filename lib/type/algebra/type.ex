@@ -20,15 +20,21 @@ defimpl Type.Algebra, for: Type do
 
   import Type, only: :macros
   def compare_internal(pos_integer(), integer) when is_integer(integer), do: :gt
-  def compare_internal(pos_integer(), _a.._b), do: :gt
+  def compare_internal(pos_integer(), _.._), do: :gt
   def compare_internal(neg_integer(), integer) when integer < 0, do: :gt
-  def compare_internal(neg_integer(), a.._) when a < 0, do: :gt
+  def compare_internal(neg_integer(), _..b) when b < 0, do: :gt
   def compare_internal(%{module: String, name: :t}, binary) when is_binary(binary), do: :gt
   def compare_internal(_, _), do: :lt
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
-  def intersection_internal(Type.any(), type), do: type
+  def intersection_internal(any(), type), do: type
+  def intersection_internal(neg_integer(), i) when is_integer(i) and i < 0, do: i
+  def intersection_internal(neg_integer(), a..b) when b < 0, do: a..b
+  def intersection_internal(pos_integer(), i) when is_integer(i) and i > 0, do: i
+  def intersection_internal(pos_integer(), a..b) when a > 0, do: a..b
+  def intersection_internal(pos_integer(), _..1), do: 1
+  def intersection_internal(pos_integer(), _..a) when a > 1, do: 1..a
   def intersection_internal(_, _) do
     Type.none()
   end

@@ -14,7 +14,6 @@ defmodule TypeTest.LiteralFloat.IntersectionTest do
       assert 47.0 == 47.0 <~> 47.0
     end
 
-    @tag :skip
     test "with other literal floats" do
       assert none() == 42.0 <~> 47.0
     end

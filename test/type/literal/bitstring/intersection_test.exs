@@ -25,8 +25,7 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
       assert "foo" == "foo" <~> remote(String.t())
       assert "foo" == "foo" <~> remote(String.t(3))
     end
-
-    @tag :skip
+    
     test "with other literal bitstrings" do
       assert none() == "baz" <~> "foo"
     end
