@@ -16,7 +16,7 @@ defimpl Type.Algebra, for: Range do
   def compare_internal(first..last, %Type.Union{of: [init | types]}) do
     case List.last(types) do
       _..b when b < last -> :gt
-      _..b ->
+      _.._ ->
         Type.compare(init, first)
       i when i < last -> :gt
       i when is_integer(i) ->

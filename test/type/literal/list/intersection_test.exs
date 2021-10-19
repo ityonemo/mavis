@@ -12,7 +12,6 @@ defmodule TypeTest.LiteralList.IntersectionTest do
   @ilist ["foo" | "bar"]
 
   describe "the intersection of a literal list" do
-
     @tag :skip
     test "with itself, list and any is itself" do
       assert @list == @list <~> any()
@@ -25,7 +24,6 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert @ilist == @ilist <~> any()
       assert @ilist == any() <~> @ilist
       assert @ilist == @ilist <~> @ilist
-
     end
 
     test "iolist literals intersect with iolist" do

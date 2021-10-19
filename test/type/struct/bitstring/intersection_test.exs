@@ -13,13 +13,11 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
   @basic_binary    %Bitstring{size: 0, unit: 8}
 
   describe "the intersection of empty bitstring" do
-    @tag :skip
     test "with itself and any is itself" do
       assert @empty_bitstring == @empty_bitstring <~> any()
       assert @empty_bitstring == @empty_bitstring <~> @empty_bitstring
     end
 
-    @tag :skip
     test "with any string with size 0 is itself" do
       assert @empty_bitstring == @empty_bitstring <~> @basic_bitstring
       assert @empty_bitstring == @empty_bitstring <~> @basic_binary
@@ -33,7 +31,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert "foo" == binary() <~> "foo"
     end
 
-    @tag :skip
     test "with any fixed size string is none" do
       assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 0}
       assert none() == @empty_bitstring <~> %Bitstring{size: 8, unit: 8}
@@ -49,7 +46,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
   end
 
   describe "the intersection of basic bitstring" do
-    @tag :skip
     test "with itself, integer and any is itself" do
       assert @basic_bitstring == @basic_bitstring <~> any()
       assert @basic_bitstring == @basic_bitstring <~> @basic_bitstring
@@ -67,7 +63,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
   end
 
   describe "other combinations of bitstrings:" do
-    @tag :skip
     test "disparate unit sizes" do
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 3}
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 6}

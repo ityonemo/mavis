@@ -42,6 +42,7 @@ defmodule Type.Helpers do
   defmacro algebra_compare_fun(module, call \\ :compare) do
     quote do
       def compare(same, same), do: :eq
+      def compare(_, %Type{module: nil, name: :any}), do: :lt
       def compare(ltype, rtype) do
         lgroup = typegroup(ltype)
         rgroup = Type.typegroup(rtype)
@@ -69,9 +70,14 @@ defmodule Type.Helpers do
     end
 
     quote do
+      def intersection(ltype, %Type{module: nil, name: :any}), do: ltype
+      def intersection(type, type), do: type
       unquote(unions_clause)
       def intersection(ltype, rtype) do
-        case compare(ltype, rtype) do
+        #IO.puts("===========================================")
+        #ltype |> IO.inspect(label: "74")
+        #rtype |> IO.inspect(label: "75")
+        case compare(ltype, rtype) do # |> IO.inspect(label: "76") do
           :gt -> unquote(module).unquote(call)(ltype, rtype)
           :lt -> Type.intersection(rtype, ltype)
           :eq -> ltype

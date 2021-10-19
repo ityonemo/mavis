@@ -8,13 +8,11 @@ defmodule TypeTest.TypeUnion.IntersectionTest do
   import Type, only: :macros
 
   describe "unions" do
-    @tag :skip
-    test "are all part of any" do
+    test "are all part of any and itself" do
       assert (1 <|> 3) == (1 <|> 3) <~> any()
       assert (1 <|> 3) == (1 <|> 3) <~> (1 <|> 3)
     end
 
-    @tag :skip
     test "are disjoint" do
       assert none() == (1 <|> 3) <~> (2 <|> 5)
     end
