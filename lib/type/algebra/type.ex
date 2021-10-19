@@ -40,6 +40,13 @@ defimpl Type.Algebra, for: Type do
   def intersection_internal(pos_integer(), _..1), do: 1
   def intersection_internal(pos_integer(), _..a) when a > 1, do: 1..a
   def intersection_internal(float(), f) when is_float(f), do: f
+  def intersection_internal(%Type{module: String, name: :t, params: []}, binary) when is_binary(binary) do
+    if String.valid?(binary), do: binary, else: none()
+  end
+  def intersection_internal(%Type{module: String, name: :t, params: [len]}, binary)
+      when is_binary(binary) and :erlang.size(binary) == len do
+    if String.valid?(binary), do: binary, else: none()
+  end
   def intersection_internal(_, _), do: none()
 
 #

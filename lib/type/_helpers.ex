@@ -74,12 +74,16 @@ defmodule Type.Helpers do
       def intersection(type, type), do: type
       unquote(unions_clause)
       def intersection(ltype, rtype) do
-        #IO.puts("===========================================")
-        #ltype |> IO.inspect(label: "74")
-        #rtype |> IO.inspect(label: "75")
-        case compare(ltype, rtype) do # |> IO.inspect(label: "76") do
-          :gt -> unquote(module).unquote(call)(ltype, rtype)
-          :lt -> Type.intersection(rtype, ltype)
+        IO.puts("===========================================")
+        ltype |> IO.inspect(label: "74", structs: false)
+        rtype |> IO.inspect(label: "75", structs: false)
+        unquote(module) |> IO.inspect(label: "80")
+        unquote(call) |> IO.inspect(label: "81")
+        case compare(ltype, rtype) |> IO.inspect(label: "76") do
+          :gt ->
+            unquote(module).unquote(call)(ltype, rtype)
+          :lt ->
+            Type.intersection(rtype, ltype)
           :eq -> ltype
         end
       end

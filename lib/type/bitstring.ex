@@ -155,8 +155,13 @@ defmodule Type.Bitstring do
   def intersection(bs, st = %Type{module: String, name: :t}) do
     Type.intersection(st, bs)
   end
-  def intersection(bs, bitstring) when is_bitstring(bitstring) do
-    Type.intersection(bitstring, bs)
+  def intersection(%{size: size, unit: 0}, bitstring)
+      when is_bitstring(bitstring) and :erlang.bit_size(bitstring) == size do
+    bitstring
+  end
+  def intersection(%{size: size, unit: unit}, bitstring)
+      when is_bitstring(bitstring) and rem(:erlang.bit_size(bitstring) - size, unit) == 0 do
+    bitstring
   end
   def intersection(_, _) do
     require Type

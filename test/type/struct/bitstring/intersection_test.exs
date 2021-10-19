@@ -23,10 +23,8 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert @empty_bitstring == @empty_bitstring <~> @basic_binary
     end
 
-    @tag :skip
     test "with a literal bitstring is the literal bitstring" do
       assert <<0::7>> == bitstring() <~> <<0::7>>
-
       assert "foo" == bitstring() <~> "foo"
       assert "foo" == binary() <~> "foo"
     end
@@ -68,7 +66,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert %Bitstring{size: 0, unit: 24} == @basic_binary <~> %Bitstring{size: 0, unit: 6}
     end
 
-    @tag :skip
     test "literals" do
       assert "foo" == %Bitstring{size: 24} <~> "foo"
       assert "foo" == %Bitstring{unit: 8} <~> "foo"
