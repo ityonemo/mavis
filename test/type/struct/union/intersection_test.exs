@@ -17,7 +17,6 @@ defmodule TypeTest.TypeUnion.IntersectionTest do
       assert none() == (1 <|> 3) <~> (2 <|> 5)
     end
 
-    @tag :skip
     test "get the overlap" do
       assert (1 <|> 3) == (0..1 <|> 3..4) <~> 1..3
       assert (1 <|> 3 <|> 5) == (0..1 <|> 3..5) <~> (1..3 <|> 5..6)

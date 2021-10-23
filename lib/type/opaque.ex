@@ -14,7 +14,11 @@ defmodule Type.Opaque do
     type: Type.t
   }
 
-  import Type, only: :macros
+  use Type.Helpers
+
+  def typegroup(%{type: child}) do
+    Type.typegroup(child)
+  end
 
   #defimpl Type.Algebra do
   #  import Type, only: :macros

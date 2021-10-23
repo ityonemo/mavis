@@ -10,7 +10,6 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
   @min_2_tuple tuple({any(), any(), ...})
 
   describe "minimum size tuple" do
-    @tag :skip
     test "intersects with any and self" do
       assert @anytuple == @anytuple <~> any()
       assert @anytuple == @anytuple <~> @anytuple
@@ -18,12 +17,10 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
       assert @min_2_tuple == @min_2_tuple <~> @min_2_tuple
     end
 
-    @tag :skip
     test "adopts the greater minimum" do
       assert @min_2_tuple == @min_2_tuple <~> @anytuple
     end
 
-    @tag :skip
     test "turns into its counterparty" do
       assert tuple({}) == @anytuple <~> tuple({})
       assert tuple({:foo}) == @anytuple <~> tuple({:foo})
@@ -76,7 +73,6 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
         tuple({atom(), integer()})
     end
 
-    @tag :skip
     test "a single mismatch yields none" do
       assert none() == tuple({:foo}) <~> tuple({:bar})
       assert none() == tuple({:foo, :bar}) <~> tuple({:bar, :bar})

@@ -40,13 +40,13 @@ defmodule Type.Union do
 
   def intersection(lunion, runion = %Type.Union{}) do
     lunion.of
-    |> Enum.map(&Type.intersection(runion, &1))
+    |> Enum.map(&intersection(runion, &1))
     |> Type.union
   end
-  
-  def intersection(union = %{}, ritem) do
+
+  def intersection(union = %{}, rtype) do
     union.of
-    |> Enum.map(&Type.intersection(&1, ritem))
+    |> Enum.map(&Type.intersection(&1, rtype))
     |> Type.union
   end
 
