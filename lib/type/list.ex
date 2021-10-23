@@ -190,8 +190,13 @@ defmodule Type.List do
     |> Type.ternary_and(so_far)
   end
 
+  def intersection(%{final: []}, []) do
+    require Type
+    Type.none()
+  end
   def intersection(type, list) when is_list(list) do
-    Type.intersection(list, type)
+    require Type
+    if t?(type, list), do: list, else: Type.none()
   end
   def intersection(a, b = %Type.List{}) do
     require Type
@@ -203,6 +208,17 @@ defmodule Type.List do
     end
   end
   def intersection(a, %Type{module: nil, name: :iolist}), do: Type.Iolist.intersection_with(a)
+  def intersection(_, _) do
+    require Type
+    Type.none()
+  end
+
+  defp t?(t = %{type: el_t}, [first | rest]) do
+    Type.intersection(el_t, first) == first && t?(t, rest)
+  end
+  defp t?(%{final: f}, el) do
+    Type.intersection(f, el) == el
+  end
 
   #defimpl Type.Algebra do
   #  import Type, only: :macros

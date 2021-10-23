@@ -74,13 +74,12 @@ defmodule Type.Helpers do
         end
         def intersection(ltype, rtype) do
           #IO.puts("===========================================")
-          #ltype |> IO.inspect(label: "74")#, structs: false)
-          #rtype |> IO.inspect(label: "75")#, structs: false)
+          #ltype |> IO.inspect(label: "74", structs: false)
+          #rtype |> IO.inspect(label: "75", structs: false)
           #unquote(module) |> IO.inspect(label: "80")
           #unquote(call) |> IO.inspect(label: "81")
-          case compare(ltype, rtype) do# |> IO.inspect(label: "76") do
+          case Type.compare(ltype, rtype) do # |> IO.inspect(label: "76") do
             :gt ->
-              #raise "foo"
               unquote(module).unquote(call)(ltype, rtype)
             :lt ->
               #raise "foo"

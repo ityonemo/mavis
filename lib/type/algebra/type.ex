@@ -21,6 +21,7 @@ defimpl Type.Algebra, for: Type do
   # TODO: REORDER THIS SECTION BY TYPECLASS
   import Type, only: :macros
   def compare_internal(list(...), l) when is_list(l), do: :gt
+  def compare_internal(pos_integer(), neg_integer()), do: :gt
   def compare_internal(pos_integer(), i) when is_integer(i), do: :gt
   def compare_internal(pos_integer(), _.._), do: :gt
   def compare_internal(neg_integer(), i) when i < 0, do: :gt
@@ -31,10 +32,7 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(atom(), module()), do: :gt
   def compare_internal(module(), node_type()), do: :gt
   def compare_internal(module(), atom) when is_atom(atom), do: :gt
-  def compare_internal(node_type(), atom) when is_atom(atom) do
-    # TODO: punt to internal node check.
-    if Type.Algebra.Atom.valid_node?(atom), do: :gt, else: :lt
-  end
+  def compare_internal(node_type(), atom) when is_atom(atom), do: :gt
   def compare_internal(%{module: String, name: :t}, binary) when is_binary(binary), do: :gt
   def compare_internal(_, _), do: :lt
 
@@ -53,6 +51,11 @@ defimpl Type.Algebra, for: Type do
   def intersection_internal(atom(), atom) when is_atom(atom), do: atom
   def intersection_internal(atom(), node_type()), do: node_type()
   def intersection_internal(atom(), module()), do: module()
+  def intersection_internal(module(), atom) when is_atom(atom), do: atom
+  def intersection_internal(node_type(), atom) do
+    require Type
+    if Type.Algebra.Atom.valid_node?(atom), do: atom, else: Type.none()
+  end
   def intersection_internal(%Type{module: String, name: :t, params: []}, binary) when is_binary(binary) do
     if String.valid?(binary), do: binary, else: none()
   end
@@ -66,7 +69,7 @@ defimpl Type.Algebra, for: Type do
 #  import Type, only: :macros
 #
 #  import Type.Helpers
-#
+#,
 #  alias Type.Message
 #
 #  usable_as do

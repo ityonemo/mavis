@@ -9,7 +9,6 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
   alias Type.List
 
   describe "the intersection of a literal empty list" do
-    @tag :skip
     test "with itself, general lists and any is itself" do
       assert [] == [] <~> any()
       assert [] == [] <~> list(:foo)
@@ -17,13 +16,11 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
       assert [] == [] <~> []
     end
 
-    @tag :skip
     test "with nonempty, or odd-termination final lists is not ok" do
       assert none() == [] <~> %List{final: :foo}
       assert none() == [] <~> list(...)
     end
 
-    @tag :skip
     test "with unions works as expected" do
       assert [] == [] <~> ([] <|> integer())
       assert none() == [] <~> (integer() <|> port())

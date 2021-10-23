@@ -1,7 +1,7 @@
 defimpl Type.Algebra, for: List do
 
   require Type
-  
+
   alias Type.Helpers
   require Helpers
 
@@ -13,7 +13,11 @@ defimpl Type.Algebra, for: List do
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
 
-  def intersection_internal(a, b), do: Type.none()
+  def intersection_internal(a, b) do
+    a |> IO.inspect(label: "17")
+    b |> IO.inspect(label: "18")
+    Type.none()
+  end
 
 #  use Type.Helpers
 #

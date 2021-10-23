@@ -79,7 +79,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
         %Bitstring{size: 7, unit: 8} <~> %Bitstring{size: 15, unit: 8}
     end
 
-    @tag :skip # until intersections with unions are validated
     test "with unions" do
       assert @basic_binary == @basic_binary <~> (@basic_bitstring <|> atom())
       assert none() == @basic_binary <~> (atom() <|> port())

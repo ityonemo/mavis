@@ -41,7 +41,6 @@ defmodule TypeTest.TypeMap.IntersectionTest do
   end
 
   describe "a complicated optional type example" do
-    #@tag :skip
     test "segments its matches correctly" do
       # These maps can take integers.
       # Map 1:      0   3       5      7
@@ -73,29 +72,24 @@ defmodule TypeTest.TypeMap.IntersectionTest do
       assert none() == @foo_int <~> map(%{bar: integer()})
     end
 
-    @tag :skip
     test "intersect with none if their value types don't match" do
       assert none() == @foo_int <~> map(%{foo: atom()})
     end
   end
 
   describe "maps with matching required and optional types" do
-    #@tag :skip
     test "convert optionals to required" do
       assert @foo_int == @foo_int <~> map(%{optional(:foo) => integer()})
     end
 
-    @tag :skip
     test "intersect optional key types, if necessary" do
       assert @foo_int == @foo_int <~> map(%{atom() => integer()})
     end
 
-    @tag :skip
     test "intersect value types" do
       assert map(%{foo: 1..10}) == @foo_int <~> map(%{atom() => 1..10})
     end
 
-    @tag :skip
     test "intersect with none if it's impossible to construct the required" do
       assert none() ==
         @foo_int <~> map(%{integer() => integer()})
