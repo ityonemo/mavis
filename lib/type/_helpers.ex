@@ -61,10 +61,32 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_intersection_fun(module, call \\ :intersection) do
-    unions_clause = unless __CALLER__.module == Type.Algebra.Type.Union do
+    unions_clause = if __CALLER__.module == Type.Algebra.Type.Union do
+      quote do
+        def intersection(lunion, runion) do
+          Type.Union.intersection(lunion, runion)
+        end
+      end
+    else
       quote do
         def intersection(ltype, rtype = %Type.Union{}) do
           Type.intersection(rtype, ltype)
+        end
+        def intersection(ltype, rtype) do
+          #IO.puts("===========================================")
+          #ltype |> IO.inspect(label: "74")#, structs: false)
+          #rtype |> IO.inspect(label: "75")#, structs: false)
+          #unquote(module) |> IO.inspect(label: "80")
+          #unquote(call) |> IO.inspect(label: "81")
+          case compare(ltype, rtype) do# |> IO.inspect(label: "76") do
+            :gt ->
+              #raise "foo"
+              unquote(module).unquote(call)(ltype, rtype)
+            :lt ->
+              #raise "foo"
+              Type.intersection(rtype, ltype)
+            :eq -> ltype
+          end
         end
       end
     end
@@ -73,22 +95,6 @@ defmodule Type.Helpers do
       def intersection(ltype, %Type{module: nil, name: :any}), do: ltype
       def intersection(type, type), do: type
       unquote(unions_clause)
-      def intersection(ltype, rtype) do
-        #IO.puts("===========================================")
-        #ltype |> IO.inspect(label: "74", structs: false)
-        #rtype |> IO.inspect(label: "75", structs: false)
-        #unquote(module) |> IO.inspect(label: "80")
-        #unquote(call) |> IO.inspect(label: "81")
-        case compare(ltype, rtype) do #|> IO.inspect(label: "76") do
-          :gt ->
-            #raise "foo"
-            unquote(module).unquote(call)(ltype, rtype)
-          :lt ->
-            #raise "foo"
-            Type.intersection(rtype, ltype)
-          :eq -> ltype
-        end
-      end
     end
   end
 

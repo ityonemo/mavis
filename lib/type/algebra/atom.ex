@@ -21,7 +21,7 @@ defimpl Type.Algebra, for: Atom do
     Type.none()
   end
 
-  defp valid_node?(atom) do
+  def valid_node?(atom) do
     node_parts = atom
     |> Atom.to_string
     |> String.split("@")
