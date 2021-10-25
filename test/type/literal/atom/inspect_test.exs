@@ -14,7 +14,7 @@ defmodule TypeTest.LiteralAtom.InspectTest do
     end
 
     test "code translates correctly" do
-      assert :literal == eval_inspect(@literal_atom)
+      assert @literal_atom == eval_inspect(@literal_atom)
     end
   end
 end

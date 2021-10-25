@@ -12,19 +12,19 @@ defmodule TypeTest.LiteralBitstring.InspectTest do
     end
 
     test "code translates correctly" do
-      assert <<7::3>> == eval_inspect(@literal_bitstring)
+      assert @literal_bitstring == eval_inspect(@literal_bitstring)
     end
   end
 
   describe "the literal binary type" do
-    @literal_bitstring Type.of("foobar")
+    @literal_binary Type.of("foobar")
 
     test "looks like a bitstring" do
-      assert ~s("foobar") == inspect(@literal_bitstring)
+      assert ~s("foobar") == inspect(@literal_binary)
     end
 
     test "code translates correctly" do
-      assert "foobar" == eval_inspect(@literal_bitstring)
+      assert @literal_binary == eval_inspect(@literal_binary)
     end
   end
 end
