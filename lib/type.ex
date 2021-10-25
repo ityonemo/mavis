@@ -1353,11 +1353,12 @@ defmodule Type do
   """
   def of(value)
   def of(integer) when is_integer(integer), do: integer
-  def of(float) when is_float(float), do: float()
+  def of(float) when is_float(float), do: float
   def of(atom) when is_atom(atom), do: atom
   def of(reference) when is_reference(reference), do: reference()
   def of(port) when is_port(port), do: port()
   def of(pid) when is_pid(pid), do: pid()
+  def of(bitstring) when is_bitstring(bitstring), do: bitstring
   def of(tuple) when is_tuple(tuple) do
     types = tuple
     |> Tuple.to_list()
@@ -1409,10 +1410,7 @@ defmodule Type do
       _ -> raise "error finding type"
     end
   end
-  def of(bitstring) when is_bitstring(bitstring) do
-    of_bitstring(bitstring)
-  end
-
+  
   defp of_list([head | rest], so_far) do
     of_list(rest, Type.union(Type.of(head), so_far))
   end
@@ -1421,32 +1419,6 @@ defmodule Type do
   end
   defp of_list(non_list, so_far) do
     %Type.List{type: so_far, final: Type.of(non_list)}
-  end
-
-  defp of_bitstring(bitstring, bits_so_far \\ 0)
-  defp of_bitstring(<<>>, 0), do: %Type.Bitstring{size: 0, unit: 0}
-  defp of_bitstring(<<>>, bits) do
-    if Application.get_env(:mavis, :use_smart_strings, true) do
-      bytes = div(bits, 8)
-      remote(String.t(bytes))
-    else
-      remote(String.t)
-    end
-  end
-  defp of_bitstring(<<0::1, chr::7, rest :: binary>>, so_far) when chr != 0 do
-    of_bitstring(rest, so_far + 8)
-  end
-  defp of_bitstring(<<6::3, _::5, 2::2, _::6, rest :: binary>>, so_far) do
-    of_bitstring(rest, so_far + 16)
-  end
-  defp of_bitstring(<<14::4, _::4, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
-    of_bitstring(rest, so_far + 24)
-  end
-  defp of_bitstring(<<30::5, _::3, 2::2, _::6, 2::2, _::6, 2::2, _::6, rest::binary>>, so_far) do
-    of_bitstring(rest, so_far + 32)
-  end
-  defp of_bitstring(bitstring, so_far) do
-    %Type.Bitstring{size: bit_size(bitstring) + so_far, unit: 0}
   end
 
   @spec type_match?(t, term) :: boolean
