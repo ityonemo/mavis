@@ -14,8 +14,16 @@ defmodule TypeTest.InspectCase do
     end
   end
 
-  def eval_inspect(type) do
-    {result, _assigns} = Code.eval_string(inspect type)
-    result
+  def eval_inspect(type_code) do
+    code_str = inspect(type_code)
+    code = if code_str =~ "(" do
+      "Type.#{type_code}"
+    else
+      code_str
+    end
+
+    code
+    |> Code.eval_string
+    |> elem(0)
   end
 end
