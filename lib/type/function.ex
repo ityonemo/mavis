@@ -481,14 +481,26 @@ defmodule Type.Function do
   defimpl Inspect do
     import Inspect.Algebra
 
-    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
     def inspect(%{params: :any, return: return}, opts) do
-      concat(basic_inspect(:any, return, opts) ++ [")"])
+      concat(["type((... -> ", to_doc(return, opts), "))"])
     end
-    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
-      concat(basic_inspect(arity, return, opts) ++ [")"])
+
+    def inspect(%{params: params, return: return}, opts) when is_list(params) do
+      params_docs = params
+      |> Enum.map(&to_doc(&1, opts))
+      |> Enum.intersperse(", ")
+
+      concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])
     end
-    def inspect(%{params: params, return: return}, opts) do
+
+#    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
+#    def inspect(%{params: :any, return: return}, opts) do
+#      concat(basic_inspect(:any, return, opts) ++ [")"])
+#    end
+#    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
+#      concat(basic_inspect(arity, return, opts) ++ [")"])
+#    end
+#    def inspect(%{params: params, return: return}, opts) do
 #
 #      # check if any of the params or the returns have *when* statements
 #      # TODO: nested variables
@@ -507,25 +519,25 @@ defmodule Type.Function do
 #      end
 #      |> Kernel.++([")"])
 #      |> concat
-    end
-
-    defp basic_inspect(params, return, opts) do
-      ["(", render_params(params, opts), " -> ", to_doc(return, opts)]
-    end
-
-    defp render_params(:any, _), do: "..."
-    defp render_params(arity, _) when is_integer(arity) do
-      "_"
-      |> List.duplicate(arity)
-      |> Enum.intersperse(", ")
-      |> concat
-    end
-    defp render_params(lst, opts) do
-      lst
-      |> Enum.map(&to_doc(&1, opts))
-      |> Enum.intersperse(", ")
-      |> concat
-    end
+#    end
+#
+#    defp basic_inspect(params, return, opts) do
+#      ["(", render_params(params, opts), " -> ", to_doc(return, opts)]
+#    end
+#
+#    defp render_params(:any, _), do: "..."
+#    defp render_params(arity, _) when is_integer(arity) do
+#      "_"
+#      |> List.duplicate(arity)
+#      |> Enum.intersperse(", ")
+#      |> concat
+#    end
+#    defp render_params(lst, opts) do
+#      lst
+#      |> Enum.map(&to_doc(&1, opts))
+#      |> Enum.intersperse(", ")
+#      |> concat
+#    end
   end
 end
 

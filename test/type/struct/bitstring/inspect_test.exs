@@ -15,7 +15,7 @@ defmodule TypeTest.Bitstring.InspectTest do
 
   describe "the empty bitstring type" do
     test "looks like itself" do
-      assert ~s(<<_::0>>) == inspect(@empty_bitstring)
+      assert "type(<<>>)" == inspect(@empty_bitstring)
     end
 
     test "code translates correctly" do
@@ -55,7 +55,7 @@ defmodule TypeTest.Bitstring.InspectTest do
 
   describe "the multi bitstring type" do
     test "is wrapped in `type`" do
-      assert "type(<<_::8, _::_*16>>)" == inspect(@multi_bitstring)
+      assert "type(<<_::_*16>>)" == inspect(@multi_bitstring)
     end
 
     test "code translates correctly" do
@@ -65,7 +65,7 @@ defmodule TypeTest.Bitstring.InspectTest do
 
   describe "the compound bitstring type" do
     test "is wrapped in `type`" do
-      assert "type(<<_::_*16>>)" == inspect(@compound_bitstring)
+      assert "type(<<_::16, _::_*8>>)" == inspect(@compound_bitstring)
     end
 
     test "code translates correctly" do

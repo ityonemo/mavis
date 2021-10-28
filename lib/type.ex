@@ -1312,6 +1312,44 @@ defmodule Type do
     end)
   end
 
+  @spec type(term) :: Macro.t
+  @doc """
+  macro wrapper for types which have asts that can't be directly wrapped and
+  reinterpreted.
+
+  Examples:
+
+  ```elixir
+  iex> require Type
+  iex> Type.type(<<>>)
+  %Type.Bitstring{size: 0, unit: 0}
+  ```
+  """
+  defmacro type({:<<>>, _, params}) do
+    fields = Enum.map(params, fn
+      {:"::", _, [{:_, _, _}, {:*, _, [{:_, _, _}, unit]}]} ->
+        {:unit, unit}
+      {:"::", _, [{:_, _, _}, size]} ->
+        {:size, size}
+    end)
+
+    Type.Bitstring
+    |> struct(fields)
+    |> Macro.escape
+  end
+
+  defmacro type([{:->, _, [[{:..., _, _}], return]}]) do
+    Macro.escape(%Type.Function{params: :any, return: return})
+  end
+
+  defmacro type([{:->, _, [params, return]}]) do
+    Macro.escape(%Type.Function{params: params, return: return})
+  end
+
+  defmacro type(_other) do
+    raise "unknown type"
+  end
+
   @spec of(term) :: Type.t
   @doc """
   returns the type of the term.
@@ -1410,7 +1448,7 @@ defmodule Type do
       _ -> raise "error finding type"
     end
   end
-  
+
   defp of_list([head | rest], so_far) do
     of_list(rest, Type.union(Type.of(head), so_far))
   end

@@ -15,15 +15,12 @@ defmodule TypeTest.InspectCase do
   end
 
   def eval_inspect(type_code) do
-    code_str = inspect(type_code)
-    code = if code_str =~ "(" do
-      "Type.#{type_code}"
-    else
-      code_str
-    end
-
-    code
-    |> Code.eval_string
+    macros = Type.__info__(:macros)
+    type_code
+    |> inspect
+    |> Code.eval_string([],
+      macros: [{Type, macros}],
+      requires: [Type])
     |> elem(0)
   end
 end
