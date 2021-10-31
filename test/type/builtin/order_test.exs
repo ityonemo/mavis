@@ -156,22 +156,22 @@ defmodule TypeTest.Builtin.OrderTest do
 
   describe "node" do
     test "is bigger than bottom and float" do
-      assert node_type() > none()  # bottom
-      assert node_type() > float() # outside of group
+      assert type(node()) > none()  # bottom
+      assert type(node()) > float() # outside of group
     end
 
     test "is bigger than that which it is a superclass of" do
-      assert node_type() > :nonode@nohost
+      assert type(node()) > :nonode@nohost
     end
 
     test "is smaller than a union containing it" do
-      assert node_type() < node_type() <|> integer()
+      assert type(node()) < type(node()) <|> integer()
     end
 
     test "is smaller than atom, reference and top" do
-      assert node_type() < atom()
-      assert node_type() < reference() # outside of group
-      assert node_type() < any()       # top
+      assert type(node()) < atom()
+      assert type(node()) < reference() # outside of group
+      assert type(node()) < any()       # top
     end
   end
 
@@ -204,7 +204,7 @@ defmodule TypeTest.Builtin.OrderTest do
 
     test "is bigger than that which it is a superclass of" do
       assert atom() > :foo
-      assert atom() > node_type()
+      assert atom() > type(node())
       assert atom() > module()
     end
 

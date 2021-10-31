@@ -21,8 +21,8 @@ defmodule TypeTest.LiteralAtom.SubtypeTest do
     end
 
     test "is a subtype of node when it has node form" do
-      assert :nonode@nohost in node_type()
-      refute :foobar in node_type()
+      assert :nonode@nohost in type(node())
+      refute :foobar in type(node())
     end
 
     test "is a subtype of module when it is a module" do

@@ -18,8 +18,8 @@ defmodule TypeTest.LiteralAtom.IntersectionTest do
     end
 
     test "with node works is itself if it has node form" do
-      assert :nonode@nohost == :nonode@nohost <~> node_type()
-      assert none() == :foobar <~> node_type()
+      assert :nonode@nohost == :nonode@nohost <~> type(node())
+      assert none() == :foobar <~> type(node())
     end
 
     test "with module generally works" do

@@ -217,9 +217,9 @@ defmodule Type do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.type_match?(node_type(), :foo)
+  iex> Type.type_match?(type(node()), :foo)
   false
-  iex> Type.type_match?(node_type(), :nonode@nohost)
+  iex> Type.type_match?(type(node()), :nonode@nohost)
   true
   ```
   """
@@ -659,66 +659,6 @@ defmodule Type do
     |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
 
     struct_of(:"Type.Map", map_list)
-  end
-
-  @doc """
-  generates the function type from a type-like ast.  Note that the AST
-  must be in a parentheses set.  If the parameters are `...`, it will
-  generate the any function; for the generic n-arity function use `_`
-  for each of the parameters.
-
-  ### Examples:
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> function (atom() -> pos_integer())
-  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
-  iex> function (... -> pos_integer())
-  %Type.Function{params: :any, return: %Type{name: :pos_integer}}
-  iex> function (_, _ -> pos_integer())
-  %Type.Function{params: 2, return: %Type{name: :pos_integer}}
-  ```
-
-  If you want to tag function variables or constrain them, you can
-  pass a keyword or atom list to the second parameter.  These variables
-  must appear in the return.
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> function (i -> i when i: var)
-  %Type.Function{params: [%Type.Function.Var{name: :i}],
-                return: %Type.Function.Var{name: :i}}
-  iex> function (i -> i when i: pos_integer())
-  %Type.Function{params: [%Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}],
-                 return: %Type.Function.Var{name: :i, constraint: %Type{name: :pos_integer}}}
-  ```
-
-  *usable in guards*
-  """
-  @doc type: true
-  defmacro function([{:->, _, [[{:..., _, _}], return]}]) do
-    quote do %Type.Function{params: :any, return: unquote(return)} end
-  end
-  # special case zero-arity
-  defmacro function([{:->, _, [[], return]}]) do
-    quote do %Type.Function{params: [], return: unquote(return)} end
-  end
-  defmacro function([{:->, _, [params, {:when, _, [return, constraints]}]}]) do
-    # TODO: fail if any constraint is not in the param or in the return.
-    c_f = constraints_to_lambda(constraints)
-    parsed_params = c_f.(params, c_f)
-    parsed_return = c_f.(return, c_f)
-    quote do
-      %Type.Function{params: unquote(parsed_params), return: unquote(parsed_return)}
-    end
-  end
-  defmacro function([{:->, _, [params, return]}]) do
-    # TODO: fail if there's a partial underscore match
-    if Enum.all?(params, &match?({:_, _, _}, &1)) do
-      quote do %Type.Function{params: unquote(length(params)), return: unquote(return)} end
-    else
-      quote do %Type.Function{params: unquote(params), return: unquote(return)} end
-    end
   end
 
   # generates a y-combinator that aggressively converts ASTs which are single
@@ -1320,10 +1260,18 @@ defmodule Type do
   Examples:
 
   ```elixir
-  iex> require Type
-  iex> Type.type(<<>>)
+  iex> import Type
+  iex> type(<<>>)
   %Type.Bitstring{size: 0, unit: 0}
+  iex> type(( -> any))
+  %Type.Function{params: [], return: any()}
+  iex> type((... -> any))
+  %Type.Function{params: :any, return: any()}
+  iex> type(_, _ -> any)
+  %Type.Function{params: 2, return: any()}
   ```
+
+  usable in guards.
   """
   defmacro type({:<<>>, _, params}) do
     fields = Enum.map(params, fn
@@ -1339,11 +1287,98 @@ defmodule Type do
   end
 
   defmacro type([{:->, _, [[{:..., _, _}], return]}]) do
-    Macro.escape(%Type.Function{params: :any, return: return})
+    Macro.escape(%Type.Function{params: :any, return: Macro.expand(return, __CALLER__)})
   end
 
   defmacro type([{:->, _, [params, return]}]) do
-    Macro.escape(%Type.Function{params: params, return: return})
+    params = cond do
+      params == [] -> []
+      Enum.all?(params, &match?({:_, _, _}, &1)) ->
+        length(params)
+      true ->
+        Macro.expand(params, __CALLER__)
+    end
+
+    Macro.escape(
+      %Type.Function{
+        params: params,
+        return: Macro.expand(return, __CALLER__)
+      }
+    )
+  end
+
+  defmacro type({:node, _, []}) do
+    Macro.escape(%Type{module: nil, name: :node, params: []})
+  end
+
+  defmacro type([]), do: []
+
+  defmacro type([{:..., _, a}]) when is_atom(a) do  # note this could be `nil` or `Elixir`
+    Macro.escape(%Type.List{type: %Type{module: nil, name: :any, params: []}, final: []})
+  end
+
+  defmacro type([t, {:..., _, a}]) when is_atom(a) do
+    quote do
+      %Type.List{type: unquote(t), final: []}
+    end
+  end
+
+  defmacro type([{a, t}]) when is_atom(a) do
+    quote do
+      %Type.Union{of: [%Type.List{type: %Type.Tuple{elements: [unquote(a), unquote(t)], fixed: true}}, []]}
+    end
+  end
+
+  defmacro type([t]) do
+    quote do
+      %Type.Union{of: [%Type.List{type: unquote(t), final: []}, []]}
+    end
+  end
+
+  defmacro type(keyword) when is_list(keyword) do
+    keyword
+    |> Enum.reduce(fn
+      {k, _}, _ when not is_atom(k) -> raise "unknown type"
+      {k, v}, acc ->
+        acc = List.wrap(acc)
+        if v in Keyword.values(acc) do
+          Enum.map(acc, fn
+            {k2, v2} when v2 == v ->
+              {Enum.sort([k | List.wrap(k2)], :desc), v}
+            other -> other
+          end)
+        else
+          Enum.sort([{k, v} | acc], fn
+            {k, _}, {l, _} ->
+              [k | _] = List.wrap(k)
+              [l | _] = List.wrap(l)
+              k > l
+          end)
+        end
+    end)
+    |> case do
+      [{k, v}] when is_atom(k) ->
+        quote do
+          %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
+        end
+      [{atoms, v}] ->
+        k = Macro.escape(%Type.Union{of: atoms})
+        quote do
+          %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
+        end
+      list ->
+        kvlist = Enum.map(list, fn
+          {k, v} when is_atom(k) -> tuple(k, v)
+          {l, v} when is_list(l) -> tuple(Macro.escape(%Type.Union{of: l}), v)
+        end)
+        quote do
+          %Type.Union{of: [%Type.List{type: %Type.Union{of: unquote(kvlist)}, final: []}, []]}
+        end
+    end
+  end
+
+  defp tuple(k, v) do
+    quote do %Type.Tuple{elements: [unquote(k), unquote(v)], fixed: true} end
   end
 
   defmacro type(_other) do

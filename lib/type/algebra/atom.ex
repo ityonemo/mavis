@@ -14,7 +14,7 @@ defimpl Type.Algebra, for: Atom do
   def compare_internal(latom, ratom) when latom > ratom, do: :gt
 
   def intersection_internal(atom, Type.atom()), do: atom
-  def intersection_internal(atom, Type.node_type()) do
+  def intersection_internal(atom, Type.type(node())) do
     if valid_node?(atom), do: atom, else: Type.none()
   end
   def intersection_internal(a, b) do
@@ -42,11 +42,11 @@ defimpl Type.Algebra, for: Atom do
 #
 #  usable_as do
 #    def usable_as(_, atom(), _), do: :ok
-#    def usable_as(atom, node_type(), meta) do
+#    def usable_as(atom, type(node()), meta) do
 #      if Type.Algebra.Type.valid_node?(atom) do
 #        :ok
 #      else
-#        {:error, Message.make(atom, node_type(), meta)}
+#        {:error, Message.make(atom, type(node()), meta)}
 #      end
 #    end
 #    def usable_as(atom, module(), meta) do
@@ -60,7 +60,7 @@ defimpl Type.Algebra, for: Atom do
 #
 #  intersection do
 #    def intersection(atom, atom()), do: atom
-#    def intersection(atom, node_type()) do
+#    def intersection(atom, type(node())) do
 #      if Type.Algebra.Type.valid_node?(atom), do: atom, else: none()
 #    end
 #    def intersection(atom, module()) do

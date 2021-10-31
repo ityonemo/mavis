@@ -123,6 +123,20 @@ defmodule Type.Spec do
     parse(fun, add_constraints(assigns, constraints))
   end
 
+  def parse_spec([one_branch]) do
+    parse_branch(one_branch)
+  end
+
+  def parse_spec(branches) do
+    branch_specs = branches
+    |> Enum.map(&parse_branch/1)
+    |> Type.Function.Branched.new()
+  end
+
+  defp parse_branch({:type, _, :fun, [{:type, _, :product, params}, return]}) do
+    %Type.Function{params: Enum.map(params, &parse/1), return: parse(return)}
+  end
+
   defp add_constraints(assigns, []), do: assigns
   defp add_constraints(assigns, [constraint | rest]) do
     assigns

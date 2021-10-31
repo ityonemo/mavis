@@ -235,28 +235,28 @@ defmodule TypeTest.Builtin.UsableAsTest do
 
   describe "node" do
     test "is usable as self, atom, and any" do
-      assert :ok = node_type() ~> node_type()
-      assert :ok = node_type() ~> atom()
-      assert :ok = node_type() ~> any()
+      assert :ok = type(node()) ~> type(node())
+      assert :ok = type(node()) ~> atom()
+      assert :ok = type(node()) ~> any()
     end
 
     test "is usable as a union with self or atom" do
-      assert :ok = node_type() ~> (node_type() <|> integer())
-      assert :ok = node_type() ~> (atom() <|> integer())
+      assert :ok = type(node()) ~> (type(node()) <|> integer())
+      assert :ok = type(node()) ~> (atom() <|> integer())
     end
 
     test "might be usable as an atom literal with node form" do
-      assert {:maybe, [%Message{type: node_type(), target: :nonode@nohost}]} =
-        node_type() ~> :nonode@nohost
+      assert {:maybe, [%Message{type: type(node()), target: :nonode@nohost}]} =
+        type(node()) ~> :nonode@nohost
     end
 
     test "is not usable as an atom literal without node form" do
-      assert {:error, %Message{type: node_type(), target: :foobar}} ==
-        node_type() ~> :foobar
+      assert {:error, %Message{type: type(node()), target: :foobar}} ==
+        type(node()) ~> :foobar
     end
 
     test "is not usable as a union of disjoint types" do
-      assert {:error, _} = node_type() ~> (float() <|> integer())
+      assert {:error, _} = type(node()) ~> (float() <|> integer())
     end
   end
 
@@ -304,8 +304,8 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as a node or module" do
-      assert {:maybe, [%Message{type: atom(), target: node_type()}]} =
-        atom() ~> node_type()
+      assert {:maybe, [%Message{type: atom(), target: type(node())}]} =
+        atom() ~> type(node())
       assert {:maybe, [%Message{type: atom(), target: module()}]} =
         atom() ~> module()
     end

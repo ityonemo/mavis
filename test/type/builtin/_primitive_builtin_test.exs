@@ -50,10 +50,10 @@ defmodule TypeTest.PrimitiveBuiltinTest do
 
   describe "node/0 type" do
     test "works in use" do
-      assert %Type{name: :node} == node_type()
+      assert %Type{name: :node} == type(node())
     end
     test "works in matches" do
-      assert node_type() = %Type{name: :node}
+      assert type(node()) = %Type{name: :node}
     end
   end
 

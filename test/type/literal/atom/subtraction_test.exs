@@ -18,8 +18,8 @@ defmodule TypeTest.LiteralAtom.SubtractionTest do
     end
 
     test "of node works is itself if it has node form" do
-      assert none() == :nonode@nohost - node_type()
-      assert :foobar == :foobar - node_type()
+      assert none() == :nonode@nohost - type(node())
+      assert :foobar == :foobar - type(node())
     end
 
     test "of module works if it is a module" do

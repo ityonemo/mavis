@@ -1,5 +1,5 @@
 defmodule Type.Function do
-
+  use Type.Helpers
   @moduledoc """
   Represents a function type.
 
@@ -343,30 +343,6 @@ defmodule Type.Function do
 #
   #  use Type.Helpers
 #
-  #  group_compare do
-  #    def group_compare(%{params: :any, return: r1}, %{params: :any, return: r2}) do
-  #      Type.compare(r1, r2)
-  #    end
-  #    def group_compare(%{params: :any}, _),           do: :gt
-  #    def group_compare(_, %{params: :any}),           do: :lt
-  #    def group_compare(%{params: p1}, %{params: p2})
-  #        when length(p1) < length(p2),                do: :gt
-  #    def group_compare(%{params: p1}, %{params: p2})
-  #        when length(p1) > length(p2),                do: :lt
-  #    def group_compare(f1, f2) do
-  #      [f1.return | f1.params]
-  #      |> Enum.zip([f2.return | f2.params])
-  #      |> Enum.each(fn {t1, t2} ->
-  #        compare = Type.compare(t1, t2)
-  #        unless compare == :eq do
-  #          throw compare
-  #        end
-  #      end)
-  #      :eq
-  #    catch
-  #      compare when compare in [:gt, :lt] -> compare
-  #    end
-  #  end
 #
   #  alias Type.{Function, Message}
 #
@@ -488,6 +464,14 @@ defmodule Type.Function do
     def inspect(%{params: params, return: return}, opts) when is_list(params) do
       params_docs = params
       |> Enum.map(&to_doc(&1, opts))
+      |> Enum.intersperse(", ")
+
+      concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])
+    end
+
+    def inspect(%{params: count, return: return}, opts) when is_integer(count) do
+      params_docs = "_"
+      |> List.duplicate(count)
       |> Enum.intersperse(", ")
 
       concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])

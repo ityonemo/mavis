@@ -9,6 +9,9 @@ defmodule TypeTest.InspectCase do
       Enum.each(attrs, fn
         {_, _, :type, {name, type, _}} ->
           Module.put_attribute(unquote(parent), name, Type.Spec.parse(type))
+        {_, _, :spec, {{name, _arity}, branches}} ->
+          # assume for our test cases we don't care about arity.
+          Module.put_attribute(unquote(parent), name, Type.Spec.parse_spec(branches))
         _ -> :ok
       end)
     end

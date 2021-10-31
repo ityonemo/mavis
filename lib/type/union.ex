@@ -284,9 +284,20 @@ defmodule Type.Union do
         tuple({atom(), kwt}) ->
           ["keyword(", to_doc(kwt, opts), ")"]
         _ ->
-          ["list(", to_doc(t, opts), ")"]
+          t
+          |> maybe_keyword
+          |> Enum.sort_by(&elem(&1, 0))
+          |> Enum.map(fn {a, t} -> [to_doc(t, opts), "#{a}: "] end)
+          |> Enum.intersperse([", "])
+          |> Enum.flat_map(&Function.identity/1)
+          |> Enum.reverse(["])"])
+          |> List.insert_at(0, "type([")
       end
+    catch
+      :default ->
+        ["type([", to_doc(t, opts), "])"]
     end
+
     defp emptify(%Type.List{type: any(), final: any()}, _opts) do
       ["maybe_improper_list()"]
     end
@@ -321,5 +332,23 @@ defmodule Type.Union do
       |> Enum.intersperse(" | ")
       |> concat
     end
+
+    defp maybe_keyword(%Type.Tuple{elements: [a, t], fixed: true}) when is_atom(a) do
+      [{a, t}]
+    end
+
+    defp maybe_keyword(%Type.Tuple{elements: [%Type.Union{of: atoms}, t], fixed: true}) do
+      Enum.map(atoms, fn
+        atom when is_atom(atom) -> {atom, t}
+        _ -> throw :default
+      end)
+    end
+
+    defp maybe_keyword(%Type.Union{of: types}) do
+      Enum.flat_map(types, &maybe_keyword/1)
+    end
+
+    defp maybe_keyword(_), do: throw :default
+
   end
 end

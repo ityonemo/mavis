@@ -230,17 +230,17 @@ defmodule TypeTest.Builtin.SubtractionTest do
 
   describe "the subtraction from node" do
     test "of any, atom, and itself is none" do
-      assert none() == node_type() - any()
-      assert none() == node_type() - atom()
-      assert none() == node_type() - node_type()
+      assert none() == type(node()) - any()
+      assert none() == type(node()) - atom()
+      assert none() == type(node()) - type(node())
     end
 
     test "of an atom that has node form is itself" do
       assert %Type.Subtraction{
-        base: node_type(),
+        base: type(node()),
         exclude: :nonode@nohost
-      } == node_type() - :nonode@nohost
-      assert node_type() == node_type() - :foobar
+      } == type(node()) - :nonode@nohost
+      assert type(node()) == type(node()) - :foobar
     end
   end
 
@@ -265,8 +265,8 @@ defmodule TypeTest.Builtin.SubtractionTest do
 
       assert %Type.Subtraction{
         base: atom(),
-        exclude: node_type()
-      } == atom() - node_type()
+        exclude: type(node())
+      } == atom() - type(node())
     end
 
     test "of unions works as expected" do

@@ -26,6 +26,6 @@ defmodule TypeTest.Type.FetchSpec.AtomsTest do
   end
 
   test "node" do
-    assert {:ok, identity_for(node_type())} == Type.fetch_spec(@source, :node_spec, 1)
+    assert {:ok, identity_for(type(node()))} == Type.fetch_spec(@source, :node_spec, 1)
   end
 end

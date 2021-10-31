@@ -28,11 +28,11 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(neg_integer(), _..b) when b < 0, do: :gt
   def compare_internal(float(), f) when is_float(f), do: :gt
   def compare_internal(atom(), atom) when is_atom(atom), do: :gt
-  def compare_internal(atom(), node_type()), do: :gt
+  def compare_internal(atom(), type(node())), do: :gt
   def compare_internal(atom(), module()), do: :gt
-  def compare_internal(module(), node_type()), do: :gt
+  def compare_internal(module(), type(node())), do: :gt
   def compare_internal(module(), atom) when is_atom(atom), do: :gt
-  def compare_internal(node_type(), atom) when is_atom(atom), do: :gt
+  def compare_internal(type(node()), atom) when is_atom(atom), do: :gt
   def compare_internal(%{module: String, name: :t}, binary) when is_binary(binary), do: :gt
   def compare_internal(_, _), do: :lt
 
@@ -49,10 +49,10 @@ defimpl Type.Algebra, for: Type do
   def intersection_internal(pos_integer(), _..a) when a > 1, do: 1..a
   def intersection_internal(float(), f) when is_float(f), do: f
   def intersection_internal(atom(), atom) when is_atom(atom), do: atom
-  def intersection_internal(atom(), node_type()), do: node_type()
+  def intersection_internal(atom(), type(node())), do: type(node())
   def intersection_internal(atom(), module()), do: module()
   def intersection_internal(module(), atom) when is_atom(atom), do: atom
-  def intersection_internal(node_type(), atom) do
+  def intersection_internal(type(node()), atom) do
     require Type
     if Type.Algebra.Atom.valid_node?(atom), do: atom, else: Type.none()
   end
@@ -103,12 +103,12 @@ defimpl Type.Algebra, for: Type do
 #    end
 #
 #    # atom
-#    def usable_as(node_type(), atom(), _meta), do: :ok
-#    def usable_as(node_type(), atom, meta) when is_atom(atom) do
+#    def usable_as(type(node()), atom(), _meta), do: :ok
+#    def usable_as(type(node()), atom, meta) when is_atom(atom) do
 #      if valid_node?(atom) do
-#        {:maybe, [Message.make(node_type(), atom, meta)]}
+#        {:maybe, [Message.make(type(node()), atom, meta)]}
 #      else
-#        {:error, Message.make(node_type(), atom, meta)}
+#        {:error, Message.make(type(node()), atom, meta)}
 #      end
 #    end
 #    def usable_as(module(), atom(), _meta), do: :ok
@@ -117,8 +117,8 @@ defimpl Type.Algebra, for: Type do
 #      # warning messages for when the module is or is not detected.
 #      {:maybe, [Message.make(module(), atom, meta)]}
 #    end
-#    def usable_as(atom(), node_type(), meta) do
-#      {:maybe, [Message.make(atom(), node_type(), meta)]}
+#    def usable_as(atom(), type(node()), meta) do
+#      {:maybe, [Message.make(atom(), type(node()), meta)]}
 #    end
 #    def usable_as(atom(), module(), meta) do
 #      {:maybe, [Message.make(atom(), module(), meta)]}
@@ -179,16 +179,16 @@ defimpl Type.Algebra, for: Type do
 #    def intersection(pos_integer(), _..1), do: 1
 #    def intersection(pos_integer(), _..b) when b > 0, do: 1..b
 #    # atoms
-#    def intersection(node_type(), atom) when is_atom(atom) do
+#    def intersection(type(node()), atom) when is_atom(atom) do
 #      if valid_node?(atom), do: atom, else: none()
 #    end
-#    def intersection(node_type(), atom()), do: node_type()
+#    def intersection(type(node()), atom()), do: type(node())
 #    def intersection(module(), atom) when is_atom(atom) do
 #      if valid_module?(atom), do: atom, else: none()
 #    end
 #    def intersection(module(), atom()), do: module()
 #    def intersection(atom(), module()), do: module()
-#    def intersection(atom(), node_type()), do: node_type()
+#    def intersection(atom(), type(node())), do: type(node())
 #    def intersection(atom(), atom) when is_atom(atom), do: atom
 #    # other literals
 #    def intersection(float(), value) when is_float(value), do: value
@@ -286,8 +286,8 @@ defimpl Type.Algebra, for: Type do
 #    def group_compare(_, atom()),                  do: :lt
 #    def group_compare(module(), _),                do: :gt
 #    def group_compare(_, module()),                do: :lt
-#    def group_compare(node_type(), _),                  do: :gt
-#    def group_compare(_, node_type()),                  do: :lt
+#    def group_compare(type(node()), _),                  do: :gt
+#    def group_compare(_, type(node())),                  do: :lt
 #
 #    # group compare for iolist
 #    def group_compare(iolist(), what), do: Type.Iolist.compare_list(what)

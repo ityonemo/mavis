@@ -190,14 +190,14 @@ defmodule TypeTest.Builtin.IntersectionTest do
 
   describe "the intersection of node" do
     test "with any, atom, and itself is itself" do
-      assert node_type() == node_type() <~> any()
-      assert node_type() == node_type() <~> atom()
-      assert node_type() == node_type() <~> node_type()
+      assert type(node()) == type(node()) <~> any()
+      assert type(node()) == type(node()) <~> atom()
+      assert type(node()) == type(node()) <~> type(node())
     end
 
     test "with an atom that has node form is itself" do
-      assert :nonode@nohost == node_type() <~> :nonode@nohost
-      assert none() == node_type() <~> :foobar
+      assert :nonode@nohost == type(node()) <~> :nonode@nohost
+      assert none() == type(node()) <~> :foobar
     end
   end
 

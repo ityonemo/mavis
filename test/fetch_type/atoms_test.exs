@@ -25,6 +25,6 @@ defmodule TypeTest.Type.FetchType.AtomsTest do
   end
 
   test "node" do
-    assert {:ok, node_type()} == Type.fetch_type(@source, :node_type)
+    assert {:ok, type(node())} == Type.fetch_type(@source, :node_type)
   end
 end

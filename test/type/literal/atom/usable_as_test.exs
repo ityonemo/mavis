@@ -22,7 +22,7 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
     end
 
     test "node, when they have the right form" do
-      assert :ok == :nonode@nohost ~> node_type()
+      assert :ok == :nonode@nohost ~> type(node())
     end
 
     test "module, when they are modules" do
@@ -49,7 +49,7 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
     end
 
     test "node, when they don't have the right form" do
-      assert {:error, _} = :foobar ~> node_type()
+      assert {:error, _} = :foobar ~> type(node())
     end
 
     test "any other type" do

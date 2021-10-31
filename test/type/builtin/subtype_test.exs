@@ -164,17 +164,17 @@ defmodule TypeTest.Builtin.SubtypeTest do
 
   describe "builtin node" do
     test "is a subtype of itself, atom, and any" do
-      assert node_type() in node_type()
-      assert node_type() in atom()
-      assert node_type() in any()
+      assert type(node()) in type(node())
+      assert type(node()) in atom()
+      assert type(node()) in any()
     end
 
     test "is a subtype of unions with itself" do
-      assert node_type() in (integer() <|> node_type())
+      assert type(node()) in (integer() <|> type(node()))
     end
 
     test "is not a subtype of orthogonal unions" do
-      refute node_type() in (pid() <|> integer())
+      refute type(node()) in (pid() <|> integer())
     end
   end
 

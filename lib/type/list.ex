@@ -300,26 +300,26 @@ defmodule Type.List do
     def inspect(list = %{final: [], type: 0..1114111}, _) do
       "nonempty_charlist()"
     end
-    def inspect(%{final: [], type: any()}, _), do: "list(...)"
+    def inspect(%{final: [], type: any()}, _), do: "type([...])"
     # keyword list literal syntax
     def inspect(%{
         final: [],
         type: tuple({k, v})}, opts) when is_atom(k) do
-      concat(["list(", "#{k}: ", to_doc(v, opts), ", ...)"])
+      concat(["type([", "#{k}: ", to_doc(v, opts), ", ...])"])
     end
     def inspect(list = %{
         final: [],
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
             tuple({e, _}) when is_atom(e), &1)) do
-        ["list(",
+        ["type([",
           type.of
           |> Enum.reverse
           |> Enum.map(fn %{elements: [atom, type]} ->
             ["#{atom}: ", to_doc(type, opts)]
           end)
           |> Enum.intersperse(", "),
-          "...)"]
+          "...])"]
         |> List.flatten
         |> concat
       else
@@ -352,7 +352,7 @@ defmodule Type.List do
     def inspect(list, opts), do: render_improper(list, opts)
 
     defp render_basic(list, opts) do
-      concat(["list(", to_doc(list.type, opts), ", ...)"])
+      concat(["type([", to_doc(list.type, opts), ", ...])"])
     end
 
     defp render_maybe_improper(list, opts) do
