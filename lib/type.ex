@@ -1336,44 +1336,55 @@ defmodule Type do
   end
 
   defmacro type(keyword) when is_list(keyword) do
-    keyword
-    |> Enum.reduce(fn
-      {k, _}, _ when not is_atom(k) -> raise "unknown type"
-      {k, v}, acc ->
-        acc = List.wrap(acc)
-        if v in Keyword.values(acc) do
-          Enum.map(acc, fn
-            {k2, v2} when v2 == v ->
-              {Enum.sort([k | List.wrap(k2)], :desc), v}
-            other -> other
+    if (__CALLER__.context) do
+      keyword
+      |> Enum.reduce(fn
+        {k, _}, _ when not is_atom(k) -> raise "unknown type"
+        {k, v}, acc ->
+          acc = List.wrap(acc)
+          if v in Keyword.values(acc) do
+            Enum.map(acc, fn
+              {k2, v2} when v2 == v ->
+                {Enum.sort([k | List.wrap(k2)], :desc), v}
+              other -> other
+            end)
+          else
+            Enum.sort([{k, v} | acc], fn
+              {k, _}, {l, _} ->
+                [k | _] = List.wrap(k)
+                [l | _] = List.wrap(l)
+                k > l
+            end)
+          end
+      end)
+      |> case do
+        [{k, v}] when is_atom(k) ->
+          quote do
+            %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
+          end
+        [{atoms, v}] ->
+          k = Macro.escape(%Type.Union{of: atoms})
+          quote do
+            %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
+          end
+        list ->
+          kvlist = Enum.map(list, fn
+            {k, v} when is_atom(k) -> tuple(k, v)
+            {l, v} when is_list(l) -> tuple(Macro.escape(%Type.Union{of: l}), v)
           end)
-        else
-          Enum.sort([{k, v} | acc], fn
-            {k, _}, {l, _} ->
-              [k | _] = List.wrap(k)
-              [l | _] = List.wrap(l)
-              k > l
-          end)
-        end
-    end)
-    |> case do
-      [{k, v}] when is_atom(k) ->
-        quote do
-          %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
-        end
-      [{atoms, v}] ->
-        k = Macro.escape(%Type.Union{of: atoms})
-        quote do
-          %Type.Union{of: [%Type.List{type: unquote(tuple(k, v)), final: []}, []]}
-        end
-      list ->
-        kvlist = Enum.map(list, fn
-          {k, v} when is_atom(k) -> tuple(k, v)
-          {l, v} when is_list(l) -> tuple(Macro.escape(%Type.Union{of: l}), v)
-        end)
-        quote do
-          %Type.Union{of: [%Type.List{type: %Type.Union{of: unquote(kvlist)}, final: []}, []]}
-        end
+          quote do
+            %Type.Union{of: [%Type.List{type: %Type.Union{of: unquote(kvlist)}, final: []}, []]}
+          end
+      end
+    else
+      types = Enum.map(keyword, fn
+        {k, v} when not is_atom(k) -> raise "unknown type"
+        {k, v} -> quote do %Type.Tuple{elements: [unquote(k), unquote(v)], fixed: true} end
+      end)
+
+      quote do
+        type([Type.union(unquote(types))])
+      end
     end
   end
 

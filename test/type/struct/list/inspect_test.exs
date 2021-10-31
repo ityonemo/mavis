@@ -83,4 +83,13 @@ defmodule TypeTest.List.InspectTest do
       assert @three_keyword_list == eval_inspect(@three_keyword_list)
     end
   end
+
+  describe "keywords work" do
+    import Type, only: :macros
+    @test_keyword type([foo: integer(), bar: integer()])
+    test "when executable" do
+      my_type = integer()
+      assert type([foo: integer, bar: my_type]) == @test_keyword
+    end
+  end
 end
