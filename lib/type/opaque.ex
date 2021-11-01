@@ -91,7 +91,10 @@ defmodule Type.Opaque do
       |> Enum.map(&to_doc(&1, opts))
       |> Enum.intersperse(", ")
 
-      concat(["#{inspect opaque.module}.#{opaque.name}("] ++ params ++ [")"])
+      concat(
+        ["opaque(#{inspect opaque.module}.#{opaque.name}("] ++
+        params ++
+        ["), ", to_doc(opaque.type, opts), ")"])
     end
   end
 end

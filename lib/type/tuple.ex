@@ -353,7 +353,7 @@ defmodule Type.Tuple do
       |> Kernel.++(if fixed, do: [], else: ["..."])
       |> Enum.intersperse(", ")
 
-      concat(["tuple({" | inner_contents] ++ ["})"])
+      concat(["type({" | inner_contents] ++ ["})"])
     end
   end
 end

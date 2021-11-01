@@ -642,24 +642,6 @@ defmodule Type do
   ```
 
   """
-  @doc type: true
-  defmacro map({:%{}, _, map_ast}) do
-    map_list = map_ast
-    |> Enum.group_by(fn
-      {{:required, _, _}, _} -> :required
-      {{:optional, _, _}, _} -> :optional
-      {k, _} when is_atom(k) or is_integer(k) -> :required
-      _ -> :optional
-    end, fn
-      {{:required, _, [k]}, v} -> {k, v}
-      {{:optional, _, [k]}, v} -> {k, v}
-      kv -> kv
-    end)
-    |> Enum.map(&(&1))
-    |> Enum.map(fn {k, v} -> {k, {:%{}, [], v}} end)
-
-    struct_of(:"Type.Map", map_list)
-  end
 
   # generates a y-combinator that aggressively converts ASTs which are single
   # variables into var variables.
@@ -1267,7 +1249,7 @@ defmodule Type do
   %Type.Function{params: [], return: any()}
   iex> type((... -> any))
   %Type.Function{params: :any, return: any()}
-  iex> type(_, _ -> any)
+  iex> type((_, _ -> any))
   %Type.Function{params: 2, return: any()}
   ```
 
@@ -1378,7 +1360,7 @@ defmodule Type do
       end
     else
       types = Enum.map(keyword, fn
-        {k, v} when not is_atom(k) -> raise "unknown type"
+        {k, _} when not is_atom(k) -> raise "unknown type"
         {k, v} -> quote do %Type.Tuple{elements: [unquote(k), unquote(v)], fixed: true} end
       end)
 
@@ -1388,12 +1370,97 @@ defmodule Type do
     end
   end
 
-  defp tuple(k, v) do
-    quote do %Type.Tuple{elements: [unquote(k), unquote(v)], fixed: true} end
+  defmacro type({:%{}, _, map_ast}) do
+    map_as_proplist = map_proplist_from_ast(map_ast)
+    quote do
+      %Type.Map{
+        optional: unquote({:%{}, [], map_as_proplist.optional}),
+        required: unquote({:%{}, [], map_as_proplist.required})
+      }
+    end
+  end
+
+  # structs
+  defmacro type({:%, _, [{:__aliases__, _, aliases}, {:%{}, _, kvs}]}) do
+    module = Module.concat(aliases)
+
+    map_as_proplist = kvs
+    |> map_proplist_from_ast()
+    |> Map.update(:required, [], fn requireds ->
+      requireds = Keyword.put(requireds, :__struct__, module)
+
+      module
+      |> struct()
+      |> Map.keys()
+      |> Enum.reduce(
+        requireds,
+        &Keyword.put_new(&2, &1, Macro.escape(%Type{module: nil, name: :any, params: []})))
+    end)
+
+    quote do
+      %Type.Map{
+        optional: unquote({:%{}, [], map_as_proplist.optional}),
+        required: unquote({:%{}, [], map_as_proplist.required})
+      }
+    end
+  end
+
+  defmacro type({:{}, _, contents}) do
+    tupletype(contents)
+  end
+
+  defmacro type({a, b}) do
+    tupletype([a, b])
   end
 
   defmacro type(_other) do
     raise "unknown type"
+  end
+
+  defp tupletype(contents, so_far \\ [])
+  defp tupletype([{:..., _, _}], so_far) do
+    quote do
+      %Type.Tuple{elements: unquote(Enum.reverse(so_far)), fixed: false}
+    end
+  end
+  defp tupletype([], so_far) do
+    quote do
+      %Type.Tuple{elements: unquote(Enum.reverse(so_far)), fixed: true}
+    end
+  end
+  defp tupletype([a | rest], so_far) do
+    tupletype(rest, [a | so_far])
+  end
+
+  defmacro opaque({{:., _, [{:__aliases__, _, modpath}, name]}, _, params}, type) do
+    module = Module.concat(modpath)
+    quote do
+      %Type.Opaque{
+        module: unquote(module),
+        name: unquote(name),
+        params: unquote(params),
+        type: unquote(type)}
+    end
+  end
+
+  defp map_proplist_from_ast(map_ast) do
+    map_ast
+    |> Enum.group_by(fn
+      {{:required, _, _}, _} -> :required
+      {{:optional, _, _}, _} -> :optional
+      {k, _} when is_atom(k) or is_integer(k) -> :required
+      _ -> :optional
+    end, fn
+      {{:required, _, [k]}, v} -> {k, v}
+      {{:optional, _, [k]}, v} -> {k, v}
+      kv -> kv
+    end)
+    |> Map.put_new(:required, [])
+    |> Map.put_new(:optional, [])
+  end
+
+  defp tuple(k, v) do
+    quote do %Type.Tuple{elements: [unquote(k), unquote(v)], fixed: true} end
   end
 
   @spec of(term) :: Type.t

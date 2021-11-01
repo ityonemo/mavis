@@ -597,17 +597,17 @@ defmodule Type.Map do
     def inspect(map = %{required: %{__struct__: struct}}, opts) do
       inner = map.required
       |> Map.from_struct
-      |> Enum.reject(&(elem(&1, 1) == @anymap))
+      |> Enum.reject(&(elem(&1, 1) == Type.any()))
       |> inner_content(opts)
 
-      concat(["map(%#{inspect struct}{", inner, "})"])
+      concat(["type(%#{inspect struct}{", inner, "})"])
     end
     def inspect(%{optional: @anymap}, _opts) do
       "map()"
     end
 
     def inspect(%{required: required, optional: optional}, opts) do
-      concat(["map(%{", inner_content(required, optional, opts), "})"])
+      concat(["type(%{", inner_content(required, optional, opts), "})"])
     end
 
     def inner_content(required, optional \\ %{}, opts) do
