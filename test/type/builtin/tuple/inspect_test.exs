@@ -7,7 +7,6 @@ defmodule TypeTest.BuiltinTuple.InspectTest do
   describe "the tuple type" do
     pull_types(defmodule Tuple do
       @type tuple_type :: tuple
-
     end)
 
     test "looks like a none" do
