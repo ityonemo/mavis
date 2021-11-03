@@ -456,7 +456,11 @@ defmodule Type.Function do
 
   defimpl Inspect do
     import Inspect.Algebra
+    require Type
 
+    def inspect(%{params: :any, return: Type.any()}, _opts) do
+      "function()"
+    end
     def inspect(%{params: :any, return: return}, opts) do
       concat(["type((... -> ", to_doc(return, opts), "))"])
     end

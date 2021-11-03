@@ -360,11 +360,11 @@ defmodule Type do
              %Type.Tuple{elements: [module(), atom(), arity()]},
              "%Type.Tuple{elements: [module(), atom(), arity()]}"
   defbuiltin :struct,
-             %Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}},
-             "%Type.Map{required: %{__struct__: atom()}, optional: %{atom() => any()}}"
+             %Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}},
+             "%Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}}"
   defbuiltin :nonempty_charlist,
-             %Type.List{type: 0..0x10_FFFF, final: []},
-             "%Type.List{type: 0..0x10_FFFF}"
+             %Type.List{type: char(), final: []},
+             "%Type.List{type: char()}"
   defbuiltin :nonempty_list,
              %Type.List{type: any(), final: []},
              "%Type.List{type: any()}"
@@ -372,13 +372,13 @@ defmodule Type do
              %Type.List{type: any(), final: any()},
              "%Type.List{type: any(), final: any()}"
   defbuiltin :charlist,
-             %Type.List{type: 0..0x10_FFFF, final: []},
-             "%Type.List{type: 0..0x10_FFFF}"
+             %Type.Union{of: [%Type.List{type: char(), final: []}, []]},
+             "%Type.Union{of: [%Type.List{type: char(), final: []}, []]}"
   defbuiltin :keyword,
-             %Type.List{
+             %Type.Union{of: [%Type.List{
                type: %Type.Tuple{elements: [atom(), any()]},
-               final: []},
-             "%Type.List{type: tuple({atom(), any()})}"
+               final: []}, []]},
+             "%Type.Union{of: [%Type.List{type: tuple({atom(), any()})}, []}"
   defbuiltin :list,
              %Type.Union{of: [%Type.List{}, []]},
              "%Type.Union{of: [%Type.List{}, []]}"

@@ -98,6 +98,9 @@ defmodule Type.Spec do
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
     list(tuple({atom(), parse(type, assigns)}))
   end
+  def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :struct}, []]}, _) do
+    struct()
+  end
   # general remote type
   def parse({:remote_type, _, [module, name, args]}, assigns) do
     %Type{module: parse(module, assigns),

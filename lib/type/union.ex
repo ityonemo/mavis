@@ -225,7 +225,7 @@ defmodule Type.Union do
 
           lists
           |> Enum.map(&emptify(&1, opts))
-          |> Enum.intersperse([" | "])
+          |> Enum.intersperse([" <|> "])
           |> Enum.flat_map(&Function.identity/1)
           |> Kernel.++(Enum.map(nonlists, &(to_doc(&1, opts))))
           |> concat
@@ -260,14 +260,14 @@ defmodule Type.Union do
 
         rest = type_has(types, [-1..0, pos_integer()]) ->
           type = override(rest, :non_neg_integer, opts)
-          concat(["-1", " | ", type])
+          concat(["-1", " <|> ", type])
 
         (range = Enum.find(types, &match?(_..0, &1))) && pos_integer() in types ->
           type = types
           |> Kernel.--([range, pos_integer()])
           |> override(:non_neg_integer, opts)
 
-          concat(["#{range.first}..-1", " | ", type])
+          concat(["#{range.first}..-1", " <|> ", type])
 
         true -> normal_inspect(types, opts)
       end
@@ -321,7 +321,7 @@ defmodule Type.Union do
       "#{name}()"
     end
     defp override(types, name, opts) do
-      concat(["#{name}()", " | ",
+      concat(["#{name}()", " <|> ",
         to_doc(%Type.Union{of: types}, opts)])
     end
 
@@ -329,7 +329,7 @@ defmodule Type.Union do
       list
       |> Enum.reverse
       |> Enum.map(&to_doc(&1, opts))
-      |> Enum.intersperse(" | ")
+      |> Enum.intersperse(" <|> ")
       |> concat
     end
 

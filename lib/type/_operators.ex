@@ -3,19 +3,30 @@ defmodule Type.Operators do
   Convenience functions.  Should only be used in testing.
   """
 
-  defmacro __using__(_opts) do
+  @kernel_operators [>: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
+  @basic_operators [<~>: 2, <|>: 2, ~>: 2]
+
+  defmacro __using__(opts) do
+    kernel_operators = case Keyword.get(opts, :only, :extended) do
+      :basic ->
+        []
+      :extended ->
+        @kernel_operators
+    end
+    all_operators = kernel_operators ++ @basic_operators
+
     quote do
-      import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
-      import Type.Operators, only: [<~>: 2, <|>: 2, ~>: 2, >: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
+      import Kernel, except: unquote(kernel_operators)
+      import Type.Operators, only: unquote(all_operators)
     end
   end
 
-  import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, in: 2]
+  import Kernel, except: [>: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
 
   @doc """
   Shortcut for `Type.usable_as/2`
   """
-  def a ~> b, do: Type.usable_as(a, b)
+  defdelegate a ~> b, to: Type, as: :usable_as
 
   @doc """
   Shortcut for `Type.union/2`

@@ -594,7 +594,13 @@ defmodule Type.Map do
 
     @anymap %{any() => any()}
 
-    def inspect(map = %{required: %{__struct__: struct}}, opts) do
+    def inspect(%{required: %{__struct__: atom()}, optional: %{atom() => any()}}, _opts) do
+      "struct()"
+    end
+    def inspect(%{required: %{__struct__: module()}, optional: %{atom() => any()}}, _opts) do
+      "struct()"
+    end
+    def inspect(map = %{required: %{__struct__: struct}}, opts) when is_atom(struct) do
       inner = map.required
       |> Map.from_struct
       |> Enum.reject(&(elem(&1, 1) == Type.any()))
