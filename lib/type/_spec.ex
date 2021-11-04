@@ -87,10 +87,10 @@ defmodule Type.Spec do
   end
   # overridden remote types
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _) do
-    list(0..0x10FFFF)
+    list(0..0x10_FFFF)
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _) do
-    list(0..0x10FFFF, ...)
+    list(0..0x10_FFFF, ...)
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
     list(tuple({atom(), any()}))

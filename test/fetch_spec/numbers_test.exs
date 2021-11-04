@@ -44,7 +44,7 @@ defmodule TypeTest.Type.FetchSpec.NumbersTest do
       Type.fetch_spec(@source, :arity_spec, 1)
     assert {:ok, identity_for(0..255)} ==
       Type.fetch_spec(@source, :byte_spec, 1)
-    assert {:ok, identity_for(0..0x10FFFF)} ==
+    assert {:ok, identity_for(0..0x10_FFFF)} ==
       Type.fetch_spec(@source, :char_spec, 1)
   end
 

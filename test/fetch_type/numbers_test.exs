@@ -31,7 +31,7 @@ defmodule TypeTest.Type.FetchType.NumbersTest do
   test "special classes of integers" do
     assert {:ok, 0..255} == Type.fetch_type(@source, :arity_type)
     assert {:ok, 0..255} == Type.fetch_type(@source, :byte_type)
-    assert {:ok, 0..0x10FFFF} == Type.fetch_type(@source, :char_type)
+    assert {:ok, 0..0x10_FFFF} == Type.fetch_type(@source, :char_type)
   end
 
   test "number" do

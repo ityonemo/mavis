@@ -297,7 +297,7 @@ defmodule Type.List do
     ## SPECIAL CASES
 
     # override for charlist
-    def inspect(list = %{final: [], type: 0..1114111}, _) do
+    def inspect(list = %{final: [], type: 0..0x10_FFFF}, _) do
       "nonempty_charlist()"
     end
     def inspect(%{final: [], type: any()}, _), do: "type([...])"

@@ -1,7 +1,10 @@
 defmodule TypeTest.BuiltinAny.InspectTest do
   use ExUnit.Case, async: true
 
+  import TypeTest.FetchCase
+  import TypeTest.FetchCase
   import TypeTest.InspectCase
+
   @moduletag :inspect
 
   describe "the any type" do

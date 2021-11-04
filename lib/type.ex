@@ -469,6 +469,21 @@ defmodule Type do
     ]}
   end
 
+  defmacro keyword(type) do
+    quote do
+      %Type.Union{of: [
+        %Type.List{type: %Type.Tuple{
+          elements: [
+            %Type{module: nil, name: :atom, params: []},
+            unquote(type)
+          ],
+          fixed: true
+        }},
+        []
+      ]}
+    end
+  end
+
   @doc """
   generates a list of a particular type.  A last parameter of `...`
   indicates that the list should be nonempty

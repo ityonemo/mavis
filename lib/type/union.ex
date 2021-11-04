@@ -277,7 +277,7 @@ defmodule Type.Union do
       case t do
         any() ->
           ["list()"]
-        0..1114111 ->
+        0..0x10_FFFF ->
           ["charlist()"]
         tuple({atom(), any()}) ->
           ["keyword()"]

@@ -1,6 +1,7 @@
 defmodule TypeTest.BuiltinChar.InspectTest do
   use ExUnit.Case, async: true
 
+  import TypeTest.FetchCase
   import TypeTest.InspectCase
   @moduletag :inspect
 
@@ -9,10 +10,10 @@ defmodule TypeTest.BuiltinChar.InspectTest do
       @type char_type :: char
     end)
 
-    test "looks like 0..1114111" do
+    test "looks like 0..0x10_FFFF" do
       # as this is a strict synonym, we don't want to assume what the
       # user intent is.
-      assert "0..1114111" == inspect(@char_type)
+      assert "0..0x10_FFFF" == inspect(@char_type)
     end
 
     test "evaluates correctly" do
