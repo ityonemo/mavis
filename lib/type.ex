@@ -593,7 +593,7 @@ defmodule Type do
   @doc """
   Creates a `t:nonempty_maybe_improper_list/2`.
 
-  * usable in matches *
+  * not usable in matches *
 
   ```elixir
   iex> nonempty_maybe_improper_list(:foo, :bar)
@@ -601,15 +601,15 @@ defmodule Type do
   ```
   """
   defmacro nonempty_maybe_improper_list(type1, type2) do
-    if __CALLER__.context do
-      # match or guard
-      quote do
-        %Type.List{type: unquote(type1), final: unquote(type2)}
-      end
-    else
-      quote do
-        %Type.List{type: unquote(type1), final: Type.union(unquote(type2), [])}
-      end
+    if __CALLER__.context == :match do
+      raise CompileError,
+        description: "can't use `maybe_improper_list/2` in a #{__CALLER__.context}",
+        line: __CALLER__.line,
+        file: __CALLER__.file
+    end
+
+    quote do
+      %Type.List{type: unquote(type1), final: Type.union(unquote(type2), [])}
     end
   end
 

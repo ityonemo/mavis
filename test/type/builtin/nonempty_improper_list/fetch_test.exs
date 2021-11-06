@@ -10,7 +10,7 @@ defmodule TypeTest.BuiltinNonemptyImproperList.FetchTest do
     @type nonempty_improper_list_type :: nonempty_improper_list(:foo, :bar)
   end)
 
-  describe "the nonempty_improper_list/0 type" do
+  describe "the nonempty_improper_list/2 type" do
     test "is itself" do
       assert nonempty_improper_list(:foo, :bar) == @nonempty_improper_list_type
     end
