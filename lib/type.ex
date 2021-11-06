@@ -552,7 +552,7 @@ defmodule Type do
   @doc """
   Creates a `t:maybe_improper_list/1`
 
-  **NOTE**: not usable in guards
+  **NOTE**: not usable in guards and matches
 
   ```elixir
   iex> maybe_improper_list(:foo, :bar)
@@ -560,6 +560,13 @@ defmodule Type do
   ```
   """
   defmacro maybe_improper_list(type1, type2) do
+    if __CALLER__.context in [:match, :guard] do
+      raise CompileError,
+        description: "can't use `maybe_improper_list/2` in matches or guards",
+        line: __CALLER__.line,
+        file: __CALLER__.file
+    end
+
     quote do
       %Type.Union{of: [
         %Type.List{type: unquote(type1), final: Type.union(unquote(type2), [])},

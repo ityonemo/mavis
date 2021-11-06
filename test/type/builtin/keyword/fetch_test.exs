@@ -30,20 +30,14 @@ defmodule TypeTest.BuiltinKeyword.FetchTest do
     test "is what we expect" do
       assert %Type.Union{of: [%Type.List{
         type: %Type.Tuple{
-          elements: [
-            %Type{module: nil, name: :atom, params: []},
-            %Type{module: nil, name: :any, params: []}
-          ],
+          elements: [atom(), any()],
           fixed: true
         },
         final: []}, []]} == @keyword_type
 
       assert %Type.Union{of: [%Type.List{
         type: %Type.Tuple{
-          elements: [
-            %Type{module: nil, name: :atom, params: []},
-            %Type{module: nil, name: :atom, params: []}
-          ],
+          elements: [atom(), atom()],
           fixed: true
         },
         final: []}, []]} == @keyword_with_type

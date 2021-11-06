@@ -20,10 +20,7 @@ defmodule TypeTest.BuiltinIodata.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Union{of: [
-        %Type.Bitstring{size: 0, unit: 8},
-        %Type{module: nil, name: :iolist, params: []},
-      ]} == @iodata_type
+      assert %Type.Union{of: [binary(), iolist()]} == @iodata_type
     end
   end
 end

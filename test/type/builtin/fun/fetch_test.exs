@@ -20,7 +20,7 @@ defmodule TypeTest.BuiltinFun.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Function{params: :any, return: %Type{module: nil, name: :any, params: []}} == @fun_type
+      assert %Type.Function{params: :any, return: any()} == @fun_type
     end
   end
 end

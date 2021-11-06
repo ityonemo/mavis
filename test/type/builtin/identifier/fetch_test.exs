@@ -20,11 +20,7 @@ defmodule TypeTest.BuiltinIdentifier.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Union{of: [
-        %Type{module: nil, name: :pid, params: []},
-        %Type{module: nil, name: :port, params: []},
-        %Type{module: nil, name: :reference, params: []},
-      ]} == @identifier_type
+      assert %Type.Union{of: [pid(), port(), reference()]} == @identifier_type
     end
   end
 end

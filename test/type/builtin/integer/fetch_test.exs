@@ -20,11 +20,7 @@ defmodule TypeTest.BuiltinInteger.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Union{of: [
-        %Type{module: nil, name: :pos_integer, params: []},
-        0,
-        %Type{module: nil, name: :neg_integer, params: []},
-      ]} == @integer_type
+      assert %Type.Union{of: [pos_integer(), 0, neg_integer()]} == @integer_type
     end
   end
 end
