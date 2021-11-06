@@ -409,7 +409,7 @@ defmodule Type do
   @doc """
   use this for when you must use a runtime value to obtain a builtin type struct
 
-  not usable in guards
+  not usable in matches
   """
   defmacro builtin(type_ast) do
     cases = [{:->, [], [[:node], {:node_type, [], []}]}
@@ -508,7 +508,7 @@ defmodule Type do
   %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
 
-  * usable in guards *
+  * usable in matches *
   """
   @doc type: true
   defmacro list({:..., _, _}) do
@@ -538,7 +538,7 @@ defmodule Type do
   @doc """
   Creates a `t:nonempty_list/1`
 
-  * usable in guards *
+  * usable in matches *
 
   ```elixir
   iex> nonempty_list(1..10)
@@ -552,7 +552,7 @@ defmodule Type do
   @doc """
   Creates a `t:maybe_improper_list/1`
 
-  **NOTE**: not usable in guards and matches
+  **NOTE**: not usable in matches and matches
 
   ```elixir
   iex> maybe_improper_list(:foo, :bar)
@@ -560,9 +560,9 @@ defmodule Type do
   ```
   """
   defmacro maybe_improper_list(type1, type2) do
-    if __CALLER__.context in [:match, :guard] do
+    if __CALLER__.context == :match do
       raise CompileError,
-        description: "can't use `maybe_improper_list/2` in matches or guards",
+        description: "can't use `maybe_improper_list/2` in a #{__CALLER__.context}",
         line: __CALLER__.line,
         file: __CALLER__.file
     end
@@ -577,7 +577,7 @@ defmodule Type do
   @doc """
   Creates a `t:nonempty_improper_list/2`
 
-  * usable in guards *
+  * usable in matches *
 
   ```elixir
   iex> nonempty_improper_list(:foo, :bar)
@@ -593,7 +593,7 @@ defmodule Type do
   @doc """
   Creates a `t:nonempty_maybe_improper_list/2`.
 
-  * usable in guards *
+  * usable in matches *
 
   ```elixir
   iex> nonempty_maybe_improper_list(:foo, :bar)
@@ -630,7 +630,7 @@ defmodule Type do
   %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :pos_integer}]}
   ```
 
-  * usable in guards *
+  * usable in matches *
   """
   @doc type: true
   defmacro tuple({a, {:..., _, any}}) when is_atom(any) do
@@ -735,7 +735,7 @@ defmodule Type do
   %Type.Map{required: %{"foo" => "bar"}}
   ```
 
-  *usable in guards*
+  *usable in matches*
   """
   defmacro literal(atform = {:@, _meta, _}) do
     atform
@@ -1275,7 +1275,7 @@ defmodule Type do
   %Type.Function{params: 2, return: any()}
   ```
 
-  usable in guards.
+  usable in matches.
   """
   defmacro type({:<<>>, _, params}) do
     fields = Enum.map(params, fn
