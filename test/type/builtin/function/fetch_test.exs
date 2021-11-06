@@ -16,7 +16,7 @@ defmodule TypeTest.BuiltinFunction.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Function{params: :any, return: any()}} == @function_type
+      assert %Type.Function{params: :any, return: any()} == @function_type
     end
   end
 end

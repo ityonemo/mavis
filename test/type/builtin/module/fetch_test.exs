@@ -6,7 +6,7 @@ defmodule TypeTest.BuiltinModule.FetchTest do
 
   @moduletag :fetch
 
-  pull_types(defmodule Module do
+  pull_types(defmodule ModuleChild do  # note this can't be Module because it forces a Module alias.
     @type module_type :: module()
   end)
 
