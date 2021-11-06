@@ -1515,13 +1515,13 @@ defmodule Type do
 
   ```
   iex> inspect Type.of(%{foo: :bar})
-  "map(%{foo: :bar})"
+  "type(%{foo: :bar})"
   iex> inspect Type.of(%{1 => :one})
-  "map(%{1 => :one})"
+  "type(%{1 => :one})"
   iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
-  "map(%{optional(String.t()) => :bar | String.t()})"
+  "type(%{optional(String.t()) => :bar | String.t()})"
   iex> inspect Type.of(1..10)
-  "map(%Range{first: 1, last: 10})"
+  "type(%Range{first: 1, last: 10})"
   ```
   """
   def of(value)

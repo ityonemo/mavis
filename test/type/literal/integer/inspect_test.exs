@@ -15,7 +15,7 @@ defmodule TypeTest.LiteralInteger.InspectTest do
     end
 
     test "code translates correctly" do
-      assert @literal_integeer == eval_inspect(@literal_integer)
+      assert @literal_integer == eval_inspect(@literal_integer)
     end
   end
 end

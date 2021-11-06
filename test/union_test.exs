@@ -280,8 +280,8 @@ defmodule TypeTest.UnionTest do
 
   describe "for functions" do
     test "two one-arity functions and same output are merged" do
-      assert function((non_neg_integer() -> :foo)) ==
-        function((pos_integer() -> :foo)) <|> function((0 -> :foo))
+      assert type((non_neg_integer() -> :foo)) ==
+        type((pos_integer() -> :foo)) <|> type((0 -> :foo))
     end
 
     test "two one-arity functions and same input are merged" do
@@ -292,31 +292,31 @@ defmodule TypeTest.UnionTest do
       #      if div(x, 2) == 0, do: :foo, else: :bar
       #    end
       #
-      assert function((pos_integer() -> :foo <|> :bar)) ==
-        function((pos_integer() -> :bar)) <|>
-        function((pos_integer() -> :foo))
+      assert type((pos_integer() -> :foo <|> :bar)) ==
+        type((pos_integer() -> :bar)) <|>
+        type((pos_integer() -> :foo))
     end
 
     test "one-arity functions with different output are not merged" do
       assert %Type.Union{} =
-        function((pos_integer() -> :bar)) <|> function((0 -> :foo))
+        type((pos_integer() -> :bar)) <|> type((0 -> :foo))
     end
 
     test "two-arity functions are merged if one is the same" do
-      assert function((:bar, non_neg_integer() -> :bar)) ==
-        function((:bar, pos_integer() -> :bar)) <|>
-        function((:bar, 0 -> :bar))
+      assert type((:bar, non_neg_integer() -> :bar)) ==
+        type((:bar, pos_integer() -> :bar)) <|>
+        type((:bar, 0 -> :bar))
     end
 
     test "two-arity functions are merged one is a total subset" do
-      assert function((atom(), pos_integer() -> :bar)) ==
-        function((:bar, 1..10 -> :bar)) <|>
-        function((atom(), pos_integer() -> :bar))
+      assert type((atom(), pos_integer() -> :bar)) ==
+        type((:bar, 1..10 -> :bar)) <|>
+        type((atom(), pos_integer() -> :bar))
     end
 
     test "functions are not merged if they have different arities" do
       assert %Type.Union{} =
-        function((atom() -> :bar)) <|> function((atom(), atom() -> :bar))
+        type((atom() -> :bar)) <|> type((atom(), atom() -> :bar))
     end
   end
 

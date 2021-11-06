@@ -21,7 +21,7 @@ defmodule Type.Function do
 
   ```
   iex> import Type, only: :macros
-  iex> function((atom() -> pos_integer()))
+  iex> type((atom() -> pos_integer()))
   %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
   ```
 
@@ -53,10 +53,10 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.compare(function(( -> atom())), function(( -> integer())))
+  iex> Type.compare(type(( -> atom())), type(( -> integer())))
   :gt
-  iex> Type.compare(function((integer() -> integer())),
-  ...>              function((atom() -> integer())))
+  iex> Type.compare(type((integer() -> integer())),
+  ...>              type((atom() -> integer())))
   :lt
   ```
 
@@ -67,10 +67,10 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function(( -> 1..10)), function(( -> integer())))
+  iex> Type.intersection(type(( -> 1..10)), type(( -> integer())))
   %Type.Function{params: [], return: 1..10}
-  iex> Type.intersection(function((integer() -> integer())),
-  ...>                   function((1..10 -> integer())))
+  iex> Type.intersection(type((integer() -> integer())),
+  ...>                   type((1..10 -> integer())))
   %Type{name: :none}
   ```
 
@@ -79,8 +79,8 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(function((... -> pos_integer())),
-  ...>                   function((1..10 -> pos_integer())))
+  iex> Type.intersection(type((... -> pos_integer())),
+  ...>                   type((1..10 -> pos_integer())))
   %Type.Function{params: [1..10], return: %Type{name: :pos_integer}}
   ```
 
@@ -91,7 +91,7 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.union(function(( -> 1..10)), function(( -> 11..20)))
+  iex> Type.union(type(( -> 1..10)), type(( -> 11..20)))
   %Type.Function{params: [], return: 1..20}
   ```
 
@@ -102,8 +102,8 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.subtype?(function((integer() -> 1..10)),
-  ...>               function((integer() -> integer())))
+  iex> Type.subtype?(type((integer() -> 1..10)),
+  ...>               type((integer() -> integer())))
   true
   ```
 
@@ -120,12 +120,12 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.usable_as(function((pos_integer() -> 1..10)), function((1..10 -> pos_integer())))
+  iex> Type.usable_as(type((pos_integer() -> 1..10)), type((1..10 -> pos_integer())))
   :ok
-  iex> Type.usable_as(function((1..10 -> 1..10)), function((pos_integer() -> pos_integer())))
+  iex> Type.usable_as(type((1..10 -> 1..10)), type((pos_integer() -> pos_integer())))
   {:maybe, [%Type.Message{type: %Type.Function{params: [1..10], return: 1..10},
                           target: %Type.Function{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}}]}
-  iex> Type.usable_as(function(( -> atom())), function(( -> pos_integer())))
+  iex> Type.usable_as(type(( -> atom())), type(( -> pos_integer())))
   {:error, %Type.Message{type: %Type.Function{params: [], return: %Type{name: :atom}},
                          target: %Type.Function{params: [], return: %Type{name: :pos_integer}}}}
   ```
@@ -160,7 +160,7 @@ defmodule Type.Function do
 
   ```
   iex> import Type, only: :macros
-  iex> func = function ((pos_integer() -> float()))
+  iex> func = type((pos_integer() -> float()))
   iex> Type.Function.apply_types(func, [pos_integer()])
   {:ok, %Type{name: :float}}
   iex> Type.Function.apply_types(func, [non_neg_integer()])
@@ -177,7 +177,7 @@ defmodule Type.Function do
       target: %Type{name: :pos_integer},
       meta: [message: "float() is disjoint to argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }}
-  iex> var_func = function((i -> i when i: integer()))
+  iex> var_func = type((i -> i when i: integer()))
   iex> Type.Function.apply_types(var_func, [1..10])
   {:ok, 1..10}
   ```
@@ -459,7 +459,7 @@ defmodule Type.Function do
     require Type
 
     def inspect(%{params: :any, return: Type.any()}, _opts) do
-      "function()"
+      "type()"
     end
     def inspect(%{params: :any, return: return}, opts) do
       concat(["type((... -> ", to_doc(return, opts), "))"])
@@ -481,7 +481,7 @@ defmodule Type.Function do
       concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])
     end
 
-#    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "function()"
+#    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "type()"
 #    def inspect(%{params: :any, return: return}, opts) do
 #      concat(basic_inspect(:any, return, opts) ++ [")"])
 #    end

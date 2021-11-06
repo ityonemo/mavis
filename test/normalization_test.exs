@@ -42,37 +42,37 @@
 #
 #  describe "top-arity functions" do
 #    test "are normalized to any... functions" do
-#      refute function((any() -> any())) == function((_ -> any()))
-#      assert function((any() -> any())) == Type.normalize(function((_ -> any())))
+#      refute type((any() -> any())) == type((_ -> any()))
+#      assert type((any() -> any())) == Type.normalize(type((_ -> any())))
 #
 #      # with a non-"any" return type
-#      refute function((any() -> :foo)) ==
-#        function((_ -> :foo))
-#      assert function((any() -> :foo)) ==
-#        Type.normalize(function((_ -> :foo)))
+#      refute type((any() -> :foo)) ==
+#        type((_ -> :foo))
+#      assert type((any() -> :foo)) ==
+#        Type.normalize(type((_ -> :foo)))
 #
 #      # with more than 1 arity
-#      refute function((any(), any() -> any())) ==
-#        function((_, _ -> any()))
-#      assert function((any(), any() -> any())) ==
-#        Type.normalize(function((_, _ -> any())))
+#      refute type((any(), any() -> any())) ==
+#        type((_, _ -> any()))
+#      assert type((any(), any() -> any())) ==
+#        Type.normalize(type((_, _ -> any())))
 #    end
 #  end
 #
 #  describe "functions with literals" do
 #    test "in the parameters can be normalized" do
-#      assert function((remote(String.t) -> :ok)) ==
-#        Type.normalize(function(("foo" -> :ok)))
+#      assert type((remote(String.t) -> :ok)) ==
+#        Type.normalize(type(("foo" -> :ok)))
 #    end
 #    test "in the return can be normalized" do
-#      assert function((any() -> remote(String.t))) ==
-#        Type.normalize(function((any() -> "foo")))
+#      assert type((any() -> remote(String.t))) ==
+#        Type.normalize(type((any() -> "foo")))
 #
-#      assert function((any(), any() -> remote(String.t))) ==
-#        Type.normalize(function((_, _ -> "foo")))
+#      assert type((any(), any() -> remote(String.t))) ==
+#        Type.normalize(type((_, _ -> "foo")))
 #
-#      assert function((... -> remote(String.t))) ==
-#        Type.normalize(function((... -> "foo")))
+#      assert type((... -> remote(String.t))) ==
+#        Type.normalize(type((... -> "foo")))
 #    end
 #  end
 #
@@ -85,10 +85,10 @@
 #
 #  describe "maps with literals" do
 #    test "are normalized correctly" do
-#      assert map(%{optional(remote(String.t())) => remote(String.t())}) ==
+#      assert type(%{optional(remote(String.t())) => remote(String.t())}) ==
 #        Type.normalize(literal(%{"foo" => "bar"}))
 #
-#      assert map(%{foo: remote(String.t())}) ==
+#      assert type(%{foo: remote(String.t())}) ==
 #        Type.normalize(literal(%{foo: "bar"}))
 #    end
 #  end

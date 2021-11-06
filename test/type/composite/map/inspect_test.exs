@@ -1,4 +1,4 @@
-defmodule TypeTest.List.InspectTest do
+defmodule TypeTest.Map.InspectTest do
   use ExUnit.Case, async: true
 
   import TypeTest.FetchCase

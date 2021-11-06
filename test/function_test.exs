@@ -7,12 +7,12 @@
 #  alias Type.{Function, FunctionError}
 #
 #  describe "the apply_types/3 function" do
-#    @zero_arity function(( -> pos_integer()))
+#    @zero_arity type(( -> pos_integer()))
 #    test "works with a zero arity function" do
 #      assert {:ok, pos_integer()} == Function.apply_types(@zero_arity, [])
 #    end
 #
-#    @one_arity function((pos_integer() -> pos_integer()))
+#    @one_arity type((pos_integer() -> pos_integer()))
 #    test "works trivially with a one arity function" do
 #      assert {:ok, pos_integer()} ==
 #        Function.apply_types(@one_arity, [pos_integer()])
@@ -27,7 +27,7 @@
 #      assert {:maybe, 1, [%Type.Message{
 #        type: 1..10,
 #        target: 1,
-#        meta: _}]} = Function.apply_types(function((1 -> 1)), [1..10])
+#        meta: _}]} = Function.apply_types(type((1 -> 1)), [1..10])
 #    end
 #
 #    test "when there is an compound overspecified parameter it works" do
@@ -50,9 +50,9 @@
 #    end
 #
 #    # simulate a compound function
-#    @simulated_neg function((pos_integer() -> neg_integer())) <|>
-#                   function((neg_integer() -> pos_integer())) <|>
-#                   function((0 -> 0))
+#    @simulated_neg type((pos_integer() -> neg_integer())) <|>
+#                   type((neg_integer() -> pos_integer())) <|>
+#                   type((0 -> 0))
 #
 #    test "compound functions work on parameters hitting one partition" do
 #      assert {:ok, neg_integer()} ==
@@ -93,16 +93,16 @@
 #    end
 #
 #    ## works with an arity/2 function
-#    @simple_arity_2 function((float(), float() -> integer()))
+#    @simple_arity_2 type((float(), float() -> integer()))
 #    test "works on a simple arity/2 function" do
 #      assert {:ok, integer()} = Function.apply_types(@simple_arity_2,
 #        [float(), float()])
 #    end
 #
-#    @compound_arity_2 function((pos_integer(), pos_integer() -> pos_integer())) <|>
-#                      function((pos_integer(), 0 -> pos_integer())) <|>
-#                      function((0, pos_integer() -> pos_integer())) <|>
-#                      function((0, 0 -> 0))
+#    @compound_arity_2 type((pos_integer(), pos_integer() -> pos_integer())) <|>
+#                      type((pos_integer(), 0 -> pos_integer())) <|>
+#                      type((0, pos_integer() -> pos_integer())) <|>
+#                      type((0, 0 -> 0))
 #    test "works on a compound arity/2 function" do
 #      assert {:ok, pos_integer()} = Function.apply_types(@compound_arity_2,
 #        [pos_integer(), non_neg_integer()])
@@ -121,17 +121,17 @@
 #      end
 #
 #      assert_raise FunctionError, @arity1_msg, fn ->
-#        Function.apply_types(function((pos_integer() -> pos_integer())), [])
+#        Function.apply_types(type((pos_integer() -> pos_integer())), [])
 #      end
 #    end
 #
 #    @anyfn_msg "cannot apply a function with ... parameters"
 #    test "raises with FunctionError when an any-arity function is supplied" do
 #      assert_raise FunctionError, @anyfn_msg, fn ->
-#        Function.apply_types(function(), [])
+#        Function.apply_types(type(), [])
 #      end
 #      assert_raise FunctionError, @anyfn_msg, fn ->
-#        Function.apply_types(function(), [integer()])
+#        Function.apply_types(type(), [integer()])
 #      end
 #    end
 #  end

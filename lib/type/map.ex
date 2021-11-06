@@ -17,9 +17,9 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> map(%{optional(atom()) => pos_integer()})
+  iex> type(%{optional(atom()) => pos_integer()})
   %Type.Map{optional: %{%Type{name: :atom} => %Type{name: :pos_integer}}}
-  iex> map(%{})       # empty map
+  iex> type(%{})       # empty map
   %Type.Map{optional: %{}, required: %{}}
   iex> map()  # t:map/0
   %Type.Map{optional: %{%Type{name: :any} => %Type{name: :any}}}
@@ -43,23 +43,23 @@ defmodule Type.Map do
   - The empty map is `%Type.Map{}`.  This is not allowed to have any k/v pairs.
     ```
     iex> inspect %Type.Map{}
-    "map(%{})"
+    "type(%{})"
     ```
   - A map with a required atom key might look as follows:
     ```
     iex> inspect %Type.Map{required: %{foo: %Type{name: :integer}}}
-    "map(%{foo: integer()})"
+    "type(%{foo: integer()})"
     ```
   - A map with a required integer key might look as follows:
     ```
     iex> inspect %Type.Map{required: %{1 => %Type{name: :integer}}}
     ```
-    "map(%{1 => integer()})"
+    "type(%{1 => integer()})"
     ```
   - A map with an optional key type might look as follows:
     ```
     iex> inspect %Type.Map{optional: %{%Type{name: :integer} => %Type{name: :integer}}}
-    "map(%{optional(integer()) => integer()})"
+    "type(%{optional(integer()) => integer()})"
     ```
   - The "any" map has optional any mapping to any (note this is distinct from empty map `%{}`)
     ```
@@ -76,14 +76,14 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.compare(map(%{foo: :bar}), map(%{foo: :quux}))
+  iex> Type.compare(type(%{foo: :bar}), type(%{foo: :quux}))
   :lt
-  iex> Type.compare(map(%{foo: :bar}), map(%{bar: :baz}))
+  iex> Type.compare(type(%{foo: :bar}), type(%{bar: :baz}))
   :gt
-  iex> Type.compare(map(%{optional(1) => integer(), foo: integer()}),
-  ...>              map(%{optional(2) => integer(), foo: integer()}))
+  iex> Type.compare(type(%{optional(1) => integer(), foo: integer()}),
+  ...>              type(%{optional(2) => integer(), foo: integer()}))
   :lt
-  iex> Type.compare(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
+  iex> Type.compare(type(%{foo: :bar}), type(%{optional(:foo) => :bar}))
   :lt
   ```
 
@@ -98,20 +98,20 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(map(%{foo: :bar}), map(%{bar: :baz}))
+  iex> Type.intersection(type(%{foo: :bar}), type(%{bar: :baz}))
   %Type{name: :none}
-  iex> Type.intersection(map(%{foo: :bar}), map(%{optional(atom()) => atom()}))
+  iex> Type.intersection(type(%{foo: :bar}), type(%{optional(atom()) => atom()}))
   %Type.Map{required: %{foo: :bar}}
-  iex> Type.intersection(map(%{1 => 1..10}), map(%{1 => 5..20}))
+  iex> Type.intersection(type(%{1 => 1..10}), type(%{1 => 5..20}))
   %Type.Map{required: %{1 => 5..10}}
-  iex> Type.intersection(map(%{optional(1..10) => integer()}),
-  ...>                   map(%{optional(integer()) => 1..10}))
+  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  ...>                   type(%{optional(integer()) => 1..10}))
   %Type.Map{optional: %{1..10 => 1..10}}
-  iex> Type.intersection(map(%{optional(1..10) => integer()}),
-  ...>                   map(%{optional(1..10) => atom()}))
+  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  ...>                   type(%{optional(1..10) => atom()}))
   %Type.Map{}
-  iex> Type.intersection(map(%{optional(1..10) => integer()}),
-  ...>                   map(%{optional(11..20) => integer()}))
+  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  ...>                   type(%{optional(11..20) => integer()}))
   %Type.Map{}
   ```
 
@@ -124,13 +124,13 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.union(map(%{foo: :bar}), map(%{}))
+  iex> Type.union(type(%{foo: :bar}), type(%{}))
   %Type.Map{optional: %{foo: :bar}}
-  iex> Type.union(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
+  iex> Type.union(type(%{foo: :bar}), type(%{optional(:foo) => :bar}))
   %Type.Map{optional: %{foo: :bar}}
-  iex> Type.union(map(%{foo: 1..10}), map(%{foo: 1..20}))
+  iex> Type.union(type(%{foo: 1..10}), type(%{foo: 1..20}))
   %Type.Map{required: %{foo: 1..20}}
-  iex> Type.union(map(%{optional(1..10) => 1..10}), map(%{optional(1..20) => 1..10}))
+  iex> Type.union(type(%{optional(1..10) => 1..10}), type(%{optional(1..20) => 1..10}))
   %Type.Map{optional: %{1..20 => 1..10}}
   ```
 
@@ -141,13 +141,13 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.subtype?(map(%{foo: :bar}), map(%{foo: atom()}))
+  iex> Type.subtype?(type(%{foo: :bar}), type(%{foo: atom()}))
   true
-  iex> Type.subtype?(map(%{foo: :bar}), map(%{optional(:foo) => atom()}))
+  iex> Type.subtype?(type(%{foo: :bar}), type(%{optional(:foo) => atom()}))
   true
-  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{optional(:foo) => atom()}))
+  iex> Type.subtype?(type(%{optional(:foo) => :bar}), type(%{optional(:foo) => atom()}))
   true
-  iex> Type.subtype?(map(%{optional(:foo) => :bar}), map(%{foo: atom()}))
+  iex> Type.subtype?(type(%{optional(:foo) => :bar}), type(%{foo: atom()}))
   false
   ```
 
@@ -164,12 +164,12 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.usable_as(map(%{foo: :bar}), map(%{optional(:foo) => :bar}))
+  iex> Type.usable_as(type(%{foo: :bar}), type(%{optional(:foo) => :bar}))
   :ok
-  iex> Type.usable_as(map(%{optional(:foo) => :bar}), map(%{foo: :bar}))
+  iex> Type.usable_as(type(%{optional(:foo) => :bar}), type(%{foo: :bar}))
   {:maybe, [%Type.Message{type: %Type.Map{optional: %{foo: :bar}},
                           target: %Type.Map{required: %{foo: :bar}}}]}
-  iex> Type.usable_as(map(%{optional(1..10) => 1..10}), map(%{optional(1..20) => 11..20}))
+  iex> Type.usable_as(type(%{optional(1..10) => 1..10}), type(%{optional(1..20) => 11..20}))
   {:maybe, [%Type.Message{type: %Type.Map{optional: %{1..10 => 1..10}},
                           target: %Type.Map{optional: %{1..20 => 11..20}}}]}
   ```
@@ -305,9 +305,9 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.preimage(map(%{pos_integer() => any()}))
+  iex> Map.preimage(type(%{pos_integer() => any()}))
   %Type{name: :pos_integer}
-  iex> Map.preimage(map(%{0 => any(), pos_integer() => any()}))
+  iex> Map.preimage(type(%{0 => any(), pos_integer() => any()}))
   %Type.Union{of: [%Type{name: :pos_integer}, 0]}
   ```
   """
@@ -337,7 +337,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(map(%{neg_integer() => :foo,
+  iex> Map.apply(type(%{neg_integer() => :foo,
   ...>                 pos_integer() => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
   ```
@@ -347,7 +347,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(map(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
+  iex> Map.apply(type(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
   :foo
   ```
 
@@ -357,7 +357,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.map_apply(map(%{0..3 => 1..10, pos_integer() => 0..5}), 1..3)
+  iex> Map.map_apply(type(%{0..3 => 1..10, pos_integer() => 0..5}), 1..3)
   1..5
   ```
   """
@@ -412,9 +412,9 @@ defmodule Type.Map do
   ```elixir
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.resegment(map(%{neg_integer() => :neg}), [-10..10])
+  iex> Map.resegment(type(%{neg_integer() => :neg}), [-10..10])
   [-10..-1]
-  iex> Map.resegment(map(%{neg_integer() => :neg,
+  iex> Map.resegment(type(%{neg_integer() => :neg,
   ...>                     pos_integer() => :pos}), [-10..10])
   [-10..-1, 1..10]
   ```

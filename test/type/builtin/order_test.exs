@@ -24,7 +24,7 @@ defmodule TypeTest.Builtin.OrderTest do
       assert none() < :foo
       assert none() < atom()
       assert none() < reference()
-      #assert none() < function(( -> 0))
+      #assert none() < type(( -> 0))
       assert none() < port()
       assert none() < pid()
       assert none() < tuple()
@@ -280,7 +280,7 @@ defmodule TypeTest.Builtin.OrderTest do
       assert any() > :foo
       assert any() > atom()
       assert any() > reference()
-      #assert any() > function(( -> 0))
+      #assert any() > type(( -> 0))
       assert any() > port()
       assert any() > pid()
       assert any() > tuple()
