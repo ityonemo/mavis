@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinInteger.FetchTest do
 
   @moduletag :fetch
 
-  describe "the integer type" do
-    pull_types(defmodule Integer do
-      @type integer_type :: integer
-    end)
+  pull_types(defmodule Integer do
+    @type integer_type :: integer
+  end)
 
+  describe "the integer/0 type" do
     test "is itself" do
       assert integer() == @integer_type
-    end
-
-    test "matches to itself" do
-      assert integer() = @integer_type
     end
 
     test "is what we expect" do

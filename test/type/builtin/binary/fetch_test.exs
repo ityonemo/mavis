@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinBinary.FetchTest do
 
   @moduletag :fetch
 
-  describe "the binary type" do
-    pull_types(defmodule Binary do
-      @type binary_type :: binary
-    end)
+  pull_types(defmodule Binary do
+    @type binary_type :: binary
+  end)
 
+  describe "the binary/0 type" do
     test "is itself" do
       assert binary() == @binary_type
-    end
-
-    test "matches to itself" do
-      assert binary() = @binary_type
     end
 
     test "is what we expect" do

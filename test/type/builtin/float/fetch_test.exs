@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinFloat.FetchTest do
 
   @moduletag :fetch
 
-  describe "the float type" do
-    pull_types(defmodule Float do
-      @type float_type :: float
-    end)
+  pull_types(defmodule Float do
+    @type float_type :: float
+  end)
 
+  describe "the float/0 type" do
     test "is itself" do
       assert float() == @float_type
-    end
-
-    test "matches to itself" do
-      assert float() = @float_type
     end
 
     test "is what we expect" do

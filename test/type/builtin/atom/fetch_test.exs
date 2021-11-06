@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinAtom.FetchTest do
 
   @moduletag :fetch
 
-  describe "the atom type" do
-    pull_types(defmodule Atom do
-      @type atom_type :: atom
-    end)
+  pull_types(defmodule Atom do
+    @type atom_type :: atom
+  end)
 
+  describe "the atom/0 type" do
     test "is itself" do
       assert atom() == @atom_type
-    end
-
-    test "matches to itself" do
-      assert atom() = @atom_type
     end
 
     test "is what we expect" do

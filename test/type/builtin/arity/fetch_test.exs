@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinArity.FetchTest do
 
   @moduletag :fetch
 
-  describe "the arity type" do
-    pull_types(defmodule Any do
-      @type arity_type :: arity
-    end)
+  pull_types(defmodule Arity do
+    @type arity_type :: arity
+  end)
 
+  describe "the arity/0 type" do
     test "is itself" do
       assert arity() == @arity_type
-    end
-
-    test "matches to itself" do
-      assert arity() = @arity_type
     end
 
     test "is what we expect" do

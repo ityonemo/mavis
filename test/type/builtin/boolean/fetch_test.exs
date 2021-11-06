@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinBoolean.FetchTest do
 
   @moduletag :fetch
 
-  describe "the boolean type" do
-    pull_types(defmodule Boolean do
-      @type boolean_type :: boolean
-    end)
+  pull_types(defmodule Boolean do
+    @type boolean_type :: boolean
+  end)
 
+  describe "the boolean/0 type" do
     test "is itself" do
       assert boolean() == @boolean_type
-    end
-
-    test "matches to itself" do
-      assert boolean() = @boolean_type
     end
 
     test "is what we expect" do

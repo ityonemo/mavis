@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinFunction.FetchTest do
 
   @moduletag :fetch
 
-  describe "the function type" do
-    pull_types(defmodule Function do
-      @type function_type :: function
-    end)
+  pull_types(defmodule Function do
+    @type function_type :: function
+  end)
 
+  describe "the function/0 type" do
     test "is itself" do
       assert function() == @function_type
-    end
-
-    test "matches to itself" do
-      assert function() = @function_type
     end
 
     test "is what we expect" do

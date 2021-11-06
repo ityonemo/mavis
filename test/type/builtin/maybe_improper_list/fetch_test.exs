@@ -6,22 +6,29 @@ defmodule TypeTest.BuiltinMaybeImproperList.FetchTest do
 
   @moduletag :fetch
 
-  describe "the maybe_improper_list type" do
-    pull_types(defmodule MaybeImproperList do
-      @type maybe_improper_list_type :: maybe_improper_list
-      @type maybe_improper_list_with_types :: maybe_improper_list(atom, float)
-    end)
+  pull_types(defmodule MaybeImproperList do
+    @type maybe_improper_list_type :: maybe_improper_list
+    @type maybe_improper_list_with_types :: maybe_improper_list(atom, float)
+  end)
 
+  describe "the maybe_improper_list/0 type" do
     test "is itself" do
       assert maybe_improper_list() == @maybe_improper_list_type
-      assert maybe_improper_list(atom(), float()) == @maybe_improper_list_with_types
     end
 
     test "is what we expect" do
       assert %Type.Union{of: [%Type.List{
         type: any(),
         final: any()}, []]} == @maybe_improper_list_type
+    end
+  end
 
+  describe "the maybe_improper_list/2 type" do
+    test "is itself" do
+      assert maybe_improper_list(atom(), float()) == @maybe_improper_list_with_types
+    end
+
+    test "is what we expect" do
       assert %Type.Union{of:
         [%Type.List{
           type: atom(),

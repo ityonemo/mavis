@@ -6,32 +6,29 @@ defmodule TypeTest.BuiltinList.FetchTest do
 
   @moduletag :fetch
 
-  describe "the list type" do
-    pull_types(defmodule List do
-      @type list_type :: list
-      @type list_with_type :: list(atom)
-    end)
+  pull_types(defmodule List do
+    @type list_type :: list
+    @type list_with_type :: list(atom)
+  end)
 
+  describe "the list/0 type" do
     test "is itself" do
       assert list() == @list_type
-      assert list(atom()) == @list_with_type
-    end
-
-    test "matches to itself" do
-      assert list() = @list_type
-      assert list(atom()) = @list_with_type
-    end
-
-    test "can match to a variable" do
-      assert list(t) = @list_with_type
-      assert t == atom()
     end
 
     test "is what we expect" do
       assert %Type.Union{of: [%Type.List{
         type: any(),
         final: []}, []]} == @list_type
+    end
+  end
 
+  describe "the list/1 type" do
+    test "is itself" do
+      assert list(atom()) == @list_with_type
+    end
+
+    test "is what we expect" do
       assert %Type.Union{of: [%Type.List{
         type: atom(),
         final: []}, []]} == @list_with_type

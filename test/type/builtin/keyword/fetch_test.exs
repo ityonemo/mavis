@@ -6,25 +6,14 @@ defmodule TypeTest.BuiltinKeyword.FetchTest do
 
   @moduletag :fetch
 
-  describe "the keyword type" do
-    pull_types(defmodule Keyword do
-      @type keyword_type :: keyword
-      @type keyword_with_type :: keyword(atom)
-    end)
+  pull_types(defmodule Keyword do
+    @type keyword_type :: keyword
+    @type keyword_with_type :: keyword(atom)
+  end)
 
+  describe "the keyword/0 type" do
     test "is itself" do
       assert keyword() == @keyword_type
-      assert keyword(atom()) == @keyword_with_type
-    end
-
-    test "matches to itself" do
-      assert keyword() = @keyword_type
-      assert keyword(atom()) = @keyword_with_type
-    end
-
-    test "can match to a variable" do
-      assert keyword(t) = @keyword_with_type
-      assert t == atom()
     end
 
     test "is what we expect" do
@@ -34,7 +23,15 @@ defmodule TypeTest.BuiltinKeyword.FetchTest do
           fixed: true
         },
         final: []}, []]} == @keyword_type
+    end
+  end
 
+  describe "the keyword/1 type" do
+    test "is itself" do
+      assert keyword(atom()) == @keyword_with_type
+    end
+
+    test "is what we expect" do
       assert %Type.Union{of: [%Type.List{
         type: %Type.Tuple{
           elements: [atom(), atom()],

@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinBitstring.FetchTest do
 
   @moduletag :fetch
 
-  describe "the bitstring type" do
-    pull_types(defmodule Bitstring do
-      @type bitstring_type :: bitstring
-    end)
+  pull_types(defmodule Bitstring do
+    @type bitstring_type :: bitstring
+  end)
 
+  describe "the bitstring/0 type" do
     test "is itself" do
       assert bitstring() == @bitstring_type
-    end
-
-    test "matches to itself" do
-      assert bitstring() = @bitstring_type
     end
 
     test "is what we expect" do

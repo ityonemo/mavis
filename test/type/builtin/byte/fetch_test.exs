@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinByte.FetchTest do
 
   @moduletag :fetch
 
-  describe "the byte type" do
-    pull_types(defmodule Byte do
-      @type byte_type :: byte
-    end)
+  pull_types(defmodule Byte do
+    @type byte_type :: byte
+  end)
 
+  describe "the byte/0 type" do
     test "is itself" do
       assert byte() == @byte_type
-    end
-
-    test "matches to itself" do
-      assert byte() = @byte_type
     end
 
     test "is what we expect" do

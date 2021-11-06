@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinCharlist.FetchTest do
 
   @moduletag :fetch
 
-  describe "the charlist type" do
-    pull_types(defmodule Charlist do
-      @type charlist_type :: charlist
-    end)
+  pull_types(defmodule Charlist do
+    @type charlist_type :: charlist
+  end)
 
+  describe "the charlist/0 type" do
     test "is itself" do
       assert charlist() == @charlist_type
-    end
-
-    test "matches to itself" do
-      assert charlist() = @charlist_type
     end
 
     test "is what we expect" do

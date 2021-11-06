@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinIolist.FetchTest do
 
   @moduletag :fetch
 
-  describe "the iolist type" do
-    pull_types(defmodule Iolist do
-      @type iolist_type :: iolist
-    end)
+  pull_types(defmodule Iolist do
+    @type iolist_type :: iolist
+  end)
 
+  describe "the iolist/0 type" do
     test "is itself" do
       assert iolist() == @iolist_type
-    end
-
-    test "matches to itself" do
-      assert iolist() = @iolist_type
     end
 
     test "is what we expect" do

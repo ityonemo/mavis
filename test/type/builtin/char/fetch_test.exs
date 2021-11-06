@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinChar.FetchTest do
 
   @moduletag :fetch
 
-  describe "the char type" do
-    pull_types(defmodule Char do
-      @type char_type :: char
-    end)
+  pull_types(defmodule Char do
+    @type char_type :: char
+  end)
 
+  describe "the char/0 type" do
     test "is itself" do
       assert char() == @char_type
-    end
-
-    test "matches to itself" do
-      assert char() = @char_type
     end
 
     test "is what we expect" do

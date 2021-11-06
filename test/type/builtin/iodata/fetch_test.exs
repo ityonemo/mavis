@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinIodata.FetchTest do
 
   @moduletag :fetch
 
-  describe "the iodata type" do
-    pull_types(defmodule Iodata do
-      @type iodata_type :: iodata
-    end)
+  pull_types(defmodule Iodata do
+    @type iodata_type :: iodata
+  end)
 
+  describe "the iodata/0 type" do
     test "is itself" do
       assert iodata() == @iodata_type
-    end
-
-    test "matches to itself" do
-      assert iodata() = @iodata_type
     end
 
     test "is what we expect" do

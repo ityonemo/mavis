@@ -6,17 +6,13 @@ defmodule TypeTest.BuiltinAny.FetchTest do
 
   @moduletag :fetch
 
-  describe "the any type" do
-    pull_types(defmodule Any do
-      @type any_type :: any
-    end)
+  pull_types(defmodule Any do
+    @type any_type :: any
+  end)
 
+  describe "the any/0 type" do
     test "is itself" do
       assert any() == @any_type
-    end
-
-    test "matches to itself" do
-      assert any() = @any_type
     end
 
     test "is what we expect" do
