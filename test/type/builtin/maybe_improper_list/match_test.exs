@@ -7,7 +7,6 @@ defmodule TypeTest.BuiltinMaybeImproperList.MatchTest do
 
   describe "the maybe_improper_list/0 type" do
     @maybe_improper_list_type %Type.Union{of: [%Type.List{type: any(), final: any()}, []]}
-    @maybe_improper_list_with_types
 
     test "matches with itself" do
       assert maybe_improper_list() = @maybe_improper_list_type
