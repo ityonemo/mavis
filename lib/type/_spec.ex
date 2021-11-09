@@ -28,11 +28,11 @@ defmodule Type.Spec do
   def parse({:integer, _, value}, _), do: value
   def parse({:atom, _, value}, _), do: value
   def parse({:type, _, :fun, [{:type, _, :any}, return]}, assigns) do
-    %Type.Function{params: :any, return: parse(return, assigns)}
+    type((... -> parse(return, assigns)))
   end
   def parse({:type, _, :fun, [{:type, _, :product, params}, return]}, assigns) do
     param_types = Enum.map(params, &parse(&1, assigns))
-    %Type.Function{params: param_types, return: parse(return, assigns)}
+    type((...(param_types) -> parse(return, assigns)))
   end
 
   def parse({:type, _, :map, :any}, _assigns), do: map()

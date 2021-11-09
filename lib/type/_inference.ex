@@ -31,8 +31,7 @@ defmodule Type.NoInference do
 
   """
   def infer(_, _, arity) do
-    {:ok, %Type.Function{params: List.duplicate(any(), arity),
-                         return: any()}}
+    {:ok, type((List.duplicate(any(), arity) -> any()))}
   end
 end
 

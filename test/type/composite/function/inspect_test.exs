@@ -52,7 +52,7 @@ defmodule TypeTest.Function.InspectTest do
     end
   end
 
-  @top_arity %Type.Function{params: 2, return: :foo}
+  @top_arity %Type.Function{branches: [%Type.Function.Branch{params: 2, return: :foo}]}
 
   describe "the top-arity function type" do
     test "gets underscores" do

@@ -131,17 +131,23 @@ defmodule Type.Function do
   ```
   """
 
-  @enforce_keys [:return]
-  defstruct @enforce_keys ++ [params: :any]
+  @enforce_keys [:branches]
+  defstruct @enforce_keys
 
   @type t :: %__MODULE__{
-    params: [Type.t] | :any | pos_integer,
-    return: Type.t
+    branches: [Type.Function.Branch.t, ...]
   }
 
-  @type return :: {:ok, Type.t} | {:maybe, Type.t, [Type.Message.t]} | {:error, Type.Message.t}
+  defimpl Inspect do
+    import Inspect.Algebra
 
-  @spec apply_types(t | Type.Union.t(t), [Type.t], keyword) :: return
+    def inspect(%{params: :any, return: return}, opts) do
+      raise "foo"
+      concat(["type((... -> ", to_doc(return, opts), "))"])
+    end
+  end
+
+  #@spec apply_types(t | Type.Union.t(t), [Type.t], keyword) :: return
   @doc """
   applies types to a function definition.
 
@@ -183,159 +189,165 @@ defmodule Type.Function do
   ```
   """
   def apply_types(fun, vars, meta \\ [])
-  def apply_types(fun = %__MODULE__{params: plst}, vlst, meta) when
-    length(plst) == length(vlst) do
-
-    var_match = match_vars(plst, vlst)
-
-    vlst
-    |> Enum.zip(plst)
-    |> Enum.with_index(1)
-    |> Enum.map(fn {{v, p}, idx} ->
-      arg = argument(fun, idx - 1)
-      Type.usable_as(v, p, meta)
-      |> add_message(v, idx, arg, fun)
-    end)
-    |> Enum.reduce({:ok, fun.return}, &apply_reduce/2)
-    |> substitute_vars(var_match)
+  def apply_types(_, vlst, meta) do
+    raise "AAAA"
   end
-  def apply_types(fun = %__MODULE__{params: arity}, params, _) when length(params) == arity do
-    {:ok, fun.return}
-  end
-  def apply_types(union = %Type.Union{of: funs}, vars, meta) do
-    # double check that everything is okay.
-    segregated_vars = funs
-    |> Enum.reduce(Enum.map(vars, &[&1]), fn
-      %__MODULE__{params: p}, acc when length(p) == length(vars) ->
-        p
-        |> Enum.zip(acc)
-        |> Enum.map(fn {a, b} -> [a | b] end)
-      type, _ ->
-        varp = length(vars)
-        raise Type.FunctionError, "type #{inspect type} in union #{inspect union} is not a function with #{varp} parameter#{p varp}"
-    end)
-    |> Enum.map(&Enum.reverse/1)
-
-    # partition the variables based on how they work with the
-    evaluated_type = segregated_vars
-    |> Enum.map(fn [var | segments] ->
-      Type.partition(var, segments)
-    end)
-    |> transpose
-    |> Enum.zip(funs)
-    |> Enum.map(fn {part, fun} -> apply_types(fun, part) end)
-    |> Enum.flat_map(fn
-      # throw away most of this information.  We figure out whether it's okay by checking
-      # out the preimage map.
-      {:ok, type} -> [type]
-      {:error, _} -> []
-      # this should be unreachable because by definition everything should be proper
-      # subtypes.
-      {:maybe, _, _} -> raise "unreachable"
-    end)
-    |> Type.union()
-
-    import Type, only: :macros
-
-    if evaluated_type == none() do
-      # find the type that doesn't match.  Sorry, just going to do the worst
-      # possible thing here.
-      vars
-      |> Enum.with_index(1)
-      |> Enum.map(fn {var, idx} ->
-        arg = argument(union, idx - 1)
-        var
-        |> Type.usable_as(arg, meta)
-        |> add_message(var, idx, arg, union)
-      end)
-      |> Enum.reduce(&Type.ternary_and/2)
-    else
-      segregated_vars
-      |> Enum.with_index(1)
-      |> Enum.map(fn {[var | segments], idx} ->
-        if Type.covered?(var, segments) do
-          :ok
-        else
-          arg = argument(union, idx - 1)
-          add_message({:maybe, [Type.Message.make(var, arg, meta)]},
-            var, idx, arg, union)
-        end
-      end)
-      |> Enum.reduce({:ok, evaluated_type}, &apply_reduce/2)
-    end
-  end
+  #  length(plst) == length(vlst) do
+#
+  #  var_match = match_vars(plst, vlst)
+#
+  #  vlst
+  #  |> Enum.zip(plst)
+  #  |> Enum.with_index(1)
+  #  |> Enum.map(fn {{v, p}, idx} ->
+  #    arg = argument(fun, idx - 1)
+  #    Type.usable_as(v, p, meta)
+  #    |> add_message(v, idx, arg, fun)
+  #  end)
+  #  |> Enum.reduce({:ok, fun.return}, &apply_reduce/2)
+  #  |> substitute_vars(var_match)
+  #end
+  #def apply_types(fun = %__MODULE__{params: arity}, params, _) when length(params) == arity do
+  #  {:ok, fun.return}
+  #end
+  #def apply_types(union = %Type.Union{of: funs}, vars, meta) do
+  #  # double check that everything is okay.
+  #  segregated_vars = funs
+  #  |> Enum.reduce(Enum.map(vars, &[&1]), fn
+  #    %__MODULE__{params: p}, acc when length(p) == length(vars) ->
+  #      p
+  #      |> Enum.zip(acc)
+  #      |> Enum.map(fn {a, b} -> [a | b] end)
+  #    type, _ ->
+  #      varp = length(vars)
+  #      raise Type.FunctionError, "type #{inspect type} in union #{inspect union} is not a function with #{varp} parameter#{p varp}"
+  #  end)
+  #  |> Enum.map(&Enum.reverse/1)
+#
+  #  # partition the variables based on how they work with the
+  #  evaluated_type = segregated_vars
+  #  |> Enum.map(fn [var | segments] ->
+  #    Type.partition(var, segments)
+  #  end)
+  #  |> transpose
+  #  |> Enum.zip(funs)
+  #  |> Enum.map(fn {part, fun} -> apply_types(fun, part) end)
+  #  |> Enum.flat_map(fn
+  #    # throw away most of this information.  We figure out whether it's okay by checking
+  #    # out the preimage map.
+  #    {:ok, type} -> [type]
+  #    {:error, _} -> []
+  #    # this should be unreachable because by definition everything should be proper
+  #    # subtypes.
+  #    {:maybe, _, _} -> raise "unreachable"
+  #  end)
+  #  |> Type.union()
+#
+  #  import Type, only: :macros
+#
+  #  if evaluated_type == none() do
+  #    # find the type that doesn't match.  Sorry, just going to do the worst
+  #    # possible thing here.
+  #    vars
+  #    |> Enum.with_index(1)
+  #    |> Enum.map(fn {var, idx} ->
+  #      arg = argument(union, idx - 1)
+  #      var
+  #      |> Type.usable_as(arg, meta)
+  #      |> add_message(var, idx, arg, union)
+  #    end)
+  #    |> Enum.reduce(&Type.ternary_and/2)
+  #  else
+  #    segregated_vars
+  #    |> Enum.with_index(1)
+  #    |> Enum.map(fn {[var | segments], idx} ->
+  #      if Type.covered?(var, segments) do
+  #        :ok
+  #      else
+  #        arg = argument(union, idx - 1)
+  #        add_message({:maybe, [Type.Message.make(var, arg, meta)]},
+  #          var, idx, arg, union)
+  #      end
+  #    end)
+  #    |> Enum.reduce({:ok, evaluated_type}, &apply_reduce/2)
+  #  end
+  #end
 
   ## error raising
-  def apply_types(%__MODULE__{params: :any}, _, _) do
-    raise Type.FunctionError, "cannot apply a function with ... parameters"
-  end
-  def apply_types(fun = %__MODULE__{params: params}, vars, _) do
-    funp = if is_integer(params), do: params, else: length(fun.params)
-    varp = length(vars)
-    raise Type.FunctionError, "mismatched arity; #{inspect fun} expects #{funp} parameter#{p funp}, got #{varp} parameter#{p varp} #{inspect vars}"
-  end
-  def apply_types(any, _, _) do
-    raise Type.FunctionError, "cannot apply a function to the type #{inspect any}"
-  end
-
-  @spec apply_reduce(Type.ternary, return) :: return
-  defp apply_reduce(:ok,             {:ok, term}),           do: {:ok, term}
-  defp apply_reduce({:maybe, msgs},  {:ok, term}),           do: {:maybe, term, msgs}
-  defp apply_reduce({:error, msg},   {:ok, _}),              do: {:error, msg}
-  defp apply_reduce(:ok,             {:maybe, term, msgs}),  do: {:maybe, term, msgs}
-  defp apply_reduce({:maybe, msgs1}, {:maybe, term, msgs2}), do: {:maybe, term, msgs1 + msgs2}
-  defp apply_reduce({:error, msg},   {:maybe, _, _}),        do: {:error, msg}
-  defp apply_reduce(_,               {:error, msg}),         do: {:error, msg}
-
-  defp match_vars(plist, vlist) do
-  #  plist
-  #  |> Enum.zip(vlist)
-  #  |> Enum.filter(&match?({%Type.Function.Var{}, _}, &1))
-  #  |> Enum.into(%{})
-  end
-
-  defp substitute_vars({:ok, result}, match) do
-#    {:ok, Type.Function.Var.resolve(result, match)}
-  end
-  defp substitute_vars({:maybe, result, msg}, match) do
-#    {:maybe, Type.Function.Var.resolve(result, match), msg}
-  end
-  defp substitute_vars(error, _), do: error
-
-  # pluralization
-  defp p(1), do: ""
-  defp p(_), do: "s"
-
-  defp add_message(:ok, _, _, _, _), do: :ok
-  defp add_message({:maybe, [message]}, var, idx, arg, fun) do
-    {:maybe, [%{message | meta: message.meta ++
-      [message: "#{inspect var} is overbroad for argument #{idx} (#{inspect arg}) of function #{inspect fun}"]}]}
-  end
-  defp add_message({:error, message}, var, idx, arg, fun) do
-    {:error, %{message | meta: message.meta ++
-      [message: "#{inspect var} is disjoint to argument #{idx} (#{inspect arg}) of function #{inspect fun}"]}}
-  end
-
+  #def apply_types(%__MODULE__{params: :any}, _, _) do
+  #  raise Type.FunctionError, "cannot apply a function with ... parameters"
+  #end
+  #def apply_types(fun = %__MODULE__{params: params}, vars, _) do
+  #  funp = if is_integer(params), do: params, else: length(fun.params)
+  #  varp = length(vars)
+  #  raise Type.FunctionError, "mismatched arity; #{inspect fun} expects #{funp} parameter#{p funp}, got #{varp} parameter#{p varp} #{inspect vars}"
+  #end
+  #def apply_types(any, _, _) do
+  #  raise Type.FunctionError, "cannot apply a function to the type #{inspect any}"
+  #end
+#
+  #@spec apply_reduce(Type.ternary, return) :: return
+  #defp apply_reduce(:ok,             {:ok, term}),           do: {:ok, term}
+  #defp apply_reduce({:maybe, msgs},  {:ok, term}),           do: {:maybe, term, msgs}
+  #defp apply_reduce({:error, msg},   {:ok, _}),              do: {:error, msg}
+  #defp apply_reduce(:ok,             {:maybe, term, msgs}),  do: {:maybe, term, msgs}
+  #defp apply_reduce({:maybe, msgs1}, {:maybe, term, msgs2}), do: {:maybe, term, msgs1 + msgs2}
+  #defp apply_reduce({:error, msg},   {:maybe, _, _}),        do: {:error, msg}
+  #defp apply_reduce(_,               {:error, msg}),         do: {:error, msg}
+#
+  #defp match_vars(plist, vlist) do
+  ##  plist
+  ##  |> Enum.zip(vlist)
+  ##  |> Enum.filter(&match?({%Type.Function.Var{}, _}, &1))
+  ##  |> Enum.into(%{})
+  #end
+#
+  #defp substitute_vars({:ok, result}, match) do
+# #   {:ok, Type.Function.Var.resolve(result, match)}
+  #end
+  #defp substitute_vars({:maybe, result, msg}, match) do
+# #   {:maybe, Type.Function.Var.resolve(result, match), msg}
+  #end
+  #defp substitute_vars(error, _), do: error
+#
+  ## pluralization
+  #defp p(1), do: ""
+  #defp p(_), do: "s"
+#
+  #defp add_message(:ok, _, _, _, _), do: :ok
+  #defp add_message({:maybe, [message]}, var, idx, arg, fun) do
+  #  {:maybe, [%{message | meta: message.meta ++
+  #    [message: "#{inspect var} is overbroad for argument #{idx} (#{inspect arg}) of function #{inspect fun}"]}]}
+  #end
+  #defp add_message({:error, message}, var, idx, arg, fun) do
+  #  {:error, %{message | meta: message.meta ++
+  #    [message: "#{inspect var} is disjoint to argument #{idx} (#{inspect arg}) of function #{inspect fun}"]}}
+  #end
+#
   # NB: This is zero-indexed.
-  defp argument(%__MODULE__{params: params}, index) do
-    Enum.at(params, index)
-  end
-  defp argument(%Type.Union{of: funs}, index) do
-    funs
-    |> Enum.map(&argument(&1, index))
-    |> Enum.into(%Type.Union{})
-  end
+  #defp argument(%__MODULE__{params: params}, index) do
+  #  Enum.at(params, index)
+  #end
+  #defp argument(%Type.Union{of: funs}, index) do
+  #  funs
+  #  |> Enum.map(&argument(&1, index))
+  #  |> Enum.into(%Type.Union{})
+  #end
+#
+  #@spec transpose([[Type.t]]) :: [[Type.t]]
+  #defp transpose(lst) do
+  #  lst
+  #  |> Enum.reduce(List.duplicate([], length(hd(lst))),
+  #    fn vec, acc ->
+  #      vec
+  #      |> Enum.zip(acc)
+  #      |> Enum.map(fn {a, b} -> [a | b] end)
+  #    end)
+  #  |> Enum.map(&Enum.reverse/1)
+  #end
 
-  @spec transpose([[Type.t]]) :: [[Type.t]]
-  defp transpose(lst) do
-    lst
-    |> Enum.reduce(List.duplicate([], length(hd(lst))),
-      fn vec, acc ->
-        vec
-        |> Enum.zip(acc)
-        |> Enum.map(fn {a, b} -> [a | b] end)
-      end)
-    |> Enum.map(&Enum.reverse/1)
+  defimpl Type.Algebra do
+    use Type.Helpers
   end
 
   #defimpl Type.Algebra do

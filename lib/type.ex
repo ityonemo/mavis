@@ -327,10 +327,10 @@ defmodule Type do
                %Type.Union{of: [pid(), port(), reference()]},
                "%Type.Union{of: [pid(), port(), reference()]}"
     builtin :fun,
-               %Type.Function{params: :any, return: any()},
+               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
                "%Type.Function{params: :any, return: any()}"
     builtin :function,
-               %Type.Function{params: :any, return: any()},
+               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
                "%Type.Function{params: :any, return: any()}"
     builtin :mfa,
                %Type.Tuple{elements: [module(), atom(), arity()]},
@@ -1105,8 +1105,22 @@ defmodule Type do
     |> Macro.escape
   end
 
+  defmacro type([{:->, _, [[{:..., _, [param_list]}], return]}]) do
+    quote do
+      %Type.Function{branches: %Type.Function.Branch{
+        params: unquote(param_list),
+        return: unquote(return)
+      }}
+    end
+  end
+
   defmacro type([{:->, _, [[{:..., _, _}], return]}]) do
-    Macro.escape(%Type.Function{params: :any, return: Macro.expand(return, __CALLER__)})
+    quote do
+      %Type.Function{branches: %Type.Function.Branch{
+        params: :any,
+        return: unquote(return)
+      }}
+    end
   end
 
   defmacro type([{:->, _, [params, return]}]) do
@@ -1118,12 +1132,12 @@ defmodule Type do
         Macro.expand(params, __CALLER__)
     end
 
-    Macro.escape(
-      %Type.Function{
-        params: params,
-        return: Macro.expand(return, __CALLER__)
-      }
-    )
+    quote do
+      %Type.Function{branches: %Type.Function.Branch{
+        params: unquote(params),
+        return: unquote(return)
+      }}
+    end
   end
 
   defmacro type({:node, _, []}) do
