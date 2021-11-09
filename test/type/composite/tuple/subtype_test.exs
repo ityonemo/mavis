@@ -8,7 +8,7 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
   use Type.Operators
 
   @any_tuple tuple()
-  @min_2_tuple tuple({any(), any(), ...})
+  @min_2_tuple type({any(), any(), ...})
 
   describe "minimum tuples" do
     test "are subtypes of themselves and any" do
@@ -33,7 +33,7 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except([tuple({})])
+      TypeTest.Targets.except([type({})])
       |> Enum.each(fn target ->
         refute @any_tuple in target
       end)
@@ -42,63 +42,63 @@ defmodule TypeTest.TypeTuple.SubtypeTest do
 
   describe "defined tuples" do
     test "are subtypes of any tuple and any" do
-      assert tuple({}) in @any_tuple
-      assert tuple({integer()}) in @any_tuple
-      assert tuple({atom(), integer()}) in @any_tuple
+      assert type({}) in @any_tuple
+      assert type({integer()}) in @any_tuple
+      assert type({atom(), integer()}) in @any_tuple
 
-      assert tuple({}) in any()
-      assert tuple({integer()}) in any()
-      assert tuple({atom(), integer()}) in any()
+      assert type({}) in any()
+      assert type({integer()}) in any()
+      assert type({atom(), integer()}) in any()
     end
 
     test "are subtypes of qualified minimum tuples" do
-      assert tuple({:ok, integer()}) in @min_2_tuple
+      assert type({:ok, integer()}) in @min_2_tuple
     end
 
     test "are subtypes of themselves" do
-      assert tuple({}) in tuple({})
+      assert type({}) in type({})
 
-      assert tuple({integer()}) in
-        tuple({integer()})
-      assert tuple({atom(), integer()}) in
-        tuple({atom(), integer()})
+      assert type({integer()}) in
+        type({integer()})
+      assert type({atom(), integer()}) in
+        type({atom(), integer()})
     end
 
     test "are subtypes of unions with themselves, supertuples, or any tuple" do
-      assert tuple({integer()}) in (tuple({integer()}) <|> integer())
-      assert tuple({integer()}) in (tuple({any()}) <|> integer())
-      assert tuple({integer()}) in (@any_tuple <|> integer())
+      assert type({integer()}) in (type({integer()}) <|> integer())
+      assert type({integer()}) in (type({any()}) <|> integer())
+      assert type({integer()}) in (@any_tuple <|> integer())
     end
 
     test "are subtypes when their elements are subtypes" do
-      assert tuple({47}) in tuple({integer()})
-      assert tuple({47, :foo}) in tuple({integer(), atom()})
+      assert type({47}) in type({integer()})
+      assert type({47, :foo}) in type({integer(), atom()})
     end
 
     test "are not subtypes of orthogonal unions" do
-      refute tuple({integer()}) in
-        (tuple({integer(), integer()}) <|> integer())
+      refute type({integer()}) in
+        (type({integer(), integer()}) <|> integer())
     end
 
     test "are not subtypes when their length is insufficient" do
-      refute tuple({integer()}) in @min_2_tuple
+      refute type({integer()}) in @min_2_tuple
     end
 
     test "is not a subtype on partial match" do
-      refute tuple({47, :foo}) in tuple({atom(), atom()})
-      refute tuple({47, :foo}) in tuple({integer(), integer()})
+      refute type({47, :foo}) in type({atom(), atom()})
+      refute type({47, :foo}) in type({integer(), integer()})
     end
 
     test "is not a subtype if the lengths don't agree" do
-      refute tuple({integer()}) in tuple({integer(), integer()})
+      refute type({integer()}) in type({integer(), integer()})
     end
 
     test "are not subtypes of other types" do
-      TypeTest.Targets.except([tuple({})])
+      TypeTest.Targets.except([type({})])
       |> Enum.each(fn target ->
-        refute tuple({}) in target
-        refute tuple({integer()}) in target
-        refute tuple({atom(), integer()}) in target
+        refute type({}) in target
+        refute type({integer()}) in target
+        refute type({atom(), integer()}) in target
       end)
     end
   end

@@ -297,7 +297,7 @@ defmodule Type.Bitstring do
   #      case Type.usable_as(challenge, binary()) do
   #        :ok ->
   #          msg = encapsulation_msg(challenge, target)
-  #          {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
+  #          {:maybe, [Message.make(challenge, type(String.t()), meta ++ [message: msg])]}
   #        error ->
   #          error
   #      end
@@ -314,7 +314,7 @@ defmodule Type.Bitstring do
   #      |> case do
   #        :ok ->
   #          msg = encapsulation_msg(challenge, target)
-  #          {:maybe, [Message.make(challenge, remote(String.t()), meta ++ [message: msg])]}
+  #          {:maybe, [Message.make(challenge, type(String.t()), meta ++ [message: msg])]}
   #        other -> other
   #      end
   #    end

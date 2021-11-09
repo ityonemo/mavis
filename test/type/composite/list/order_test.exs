@@ -11,29 +11,29 @@ defmodule TypeTest.TypeList.OrderTest do
 
   describe "a nonempty true list" do
     test "is bigger than bottom and reference" do
-      assert list(...) > none()
-      assert list(...) > reference()
+      assert type([...]) > none()
+      assert type([...]) > reference()
     end
 
     test "is bigger than a literal lists and lists which are a subclass" do
-      assert list(...) > []
-      assert list(...) > [:foo]
-      assert list(...) > list(integer(), ...)
+      assert type([...]) > []
+      assert type([...]) > [:foo]
+      assert type([...]) > nonempty_list(integer())
       # because the final is more general
       assert %List{type: any(), final: any()} >
-        list(any(), ...)
+        nonempty_list(any())
     end
 
     test "is smaller than a list which is a superclass" do
-      assert list(integer(), ...) < list(...)
-      assert list(integer(), ...) < list(integer())
+      assert nonempty_list(integer()) < type([...])
+      assert nonempty_list(integer()) < list(integer())
       # because the final is more general
-      assert list(...) < %List{type: any(), final: any()}
+      assert type([...]) < %List{type: any(), final: any()}
     end
 
     test "is smaller than maybe-empty lists, empty list, bitstrings or top" do
-      assert list(...) < %Type.Bitstring{size: 0, unit: 0}
-      assert list(...) < any()
+      assert type([...]) < %Type.Bitstring{size: 0, unit: 0}
+      assert type([...]) < any()
     end
   end
 
@@ -45,7 +45,7 @@ defmodule TypeTest.TypeList.OrderTest do
     end
 
     test "is bigger than a list which is nonempty: true" do
-      assert list(integer()) < list(...)
+      assert list(integer()) < type([...])
     end
 
     test "is bigger than a list which is a subclass" do

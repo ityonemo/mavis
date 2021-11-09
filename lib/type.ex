@@ -354,7 +354,7 @@ defmodule Type do
                %Type.Union{of: [%Type.List{
                  type: %Type.Tuple{elements: [atom(), any()]},
                  final: []}, []]},
-               "%Type.Union{of: [%Type.List{type: tuple({atom(), any()})}, []}"
+               "%Type.Union{of: [%Type.List{type: type({atom(), any()})}, []}"
     builtin :list,
                %Type.Union{of: [%Type.List{}, []]},
                "%Type.Union{of: [%Type.List{}, []]}"
@@ -397,11 +397,11 @@ defmodule Type do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> list(...)
+  iex> type([...])
   %Type.List{type: %Type{name: :any}}
   iex> list(1..10)
   %Type.Union{of: [%Type.List{type: 1..10}, []]}
-  iex> list(1..10, ...)
+  iex> nonempty_list(1..10)
   %Type.List{type: 1..10}
   ```
 
@@ -416,8 +416,10 @@ defmodule Type do
   * usable in matches *
   """
   @doc type: true
-  defmacro list({:..., _, _}) do
-    Macro.escape(%Type.List{type: any()})
+  defmacro list(type) do
+    quote do
+      %Type.Union{of: [%Type.List{type: unquote(type), final: []}, []]}
+    end
   end
 
   @doc """
@@ -702,12 +704,12 @@ defmodule Type do
   ```
   iex> import Type, only: :macros
   iex> binary = %Type.Bitstring{size: 0, unit: 8}
-  iex> Type.usable_as(remote(String.t()), binary)
+  iex> Type.usable_as(type(String.t()), binary)
   :ok
-  iex> Type.usable_as(binary, remote(String.t))
+  iex> Type.usable_as(binary, type(String.t))
   {:maybe, [%Type.Message{
               type: binary,
-              target: remote(String.t()),
+              target: type(String.t()),
               meta: [message: \"""
     binary() is an equivalent type to String.t() but it may fail because it is
     a remote encapsulation which may require qualifications outside the type system.
@@ -751,9 +753,9 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> binary = %Type.Bitstring{size: 0, unit: 8}
-  iex> Type.subtype?(remote(String.t()), binary)
+  iex> Type.subtype?(type(String.t()), binary)
   true
-  iex> Type.subtype?(binary, remote(String.t()))
+  iex> Type.subtype?(binary, type(String.t()))
   false
   ```
   """

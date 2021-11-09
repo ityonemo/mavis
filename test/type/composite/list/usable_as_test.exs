@@ -42,7 +42,7 @@ defmodule TypeTest.TypeList.UsableAsTest do
     end
 
     test "it might be usable as a nonempty list" do
-      assert {:maybe, _} = list(integer()) ~> list(integer(), ...)
+      assert {:maybe, _} = list(integer()) ~> nonempty_list(integer())
     end
 
     test "it might be usable if the types are orthogonal" do
@@ -50,27 +50,26 @@ defmodule TypeTest.TypeList.UsableAsTest do
     end
 
     test "it won't be usable if the types are orthogonal and the target is nonempty" do
-      assert {:error, _} = list(integer()) ~> list(atom(), ...)
+      assert {:error, _} = list(integer()) ~> nonempty_list(atom())
     end
   end
 
   describe "for nonempty: true lists" do
     test "it is usable as similar lists, nonempty or otherwise" do
-      assert :ok = list(47, ...) ~> list(integer())
-      assert :ok = list(integer(), ...) ~> list(integer())
-
-      assert :ok = list(47, ...) ~> list(integer(), ...)
-      assert :ok = list(integer(), ...) ~> list(integer(), ...)
+      assert :ok = nonempty_list(47) ~> list(integer())
+      assert :ok = nonempty_list(integer()) ~> nonempty_list(integer())
+      assert :ok = nonempty_list(47) ~> nonempty_list(integer())
+      assert :ok = nonempty_list(integer()) ~> nonempty_list(integer())
     end
 
     test "it might be usable if the types might be usable" do
-      assert {:maybe, _} = list(integer(), ...) ~> list(47)
-      assert {:maybe, _} = list(integer(), ...) ~> list(47, ...)
+      assert {:maybe, _} = nonempty_list(integer()) ~> list(47)
+      assert {:maybe, _} = nonempty_list(integer()) ~> nonempty_list(47)
     end
 
     test "if the inner types are hopeless, it won't be usable" do
-      assert {:error, _} = list(integer(), ...) ~> list(atom())
-      assert {:error, _} = list(integer(), ...) ~> list(atom(), ...)
+      assert {:error, _} = nonempty_list(integer()) ~> list(atom())
+      assert {:error, _} = nonempty_list(integer()) ~> nonempty_list(atom())
     end
   end
 

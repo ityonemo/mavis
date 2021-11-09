@@ -37,11 +37,11 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert @list == list(:foo <|> :bar) <~> @list
       assert @list == list(atom()) <~> @list
 
-      assert @ilist == @ilist <~> %List{final: remote(String.t)}
+      assert @ilist == @ilist <~> %List{final: type(String.t)}
       assert @ilist == @ilist <~> maybe_improper_list()
       assert @ilist == @ilist <~> nonempty_maybe_improper_list()
 
-      assert @ilist == %List{final: remote(String.t)} <~> @ilist
+      assert @ilist == %List{final: type(String.t)} <~> @ilist
       assert @ilist == maybe_improper_list() <~> @ilist
       assert @ilist == nonempty_maybe_improper_list() <~> @ilist
     end
@@ -50,8 +50,8 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       assert none() == @ilist <~> list()
       assert none() == list() <~> @ilist
 
-      assert none() == @list <~> %List{final: remote(String.t)}
-      assert none() == %List{final: remote(String.t)} <~> @list
+      assert none() == @list <~> %List{final: type(String.t)}
+      assert none() == %List{final: type(String.t)} <~> @list
     end
 
     #@tag :skip
@@ -69,7 +69,7 @@ defmodule TypeTest.LiteralList.IntersectionTest do
       #assert none() == @list <~> (atom() <|> port())
 #
       #assert @ilist == @ilist <~> (:foo <|> @ilist)
-      #assert @ilist == @ilist <~> (:foo <|> %List{final: remote(String.t)})
+      #assert @ilist == @ilist <~> (:foo <|> %List{final: type(String.t)})
       #assert none() == @ilist <~> (atom() <|> port())
     end
 

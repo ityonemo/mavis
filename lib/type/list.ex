@@ -28,9 +28,9 @@ defmodule Type.List do
   iex> import Type, only: :macros
   iex> list(pos_integer())
   %Type.Union{of: [%Type.List{type: %Type{name: :pos_integer}}, []]}
-  iex> list(...)
+  iex> type([...])
   %Type.List{type: %Type{name: :any}}
-  iex> list(pos_integer(), ...)
+  iex> nonempty_list(pos_integer())
   %Type.List{type: %Type{name: :pos_integer}}
   ```
 
@@ -39,7 +39,7 @@ defmodule Type.List do
   - A the general nonempty list
     ```
     iex> inspect %Type.List{}
-    "list(...)"
+    "type([...])"
     ```
   - a nonempty list of a given type
     ```elixir
@@ -89,7 +89,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.compare(list(...), [])
+  iex> Type.compare(type([...]), [])
   :gt
   iex> Type.compare(list(), [])
   :gt
@@ -105,9 +105,9 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(list(...), list())
+  iex> Type.intersection(type([...]), list())
   %Type.List{}
-  iex> Type.intersection(list(1..20, ...), list(10..30, ...))
+  iex> Type.intersection(nonempty_list(1..20), nonempty_list(10..30))
   %Type.List{type: 10..20}
   iex> inspect Type.intersection(list(1..20), list(10..30))
   "list(10..20)"
@@ -121,7 +121,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.union(list(...), list())
+  iex> Type.union(type([...]), list())
   %Type.Union{of: [%Type.List{}, []]}
   iex> inspect Type.union(list(1..10), list(10..20))
   "list(10..20) | list(1..10)"
@@ -133,7 +133,7 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.subtype?(list(...), list())
+  iex> Type.subtype?(type([...]), list())
   true
   iex> Type.subtype?(list(1..10), list(2..30))
   false
@@ -150,7 +150,7 @@ defmodule Type.List do
   iex> Type.usable_as(list(1..10), list(atom())) # note it might be the empty list
   {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{type: 1..10}, []]},
                           target: %Type.Union{of: [%Type.List{type: %Type{name: :atom}}, []]}}]}
-  iex> Type.usable_as(list(), list(...))
+  iex> Type.usable_as(list(), type([...]))
   {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{}, []]}, target: %Type.List{}}]}
   ```
 

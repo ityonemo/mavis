@@ -119,7 +119,7 @@ defmodule Type.Spec do
   end
   # default builtin
   def parse({:type, _, type, []}, _) when type in [:node | @builtins] do
-    Type.builtin(type) |> IO.inspect(label: "122", structs: false)
+    Type.builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment

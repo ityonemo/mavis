@@ -55,7 +55,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "is not usable as a nonempty list with totally different types, or final" do
-      assert {:error, _} = iolist() ~> list(atom(), ...)
+      assert {:error, _} = iolist() ~> nonempty_list(atom())
       assert {:error, _} = iolist() ~> %List{type: atom(), final: atom()}
     end
 
@@ -101,7 +101,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "with either incompatible final terms or nonempty are not usable as iolists" do
-      assert {:error, _} = list(atom(), ...) ~> iolist()
+      assert {:error, _} = nonempty_list(atom()) ~> iolist()
       assert {:error, _} = %List{type: any(), final: atom()} ~>
         iolist()
     end

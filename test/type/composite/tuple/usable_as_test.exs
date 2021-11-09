@@ -9,8 +9,8 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
   alias Type.Message
 
   @any_tuple tuple()
-  @min_2_tuple tuple({any(), any(), ...})
-  @min_3_tuple tuple({any(), any(), any(), ...})
+  @min_2_tuple type({any(), any(), ...})
+  @min_3_tuple type({any(), any(), any(), ...})
 
   describe "for the minimum size tuple types" do
     test "you can use it for itself and the builtin any" do
@@ -30,12 +30,12 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
 
     test "it might be usable as a specified tuple" do
       # zero arity
-      assert {:maybe, _} = @any_tuple ~> tuple({})
+      assert {:maybe, _} = @any_tuple ~> type({})
       # one arity
-      assert {:maybe, _} = @any_tuple ~> tuple({:foo})
+      assert {:maybe, _} = @any_tuple ~> type({:foo})
       # two arity
-      assert {:maybe, _} = @any_tuple ~> tuple({integer(), atom()})
-      assert {:maybe, _} = @min_2_tuple ~> tuple({:ok, integer()})
+      assert {:maybe, _} = @any_tuple ~> type({integer(), atom()})
+      assert {:maybe, _} = @min_2_tuple ~> type({:ok, integer()})
     end
 
     test "you can maybe use it as a more restrictive tuple" do
@@ -47,11 +47,11 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     end
 
     test "you can't use it as a tuple that's too small" do
-      assert {:error, _} = @min_3_tuple ~> tuple({:ok, binary()})
+      assert {:error, _} = @min_3_tuple ~> type({:ok, binary()})
     end
 
     test "you can't use it for anything else" do
-      targets = TypeTest.Targets.except([tuple({})])
+      targets = TypeTest.Targets.except([type({})])
       Enum.each(targets, fn target ->
         assert {:error, %Message{type: @any_tuple, target: ^target}} =
           (@any_tuple ~> target)
@@ -61,88 +61,88 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
 
   describe "for specified tuples" do
     test "they are usable as any tuple" do
-      assert :ok = tuple({}) ~> @any_tuple
-      assert :ok = tuple({:foo}) ~> @any_tuple
-      assert :ok = tuple({integer(), atom()}) ~> @any_tuple
+      assert :ok = type({}) ~> @any_tuple
+      assert :ok = type({:foo}) ~> @any_tuple
+      assert :ok = type({integer(), atom()}) ~> @any_tuple
     end
 
     test "they are usable as mininum arity tuples" do
-      assert :ok = tuple({:ok, integer()}) ~> @min_2_tuple
-      assert :ok = tuple({:ok, binary(), integer()}) ~> @min_2_tuple
+      assert :ok = type({:ok, integer()}) ~> @min_2_tuple
+      assert :ok = type({:ok, binary(), integer()}) ~> @min_2_tuple
     end
 
     test "they are usable as tuples with the same length and transitive usable_as" do
-      assert :ok = tuple({}) ~> tuple({})
-      assert :ok = tuple({:foo}) ~> tuple({:foo})
-      assert :ok = tuple({:foo}) ~> tuple({atom()})
+      assert :ok = type({}) ~> type({})
+      assert :ok = type({:foo}) ~> type({:foo})
+      assert :ok = type({:foo}) ~> type({atom()})
 
-      assert :ok = tuple({integer(), atom()}) ~>
-        tuple({integer(), any()})
+      assert :ok = type({integer(), atom()}) ~>
+        type({integer(), any()})
 
-      assert :ok = tuple({integer(), atom()}) ~>
-        tuple({any(), atom()})
+      assert :ok = type({integer(), atom()}) ~>
+        type({any(), atom()})
     end
 
     test "tuple lengths must match" do
-      assert {:error, _} = tuple({}) ~> tuple({integer()})
-      assert {:error, _} = tuple({}) ~> tuple({integer(), any()})
+      assert {:error, _} = type({}) ~> type({integer()})
+      assert {:error, _} = type({}) ~> type({integer(), any()})
 
-      assert {:error, _} = tuple({integer()}) ~> tuple({})
-      assert {:error, _} = tuple({integer()}) ~> tuple({integer(), any()})
+      assert {:error, _} = type({integer()}) ~> type({})
+      assert {:error, _} = type({integer()}) ~> type({integer(), any()})
 
-      assert {:error, _} = tuple({integer(), any()}) ~> tuple({})
-      assert {:error, _} = tuple({integer(), any()}) ~> tuple({integer()})
+      assert {:error, _} = type({integer(), any()}) ~> type({})
+      assert {:error, _} = type({integer(), any()}) ~> type({integer()})
     end
 
     test "for a one-tuple it's the expected match of the single element" do
-      assert {:maybe, _} = tuple({integer()}) ~> tuple({1..10})
-      assert {:error, _} = tuple({integer()}) ~> tuple({atom()})
+      assert {:maybe, _} = type({integer()}) ~> type({1..10})
+      assert {:error, _} = type({integer()}) ~> type({atom()})
     end
 
     test "you can't use it as a tuple for which it doesn't have enough" do
-      assert {:error, _} = tuple({:ok, integer()}) ~> @min_3_tuple
+      assert {:error, _} = type({:ok, integer()}) ~> @min_3_tuple
     end
 
     test "for a two-tuple it's the ternary logic match of all elements" do
       # OK MAYBE
       assert {:maybe, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({integer(), 0..42})
+        type({integer(), integer()}) ~>
+        type({integer(), 0..42})
 
       # OK ERROR
       assert {:error, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({integer(), atom()})
+        type({integer(), integer()}) ~>
+        type({integer(), atom()})
 
       # MAYBE OK
       assert {:maybe, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({0..42,             integer()})
+        type({integer(), integer()}) ~>
+        type({0..42,             integer()})
 
       # MAYBE MAYBE
       assert {:maybe, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({0..42,             0..42})
+        type({integer(), integer()}) ~>
+        type({0..42,             0..42})
 
       # MAYBE ERROR
       assert {:error, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({0..42,             atom()})
+        type({integer(), integer()}) ~>
+        type({0..42,             atom()})
 
       # ERROR OK
       assert {:error, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({atom(),    integer()})
+        type({integer(), integer()}) ~>
+        type({atom(),    integer()})
 
       # ERROR MAYBE
       assert {:error, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({atom(),    0..42})
+        type({integer(), integer()}) ~>
+        type({atom(),    0..42})
 
       # ERROR ERROR
       assert {:error, _} =
-        tuple({integer(), integer()}) ~>
-        tuple({atom(),    atom()})
+        type({integer(), integer()}) ~>
+        type({atom(),    atom()})
     end
   end
 end

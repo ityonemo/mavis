@@ -32,7 +32,7 @@ defmodule TypeTest.TypeList.SubtypeTest do
     end
 
     test "is not a subtype if the inner type is the same but nonempty" do
-      refute list(atom()) in list(atom(), ...)
+      refute list(atom()) in nonempty_list(atom())
     end
 
     test "is not a subtype if the inner type is the same but with a different final" do
@@ -49,21 +49,21 @@ defmodule TypeTest.TypeList.SubtypeTest do
 
   describe "the a nonempty list" do
     test "is a subtype of itself and any" do
-      assert list(...) in list(...)
-      assert list(...) in any()
+      assert type([...]) in type([...])
+      assert type([...]) in any()
     end
 
     test "is a subtype of nonempty false self" do
-      assert list(...) in list()
-      assert list(integer(), ...) in list(integer())
+      assert type([...]) in list()
+      assert nonempty_list(integer()) in list(integer())
     end
 
     test "if subtype if inner type is a subtype" do
-      assert list(47, ...) in list(integer(), ...)
+      assert nonempty_list(47) in nonempty_list(integer())
     end
 
     test "is not a subtype if the inner type is not a subtype" do
-      refute list(atom(), ...) in list(integer(), ...)
+      refute nonempty_list(atom()) in nonempty_list(integer())
     end
   end
 

@@ -19,7 +19,7 @@ defimpl Type.Algebra, for: Type do
 
   # TODO: REORDER THIS SECTION BY TYPECLASS
   import Type, only: :macros
-  def compare_internal(list(...), l) when is_list(l), do: :gt
+  def compare_internal(type([...]), l) when is_list(l), do: :gt
   def compare_internal(pos_integer(), neg_integer()), do: :gt
   def compare_internal(pos_integer(), i) when is_integer(i), do: :gt
   def compare_internal(pos_integer(), _.._), do: :gt
@@ -38,8 +38,8 @@ defimpl Type.Algebra, for: Type do
   Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
   def intersection_internal(any(), type), do: type
-  def intersection_internal(list(...), []), do: none()
-  def intersection_internal(list(...), l) when is_list(l), do: l
+  def intersection_internal(type([...]), []), do: none()
+  def intersection_internal(type([...]), l) when is_list(l), do: l
   def intersection_internal(neg_integer(), i) when is_integer(i) and i < 0, do: i
   def intersection_internal(neg_integer(), a..b) when b < 0, do: a..b
   def intersection_internal(pos_integer(), i) when is_integer(i) and i > 0, do: i
@@ -195,8 +195,8 @@ defimpl Type.Algebra, for: Type do
 #    def intersection(iolist(), any), do: Type.Iolist.intersection_with(any)
 #
 #    # strings
-#    def intersection(remote(String.t), target = %Type{module: String, name: :t}), do: target
-#    def intersection(specced = %{module: String, name: :t}, remote(String.t)), do: specced
+#    def intersection(type(String.t), target = %Type{module: String, name: :t}), do: target
+#    def intersection(specced = %{module: String, name: :t}, type(String.t)), do: specced
 #    def intersection(%{module: String, name: :t, params: params}, binary) when is_binary(binary) do
 #      case params do
 #        [] -> binary

@@ -31,8 +31,8 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   describe "empty list not usable as" do
     test "a nonempty list" do
-      assert {:error, %Message{type: [], target: list(...)}} =
-        ([] ~> list(...))
+      assert {:error, %Message{type: [], target: type([...])}} =
+        ([] ~> type([...]))
     end
 
     test "a list with a different final" do

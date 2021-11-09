@@ -33,7 +33,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
     end
 
     test "acts as if it is a maybe_empty list" do
-      nonempty = list(binary(), ...)
+      nonempty = nonempty_list(binary())
       assert nonempty == iolist() <~> nonempty
       assert nonempty == nonempty <~> iolist()
     end
@@ -56,7 +56,7 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
 
     test "if the list is different, there is only an empty list intersection" do
       assert [] == iolist() <~> list(atom())
-      assert none() == iolist() <~> list(atom(), ...)
+      assert none() == iolist() <~> nonempty_list(atom())
     end
 
     test "if the final is different, there's no interesction" do

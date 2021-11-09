@@ -94,7 +94,7 @@ defimpl Type.Algebra, for: BitString do
 #
 #  def normalize(binary) when is_binary(binary) do
 #    if String.valid?(binary) do
-#      remote(String.t())
+#      type(String.t())
 #    else
 #      %Type.Bitstring{size: :erlang.bit_size(binary)}
 #    end

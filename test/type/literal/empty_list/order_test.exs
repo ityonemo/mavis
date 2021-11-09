@@ -14,7 +14,7 @@ defmodule TypeTest.LiteralEmptyList.OrderTest do
     end
 
     test "is smaller than any nonempty list" do
-      assert [] < list(...)
+      assert [] < type([...])
     end
 
     test "is smaller than a union containing it" do

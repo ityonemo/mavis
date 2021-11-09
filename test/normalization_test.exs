@@ -61,54 +61,54 @@
 #
 #  describe "functions with literals" do
 #    test "in the parameters can be normalized" do
-#      assert type((remote(String.t) -> :ok)) ==
+#      assert type((type(String.t) -> :ok)) ==
 #        Type.normalize(type(("foo" -> :ok)))
 #    end
 #    test "in the return can be normalized" do
-#      assert type((any() -> remote(String.t))) ==
+#      assert type((any() -> type(String.t))) ==
 #        Type.normalize(type((any() -> "foo")))
 #
-#      assert type((any(), any() -> remote(String.t))) ==
+#      assert type((any(), any() -> type(String.t))) ==
 #        Type.normalize(type((_, _ -> "foo")))
 #
-#      assert type((... -> remote(String.t))) ==
+#      assert type((... -> type(String.t))) ==
 #        Type.normalize(type((... -> "foo")))
 #    end
 #  end
 #
 #  describe "min-arity tuples" do
 #    test "are normalized to general tuples" do
-#      refute tuple() == tuple({any(), any(), any(), ...})
-#      assert tuple() == Type.normalize(tuple({any(), any(), any(), ...}))
+#      refute tuple() == type({any(), any(), any(), ...})
+#      assert tuple() == Type.normalize(type({any(), any(), any(), ...}))
 #    end
 #  end
 #
 #  describe "maps with literals" do
 #    test "are normalized correctly" do
-#      assert type(%{optional(remote(String.t())) => remote(String.t())}) ==
+#      assert type(%{optional(type(String.t())) => type(String.t())}) ==
 #        Type.normalize(literal(%{"foo" => "bar"}))
 #
-#      assert type(%{foo: remote(String.t())}) ==
+#      assert type(%{foo: type(String.t())}) ==
 #        Type.normalize(literal(%{foo: "bar"}))
 #    end
 #  end
 #
 #  describe "tuples with literals" do
 #    test "are normalized down to the expected type" do
-#      assert tuple({remote(String.t)}) == Type.normalize(tuple({"foo"}))
+#      assert type({type(String.t)}) == Type.normalize(type({"foo"}))
 #    end
 #  end
 #
 #  describe "literal lists" do
 #    test "are normalized to list type" do
 #      assert [] == Type.normalize([])
-#      assert list(remote(String.t),...) == Type.normalize(["foo"])
+#      assert list(type(String.t),...) == Type.normalize(["foo"])
 #    end
 #  end
 #
 #  describe "literal binaries and bitstrings" do
 #    test "are normalized correctly" do
-#      assert remote(String.t()) == Type.normalize("foo")
+#      assert type(String.t()) == Type.normalize("foo")
 #      # not UTF-8 compliant:
 #      assert %Type.Bitstring{size: 8} == Type.normalize(<<255::8>>)
 #      assert %Type.Bitstring{size: 7} == Type.normalize(<<0::7>>)
@@ -117,14 +117,14 @@
 #
 #  describe "String.t/1" do
 #    test "is normalized back to String.t" do
-#      refute remote(String.t()) == remote(String.t(8))
-#      assert remote(String.t) == Type.normalize(remote(String.t(8)))
+#      refute type(String.t()) == type(String.t(8))
+#      assert type(String.t) == Type.normalize(type(String.t(8)))
 #    end
 #  end
 #
 #  describe "unions of literals" do
 #    test "are normalized correctly" do
-#      assert remote(String.t()) == Type.normalize(Type.union("foo", "quux"))
+#      assert type(String.t()) == Type.normalize(Type.union("foo", "quux"))
 #    end
 #  end
 #end

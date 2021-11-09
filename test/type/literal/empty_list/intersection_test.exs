@@ -18,7 +18,7 @@ defmodule TypeTest.LiteralEmptyList.IntersectionTest do
 
     test "with nonempty, or odd-termination final lists is not ok" do
       assert none() == [] <~> %List{final: :foo}
-      assert none() == [] <~> list(...)
+      assert none() == [] <~> type([...])
     end
 
     test "with unions works as expected" do

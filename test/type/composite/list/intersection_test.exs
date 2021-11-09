@@ -42,13 +42,13 @@ defmodule TypeTest.TypeList.IntersectionTest do
 
   describe "nonempty list" do
     test "intersects with any and self" do
-      assert list(...) == list() <~> list(...)
-      assert list(...) == list(...) <~> list()
+      assert type([...]) == list() <~> type([...])
+      assert type([...]) == type([...]) <~> list()
     end
 
     test "doesn't intersect with empty list" do
-      assert none() == [] <~> list(...)
-      assert none() == list(...) <~> []
+      assert none() == [] <~> type([...])
+      assert none() == type([...]) <~> []
     end
   end
 

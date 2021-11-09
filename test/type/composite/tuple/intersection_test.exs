@@ -7,7 +7,7 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
   import Type, only: :macros
 
   @anytuple tuple()
-  @min_2_tuple tuple({any(), any(), ...})
+  @min_2_tuple type({any(), any(), ...})
 
   describe "minimum size tuple" do
     test "intersects with any and self" do
@@ -22,33 +22,33 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
     end
 
     test "turns into its counterparty" do
-      assert tuple({}) == @anytuple <~> tuple({})
-      assert tuple({:foo}) == @anytuple <~> tuple({:foo})
-      assert tuple({:foo, integer()}) ==
-        @anytuple <~> tuple({:foo, integer()})
+      assert type({}) == @anytuple <~> type({})
+      assert type({:foo}) == @anytuple <~> type({:foo})
+      assert type({:foo, integer()}) ==
+        @anytuple <~> type({:foo, integer()})
 
-      assert tuple({:ok, integer()}) ==
-        @min_2_tuple <~> tuple({:ok, integer()})
+      assert type({:ok, integer()}) ==
+        @min_2_tuple <~> type({:ok, integer()})
 
-      assert tuple({:ok, binary(), integer()}) ==
-        @min_2_tuple <~> tuple({:ok, binary(), integer()})
+      assert type({:ok, binary(), integer()}) ==
+        @min_2_tuple <~> type({:ok, binary(), integer()})
     end
 
     test "is none when the tuple is too small" do
-      assert none() == tuple({any(), any(), any(), ...}) <~> tuple({:ok, integer()})
+      assert none() == type({any(), any(), any(), ...}) <~> type({:ok, integer()})
     end
 
     test "with unions works as expected" do
-      assert tuple({}) == @anytuple <~> (tuple({}) <|> 1..10)
+      assert type({}) == @anytuple <~> (type({}) <|> 1..10)
       #assert none() == @anytuple <~> (atom() <|> port())
 #
-      #assert none() == @min_2_tuple <~> (tuple({}) <|> 1..10)
+      #assert none() == @min_2_tuple <~> (type({}) <|> 1..10)
       #assert none() == @min_2_tuple <~> (atom() <|> port())
     end
 
     @tag :skip
     test "doesn't intersect with anything else" do
-      TypeTest.Targets.except([@anytuple, tuple({})])
+      TypeTest.Targets.except([@anytuple, type({})])
       |> Enum.each(fn target ->
         assert none() == @anytuple <~> target
       end)
@@ -57,24 +57,24 @@ defmodule TypeTest.TypeTuple.IntersectionTest do
 
   describe "tuples with defined elements" do
     test "intersect with the cartesian intersection" do
-      assert tuple({:foo}) == tuple({:foo}) <~> tuple({atom()})
-      assert tuple({:foo}) == tuple({atom()}) <~> tuple({:foo})
+      assert type({:foo}) == type({:foo}) <~> type({atom()})
+      assert type({:foo}) == type({atom()}) <~> type({:foo})
 
-      assert tuple({:foo, 47}) ==
-        tuple({:foo, integer()}) <~>
-        tuple({atom(), 47})
-      assert tuple({:foo, 47}) ==
-        tuple({atom(), integer()}) <~>
-        tuple({:foo, 47})
-      assert tuple({:foo, 47}) ==
-        tuple({:foo, 47}) <~>
-        tuple({atom(), integer()})
+      assert type({:foo, 47}) ==
+        type({:foo, integer()}) <~>
+        type({atom(), 47})
+      assert type({:foo, 47}) ==
+        type({atom(), integer()}) <~>
+        type({:foo, 47})
+      assert type({:foo, 47}) ==
+        type({:foo, 47}) <~>
+        type({atom(), integer()})
     end
 
     test "a single mismatch yields none" do
-      assert none() == tuple({:foo}) <~> tuple({:bar})
-      assert none() == tuple({:foo, :bar}) <~> tuple({:bar, :bar})
-      assert none() == tuple({:bar, :bar}) <~> tuple({:bar, :foo})
+      assert none() == type({:foo}) <~> type({:bar})
+      assert none() == type({:foo, :bar}) <~> type({:bar, :bar})
+      assert none() == type({:bar, :bar}) <~> type({:bar, :foo})
     end
   end
 end

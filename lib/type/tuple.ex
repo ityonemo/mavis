@@ -28,15 +28,15 @@ defmodule Type.Tuple do
 
     ```elixir
     iex> inspect %Type.Tuple{elements: [any(), any()], fixed: false}
-    "tuple({any(), any(), ...})"
+    "type({any(), any(), ...})"
     ```
 
   - generic tuples have their types as lists.
     ```
     iex> inspect %Type.Tuple{elements: [%Type{name: :atom}, %Type{name: :integer}]}
-    "tuple({atom(), integer()})"
+    "type({atom(), integer()})"
     iex> inspect %Type.Tuple{elements: [:ok, %Type{name: :integer}]}
-    "tuple({:ok, integer()})"
+    "type({:ok, integer()})"
     ```
 
   ### Shortcut Form
@@ -46,11 +46,11 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> tuple {...}
+  iex> type({...})
   %Type.Tuple{elements: [], fixed: false}
-  iex> tuple {any(), any(), ...}
+  iex> type({any(), any(), ...})
   %Type.Tuple{elements: [any(), any()], fixed: false}
-  iex> tuple {:ok, integer()}
+  iex> type({:ok, integer()})
   %Type.Tuple{elements: [:ok, integer()]}
   ```
 
@@ -63,9 +63,9 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.compare(tuple({}), tuple({:foo}))
+  iex> Type.compare(type({}), type({:foo}))
   :lt
-  iex> Type.compare(tuple({:foo, 1..10}), tuple({:bar, 10..20}))
+  iex> Type.compare(type({:foo, 1..10}), type({:bar, 10..20}))
   :gt
   ```
 
@@ -76,9 +76,9 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(tuple({}), tuple({:ok, integer()}))
+  iex> Type.intersection(type({}), type({:ok, integer()}))
   %Type{name: :none}
-  iex> Type.intersection(tuple({:ok, integer()}), tuple({atom(), 1..10}))
+  iex> Type.intersection(type({:ok, integer()}), type({atom(), 1..10}))
   %Type.Tuple{elements: [:ok, 1..10]}
   ```
 
@@ -90,7 +90,7 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.union(tuple({:ok, 11..20}), tuple({:ok, 1..10}))
+  iex> Type.union(type({:ok, 11..20}), type({:ok, 1..10}))
   %Type.Tuple{elements: [:ok, 1..20]}
   ```
 
@@ -102,11 +102,11 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({atom(), integer()}))
+  iex> Type.subtype?(type({:ok, 1..10}), type({atom(), integer()}))
   true
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({any(), any(), ...}))
+  iex> Type.subtype?(type({:ok, 1..10}), type({any(), any(), ...}))
   true
-  iex> Type.subtype?(tuple({:ok, 1..10}), tuple({any(), any(), any(), ...}))
+  iex> Type.subtype?(type({:ok, 1..10}), type({any(), any(), any(), ...}))
   false
   ```
 
@@ -118,14 +118,14 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.usable_as(tuple({:ok, 1..10}), tuple({atom(), integer()}))
+  iex> Type.usable_as(type({:ok, 1..10}), type({atom(), integer()}))
   :ok
-  iex> Type.usable_as(tuple({:ok, integer()}), tuple({atom(), 1..10}))
-  {:maybe, [%Type.Message{type: tuple({:ok, integer()}),
-                          target: tuple({atom(), 1..10})}]}
-  iex> Type.usable_as(tuple({:ok, integer()}), tuple({:error, 1..10}))
-  {:error, %Type.Message{type: tuple({:ok, integer()}),
-                         target: tuple({:error, 1..10})}}
+  iex> Type.usable_as(type({:ok, integer()}), type({atom(), 1..10}))
+  {:maybe, [%Type.Message{type: type({:ok, integer()}),
+                          target: type({atom(), 1..10})}]}
+  iex> Type.usable_as(type({:ok, integer()}), type({:error, 1..10}))
+  {:error, %Type.Message{type: type({:ok, integer()}),
+                         target: type({:error, 1..10})}}
   ```
 
   """
@@ -265,7 +265,7 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.Tuple.elem(tuple({:ok, pos_integer()}), 1)
+  iex> Type.Tuple.elem(type({:ok, pos_integer()}), 1)
   %Type{name: :pos_integer}
   ```
   """

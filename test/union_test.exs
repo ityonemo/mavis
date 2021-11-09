@@ -132,46 +132,46 @@ defmodule TypeTest.UnionTest do
 
 
   @anytuple tuple()
-  @min_2_tuple tuple({any(), any(), ...})
+  @min_2_tuple type({any(), any(), ...})
 
   describe "for the tuple type" do
     test "anytuple merges other all tuples" do
-      assert @anytuple == (@anytuple <|> tuple({}))
-      assert @anytuple == (@anytuple <|> tuple({any()}))
-      assert @anytuple == (@anytuple <|> tuple({:foo}) <|> tuple({:bar}))
+      assert @anytuple == (@anytuple <|> type({}))
+      assert @anytuple == (@anytuple <|> type({any()}))
+      assert @anytuple == (@anytuple <|> type({:foo}) <|> type({:bar}))
     end
 
     test "two minimum-arity tuples get merged" do
-      assert @min_2_tuple = tuple({any(), any(), any(), ...}) <|> @min_2_tuple
+      assert @min_2_tuple = type({any(), any(), any(), ...}) <|> @min_2_tuple
     end
 
     test "a tuple that is a subtype of another tuple gets merged" do
-      outer = tuple({:ok, integer() <|> :bar, float() <|> integer()})
-      inner = tuple({:ok, integer(), float()})
+      outer = type({:ok, integer() <|> :bar, float() <|> integer()})
+      inner = type({:ok, integer(), float()})
 
       assert outer == outer <|> inner
     end
 
     test "a defined tuple merges into an minimum-arity tuple" do
-      assert @min_2_tuple = tuple({:ok, integer()}) <|> @min_2_tuple
-      assert @min_2_tuple = tuple({:ok, binary(), integer()}) <|> @min_2_tuple
+      assert @min_2_tuple = type({:ok, integer()}) <|> @min_2_tuple
+      assert @min_2_tuple = type({:ok, binary(), integer()}) <|> @min_2_tuple
     end
 
     test "a tuple that is identical or has one difference gets merged" do
-      duple1 = tuple({:ok, integer()})
-      duple2 = tuple({:ok, float()})
-      duple3 = tuple({:error, integer()})
+      duple1 = type({:ok, integer()})
+      duple2 = type({:ok, float()})
+      duple3 = type({:error, integer()})
 
       assert duple1 == duple1 <|> duple1
 
-      assert tuple({:ok, number()}) == duple1 <|> duple2
-      assert tuple({:ok <|> :error, integer()}) == duple1 <|> duple3
+      assert type({:ok, number()}) == duple1 <|> duple2
+      assert type({:ok <|> :error, integer()}) == duple1 <|> duple3
 
-      triple1 = tuple({:ok, integer(), float()})
-      triple2 = tuple({:error, integer(), float()})
-      triple3 = tuple({:ok, pid(), atom()})
+      triple1 = type({:ok, integer(), float()})
+      triple2 = type({:error, integer(), float()})
+      triple3 = type({:ok, pid(), atom()})
 
-      assert tuple({:ok <|> :error, integer(), float()}) ==
+      assert type({:ok <|> :error, integer(), float()}) ==
         triple1 <|> triple2
 
       # if there is more than one difference it doesn't get merged.
@@ -179,22 +179,22 @@ defmodule TypeTest.UnionTest do
     end
 
     test "tuples are merged if their elements can transitively merge" do
-      assert tuple({any(), :bar}) == (tuple({any(), :bar}) <|> tuple({:foo, :bar}))
+      assert type({any(), :bar}) == (type({any(), :bar}) <|> type({:foo, :bar}))
 
-      assert tuple({:bar, any()}) == (tuple({:bar, any()}) <|> tuple({:bar, :foo}))
+      assert type({:bar, any()}) == (type({:bar, any()}) <|> type({:bar, :foo}))
 
-      assert (tuple({:foo, any()}) <|> tuple({any(), :bar})) ==
-        (tuple({any(), :bar}) <|> tuple({:foo, any()}) <|> tuple({:foo, :bar}))
+      assert (type({:foo, any()}) <|> type({any(), :bar})) ==
+        (type({any(), :bar}) <|> type({:foo, any()}) <|> type({:foo, :bar}))
 
-      assert tuple({1..2, 1..2}) == (tuple({1, 2}) <|> tuple({2, 1}) <|> tuple({1, 1}) <|> tuple({2, 2}))
+      assert type({1..2, 1..2}) == (type({1, 2}) <|> type({2, 1}) <|> type({1, 1}) <|> type({2, 2}))
     end
 
     test "complicated tuples can be merged" do
       # This should not be able to be solved without a more complicated SAT solver.
-      unless tuple({1..3, 1..3, 1..3}) == (
-        tuple({1 <|> 2, 2 <|> 3, 1 <|> 3}) <|>
-        tuple({2 <|> 3, 1 <|> 3, 1 <|> 2}) <|>
-        tuple({1 <|> 3, 1 <|> 2, 2 <|> 3})
+      unless type({1..3, 1..3, 1..3}) == (
+        type({1 <|> 2, 2 <|> 3, 1 <|> 3}) <|>
+        type({2 <|> 3, 1 <|> 3, 1 <|> 2}) <|>
+        type({1 <|> 3, 1 <|> 2, 2 <|> 3})
       ) do
         IO.warn("this test can't be solved without a SAT solver")
       end
@@ -202,12 +202,12 @@ defmodule TypeTest.UnionTest do
 
     test "orthogonal tuples don't merge" do
       assert %Type.Union{} =
-        (tuple({:foo, integer()}) <|> tuple({:bar, float()}))
+        (type({:foo, integer()}) <|> type({:bar, float()}))
     end
 
     test "tuples that are too small for a minimum don't merge" do
       assert %Type.Union{} =
-        (tuple({any(), any(), any(), ...}) <|> tuple({:ok, integer()}))
+        (type({any(), any(), any(), ...}) <|> type({:ok, integer()}))
     end
   end
 
@@ -215,7 +215,7 @@ defmodule TypeTest.UnionTest do
     alias Type.List
     test "you can't naively union lists" do
       assert %Type.Union{} = list(:foo) <|> list(:bar)
-      assert %Type.Union{} = list(:foo, ...) <|> list(:bar, ...)
+      assert %Type.Union{} = nonempty_list(:foo) <|> nonempty_list(:bar)
     end
 
     test "lists of supersets CAN be merged" do
@@ -230,16 +230,16 @@ defmodule TypeTest.UnionTest do
     end
 
     test "nonempty lists get merged into nonempty lists" do
-      assert list(any(), ...) == list(any(), ...) <|> list(:bar, ...)
+      assert nonempty_list(any()) == nonempty_list(any()) <|> nonempty_list(:bar)
     end
 
     test "nonempty: true lists get turned into nonempty: false lists when empty is added" do
-      assert list() = [] <|> list(...)
+      assert list() = [] <|> type([...])
     end
 
     test "nonempty: true lists get merged into nonempty: false lists" do
-      assert list(:foo) = list(:foo) <|> list(:foo, ...)
-      assert list(any()) = list(any()) <|> list(:foo, ...)
+      assert list(:foo) = list(:foo) <|> nonempty_list(:foo)
+      assert list(any()) = list(any()) <|> nonempty_list(:foo)
     end
   end
 
@@ -322,19 +322,19 @@ defmodule TypeTest.UnionTest do
 
   describe "for strings" do
     test "fixed size strings are merged into general string" do
-      assert remote(String.t) == (remote(String.t) <|> remote(String.t(42)))
+      assert type(String.t) == (type(String.t) <|> type(String.t(42)))
     end
 
     test "fixed size strings are merged" do
       range = 2..3
-      assert remote(String.t(range)) == (remote(String.t(2)) <|> remote(String.t(3)))
+      assert type(String.t(range)) == (type(String.t(2)) <|> type(String.t(3)))
       union = 2 <|> 4
-      assert remote(String.t(union)) == (remote(String.t(2)) <|> remote(String.t(4)))
+      assert type(String.t(union)) == (type(String.t(2)) <|> type(String.t(4)))
     end
 
     test "bitstrings merge strings" do
-      assert bitstring() == remote(String.t) <|> bitstring()
-      assert binary() == remote(String.t) <|> binary()
+      assert bitstring() == type(String.t) <|> bitstring()
+      assert binary() == type(String.t) <|> binary()
     end
 
     test "bitstrings can merge string/1 s" do
@@ -342,7 +342,7 @@ defmodule TypeTest.UnionTest do
       assert %Type.Union{of: [
         %Type.Bitstring{size: 8, unit: 16},
         %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]}
-      ]} = remote(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
+      ]} = type(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
     end
   end
 end

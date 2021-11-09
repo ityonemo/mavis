@@ -29,14 +29,14 @@ defmodule TypeTest.LiteralList.SubtractionTest do
       assert none() == @list - list(:foo <|> :bar)
       assert none() == @list - list(atom())
 
-      assert none() == @ilist - %List{final: remote(String.t)}
+      assert none() == @ilist - %List{final: type(String.t)}
       assert none() == @ilist - maybe_improper_list()
       assert none() == @ilist - nonempty_maybe_improper_list()
     end
 
     test "of wrong finals" do
       assert @ilist == @ilist - list()
-      assert @list == @list - %List{final: remote(String.t)}
+      assert @list == @list - %List{final: type(String.t)}
     end
 
     test "of other literal lists" do
@@ -53,7 +53,7 @@ defmodule TypeTest.LiteralList.SubtractionTest do
       assert none() == @list - (:foo <|> list())
 
       assert none() == @ilist - (:foo <|> @ilist)
-      assert none() == @ilist - (:foo <|> %List{final: remote(String.t)})
+      assert none() == @ilist - (:foo <|> %List{final: type(String.t)})
     end
 
     test "of all other types is none" do
