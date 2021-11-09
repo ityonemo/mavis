@@ -279,9 +279,9 @@ defmodule Type.Union do
           ["list()"]
         0..0x10_FFFF ->
           ["charlist()"]
-        tuple({atom(), any()}) ->
+        type({atom(), any()}) ->
           ["keyword()"]
-        tuple({atom(), kwt}) ->
+        type({atom(), kwt}) ->
           ["keyword(", to_doc(kwt, opts), ")"]
         _ ->
           t

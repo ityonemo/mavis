@@ -278,212 +278,117 @@ defmodule Type do
   @doc "guard for when a ternary value is not an error"
   defguard is_not_error(t) when t == :ok or (elem(t, 0) == :maybe)
 
-  @typedoc """
-  output type for `c:Type.Inference.Api.infer/1` and `c:Type.Inference.Api.infer/3`
-  """
-  @type inferred :: Type.Function.t | Type.Union.t(Type.Function.t)
+  import Type.Builtins
 
-  @primitive_builtins ~w(none neg_integer pos_integer float node_type module
-  atom reference port pid iolist any)a
+  defbuiltin do
+    # primitive builtins
+    basic :none
+    basic :neg_integer
+    basic :pos_integer
+    basic :float
+    basic :node
+    basic :module
+    basic :atom
+    basic :pid
+    basic :port
+    basic :reference
+    basic :iolist
+    basic :any
 
-  @doc false
-  def primitive_builtins, do: @primitive_builtins
+    ## composite builtins (but under "basic" in the docs)
+    builtin :non_neg_integer,
+               %Type.Union{of: [pos_integer(), 0]},
+               "%Type.Union{of: [pos_integer(), 0]}"
+    builtin :integer,
+               %Type.Union{of: [pos_integer(), 0, neg_integer()]},
+               "%Type.Union{of: [pos_integer(), 0, neg_integer()]}"
+    builtin :map,
+               %Type.Map{optional: %{any() => any()}},
+               "%Type.Map{optional: %{any() => any()}}"
+    builtin :tuple,
+               %Type.Tuple{elements: [], fixed: false},
+               "%Type.Tuple{elements: [], fixed: false}"
+    # composite builtins (built-in types)
+    builtin :foo, any(), "any()"
+    builtin :no_return, none(), "%Type{name: :none}"
+    builtin :arity, 0..255, "0..255"
+    builtin :byte, 0..255, "0..255"
+    builtin :char, 0..0x10_FFFF, "0..0x10_FFFF"
+    builtin :number,
+               %Type.Union{of: [float(), pos_integer(), 0, neg_integer()]},
+               "%Type.Union{of: [float(), pos_integer(), 0, neg_integer()]}"
+    builtin :timeout,
+               %Type.Union{of: [:infinity, pos_integer(), 0]},
+               "%Type.Union{of: [:infinity, pos_integer(), 0]}"
+    builtin :boolean,
+               %Type.Union{of: [true, false]},
+               "%Type.Union{of: [true, false]}"
+    builtin :identifier,
+               %Type.Union{of: [pid(), port(), reference()]},
+               "%Type.Union{of: [pid(), port(), reference()]}"
+    builtin :fun,
+               %Type.Function{params: :any, return: any()},
+               "%Type.Function{params: :any, return: any()}"
+    builtin :function,
+               %Type.Function{params: :any, return: any()},
+               "%Type.Function{params: :any, return: any()}"
+    builtin :mfa,
+               %Type.Tuple{elements: [module(), atom(), arity()]},
+               "%Type.Tuple{elements: [module(), atom(), arity()]}"
+    builtin :struct,
+               %Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}},
+               "%Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}}"
+    builtin :nonempty_charlist,
+               %Type.List{type: char(), final: []},
+               "%Type.List{type: char()}"
+    builtin :nonempty_list,
+               %Type.List{type: any(), final: []},
+               "%Type.List{type: any()}"
+    builtin :nonempty_maybe_improper_list,
+               %Type.List{type: any(), final: any()},
+               "%Type.List{type: any(), final: any()}"
+    builtin :charlist,
+              %Type.Union{of: [%Type.List{type: char(), final: []}, []]},
+              "%Type.Union{of: [%Type.List{type: char(), final: []}, []]}"
+    builtin :keyword,
+               %Type.Union{of: [%Type.List{
+                 type: %Type.Tuple{elements: [atom(), any()]},
+                 final: []}, []]},
+               "%Type.Union{of: [%Type.List{type: tuple({atom(), any()})}, []}"
+    builtin :list,
+               %Type.Union{of: [%Type.List{}, []]},
+               "%Type.Union{of: [%Type.List{}, []]}"
+    builtin :maybe_improper_list,
+               %Type.Union{of: [%Type.List{type: any(), final: any()}, []]},
+               "%Type.Union{of: [%Type.List{type: any(), final: any()}, []]}"
+    builtin :binary,
+               %Type.Bitstring{size: 0, unit: 8},
+               "%Type.Bitstring{unit: 8}"
+    builtin :iodata,
+               %Type.Union{of: [binary(), iolist()]},
+               "%Type.Union{of: [binary(), iolist()]}"
+    builtin :bitstring,
+               %Type.Bitstring{size: 0, unit: 1},
+               "%Type.Bitstring{unit: 1}"
+    builtin :term, any(), "%Type{name: :any}"
 
-  @composite_builtins ~w(term integer non_neg_integer tuple arity byte
-  map binary bitstring boolean char charlist nonempty_charlist fun
-  function identifier iodata keyword list nonempty_list
-  maybe_improper_list nonempty_maybe_improper_list mfa no_return number
-  struct timeout)a
-
-  @doc false
-  def composite_builtins, do: @composite_builtins
-
-  @builtins @primitive_builtins ++ @composite_builtins
-  @doc false
-  def builtins, do: @builtins
-
-  import Type.Helpers, only: [defbuiltin: 1, defbuiltin: 3]
-
-  # primitive builtins
-  defbuiltin :none
-  defbuiltin :neg_integer
-  defbuiltin :pos_integer
-  defbuiltin :float
-  defbuiltin :node_type,
-             %Type{module: nil, name: :node, params: []},
-             "%Type{name: :node}"
-  defbuiltin :module
-  defbuiltin :atom
-  defbuiltin :pid
-  defbuiltin :port
-  defbuiltin :reference
-  defbuiltin :iolist
-  defbuiltin :any
-
-  # composite builtins ("basic")
-  defbuiltin :non_neg_integer,
-             %Type.Union{of: [pos_integer(), 0]},
-             "%Type.Union{of: [pos_integer(), 0]}"
-  defbuiltin :integer,
-             %Type.Union{of: [pos_integer(), 0, neg_integer()]},
-             "%Type.Union{of: [pos_integer(), 0, neg_integer()]}"
-  defbuiltin :map,
-             %Type.Map{optional: %{any() => any()}},
-             "%Type.Map{optional: %{any() => any()}}"
-  defbuiltin :tuple,
-             %Type.Tuple{elements: [], fixed: false},
-             "%Type.Tuple{elements: [], fixed: false}"
-  # composite builtins (built-in types)
-  defbuiltin :no_return, none(), "%Type{name: :none}"
-  defbuiltin :arity, 0..255, "0..255"
-  defbuiltin :byte, 0..255, "0..255"
-  defbuiltin :char, 0..0x10_FFFF, "0..0x10_FFFF"
-  defbuiltin :number,
-             %Type.Union{of: [float(), pos_integer(), 0, neg_integer()]},
-             "%Type.Union{of: [float(), pos_integer(), 0, neg_integer()]}"
-  defbuiltin :timeout,
-             %Type.Union{of: [:infinity, pos_integer(), 0]},
-             "%Type.Union{of: [:infinity, pos_integer(), 0]}"
-  defbuiltin :boolean,
-             %Type.Union{of: [true, false]},
-             "%Type.Union{of: [true, false]}"
-  defbuiltin :identifier,
-             %Type.Union{of: [pid(), port(), reference()]},
-             "%Type.Union{of: [pid(), port(), reference()]}"
-  defbuiltin :fun,
-             %Type.Function{params: :any, return: any()},
-             "%Type.Function{params: :any, return: any()}"
-  defbuiltin :function,
-             %Type.Function{params: :any, return: any()},
-             "%Type.Function{params: :any, return: any()}"
-  defbuiltin :mfa,
-             %Type.Tuple{elements: [module(), atom(), arity()]},
-             "%Type.Tuple{elements: [module(), atom(), arity()]}"
-  defbuiltin :struct,
-             %Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}},
-             "%Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}}"
-  defbuiltin :nonempty_charlist,
-             %Type.List{type: char(), final: []},
-             "%Type.List{type: char()}"
-  defbuiltin :nonempty_list,
-             %Type.List{type: any(), final: []},
-             "%Type.List{type: any()}"
-  defbuiltin :nonempty_maybe_improper_list,
-             %Type.List{type: any(), final: any()},
-             "%Type.List{type: any(), final: any()}"
-  defbuiltin :charlist,
-             %Type.Union{of: [%Type.List{type: char(), final: []}, []]},
-             "%Type.Union{of: [%Type.List{type: char(), final: []}, []]}"
-  defbuiltin :keyword,
-             %Type.Union{of: [%Type.List{
-               type: %Type.Tuple{elements: [atom(), any()]},
-               final: []}, []]},
-             "%Type.Union{of: [%Type.List{type: tuple({atom(), any()})}, []}"
-  defbuiltin :list,
-             %Type.Union{of: [%Type.List{}, []]},
-             "%Type.Union{of: [%Type.List{}, []]}"
-  defbuiltin :maybe_improper_list,
-             %Type.Union{of: [%Type.List{type: any(), final: any()}, []]},
-             "%Type.Union{of: [%Type.List{type: any(), final: any()}, []]}"
-  defbuiltin :binary,
-             %Type.Bitstring{size: 0, unit: 8},
-             "%Type.Bitstring{unit: 8}"
-  defbuiltin :iodata,
-             %Type.Union{of: [binary(), iolist()]},
-             "%Type.Union{of: [binary(), iolist()]}"
-  defbuiltin :bitstring,
-             %Type.Bitstring{size: 0, unit: 1},
-             "%Type.Bitstring{unit: 1}"
-  defbuiltin :term, any(), "%Type{name: :any}"
-
-  # nonstandard builtins (useful just for this library)
-  defbuiltin :nonempty_iolist,
-             %Type.List{
-               type: %Type.Union{of: [binary(), iolist(), byte()]},
-               final: %Type.Union{of: [binary(), []]}},
-             "%Type.List{type: %Type.Union{of: [binary(), iolist(), byte()]}, final: %Type.Union{of: [binary(), []]}}"
-  defbuiltin :explicit_iolist,
-             %Type.Union{of: [nonempty_iolist(), []]},
-             "%Type.Union{of: [nonempty_iolist(), []]}"
-
-  @doc """
-  use this for when you must use a runtime value to obtain a builtin type struct
-
-  not usable in matches
-  """
-  defmacro builtin(type_ast) do
-    cases = [{:->, [], [[:node], {:node_type, [], []}]}
-      | Enum.map(@builtins, &{:->, [], [[&1], {&1, [], []}]})]
-    {:case, [], [type_ast, [do: cases]]}
+    ## nonstandard builtins (useful just for this library)
+    builtin :nonempty_iolist,
+               %Type.List{
+                 type: %Type.Union{of: [binary(), iolist(), byte()]},
+                 final: %Type.Union{of: [binary(), []]}},
+                 nil
+    builtin :explicit_iolist,
+               %Type.Union{of: [nonempty_iolist(), []]},
+               nil
   end
 
-  @spec remote(Macro.t) :: Macro.t
-  @doc """
-  helper macro to match on remote types
-
-  ### Example:
-  ```elixir
-  iex> Type.remote(String.t())
-  %Type{module: String, name: :t}
-  ```
-  """
   @doc type: true
-  defmacro remote({{:., _, [module_ast, name]}, _, atom}) when is_atom(atom) do
-    Macro.escape(%Type{module: module_ast, name: name})
-  end
-  defmacro remote({{:., _, [module_ast, name]}, _, params_ast}) do
-    params = Enum.map(params_ast, fn ast ->
-      quote do
-        remote(unquote(ast))
-      end
-    end)
-    quote do
-      %Type{module: unquote(module_ast),
-            name: unquote(name),
-            params: unquote(params)}
-    end
-  end
-  defmacro remote(ast = {builtin, _, atom}) when is_atom(atom) do
-    # detect if we're trying to be a variable or if we're trying
-    # to call a zero-arity builtin.
-    __CALLER__.current_vars
-    |> elem(0)
-    |> Enum.any?(&match?({{^builtin, _}, _}, &1))
-    |> if do
-      ast
-    else
-      Macro.escape(%Type{module: nil, name: builtin, params: []})
-    end
-  end
-  defmacro remote({builtin, _, params}) do
-    Macro.escape(%Type{module: nil, name: builtin, params: params})
-  end
-  defmacro remote(any) do
-    quote do unquote(any) end
-  end
-
-  defp struct_of(module, kv) do
-    {:%, [], [
-      {:__aliases__, [alias: false], [module]},
-      {:%{}, [], kv}
-    ]}
-  end
-
   defmacro keyword(type) do
     quote do
-      %Type.Union{of: [
-        %Type.List{type: %Type.Tuple{
-          elements: [
-            %Type{module: nil, name: :atom, params: []},
-            unquote(type)
-          ],
-          fixed: true
-        }},
-        []
-      ]}
+      %Type.Union{of: [%Type.List{type: unquote(type), final: []}, []]}
     end
   end
-
   @doc """
   generates a list of a particular type.  A last parameter of `...`
   indicates that the list should be nonempty
@@ -513,26 +418,6 @@ defmodule Type do
   @doc type: true
   defmacro list({:..., _, _}) do
     Macro.escape(%Type.List{type: any()})
-  end
-  defmacro list([{k, v}]) when is_atom(k) do
-    quote do
-      %Type.List{type: unquote(struct_of(:"Type.Tuple", elements: [k, v]))}
-    end
-  end
-  defmacro list(lst) when is_list(lst) do
-    tuples = lst
-    |> Enum.sort_by(fn {k, _} when is_atom(k) -> k end, :desc)
-    |> Enum.map(fn {k, v} -> struct_of(:"Type.Tuple", elements: [k, v]) end)
-
-    quote do
-      %Type.List{type: unquote(struct_of(:"Type.Union", of: tuples))}
-    end
-  end
-  defmacro list(ast) do
-    quote do %Type.Union{of: [%Type.List{type: unquote(ast)}, []]} end
-  end
-  defmacro list(ast, {:..., _, _}) do
-    quote do %Type.List{type: unquote(ast)} end
   end
 
   @doc """
@@ -613,82 +498,10 @@ defmodule Type do
     end
   end
 
-  @doc """
-  generates the tuple type from a tuple ast.  If the tuple contains
-  `...` it will generate the generic any tuple.
-
-  See `Type.Tuple` for an explanation of deviations from dialyzer in the
-  implementation of this type.
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> tuple {...}
-  %Type.Tuple{elements: [], fixed: false}
-  iex> tuple {:ok, pos_integer()}
-  %Type.Tuple{elements: [:ok, %Type{name: :pos_integer}]}
-  iex> tuple {:error, atom(), pos_integer()}
-  %Type.Tuple{elements: [:error, %Type{name: :atom}, %Type{name: :pos_integer}]}
-  ```
-
-  * usable in matches *
-  """
-  @doc type: true
-  defmacro tuple({a, {:..., _, any}}) when is_atom(any) do
-    struct_of(:"Type.Tuple", elements: a, fixed: false)
-  end
-  defmacro tuple({a, b}) do
-    struct_of(:"Type.Tuple", elements: [a, b])
-  end
-  defmacro tuple({:{}, _, what}) do
-    {elements, fixed} = find_elements(what)
-    struct_of(:"Type.Tuple", elements: elements, fixed: fixed)
-  end
-
   def find_elements(elements, so_far \\ [])
   def find_elements([{:..., _, _}], so_far), do: {Enum.reverse(so_far), false}
   def find_elements([], so_far), do: {Enum.reverse(so_far), true}
   def find_elements([a | rest], so_far), do: find_elements(rest, [a | so_far])
-
-  @doc """
-  generates the map type from a map ast.  Unspecified keys default to
-  required if singletons, and optional if non-singletons.
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> map %{foo: pos_integer()}
-  %Type.Map{required: %{foo: %Type{name: :pos_integer}}}
-  iex> map %{required(1) => atom()}
-  %Type.Map{required: %{1 => %Type{name: :atom}}}
-  iex> map %{optional(:bar) => atom()}
-  %Type.Map{optional: %{bar: %Type{name: :atom}}}
-  ```
-
-  """
-
-  # generates a y-combinator that aggressively converts ASTs which are single
-  # variables into var variables.
-  defp constraints_to_lambda(constraints) do
-    cmap = constraints
-    |> Enum.map(fn
-      {id, {:var, _, _}} -> {id, quote do any() end}
-      any -> any
-    end)
-    |> Enum.into(%{})
-
-    fn
-      {id, meta, atom}, _ when is_atom(atom) and is_map_key(cmap, id) ->
-        {:%, meta,
-        [
-          {:__aliases__, [alias: false], [:"Type.Function.Var"]},
-          {:%{}, meta, [name: id, constraint: cmap[id]]}
-        ]}
-      {id, meta, list}, f when is_list(list) ->
-        {id, meta, f.(list, f)}
-      list, f when is_list(list) ->
-        Enum.map(list, &(f.(&1, f)))
-      any, _ -> any
-    end
-  end
 
   @doc """
   generates type literals.
@@ -1433,6 +1246,28 @@ defmodule Type do
 
   defmacro type({a, b}) do
     tupletype([a, b])
+  end
+
+  # remote types
+  defmacro type({{:., _, [module, name]}, _, params}) do
+    case module do
+      {:__aliases__, _, aliases} ->
+        quote do
+          %Type{
+            module: unquote(Module.concat(aliases)),
+            name: unquote(name),
+            params: unquote(params)
+          }
+        end
+      module when is_atom(module) ->
+        quote do
+          %Type{
+            module: unquote(module),
+            name: unquote(name),
+            params: unquote(params)
+          }
+        end
+    end
   end
 
   defmacro type(_other) do

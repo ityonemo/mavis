@@ -1,4 +1,3 @@
-
 defimpl Type.Algebra, for: Type do
 
   alias Type.Helpers
@@ -7,8 +6,8 @@ defimpl Type.Algebra, for: Type do
 
   @group_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
-    float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6, pid: 7,
-    iolist: 10, any: 12}
+    float: 2, node: 3, module: 3, atom: 3, reference: 4, port: 6,
+    pid: 7, iolist: 10, any: 12}
   @builtins Map.keys(@group_for)
 
   def typegroup(%Type{module: nil, name: name}) when name in @builtins do

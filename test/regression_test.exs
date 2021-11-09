@@ -12,7 +12,7 @@ defmodule TypeTest.RegressionTest do
 
     # reduced to the major culprit:
     test "Path.t/0 spec can be unioned" do
-      assert %Type.Union{} = remote(Path.t()) <|> remote(:file.io_device())
+      assert %Type.Union{} = type(Path.t()) <|> type(:file.io_device())
     end
 
     # failing typespec:
@@ -32,7 +32,7 @@ defmodule TypeTest.RegressionTest do
 
     # reduced to a specific failing function:
     test "specific problem with typegroup" do
-      type = remote(TypeTest.TypeExample.regression_1())
+      type = type(TypeTest.TypeExample.regression_1())
       assert 0 == Type.typegroup(type)
     end
   end

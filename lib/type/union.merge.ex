@@ -144,13 +144,13 @@ defmodule Type.Union.Merge do
       :nomerge
     end
   end
-  def type_merge(%Type{module: String, name: :t}, remote(String.t)) do
-    [remote(String.t)]
+  def type_merge(%Type{module: String, name: :t}, type(String.t)) do
+    [type(String.t)]
   end
   def type_merge(%Type{module: String, name: :t, params: [left]},
                   %Type{module: String, name: :t, params: [right]}) do
     lengths = Type.union(left, right)
-    [remote(String.t(lengths))]
+    [type(String.t(lengths))]
   end
   def type_merge(%Type{module: String, name: :t, params: []},
                   %Bitstring{size: 0, unit: unit})
@@ -170,7 +170,7 @@ defmodule Type.Union.Merge do
       {[], _} -> :nomerge
       {_, keep} ->
         keep_type = Type.union(keep)
-        [bitstring, remote(String.t(keep_type))]
+        [bitstring, type(String.t(keep_type))]
     end
   end
 

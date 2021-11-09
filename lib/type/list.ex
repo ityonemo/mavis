@@ -304,14 +304,14 @@ defmodule Type.List do
     # keyword list literal syntax
     def inspect(%{
         final: [],
-        type: tuple({k, v})}, opts) when is_atom(k) do
+        type: type({k, v})}, opts) when is_atom(k) do
       concat(["type([", "#{k}: ", to_doc(v, opts), ", ...])"])
     end
     def inspect(list = %{
         final: [],
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
-            tuple({e, _}) when is_atom(e), &1)) do
+            type({e, _}) when is_atom(e), &1)) do
         ["type([",
           type.of
           |> Enum.reverse
@@ -327,11 +327,11 @@ defmodule Type.List do
       end
     end
     # keyword syntax
-    def inspect(list(tuple({atom(), any()})), _) do
-      "keyword(...)"
+    def inspect(keyword(), _) do
+      "keyword()"
     end
-    def inspect(list(tuple({atom(), type})), opts) do
-      concat(["keyword(", to_doc(type, opts), "...)"])
+    def inspect(keyword(t), opts) do
+      concat(["keyword(", to_doc(t, opts), ")"])
     end
 
     ##########################################################

@@ -57,7 +57,7 @@ defmodule Type.Spec do
   def parse({:type, _, nil, []}, _), do: []
   # overrides
   def parse({:type, _, :list, [type]}, assigns) do
-    list(parse(type, assigns))
+    %Type.Union{of: [%Type.List{type: parse(type, assigns), final: []}, []]}
   end
   def parse({:type, _, :nonempty_list, [type]}, assigns) do
     %Type.List{type: parse(type, assigns)}
@@ -87,16 +87,16 @@ defmodule Type.Spec do
   end
   # overridden remote types
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :charlist}, []]}, _) do
-    list(0..0x10_FFFF)
+    charlist()
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :nonempty_charlist}, []]}, _) do
-    list(0..0x10_FFFF, ...)
+    nonempty_charlist()
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, []]}, _) do
-    list(tuple({atom(), any()}))
+    keyword()
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :keyword}, [type]]}, assigns) do
-    list(tuple({atom(), parse(type, assigns)}))
+    keyword(parse(type, assigns))
   end
   def parse({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, :struct}, []]}, _) do
     struct()
@@ -119,25 +119,11 @@ defmodule Type.Spec do
   end
   # default builtin
   def parse({:type, _, type, []}, _) when type in [:node | @builtins] do
-    Type.builtin(type)
+    Type.builtin(type) |> IO.inspect(label: "122", structs: false)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
     # TODO: write a test against constraint assignment
     parse(fun, add_constraints(assigns, constraints))
-  end
-
-  def parse_spec([one_branch]) do
-    parse_branch(one_branch)
-  end
-
-  def parse_spec(branches) do
-    branch_specs = branches
-    |> Enum.map(&parse_branch/1)
-    |> Type.Function.Branched.new()
-  end
-
-  defp parse_branch({:type, _, :fun, [{:type, _, :product, params}, return]}) do
-    %Type.Function{params: Enum.map(params, &parse/1), return: parse(return)}
   end
 
   defp add_constraints(assigns, []), do: assigns
