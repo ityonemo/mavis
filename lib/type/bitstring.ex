@@ -118,6 +118,10 @@ defmodule Type.Bitstring do
   def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a > b,  do: :lt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a < b,  do: :gt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
+  def compare(%__MODULE__{size: 0, unit: 8}, %Type{module: String, name: :t, params: []}), do: :gt
+  def compare(%__MODULE__{size: size, unit: 8}, %Type{module: String, name: :t, params: [bytes]}) when size == bytes * 8, do: :gt
+  def compare(bitstring_t, %Type{module: String, name: :t, params: []}), do: compare(bitstring_t, %__MODULE__{unit: 8})
+  def compare(bitstring_t, %Type{module: String, name: :t, params: [bytes]}), do: compare(bitstring_t, %__MODULE__{unit: bytes * 8})
 
   # INTERSECTION
   def intersection(%{unit: 0}, %__MODULE__{unit: 0}) do

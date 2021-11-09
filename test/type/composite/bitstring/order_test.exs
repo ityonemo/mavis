@@ -43,4 +43,21 @@ defmodule TypeTest.TypeBitstring.OrderTest do
       assert %Bitstring{size: 0, unit: 0} < any()
     end
   end
+
+  describe "the zero bitstring type" do
+    test "is bigger than the empty bitstring" do
+      assert %Bitstring{size: 0, unit: 0} > ""
+    end
+  end
+
+  describe "binary" do
+    test "is bigger than String.t" do
+      assert binary() > type(String.t())
+    end
+
+    test "is bigger than binary literals" do
+      assert binary() > "foo"
+      assert binary() > ""
+    end
+  end
 end
