@@ -409,7 +409,7 @@ defmodule Type do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> list(foo: pos_integer())
+  iex> type([foo: pos_integer()])
   %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
   ```
 
