@@ -4,13 +4,13 @@ defmodule TypeTest.InspectCase do
     |> Code.eval_string([],
       functions: [
         {Kernel, Kernel.__info__(:functions)},
-        {Type.Operators, [<|>: 2, <~>: 2]}
+        {Type.Operators, [<|>: 2, <~>: 2, |||: 2]}
       ],
       macros: [
         {Kernel, Kernel.__info__(:macros)},
         {Type, Type.__info__(:macros)}
       ],
-      requires: [Type])
+      requires: [Type, Type.Operators])
     |> elem(0)
   end
 

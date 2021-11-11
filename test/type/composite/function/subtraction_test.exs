@@ -8,11 +8,11 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
   alias Type.Function
 
 
-  @any_function %Function{params: :any, return: any()}
-  @zero_arity_any %Function{params: [], return: any()}
-  @one_arity_any %Function{params: [any()], return: any()}
-  @two_arity_any %Function{params: [any(), any()], return: any()}
-  @three_arity %Function{params: 3, return: any()}
+  @any_function function()
+  @zero_arity_any type(( -> any))
+  @one_arity_any type((any -> any))
+  @two_arity_any type((any, any -> any))
+  @three_arity type((_, _, _ -> any))
 
   describe "subtracting from the any function" do
     test "is none for any and self" do
@@ -31,7 +31,8 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     end
 
     test "is itself for anything else" do
-      TypeTest.Targets.except([%Function{params: [], return: 0}])
+      type(( -> 0))
+      |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
         assert @any_function == @any_function - target
       end)
@@ -39,7 +40,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
   end
 
   describe "subtracting from function with any parameters" do
-    @any_with_integer %Function{params: :any, return: integer()}
+    @any_with_integer type((... -> integer))
     test "is none for any, itself and the any function" do
       assert none() == @any_with_integer - any()
       assert none() == @any_with_integer - @any_with_integer
@@ -49,28 +50,21 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     test "is trivial for functions which have subset or matching return" do
       assert %Type.Subtraction{
         base: @any_with_integer,
-        exclude: %Function{params: [], return: integer()}} ==
-          @any_with_integer - %Function{params: [], return: integer()}
-
-      assert %Type.Subtraction{
-        base: @any_with_integer,
-        exclude: %Function{params: [], return: integer()}} ==
-          @any_with_integer - %Function{params: [], return: integer()}
+        exclude: type(( -> integer))} ==
+          @any_with_integer - type(( -> integer))
     end
 
     test "does expected subtractions for returns" do
-      assert %Function{params: :any, return: 1..6} ==
-        %Function{params: :any, return: 1..10} - %Function{params: :any, return: 7..10}
+      assert type((... -> 1..6)) == type((... -> 1..10)) - type((... -> 7..10))
     end
 
     test "is unaffected if the return is disjoint" do
-      assert @any_with_integer ==
-        @any_with_integer - %Function{params: [], return: atom()}
+      assert @any_with_integer == @any_with_integer - type(( -> atom))
     end
   end
 
   describe "subtracting from n-arity function" do
-    @three_arity_integer %Function{params: 3, return: integer}
+    @three_arity_integer type((_, _, _ -> integer))
     test "is none for any, itself, and any function" do
       assert none() == @three_arity - any()
       assert none() == @three_arity - @any_function
@@ -106,8 +100,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     end
 
     test "is none for a matching n-arity function" do
-      assert none() == %Function{params: [any(), any(), any()], return: any()} -
-        @three_arity
+      assert none() == type((any, any, any -> any)) - @three_arity
     end
 
     test "must match arities" do
@@ -119,49 +112,36 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     test "reduces the return type" do
       assert %Type.Subtraction{
         base: @zero_arity_any,
-        exclude: %Function{params: [], return: integer()}} ==
-        @zero_arity_any - %Function{params: [], return: integer()}
+        exclude: type(( -> integer))} ==
+        @zero_arity_any - type(( -> integer))
 
       assert %Type.Subtraction{
         base: @one_arity_any,
-        exclude: %Function{params: [any()], return: integer()}} ==
-        @one_arity_any - %Function{params: [any()], return: integer()}
+        exclude: type((any -> integer))} ==
+        @one_arity_any - type((any -> integer))
 
       assert %Type.Subtraction{
         base: @two_arity_any,
-        exclude: %Function{params: [any(), any()], return: integer()}} ==
-        @two_arity_any - %Function{params: [any(), any()], return: integer()}
+        exclude: type((any, any -> integer))} ==
+        @two_arity_any - type((any, any -> integer))
     end
 
     test "is invalid if any parameter types mismatches" do
-      assert @one_arity_any ==
-        @one_arity_any - %Function{params: [integer()], return: any()}
+      assert @one_arity_any == @one_arity_any - type((integer -> any))
 
-      assert @two_arity_any ==
-        @two_arity_any - %Function{params: [integer(), any()], return: any()}
+      assert @two_arity_any == @two_arity_any - type((integer, any -> any))
 
-      assert @two_arity_any ==
-        @two_arity_any - %Function{params: [any(), atom()], return: any()}
+      assert @two_arity_any == @two_arity_any - type((any, atom -> any))
     end
 
     test "is invalid if return mismatches" do
-      assert %Function{params: [any()], return: integer()} ==
-        %Function{params: [any()], return: integer()} -
-        %Function{params: [any()], return: atom()}
+      assert type((any -> integer)) == type((any -> integer)) - type((any -> atom))
     end
 
     test "is invalid if any parameter mismatches" do
-      assert %Function{params: [integer()], return: any()} ==
-        %Function{params: [integer()], return: any()} -
-        %Function{params: [atom()], return: any()}
-
-      assert %Function{params: [integer(), any()], return: any()} ==
-        %Function{params: [integer(), any()], return: any()} -
-        %Function{params: [atom(), any()], return: any()}
-
-      assert %Function{params: [any(), integer()], return: any()} ==
-        %Function{params: [any(), integer()], return: any()} -
-        %Function{params: [any(), atom()], return: any()}
+      assert type((integer -> any)) == type((integer -> atom)) - type((atom -> any))
+      assert type((integer, any -> any)) == type((integer, any -> atom)) - type((atom, any -> any))
+      assert type((any, integer -> any)) == type((any, integer -> atom)) - type((any, atom -> any))
     end
   end
 

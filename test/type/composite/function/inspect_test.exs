@@ -6,11 +6,27 @@ defmodule TypeTest.Function.InspectTest do
   @moduletag :inspect
 
   pull_types(defmodule Functions do
+    @type any_fun :: (... -> any())
     @type zero_arity :: (-> :foo)
     @type one_arity :: (:foo -> :foo)
     @type two_arity :: (:foo, :bar -> :foo)
     @type any_arity :: (... -> :foo)
+
+    @spec multi_branch(:foo) :: :bar
+    @spec multi_branch(:bar) :: :baz
+    def multi_branch(:foo), do: :bar
+    def multi_branch(:bar), do: :baz
   end)
+
+  describe "the any function type" do
+    test "looks like function" do
+      assert "function()" == inspect(@any_fun)
+    end
+
+    test "code translates correctly" do
+      assert @any_fun == eval_inspect(@any_fun)
+    end
+  end
 
   describe "the zero arity function type" do
     test "looks like itself" do
@@ -49,6 +65,16 @@ defmodule TypeTest.Function.InspectTest do
 
     test "code translates correctly" do
       assert @any_arity == eval_inspect(@any_arity)
+    end
+  end
+
+  describe "the multi-branch function type" do
+    test "uses the ||| operator" do
+      assert "(:foo -> :bar) ||| (:bar -> :baz)" == inspect(@multi_branch)
+    end
+
+    test "code translates correctly" do
+      assert @multi_branch == eval_inspect(@multi_branch)
     end
   end
 

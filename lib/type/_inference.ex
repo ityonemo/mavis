@@ -25,8 +25,8 @@ defmodule Type.NoInference do
 
   ```
   iex> Type.NoInference.infer(String, :split, 1)
-  {:ok, %Type.Function{params: [%Type{name: :any}],
-                       return: %Type{name: :any}}}
+  {:ok, %Type.Function{branches: [%Type.Function.Branch{params: [%Type{name: :any}],
+                       return: %Type{name: :any}}]}}
   ```
 
   """

@@ -22,7 +22,7 @@ defmodule Type.Function do
   ```
   iex> import Type, only: :macros
   iex> type((atom() -> pos_integer()))
-  %Type.Function{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}
+  %Type.Function{branches: [%Type.Function.Branch{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}]}
   ```
 
   ### Inference
@@ -68,7 +68,7 @@ defmodule Type.Function do
   ```elixir
   iex> import Type, only: :macros
   iex> Type.intersection(type(( -> 1..10)), type(( -> integer())))
-  %Type.Function{params: [], return: 1..10}
+  %Type.Function{branches: [%Type.Function.Branch{params: [], return: 1..10}]}
   iex> Type.intersection(type((integer() -> integer())),
   ...>                   type((1..10 -> integer())))
   %Type{name: :none}
@@ -81,7 +81,7 @@ defmodule Type.Function do
   iex> import Type, only: :macros
   iex> Type.intersection(type((... -> pos_integer())),
   ...>                   type((1..10 -> pos_integer())))
-  %Type.Function{params: [1..10], return: %Type{name: :pos_integer}}
+  %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: %Type{name: :pos_integer}}]}
   ```
 
   #### union
@@ -92,7 +92,7 @@ defmodule Type.Function do
   ```elixir
   iex> import Type, only: :macros
   iex> Type.union(type(( -> 1..10)), type(( -> 11..20)))
-  %Type.Function{params: [], return: 1..20}
+  %Type.Function{branches: [%Type.Function.Branch{params: [], return: 1..20}]}
   ```
 
   #### subtype?
@@ -123,11 +123,11 @@ defmodule Type.Function do
   iex> Type.usable_as(type((pos_integer() -> 1..10)), type((1..10 -> pos_integer())))
   :ok
   iex> Type.usable_as(type((1..10 -> 1..10)), type((pos_integer() -> pos_integer())))
-  {:maybe, [%Type.Message{type: %Type.Function{params: [1..10], return: 1..10},
-                          target: %Type.Function{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}}]}
+  {:maybe, [%Type.Message{type: %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: 1..10}]},
+                          target: %Type.Function{branches: [%Type.Function.Branch{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}]}}]}
   iex> Type.usable_as(type(( -> atom())), type(( -> pos_integer())))
-  {:error, %Type.Message{type: %Type.Function{params: [], return: %Type{name: :atom}},
-                         target: %Type.Function{params: [], return: %Type{name: :pos_integer}}}}
+  {:error, %Type.Message{type: %Type.Function{branches: [%Type.Function.Branch{params: [], return: %Type{name: :atom}}]},
+                         target: %Type.Function{branches: [%Type.Function.Branch{params: [], return: %Type{name: :pos_integer}}]}}}
   ```
   """
 
@@ -137,15 +137,6 @@ defmodule Type.Function do
   @type t :: %__MODULE__{
     branches: [Type.Function.Branch.t, ...]
   }
-
-  defimpl Inspect do
-    import Inspect.Algebra
-
-    def inspect(%{params: :any, return: return}, opts) do
-      raise "foo"
-      concat(["type((... -> ", to_doc(return, opts), "))"])
-    end
-  end
 
   #@spec apply_types(t | Type.Union.t(t), [Type.t], keyword) :: return
   @doc """
@@ -183,11 +174,15 @@ defmodule Type.Function do
       target: %Type{name: :pos_integer},
       meta: [message: "float() is disjoint to argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }}
-  iex> var_func = type((i -> i when i: integer()))
-  iex> Type.Function.apply_types(var_func, [1..10])
-  {:ok, 1..10}
   ```
   """
+
+  # NEXT, ADD THESE:
+  # iex> var_func = type((i -> i when i: integer()))
+  # iex> Type.Function.apply_types(var_func, [1..10])
+  # {:ok, 1..10}
+
+  #"""
   def apply_types(fun, vars, meta \\ [])
   def apply_types(_, vlst, meta) do
     raise "AAAA"
@@ -468,79 +463,18 @@ defmodule Type.Function do
 
   defimpl Inspect do
     import Inspect.Algebra
-    require Type
 
-    def inspect(%{params: :any, return: Type.any()}, _opts) do
-      "type()"
-    end
-    def inspect(%{params: :any, return: return}, opts) do
-      concat(["type((... -> ", to_doc(return, opts), "))"])
+    def inspect(%{branches: [branch]}, opts) do
+      to_doc(branch, opts)
     end
 
-    def inspect(%{params: params, return: return}, opts) when is_list(params) do
-      params_docs = params
-      |> Enum.map(&to_doc(&1, opts))
-      |> Enum.intersperse(", ")
+    def inspect(%{branches: branches}, opts) do
+      custom_options = Keyword.put(opts.custom_options, :no_type, true)
 
-      concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])
+      branches
+      |> Enum.map(&to_doc(&1, %{opts | custom_options: custom_options}))
+      |> Enum.intersperse(" ||| ")
+      |> concat()
     end
-
-    def inspect(%{params: count, return: return}, opts) when is_integer(count) do
-      params_docs = "_"
-      |> List.duplicate(count)
-      |> Enum.intersperse(", ")
-
-      concat(["type(("] ++ params_docs ++ [" -> ", to_doc(return, opts), "))"])
-    end
-
-#    def inspect(%{params: :any, return: %Type{module: nil, name: :any}}, _), do: "type()"
-#    def inspect(%{params: :any, return: return}, opts) do
-#      concat(basic_inspect(:any, return, opts) ++ [")"])
-#    end
-#    def inspect(%{params: arity, return: return}, opts) when is_integer(arity) do
-#      concat(basic_inspect(arity, return, opts) ++ [")"])
-#    end
-#    def inspect(%{params: params, return: return}, opts) do
-#
-#      # check if any of the params or the returns have *when* statements
-#      # TODO: nested variables
-#
-#      [return | params]
-#      |> Enum.filter(&match?(%Type.Function.Var{}, &1))
-#      |> case do
-#        [] -> basic_inspect(params, return, opts)
-#        free_vars ->
-#          when_list = free_vars
-#          |> Enum.uniq
-#          |> Enum.map(&Inspect.inspect(&1, %{opts | custom_options: [show_constraints: true]}))
-#          |> Enum.intersperse(", ")
-#
-#          basic_inspect(params, return, opts) ++ [" when " | when_list]
-#      end
-#      |> Kernel.++([")"])
-#      |> concat
-#    end
-#
-#    defp basic_inspect(params, return, opts) do
-#      ["(", render_params(params, opts), " -> ", to_doc(return, opts)]
-#    end
-#
-#    defp render_params(:any, _), do: "..."
-#    defp render_params(arity, _) when is_integer(arity) do
-#      "_"
-#      |> List.duplicate(arity)
-#      |> Enum.intersperse(", ")
-#      |> concat
-#    end
-#    defp render_params(lst, opts) do
-#      lst
-#      |> Enum.map(&to_doc(&1, opts))
-#      |> Enum.intersperse(", ")
-#      |> concat
-#    end
   end
-end
-
-defmodule Type.FunctionError do
-  defexception [:message]
 end

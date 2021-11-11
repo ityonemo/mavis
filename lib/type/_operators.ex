@@ -4,7 +4,7 @@ defmodule Type.Operators do
   """
 
   @kernel_operators [>: 2, <: 2, <=: 2, >=: 2, -: 2, in: 2]
-  @basic_operators [<~>: 2, <|>: 2, ~>: 2]
+  @basic_operators [<~>: 2, <|>: 2, ~>: 2, |||: 2]
 
   defmacro __using__(opts) do
     kernel_operators = case Keyword.get(opts, :only, :extended) do
@@ -55,4 +55,29 @@ defmodule Type.Operators do
   shortcut for `Type.subtract/2`
   """
   defdelegate a - b, to: Type, as: :subtract
+
+  @doc """
+  special operator for multi-branch functions
+  """
+  defmacro a ||| b do
+    branches = resolve_branches(a, b)
+    quote do
+      %Type.Function{branches: unquote(branches)}
+    end
+  end
+
+  defp resolve_branches([{:->, _, left}], [{:->, _, right}]) do
+    [to_branch(left), to_branch(right)]
+  end
+
+  defp resolve_branches({:|||, _, [bleft, bright]}, {:->, _, right}) do
+    resolve_branches(bleft, bright) ++ to_branch(right)
+  end
+
+  defp to_branch([params, return]) do
+    quote do
+      %Type.Function.Branch{params: unquote(params), return: unquote(return)}
+    end
+  end
+
 end

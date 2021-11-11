@@ -122,6 +122,7 @@ defmodule Type.Spec do
     Type.builtin(type)
   end
   def parse({:type, _, :bounded_fun, [fun, constraints]}, assigns) do
+    raise "not supported yet"
     # TODO: write a test against constraint assignment
     parse(fun, add_constraints(assigns, constraints))
   end

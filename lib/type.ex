@@ -328,10 +328,10 @@ defmodule Type do
                "%Type.Union{of: [pid(), port(), reference()]}"
     builtin :fun,
                %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
-               "%Type.Function{params: :any, return: any()}"
+               "%Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}"
     builtin :function,
                %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
-               "%Type.Function{params: :any, return: any()}"
+               "%Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}"
     builtin :mfa,
                %Type.Tuple{elements: [module(), atom(), arity()]},
                "%Type.Tuple{elements: [module(), atom(), arity()]}"
@@ -1083,11 +1083,11 @@ defmodule Type do
   iex> type(<<>>)
   %Type.Bitstring{size: 0, unit: 0}
   iex> type(( -> any))
-  %Type.Function{params: [], return: any()}
+  %Type.Function{branches: [%Type.Function.Branch{params: [], return: any()}]}
   iex> type((... -> any))
-  %Type.Function{params: :any, return: any()}
+  %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}
   iex> type((_, _ -> any))
-  %Type.Function{params: 2, return: any()}
+  %Type.Function{branches: [%Type.Function.Branch{params: 2, return: any()}]}
   ```
 
   usable in matches.
@@ -1105,21 +1105,21 @@ defmodule Type do
     |> Macro.escape
   end
 
-  defmacro type([{:->, _, [[{:..., _, [param_list]}], return]}]) do
+  defmacro type([{:->, _, [[{:..., _, [params]}], return]}]) do
     quote do
-      %Type.Function{branches: %Type.Function.Branch{
-        params: unquote(param_list),
+      %Type.Function{branches: [%Type.Function.Branch{
+        params: unquote(params),
         return: unquote(return)
-      }}
+      }]}
     end
   end
 
   defmacro type([{:->, _, [[{:..., _, _}], return]}]) do
     quote do
-      %Type.Function{branches: %Type.Function.Branch{
+      %Type.Function{branches: [%Type.Function.Branch{
         params: :any,
         return: unquote(return)
-      }}
+      }]}
     end
   end
 
@@ -1133,10 +1133,10 @@ defmodule Type do
     end
 
     quote do
-      %Type.Function{branches: %Type.Function.Branch{
+      %Type.Function{branches: [%Type.Function.Branch{
         params: unquote(params),
         return: unquote(return)
-      }}
+      }]}
     end
   end
 

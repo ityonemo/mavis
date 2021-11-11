@@ -13,8 +13,15 @@ defmodule TypeTest.FetchCase do
           Module.put_attribute(unquote(parent), name,
             %Type.Opaque{module: module, name: name, params: params, type: Type.Spec.parse(type)})
         {_, _, :spec, {{name, _arity}, branches}} ->
-          # assume for our test cases we don't care about arity.
-          Module.put_attribute(unquote(parent), name, Type.Spec.parse_spec(branches))
+          # assume for our test cases we don't care about arity, since they are
+          # inferrable from branches
+          Module.put_attribute(unquote(parent), name,
+            %Type.Function{branches: Enum.map(branches, fn branch ->
+              branch
+              |> Type.Spec.parse
+              |> Map.get(:branches)
+              |> List.first
+            end)})
         _ ->
           :ok
       end)

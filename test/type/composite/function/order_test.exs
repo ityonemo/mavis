@@ -10,7 +10,7 @@ defmodule TypeTest.TypeFunction.OrderTest do
   alias Type.Function
 
   defp param_fn(params, return) do
-    %Function{params: params, return: return}
+    type((...(params) -> return))
   end
 
   describe "a parameterized function" do
@@ -58,7 +58,7 @@ defmodule TypeTest.TypeFunction.OrderTest do
   end
 
   defp param_any_fn(return) do
-    %Function{return: return, params: :any}
+    type((... -> return))
   end
 
   describe "a params any function" do
