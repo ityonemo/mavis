@@ -13,7 +13,7 @@ defimpl Type.Algebra, for: List do
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
 
-  def intersection_internal(a, b), do: Type.none()
+  def intersect_internal(a, b), do: Type.none()
 
 #  use Type.Helpers
 #
@@ -66,13 +66,13 @@ defimpl Type.Algebra, for: List do
 #  end
 #
 #  intersection do
-#    def intersection([], %Type.List{}), do: none()
-#    def intersection([], iolist()), do: Type.Iolist.intersection_with([])
-#    def intersection([], _), do: none()
-#    def intersection(rvalue, iolist()) do
+#    def intersect([], %Type.List{}), do: none()
+#    def intersect([], iolist()), do: Type.Iolist.intersection_with([])
+#    def intersect([], _), do: none()
+#    def intersect(rvalue, iolist()) do
 #      if Type.subtype?(rvalue, iolist()), do: rvalue, else: iolist()
 #    end
-#    def intersection(rvalue, type = %Type.List{}) do
+#    def intersect(rvalue, type = %Type.List{}) do
 #      if Type.subtype?(rvalue, type), do: rvalue, else: none()
 #    end
 #  end

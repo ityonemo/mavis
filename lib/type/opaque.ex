@@ -73,7 +73,7 @@ defmodule Type.Opaque do
   #  end
 #
   #  intersection do
-  #    def intersection(%Opaque{}, _non_opaque) do
+  #    def intersect(%Opaque{}, _non_opaque) do
   #      none()
   #    end
   #  end

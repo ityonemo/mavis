@@ -105,11 +105,11 @@ defmodule Type.List do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(type([...]), list())
+  iex> Type.intersect(type([...]), list())
   %Type.List{}
-  iex> Type.intersection(nonempty_list(1..20), nonempty_list(10..30))
+  iex> Type.intersect(nonempty_list(1..20), nonempty_list(10..30))
   %Type.List{type: 10..20}
-  iex> inspect Type.intersection(list(1..20), list(10..30))
+  iex> inspect Type.intersect(list(1..20), list(10..30))
   "list(10..20)"
   ```
 
@@ -190,34 +190,34 @@ defmodule Type.List do
     |> Type.ternary_and(so_far)
   end
 
-  def intersection(%{final: []}, []) do
+  def intersect(%{final: []}, []) do
     require Type
     Type.none()
   end
-  def intersection(type, list) when is_list(list) do
+  def intersect(type, list) when is_list(list) do
     require Type
     if t?(type, list), do: list, else: Type.none()
   end
-  def intersection(a, b = %Type.List{}) do
+  def intersect(a, b = %Type.List{}) do
     require Type
-    case {Type.intersection(a.type, b.type), Type.intersection(a.final, b.final)} do
+    case {Type.intersect(a.type, b.type), Type.intersect(a.final, b.final)} do
       {Type.none(), _} -> Type.none()
       {_, Type.none()} -> Type.none()
       {type, final} ->
         %Type.List{type: type, final: final}
     end
   end
-  def intersection(a, %Type{module: nil, name: :iolist}), do: Type.Iolist.intersection_with(a)
-  def intersection(_, _) do
+  def intersect(a, %Type{module: nil, name: :iolist}), do: Type.Iolist.intersection_with(a)
+  def intersect(_, _) do
     require Type
     Type.none()
   end
 
   defp t?(t = %{type: el_t}, [first | rest]) do
-    Type.intersection(el_t, first) == first && t?(t, rest)
+    Type.intersect(el_t, first) == first && t?(t, rest)
   end
   defp t?(%{final: f}, el) do
-    Type.intersection(f, el) == el
+    Type.intersect(f, el) == el
   end
 
   #defimpl Type.Algebra do

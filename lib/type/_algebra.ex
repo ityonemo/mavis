@@ -11,8 +11,8 @@ defprotocol Type.Algebra do
   @spec typegroup(Type.t) :: Type.group
   def typegroup(type)
 
-  @spec intersection(Type.t, Type.t) :: Type.t
-  def intersection(ltype, rtype)
+  @spec intersect(Type.t, Type.t) :: Type.t
+  def intersect(ltype, rtype)
 
   @spec subtract(Type.t, Type.t) :: Type.t
   def subtract(ltype, rtype)

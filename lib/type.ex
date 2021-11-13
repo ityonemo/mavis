@@ -64,7 +64,7 @@ defmodule Type do
   iex> import Type, only: :macros
   iex> inspect Type.union(non_neg_integer(), :infinity)
   "timeout()"
-  iex> Type.intersection(pos_integer(), -10..10)
+  iex> Type.intersect(pos_integer(), -10..10)
   1..10
   ```
 
@@ -117,7 +117,7 @@ defmodule Type do
   dialyzer.
 
   - `Type.union/1`
-  - `Type.intersection/1`
+  - `Type.intersect/1`
   - `Type.subtype?/2`
   - `Type.usable_as/3`
   - `Type.of/1`
@@ -816,7 +816,7 @@ defmodule Type do
     Enum.into(types, %Type.Union{})
   end
 
-  @spec intersection(t, t) :: t
+  @spec intersect(t, t) :: t
   @doc """
   outputs the type which is guaranteed to satisfy the following conditions:
 
@@ -826,13 +826,13 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(non_neg_integer(), -10..10)
+  iex> Type.intersect(non_neg_integer(), -10..10)
   0..10
   ```
   """
-  defdelegate intersection(a, b), to: Type.Algebra
+  defdelegate intersect(a, b), to: Type.Algebra
 
-  @spec intersection([Type.t]) :: Type.t
+  @spec intersect([Type.t]) :: Type.t
   @doc """
   outputs the type which is guaranteed to satisfy the following conditions:
 
@@ -842,14 +842,22 @@ defmodule Type do
   ### Example:
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection([pos_integer(), -1..10, -6..6])
+  iex> Type.intersect([pos_integer(), -1..10, -6..6])
   1..6
   ```
   """
-  def intersection([]), do: none()
-  def intersection([a]), do: a
-  def intersection([a | b]) do
-    Type.intersection(a, Type.intersection(b))
+  def intersect([]), do: none()
+  def intersect([a]), do: a
+  def intersect([a | b]) do
+    intersect_helper(a, b)
+    Type.intersect(a, Type.intersect(b))
+  end
+
+  defp intersect_helper(a, [b]) do
+    Type.intersect(a, b)
+  end
+  defp intersect_helper(a, [b | rest]) do
+    intersect_helper(Type.intersect(a, b), rest)
   end
 
   @spec compare(t, t) :: :lt | :gt | :eq
@@ -1494,7 +1502,7 @@ defmodule Type do
   ```
   """
   def partition(type, type_list) when is_list(type_list) do
-    Enum.map(type_list, &Type.intersection(type, &1))
+    Enum.map(type_list, &Type.intersect(type, &1))
   end
 
   @spec covered?(t, [t]) :: boolean

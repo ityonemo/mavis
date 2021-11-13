@@ -77,7 +77,7 @@ defmodule Type.Union.Merge do
   end
   def type_merge(%List{type: t1, final: f}, %List{type: t2, final: f}) do
     # check if the types are mergable
-    case Type.intersection(t1, t2) do
+    case Type.intersect(t1, t2) do
       ^t1 ->
         [%List{type: t2, final: f}]
       ^t2 ->

@@ -16,10 +16,10 @@ defimpl Type.Algebra, for: Integer do
   def compare_internal(_, _), do: :lt
 
 
-  def intersection_internal(i, a..b) when a <= i and i <= b, do: i
-  def intersection_internal(i, neg_integer()) when i < 0, do: i
-  def intersection_internal(i, pos_integer()) when i > 0, do: i
-  def intersection_internal(_, _), do: Type.none()
+  def intersect_internal(i, a..b) when a <= i and i <= b, do: i
+  def intersect_internal(i, neg_integer()) when i < 0, do: i
+  def intersect_internal(i, pos_integer()) when i > 0, do: i
+  def intersect_internal(_, _), do: Type.none()
 
 #  use Type.Helpers
 #

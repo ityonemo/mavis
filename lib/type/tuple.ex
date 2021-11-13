@@ -76,9 +76,9 @@ defmodule Type.Tuple do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(type({}), type({:ok, integer()}))
+  iex> Type.intersect(type({}), type({:ok, integer()}))
   %Type{name: :none}
-  iex> Type.intersection(type({:ok, integer()}), type({atom(), 1..10}))
+  iex> Type.intersect(type({:ok, integer()}), type({atom(), 1..10}))
   %Type.Tuple{elements: [:ok, 1..10]}
   ```
 
@@ -169,31 +169,31 @@ defmodule Type.Tuple do
     compare when compare in [:gt, :lt] -> compare
   end
 
-  def intersection(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: false})
+  def intersect(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: false})
     when length(e1) < length(e2) do
     require Type
     Type.none()
   end
 
-  def intersection(%{elements: e1, fixed: false}, %__MODULE__{elements: e2, fixed: true})
+  def intersect(%{elements: e1, fixed: false}, %__MODULE__{elements: e2, fixed: true})
     when length(e2) < length(e1) do
     require Type
     Type.none()
   end
 
-  def intersection(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true})
+  def intersect(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true})
     when length(e1) != length(e2) do
     require Type
     Type.none()
   end
 
-  def intersection(%{elements: e1, fixed: f1}= a, %__MODULE__{elements: e2, fixed: f2}= b) do
+  def intersect(%{elements: e1, fixed: f1}= a, %__MODULE__{elements: e2, fixed: f2}= b) do
     require Type
 
     elements = e1
     |> zipfill(e2, Type.any())
     |> Enum.map(fn {t1, t2} ->
-      case Type.intersection(t1, t2) do
+      case Type.intersect(t1, t2) do
         Type.none() -> throw :mismatch
         any -> any
       end
@@ -204,7 +204,7 @@ defmodule Type.Tuple do
       require Type
       Type.none()
   end
-  def intersection(_, _) do
+  def intersect(_, _) do
     require Type
     Type.none()
   end

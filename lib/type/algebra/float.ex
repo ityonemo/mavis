@@ -12,7 +12,7 @@ defimpl Type.Algebra, for: Float do
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
 
-  def intersection_internal(_, _), do: Type.none()
+  def intersect_internal(_, _), do: Type.none()
 
 #  use Type.Helpers
 #
@@ -40,7 +40,7 @@ defimpl Type.Algebra, for: Float do
 #  end
 #
 #  intersection do
-#    def intersection(value, float()), do: value
+#    def intersect(value, float()), do: value
 #  end
 #
 #  subtract do

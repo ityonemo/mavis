@@ -87,12 +87,12 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
 
   test "regressions" do
     assert %Type.Bitstring{size: 16, unit: 8} =
-      Type.intersection(
+      Type.intersect(
         %Type.Bitstring{size: 15, unit: 1},
         %Type.Bitstring{size: 0, unit: 8})
 
     assert %Type.Bitstring{size: 32, unit: 24} =
-      Type.intersection(
+      Type.intersect(
         %Type.Bitstring{size: 14, unit: 6},
         %Type.Bitstring{size: 16, unit: 8})
   end

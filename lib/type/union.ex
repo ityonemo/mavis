@@ -38,15 +38,15 @@ defmodule Type.Union do
     if result == :eq, do: :gt, else: result
   end
 
-  def intersection(lunion, runion = %Type.Union{}) do
+  def intersect(lunion, runion = %Type.Union{}) do
     lunion.of
-    |> Enum.map(&intersection(runion, &1))
+    |> Enum.map(&intersect(runion, &1))
     |> Type.union
   end
 
-  def intersection(union = %{}, rtype) do
+  def intersect(union = %{}, rtype) do
     union.of
-    |> Enum.map(&Type.intersection(&1, rtype))
+    |> Enum.map(&Type.intersect(&1, rtype))
     |> Type.union
   end
 

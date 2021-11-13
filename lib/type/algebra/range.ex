@@ -25,12 +25,12 @@ defimpl Type.Algebra, for: Range do
     end
   end
 
-  def intersection_internal(a..b, i) when a <= i and i <= b, do: i
-  def intersection_internal(a.._, _..a), do: a
-  def intersection_internal(_..a, a.._), do: a
-  def intersection_internal(-1.._, neg_integer()), do: -1
-  def intersection_internal(a.._, neg_integer()) when a < 0, do: a..-1
-  def intersection_internal(a..b, c..d) do
+  def intersect_internal(a..b, i) when a <= i and i <= b, do: i
+  def intersect_internal(a.._, _..a), do: a
+  def intersect_internal(_..a, a.._), do: a
+  def intersect_internal(-1.._, neg_integer()), do: -1
+  def intersect_internal(a.._, neg_integer()) when a < 0, do: a..-1
+  def intersect_internal(a..b, c..d) do
     case {a >= c, a > d, b < c, b <= d} do
       {_,     x, y, _} when x or y -> none()
       {false, _, _, true}  -> c..b
@@ -39,7 +39,7 @@ defimpl Type.Algebra, for: Range do
       {false, _, _, false} -> c..d
     end
   end
-  def intersection_internal(_, _), do: Type.none()
+  def intersect_internal(_, _), do: Type.none()
 
 #
 #  usable_as do
@@ -68,7 +68,7 @@ defimpl Type.Algebra, for: Range do
 #      # take the intersections and make sure they reassemble to the
 #      # range.
 #      list
-#      |> Enum.map(&Type.intersection(&1, range))
+#      |> Enum.map(&Type.intersect(&1, range))
 #      |> Type.union
 #      |> case do
 #        none() -> {:error, Type.Message.make(range, union, meta)}

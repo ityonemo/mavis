@@ -15,15 +15,6 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
   end
 
-  describe "the intersection of any" do
-    test "with all other types is itself" do
-      TypeTest.Targets.except()
-      |> Enum.each(fn target ->
-        assert target == any() <~> target
-      end)
-    end
-  end
-
   describe "the intersection of neg_integer" do
     test "with any, integer, and neg_integer is itself" do
       assert neg_integer() == neg_integer() <~> any()

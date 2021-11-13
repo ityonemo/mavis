@@ -50,13 +50,13 @@ defmodule Type.Bitstring do
   Some binaries have no intersection, but Mavis will find obscure intersections.
 
   ```elixir
-  iex> Type.intersection(%Type.Bitstring{size: 15, unit: 0}, %Type.Bitstring{size: 3, unit: 0})
+  iex> Type.intersect(%Type.Bitstring{size: 15, unit: 0}, %Type.Bitstring{size: 3, unit: 0})
   %Type{name: :none}
-  iex> Type.intersection(%Type.Bitstring{size: 0, unit: 8}, %Type.Bitstring{size: 16, unit: 4})
+  iex> Type.intersect(%Type.Bitstring{size: 0, unit: 8}, %Type.Bitstring{size: 16, unit: 4})
   %Type.Bitstring{size: 16, unit: 8}
-  iex> Type.intersection(%Type.Bitstring{size: 15, unit: 1}, %Type.Bitstring{size: 0, unit: 8})
+  iex> Type.intersect(%Type.Bitstring{size: 15, unit: 1}, %Type.Bitstring{size: 0, unit: 8})
   %Type.Bitstring{size: 16, unit: 8}
-  iex> Type.intersection(%Type.Bitstring{size: 14, unit: 6}, %Type.Bitstring{size: 16, unit: 8})
+  iex> Type.intersect(%Type.Bitstring{size: 14, unit: 6}, %Type.Bitstring{size: 16, unit: 8})
   %Type.Bitstring{size: 32, unit: 24}
   ```
 
@@ -103,11 +103,12 @@ defmodule Type.Bitstring do
 
   use Type.Helpers
 
-  defstruct [size: 0, unit: 0]
+  defstruct [size: 0, unit: 0, unicode: false]
 
   @type t :: %__MODULE__{
     size: non_neg_integer,
-    unit: 0..256
+    unit: 0..256,
+    unicode: boolean
   }
 
   # COMPARISONS
@@ -118,30 +119,26 @@ defmodule Type.Bitstring do
   def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a > b,  do: :lt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a < b,  do: :gt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
-  def compare(%__MODULE__{size: 0, unit: 8}, %Type{module: String, name: :t, params: []}), do: :gt
-  def compare(%__MODULE__{size: size, unit: 8}, %Type{module: String, name: :t, params: [bytes]}) when size == bytes * 8, do: :gt
-  def compare(bitstring_t, %Type{module: String, name: :t, params: []}), do: compare(bitstring_t, %__MODULE__{unit: 8})
-  def compare(bitstring_t, %Type{module: String, name: :t, params: [bytes]}), do: compare(bitstring_t, %__MODULE__{unit: bytes * 8})
-
+  
   # INTERSECTION
-  def intersection(%{unit: 0}, %__MODULE__{unit: 0}) do
+  def intersect(%{unit: 0}, %__MODULE__{unit: 0}) do
     require Type
     Type.none()
   end
-  def intersection(%{size: asz, unit: 0}, %__MODULE__{size: bsz, unit: unit})
+  def intersect(%{size: asz, unit: 0}, %__MODULE__{size: bsz, unit: unit})
       when asz >= bsz and rem(asz - bsz, unit) == 0 do
     %__MODULE__{size: asz, unit: 0}
   end
-  def intersection(%{size: asz, unit: unit}, %__MODULE__{size: bsz, unit: 0})
+  def intersect(%{size: asz, unit: unit}, %__MODULE__{size: bsz, unit: 0})
       when bsz >= asz and rem(asz - bsz, unit) == 0 do
     %__MODULE__{size: bsz, unit: 0}
   end
-  def intersection(%{unit: aun}, %__MODULE__{unit: bun})
+  def intersect(%{unit: aun}, %__MODULE__{unit: bun})
     when aun == 0 or bun == 0 do
     require Type
     Type.none()
   end
-  def intersection(%{size: asz, unit: aun}, %__MODULE__{size: bsz, unit: bun}) do
+  def intersect(%{size: asz, unit: aun}, %__MODULE__{size: bsz, unit: bun}) do
     require Type
     if rem(asz - bsz, Integer.gcd(aun, bun)) == 0 do
       size = if asz > bsz do
@@ -156,18 +153,18 @@ defmodule Type.Bitstring do
       Type.none()
     end
   end
-  def intersection(bs, st = %Type{module: String, name: :t}) do
-    Type.intersection(st, bs)
+  def intersect(%{size: size, unit: unit}, st = %Type{module: String, name: :t}) do
+    Type.intersect(st, bs)
   end
-  def intersection(%{size: size, unit: 0}, bitstring)
+  def intersect(%{size: size, unit: 0}, bitstring)
       when is_bitstring(bitstring) and :erlang.bit_size(bitstring) == size do
     bitstring
   end
-  def intersection(%{size: size, unit: unit}, bitstring)
+  def intersect(%{size: size, unit: unit}, bitstring)
       when is_bitstring(bitstring) and rem(:erlang.bit_size(bitstring) - size, unit) == 0 do
     bitstring
   end
-  def intersection(_, _) do
+  def intersect(_, b) do
     require Type
     Type.none()
   end

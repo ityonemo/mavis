@@ -67,9 +67,9 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(type(( -> 1..10)), type(( -> integer())))
+  iex> Type.intersect(type(( -> 1..10)), type(( -> integer())))
   %Type.Function{branches: [%Type.Function.Branch{params: [], return: 1..10}]}
-  iex> Type.intersection(type((integer() -> integer())),
+  iex> Type.intersect(type((integer() -> integer())),
   ...>                   type((1..10 -> integer())))
   %Type{name: :none}
   ```
@@ -79,7 +79,7 @@ defmodule Type.Function do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> Type.intersection(type((... -> pos_integer())),
+  iex> Type.intersect(type((... -> pos_integer())),
   ...>                   type((1..10 -> pos_integer())))
   %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: %Type{name: :pos_integer}}]}
   ```
@@ -343,6 +343,10 @@ defmodule Type.Function do
 
   defimpl Type.Algebra do
     use Type.Helpers
+
+    import Type, only: :macros
+
+    def intersect(a, b), do: none()
   end
 
   #defimpl Type.Algebra do
@@ -380,8 +384,8 @@ defmodule Type.Function do
   #  end
 #
   #  intersection do
-  #    def intersection(%{params: :any, return: ret}, target = %Function{}) do
-  #      new_ret = Type.intersection(ret, target.return)
+  #    def intersect(%{params: :any, return: ret}, target = %Function{}) do
+  #      new_ret = Type.intersect(ret, target.return)
 #
   #      if new_ret == none() do
   #        none()
@@ -389,19 +393,19 @@ defmodule Type.Function do
   #        %Function{params: target.params, return: new_ret}
   #      end
   #    end
-  #    def intersection(a, b = %Function{params: :any}) do
+  #    def intersect(a, b = %Function{params: :any}) do
   #      intersection(b, a)
   #    end
-  #    def intersection(lf = %Function{params: i}, rf = %Function{params: rp})
+  #    def intersect(lf = %Function{params: i}, rf = %Function{params: rp})
   #        when length(rp) == i do
 #
-  #      case Type.intersection(lf.return, rf.return) do
+  #      case Type.intersect(lf.return, rf.return) do
   #        none() -> none()
   #        return -> %Function{params: rp, return: return}
   #      end
   #    end
-  #    def intersection(%{params: p, return: lr}, %Function{params: p, return: rr}) do
-  #      case Type.intersection(lr, rr) do
+  #    def intersect(%{params: p, return: lr}, %Function{params: p, return: rr}) do
+  #      case Type.intersect(lr, rr) do
   #        none() -> none()
   #        return ->
   #          %Function{params: p, return: return}

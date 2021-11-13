@@ -14,7 +14,7 @@ defimpl Type.Algebra, for: BitString do
   def compare_internal(lstring, rstring) when lstring > rstring, do: :gt
   def compare_internal(lstring, rstring), do: :eq
 
-  def intersection_internal(_, _) do
+  def intersect_internal(_, _) do
     require Type
     Type.none()
   end
@@ -67,8 +67,8 @@ defimpl Type.Algebra, for: BitString do
 #  end
 #
 #  intersection do
-#    def intersection(_, bitstring) when is_bitstring(bitstring), do: none()
-#    def intersection(binary, rhs = %Type{module: String, name: :t})
+#    def intersect(_, bitstring) when is_bitstring(bitstring), do: none()
+#    def intersect(binary, rhs = %Type{module: String, name: :t})
 #        when is_binary(binary) do
 #
 #      case {rhs.params, String.valid?(binary)} do
@@ -78,7 +78,7 @@ defimpl Type.Algebra, for: BitString do
 #        _ -> none()
 #      end
 #    end
-#    def intersection(bitstring, type) do
+#    def intersect(bitstring, type) do
 #      %Type.Bitstring{size: :erlang.bit_size(bitstring)}
 #      |> Type.subtype?(type)
 #      |> if do

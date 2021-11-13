@@ -13,11 +13,11 @@ defimpl Type.Algebra, for: Atom do
   def compare_internal(latom, ratom) when latom < ratom, do: :lt
   def compare_internal(latom, ratom) when latom > ratom, do: :gt
 
-  def intersection_internal(atom, Type.atom()), do: atom
-  def intersection_internal(atom, Type.type(node())) do
+  def intersect_internal(atom, Type.atom()), do: atom
+  def intersect_internal(atom, Type.type(node())) do
     if valid_node?(atom), do: atom, else: Type.none()
   end
-  def intersection_internal(a, b) do
+  def intersect_internal(a, b) do
     Type.none()
   end
 
@@ -59,11 +59,11 @@ defimpl Type.Algebra, for: Atom do
 #  end
 #
 #  intersection do
-#    def intersection(atom, atom()), do: atom
-#    def intersection(atom, type(node())) do
+#    def intersect(atom, atom()), do: atom
+#    def intersect(atom, type(node())) do
 #      if Type.Algebra.Type.valid_node?(atom), do: atom, else: none()
 #    end
-#    def intersection(atom, module()) do
+#    def intersect(atom, module()) do
 #      if Type.Algebra.Type.valid_module?(atom), do: atom, else: none()
 #    end
 #  end

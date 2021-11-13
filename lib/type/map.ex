@@ -98,19 +98,19 @@ defmodule Type.Map do
 
   ```
   iex> import Type, only: :macros
-  iex> Type.intersection(type(%{foo: :bar}), type(%{bar: :baz}))
+  iex> Type.intersect(type(%{foo: :bar}), type(%{bar: :baz}))
   %Type{name: :none}
-  iex> Type.intersection(type(%{foo: :bar}), type(%{optional(atom()) => atom()}))
+  iex> Type.intersect(type(%{foo: :bar}), type(%{optional(atom()) => atom()}))
   %Type.Map{required: %{foo: :bar}}
-  iex> Type.intersection(type(%{1 => 1..10}), type(%{1 => 5..20}))
+  iex> Type.intersect(type(%{1 => 1..10}), type(%{1 => 5..20}))
   %Type.Map{required: %{1 => 5..10}}
-  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  iex> Type.intersect(type(%{optional(1..10) => integer()}),
   ...>                   type(%{optional(integer()) => 1..10}))
   %Type.Map{optional: %{1..10 => 1..10}}
-  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  iex> Type.intersect(type(%{optional(1..10) => integer()}),
   ...>                   type(%{optional(1..10) => atom()}))
   %Type.Map{}
-  iex> Type.intersection(type(%{optional(1..10) => integer()}),
+  iex> Type.intersect(type(%{optional(1..10) => integer()}),
   ...>                   type(%{optional(11..20) => integer()}))
   %Type.Map{}
   ```
@@ -226,12 +226,12 @@ defmodule Type.Map do
     end
   end
 
-  def intersection(lmap, rmap = %__MODULE__{}) do
+  def intersect(lmap, rmap = %__MODULE__{}) do
     require Type
     # find the intersection of the preimages
     preimage_intersection = lmap
     |> preimage
-    |> Type.intersection(preimage(rmap))
+    |> Type.intersect(preimage(rmap))
 
     # required properties can fail.
     case evaluate_requireds(lmap, rmap, preimage_intersection) do
@@ -244,7 +244,7 @@ defmodule Type.Map do
         Type.none()
     end
   end
-  def intersection(_, _) do
+  def intersect(_, _) do
     require Type
     Type.none()
   end
@@ -263,7 +263,7 @@ defmodule Type.Map do
       req_kv = all_req_keys
       |> Enum.map(fn rq_key ->
         val_type = map_apply(map, rq_key)
-        |> Type.intersection(map_apply(tgt, rq_key))
+        |> Type.intersect(map_apply(tgt, rq_key))
 
         val_type == Type.none() && throw :empty
 
@@ -290,7 +290,7 @@ defmodule Type.Map do
     |> Enum.flat_map(fn segment ->
       map
       |> map_apply(segment)
-      |> Type.intersection(map_apply(tgt, segment))
+      |> Type.intersect(map_apply(tgt, segment))
       |> case do
         Type.none() -> []
         image -> [{segment, image}]
@@ -380,7 +380,7 @@ defmodule Type.Map do
   defp segment_apply(map, segment) do
     required_image = apply_partial(map.required, segment)
     optional_image = apply_partial(map.optional, segment)
-    Type.intersection(required_image ++ optional_image)
+    Type.intersect(required_image ++ optional_image)
   end
 
   # performs an apply operation on either the required part or the
@@ -390,7 +390,7 @@ defmodule Type.Map do
     import Type, only: :macros
     req_or_opt
     |> Enum.flat_map(fn {keytype, valtype} ->
-      if Type.intersection(keytype, preimage_subtype) == none() do
+      if Type.intersect(keytype, preimage_subtype) == none() do
         []
       else
         [valtype]
@@ -430,7 +430,7 @@ defmodule Type.Map do
     map
     |> keytypes
     |> Enum.flat_map(fn key_type ->
-      case Type.intersection(key_type, preimage_segment) do
+      case Type.intersect(key_type, preimage_segment) do
         none() -> resegment(map, rest)
         other -> [other | resegment(map, rest)]
       end
@@ -510,7 +510,7 @@ defmodule Type.Map do
   #    |> Elixir.Map.keys
   #    |> Enum.into(%Type.Union{})
 #
-  #    is_preimage = Type.intersection(challenge_preimage, target_preimage)
+  #    is_preimage = Type.intersect(challenge_preimage, target_preimage)
 #
   #    if is_preimage == challenge_preimage do
   #      [:ok]

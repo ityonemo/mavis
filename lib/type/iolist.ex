@@ -15,17 +15,17 @@ defmodule Type.Iolist do
 
   # INTERSECTIONS
 
-  def intersection_with([]), do: []
-  def intersection_with(list) when is_list(list) do
-    Type.intersection(list, iolist())
+  def intersect_with([]), do: []
+  def intersect_with(list) when is_list(list) do
+    Type.intersect(list, iolist())
   end
-  def intersection_with(list = %List{}) do
+  def intersect_with(list = %List{}) do
     # iolist is byte | binary | iolist
     type = [byte(), binary(), iolist()]
-    |> Enum.map(&Type.intersection(&1, list.type))
+    |> Enum.map(&Type.intersect(&1, list.type))
     |> Type.union
 
-    final = Type.intersection(list.final, @final)
+    final = Type.intersect(list.final, @final)
 
     if final == none() or type == none() do
       none()
@@ -33,7 +33,7 @@ defmodule Type.Iolist do
       %List{type: type, final: final}
     end
   end
-  def intersection_with(_), do: none()
+  def intersect_with(_), do: none()
 
   # COMPARISONS
 

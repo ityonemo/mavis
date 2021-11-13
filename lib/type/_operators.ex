@@ -34,9 +34,9 @@ defmodule Type.Operators do
   defdelegate a <|> b, to: Type, as: :union
 
   @doc """
-  Shortcut for `Type.intersection/2`
+  Shortcut for `Type.intersect/2`
   """
-  defdelegate a <~> b, to: Type, as: :intersection
+  defdelegate a <~> b, to: Type, as: :intersect
 
   @doc """
   Shortcut for `Type.compare/2`

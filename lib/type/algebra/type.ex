@@ -45,32 +45,32 @@ defimpl Type.Algebra, for: Type do
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
 
-  def intersection_internal(any(), type), do: type
-  def intersection_internal(type([...]), []), do: none()
-  def intersection_internal(type([...]), l) when is_list(l), do: l
-  def intersection_internal(neg_integer(), i) when is_integer(i) and i < 0, do: i
-  def intersection_internal(neg_integer(), a..b) when b < 0, do: a..b
-  def intersection_internal(pos_integer(), i) when is_integer(i) and i > 0, do: i
-  def intersection_internal(pos_integer(), a..b) when a > 0, do: a..b
-  def intersection_internal(pos_integer(), _..1), do: 1
-  def intersection_internal(pos_integer(), _..a) when a > 1, do: 1..a
-  def intersection_internal(float(), f) when is_float(f), do: f
-  def intersection_internal(atom(), atom) when is_atom(atom), do: atom
-  def intersection_internal(atom(), type(node())), do: type(node())
-  def intersection_internal(atom(), module()), do: module()
-  def intersection_internal(module(), atom) when is_atom(atom), do: atom
-  def intersection_internal(type(node()), atom) do
+  def intersect_internal(any(), type), do: type
+  def intersect_internal(type([...]), []), do: none()
+  def intersect_internal(type([...]), l) when is_list(l), do: l
+  def intersect_internal(neg_integer(), i) when is_integer(i) and i < 0, do: i
+  def intersect_internal(neg_integer(), a..b) when b < 0, do: a..b
+  def intersect_internal(pos_integer(), i) when is_integer(i) and i > 0, do: i
+  def intersect_internal(pos_integer(), a..b) when a > 0, do: a..b
+  def intersect_internal(pos_integer(), _..1), do: 1
+  def intersect_internal(pos_integer(), _..a) when a > 1, do: 1..a
+  def intersect_internal(float(), f) when is_float(f), do: f
+  def intersect_internal(atom(), atom) when is_atom(atom), do: atom
+  def intersect_internal(atom(), type(node())), do: type(node())
+  def intersect_internal(atom(), module()), do: module()
+  def intersect_internal(module(), atom) when is_atom(atom), do: atom
+  def intersect_internal(type(node()), atom) do
     require Type
     if Type.Algebra.Atom.valid_node?(atom), do: atom, else: Type.none()
   end
-  def intersection_internal(%Type{module: String, name: :t, params: []}, binary) when is_binary(binary) do
+  def intersect_internal(%Type{module: String, name: :t, params: []}, binary) when is_binary(binary) do
     if String.valid?(binary), do: binary, else: none()
   end
-  def intersection_internal(%Type{module: String, name: :t, params: [len]}, binary)
+  def intersect_internal(%Type{module: String, name: :t, params: [len]}, binary)
       when is_binary(binary) and :erlang.size(binary) == len do
     if String.valid?(binary), do: binary, else: none()
   end
-  def intersection_internal(_, _), do: none()
+  def intersect_internal(_, _), do: none()
 
 #
 #  import Type, only: :macros
@@ -176,50 +176,50 @@ defimpl Type.Algebra, for: Type do
 #
 #  intersection do
 #    # negative integer
-#    def intersection(neg_integer(), a) when is_integer(a) and a < 0, do: a
-#    def intersection(neg_integer(), a..b) when b < 0, do: a..b
-#    def intersection(neg_integer(), -1.._), do: -1
-#    def intersection(neg_integer(), a.._) when a < 0, do: a..-1
+#    def intersect(neg_integer(), a) when is_integer(a) and a < 0, do: a
+#    def intersect(neg_integer(), a..b) when b < 0, do: a..b
+#    def intersect(neg_integer(), -1.._), do: -1
+#    def intersect(neg_integer(), a.._) when a < 0, do: a..-1
 #    # positive integer
-#    def intersection(pos_integer(), a) when is_integer(a) and a > 0, do: a
-#    def intersection(pos_integer(), a..b) when a > 0, do: a..b
-#    def intersection(pos_integer(), _..1), do: 1
-#    def intersection(pos_integer(), _..b) when b > 0, do: 1..b
+#    def intersect(pos_integer(), a) when is_integer(a) and a > 0, do: a
+#    def intersect(pos_integer(), a..b) when a > 0, do: a..b
+#    def intersect(pos_integer(), _..1), do: 1
+#    def intersect(pos_integer(), _..b) when b > 0, do: 1..b
 #    # atoms
-#    def intersection(type(node()), atom) when is_atom(atom) do
+#    def intersect(type(node()), atom) when is_atom(atom) do
 #      if valid_node?(atom), do: atom, else: none()
 #    end
-#    def intersection(type(node()), atom()), do: type(node())
-#    def intersection(module(), atom) when is_atom(atom) do
+#    def intersect(type(node()), atom()), do: type(node())
+#    def intersect(module(), atom) when is_atom(atom) do
 #      if valid_module?(atom), do: atom, else: none()
 #    end
-#    def intersection(module(), atom()), do: module()
-#    def intersection(atom(), module()), do: module()
-#    def intersection(atom(), type(node())), do: type(node())
-#    def intersection(atom(), atom) when is_atom(atom), do: atom
+#    def intersect(module(), atom()), do: module()
+#    def intersect(atom(), module()), do: module()
+#    def intersect(atom(), type(node())), do: type(node())
+#    def intersect(atom(), atom) when is_atom(atom), do: atom
 #    # other literals
-#    def intersection(float(), value) when is_float(value), do: value
+#    def intersect(float(), value) when is_float(value), do: value
 #    # iolist
-#    def intersection(iolist(), any), do: Type.Iolist.intersection_with(any)
+#    def intersect(iolist(), any), do: Type.Iolist.intersection_with(any)
 #
 #    # strings
-#    def intersection(type(String.t), target = %Type{module: String, name: :t}), do: target
-#    def intersection(specced = %{module: String, name: :t}, type(String.t)), do: specced
-#    def intersection(%{module: String, name: :t, params: params}, binary) when is_binary(binary) do
+#    def intersect(type(String.t), target = %Type{module: String, name: :t}), do: target
+#    def intersect(specced = %{module: String, name: :t}, type(String.t)), do: specced
+#    def intersect(%{module: String, name: :t, params: params}, binary) when is_binary(binary) do
 #      case params do
 #        [] -> binary
 #        [v] when v == :erlang.size(binary) -> binary
 #        _ -> none()
 #      end
 #    end
-#    def intersection(%Type{module: String, name: :t, params: [lp]},
+#    def intersect(%Type{module: String, name: :t, params: [lp]},
 #                     %Type{module: String, name: :t, params: [rp]}) do
-#      case Type.intersection(lp, rp) do
+#      case Type.intersect(lp, rp) do
 #        none() -> none()
 #        int_type -> %Type{module: String, name: :t, params: [int_type]}
 #      end
 #    end
-#    def intersection(%{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
+#    def intersect(%{module: String, name: :t, params: [lp]}, bs = %Type.Bitstring{}) do
 #      lp
 #      |> case do
 #        i when is_integer(i) ->
@@ -234,15 +234,15 @@ defimpl Type.Algebra, for: Type do
 #        lst -> %Type{module: String, name: :t, params: [Enum.into(lst, %Type.Union{})]}
 #      end
 #    end
-#    def intersection(%{module: String, name: :t, params: [_]}, _), do: none()
+#    def intersect(%{module: String, name: :t, params: [_]}, _), do: none()
 #
 #    # remote types
-#    def intersection(type = %{module: module, name: name, params: params}, right)
+#    def intersect(type = %{module: module, name: name, params: params}, right)
 #        when is_remote(type) do
 #      # deal with errors later.
 #      # TODO: implement type caching system
 #      left = Type.fetch_type!(module, name, params)
-#      Type.intersection(left, right)
+#      Type.intersect(left, right)
 #    end
 #  end
 #
