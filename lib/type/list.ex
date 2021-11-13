@@ -168,7 +168,19 @@ defmodule Type.List do
 
   use Type.Helpers
 
+  @none %Type{name: :none}
+  @binary %Type.Bitstring{unit: 8}
+  @char 0..0x10FFFF
+  @iotype Type.union([@binary, @char, %Type{name: :iolist}])
+  @iofinal Type.union([@binary, []])
+
   def compare(_, lst) when is_list(lst), do: :gt
+  def compare(l, %Type{module: nil, name: :iolist, params: []}) do
+    case Type.compare(l.type, @iotype) do
+      :eq -> Type.compare(l.final, @iofinal)
+      ordered -> ordered
+    end
+  end
   def compare(a, b) do
     case Type.compare(a.type, b.type) do
       :eq -> Type.compare(a.final, b.final)
@@ -190,28 +202,27 @@ defmodule Type.List do
     |> Type.ternary_and(so_far)
   end
 
-  def intersect(%{final: []}, []) do
-    require Type
-    Type.none()
-  end
+  def intersect(%{final: []}, []), do: @none
   def intersect(type, list) when is_list(list) do
-    require Type
-    if t?(type, list), do: list, else: Type.none()
+    if t?(type, list), do: list, else: @none
   end
   def intersect(a, b = %Type.List{}) do
-    require Type
     case {Type.intersect(a.type, b.type), Type.intersect(a.final, b.final)} do
-      {Type.none(), _} -> Type.none()
-      {_, Type.none()} -> Type.none()
+      {@none, _} -> @none
+      {_, @none} -> @none
       {type, final} ->
         %Type.List{type: type, final: final}
     end
   end
-  def intersect(a, %Type{module: nil, name: :iolist}), do: Type.Iolist.intersection_with(a)
-  def intersect(_, _) do
-    require Type
-    Type.none()
+  def intersect(l, %Type{module: nil, name: :iolist, params: []}) do
+    case {Type.intersect(l.type, @iotype), Type.intersect(l.final, @iofinal)} do
+      {@none, _} -> @none
+      {_, @none} -> @none
+      {type, final} ->
+        %Type.List{type: type, final: final}
+    end
   end
+  def intersect(_, _), do: @none
 
   defp t?(t = %{type: el_t}, [first | rest]) do
     Type.intersect(el_t, first) == first && t?(t, rest)

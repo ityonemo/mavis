@@ -111,6 +111,8 @@ defmodule Type.Bitstring do
     unicode: boolean
   }
 
+  @none %Type{name: :none}
+
   # COMPARISONS
   def compare(_, bitstring) when is_bitstring(bitstring), do: :gt
   def compare(%__MODULE__{size: s, unit: u, unicode: false}, %__MODULE__{size: s, unit: u, unicode: true}), do: :gt
@@ -123,10 +125,7 @@ defmodule Type.Bitstring do
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
 
   # INTERSECTION
-  def intersect(%{unit: 0}, %__MODULE__{unit: 0}) do
-    require Type
-    Type.none()
-  end
+  def intersect(%{unit: 0}, %__MODULE__{unit: 0}), do: @none
   def intersect(%{size: asz, unit: 0, unicode: au}, %__MODULE__{size: bsz, unit: unit, unicode: bu})
       when asz >= bsz and rem(asz - bsz, unit) == 0 do
     %__MODULE__{size: asz, unit: 0, unicode: au or bu}
@@ -135,13 +134,8 @@ defmodule Type.Bitstring do
       when bsz >= asz and rem(asz - bsz, unit) == 0 do
     %__MODULE__{size: bsz, unit: 0, unicode: au or bu}
   end
-  def intersect(%{unit: aun}, %__MODULE__{unit: bun})
-    when aun == 0 or bun == 0 do
-    require Type
-    Type.none()
-  end
+  def intersect(%{unit: aun}, %__MODULE__{unit: bun}) when aun == 0 or bun == 0, do: @none
   def intersect(%{size: asz, unit: aun, unicode: au}, %__MODULE__{size: bsz, unit: bun, unicode: bu}) do
-    require Type
     if rem(asz - bsz, Integer.gcd(aun, bun)) == 0 do
       size = if asz > bsz do
         sizeup(asz, bsz, aun, bun)
@@ -154,38 +148,33 @@ defmodule Type.Bitstring do
         unicode: au or bu
       }
     else
-      Type.none()
+      @none
     end
   end
   def intersect(%{size: size, unit: 0, unicode: unicode}, bitstring)
-      when is_bitstring(bitstring) and :erlang.bit_size(bitstring) == size do
-    require Type
+      when is_bitstring(bitstring) and bit_size(bitstring) == size do
     cond do
-      unicode and String.valid?(bitstring) ->
+      is_binary(bitstring) and unicode and String.valid?(bitstring) ->
         bitstring
       not unicode->
         bitstring
       true ->
-        Type.none()
+        @none
     end
   end
   def intersect(%{size: size, unit: unit, unicode: unicode}, bitstring)
-      when is_bitstring(bitstring) and rem(:erlang.bit_size(bitstring) - size, unit) == 0 do
-    require Type
+      when is_bitstring(bitstring) and rem(bit_size(bitstring) - size, unit) == 0 do
     cond do
-      unicode and String.valid?(bitstring) ->
+      is_binary(bitstring) and unicode and String.valid?(bitstring) ->
         bitstring
       not unicode->
         bitstring
       true ->
-        Type.none()
+        @none
     end
   end
-  def intersect(_, _) do
-    require Type
-    Type.none()
-  end
-
+  def intersect(_, _), do: @none
+  
   defp sizeup(asz, bsz, aun, bun) do
     a_mod_b = rem(aun, bun)
     Enum.reduce(0..bun-1, asz - bsz, fn idx, acc ->

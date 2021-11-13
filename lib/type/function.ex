@@ -134,8 +134,10 @@ defmodule Type.Function do
   @enforce_keys [:branches]
   defstruct @enforce_keys
 
+  alias Type.Function.Branch
+
   @type t :: %__MODULE__{
-    branches: [Type.Function.Branch.t, ...]
+    branches: [Branch.t, ...]
   }
 
   #@spec apply_types(t | Type.Union.t(t), [Type.t], keyword) :: return
@@ -341,13 +343,26 @@ defmodule Type.Function do
   #  |> Enum.map(&Enum.reverse/1)
   #end
 
-  defimpl Type.Algebra do
-    use Type.Helpers
+  def intersect(_, %Branch{}), do: raise "functions and branches are incomparable"
 
-    import Type, only: :macros
-
-    def intersect(a, b), do: none()
+  def intersect(%{branches: [lbranch]}, %__MODULE__{branches: [rbranch]}) do
+    %__MODULE__{branches: [Type.intersect(lbranch, rbranch)]}
   end
+  def intersect(_, _), do: @none
+
+  def compare(_, %Branch{}), do: raise "functions and branches are incomparable"
+  def compare(%{branches: [branch | lrest]}, %__MODULE__{branches: [branch | rrest]}) do
+    compare(%__MODULE__{branches: lrest}, %__MODULE__{branches: rrest})
+  end
+
+  def compare(%{branches: [lbranch | _]}, %__MODULE__{branches: [rbranch | _]}) do
+    Type.compare(lbranch, rbranch)
+  end
+
+  # NOTE: these two function heads should only be accessible internally as
+  # a function with empty list branches is not supported.
+  def compare(%{branches: []}, %__MODULE__{branches: [_branch | _]}), do: :gt
+  def compare(%{branches: [_branch | _]}, %__MODULE__{branches: []}), do: :lt
 
   #defimpl Type.Algebra do
   #  import Type, only: :macros

@@ -142,6 +142,8 @@ defmodule Type.Tuple do
     fixed: true
   }
 
+  @none %Type{name: :none}
+
   alias Type.Helpers
   use Type.Helpers
 
@@ -170,44 +172,28 @@ defmodule Type.Tuple do
   end
 
   def intersect(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: false})
-    when length(e1) < length(e2) do
-    require Type
-    Type.none()
-  end
+    when length(e1) < length(e2), do: @none
 
   def intersect(%{elements: e1, fixed: false}, %__MODULE__{elements: e2, fixed: true})
-    when length(e2) < length(e1) do
-    require Type
-    Type.none()
-  end
+    when length(e2) < length(e1), do: @none
 
   def intersect(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true})
-    when length(e1) != length(e2) do
-    require Type
-    Type.none()
-  end
+    when length(e1) != length(e2), do: @none
 
   def intersect(%{elements: e1, fixed: f1}= a, %__MODULE__{elements: e2, fixed: f2}= b) do
-    require Type
-
     elements = e1
     |> zipfill(e2, Type.any())
     |> Enum.map(fn {t1, t2} ->
       case Type.intersect(t1, t2) do
-        Type.none() -> throw :mismatch
+        @none -> throw :mismatch
         any -> any
       end
     end)
     %__MODULE__{elements: elements, fixed: f1 or f2}
   catch
-    :mismatch ->
-      require Type
-      Type.none()
+    :mismatch -> @none
   end
-  def intersect(_, _) do
-    require Type
-    Type.none()
-  end
+  def intersect(_, _), do: @none
 
   # like Enum.zip, but only works on lists, and fills up the other
   # list with a value, instead of stopping when one list is exhausted.

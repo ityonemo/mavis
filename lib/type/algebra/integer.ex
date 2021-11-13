@@ -1,13 +1,11 @@
 defimpl Type.Algebra, for: Integer do
 
-  require Type
-
   alias Type.Helpers
   require Helpers
 
   Helpers.typegroup_fun()
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
   import Type, only: :macros
   def compare_internal(a, neg_integer()) when a >= 0, do: :gt
@@ -15,11 +13,10 @@ defimpl Type.Algebra, for: Integer do
   def compare_internal(a, b) when a > b, do: :gt
   def compare_internal(_, _), do: :lt
 
-
   def intersect_internal(i, a..b) when a <= i and i <= b, do: i
   def intersect_internal(i, neg_integer()) when i < 0, do: i
   def intersect_internal(i, pos_integer()) when i > 0, do: i
-  def intersect_internal(_, _), do: Type.none()
+  def intersect_internal(_, _), do: %Type{name: :none}
 
 #  use Type.Helpers
 #

@@ -1525,11 +1525,6 @@ end
 defimpl Inspect, for: Type do
   import Inspect.Algebra
 
-  # special case String.t.  This hides our under-the-hood
-  # implementation of sized string types.
-  def inspect(%{module: String, name: :t, params: [_]}, _opts) do
-    "String.t()"
-  end
   def inspect(%{module: nil, name: name, params: params}, opts) do
     param_list = params
     |> Enum.map(&to_doc(&1, opts))

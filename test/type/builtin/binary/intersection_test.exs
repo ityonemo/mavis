@@ -34,6 +34,14 @@ defmodule TypeTest.BuiltinBinary.IntersectionTest do
       assert "foo" == binary() <~> "foo"
     end
 
+    test "with a non-binary bitstring is none" do
+      assert none() == binary() <~> <<3::3>>
+    end
+
+    test "with none is none" do
+      assert none() == binary() <~> none()
+    end
+
     test "with all other types is none" do
       [binary(), "foo", type(<<>>)]
       |> TypeTest.Targets.except()

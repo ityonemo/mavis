@@ -7,6 +7,10 @@ defmodule TypeTest.BuiltinAny.IntersectionTest do
   import Type, only: :macros
 
   describe "the intersection of any" do
+    test "with none is none" do
+      assert none() == any() <~> none()
+    end
+
     test "with all other types is itself" do
       TypeTest.Targets.except()
       |> Enum.each(fn target ->

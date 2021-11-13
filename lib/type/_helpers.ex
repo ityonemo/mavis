@@ -8,6 +8,7 @@ defmodule Type.Helpers do
     Type.Atom => 3,
     Atom => 3,
     Type.Function => 5,
+    Type.Function.Branch => 5,
     Type.Tuple => 8,
     Type.Map => 9,
     Type.List => 10,

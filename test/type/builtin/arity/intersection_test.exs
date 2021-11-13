@@ -26,6 +26,9 @@ defmodule TypeTest.BuiltinArity.IntersectionTest do
       assert 4 == arity() <~> 4
     end
 
+    test "with none is none" do
+      assert none() == arity() <~> none()
+    end
 
     test "with all other types is none" do
       [0, 47, -10..10, pos_integer()]

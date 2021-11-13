@@ -24,6 +24,10 @@ defmodule TypeTest.BuiltinAtom.IntersectionTest do
       assert type(node()) == atom() <~> type(node())
     end
 
+    test "with none is none" do
+      assert none() == atom() <~> none()
+    end
+
     test "with all other types is none" do
       [:foo, atom()]
       |> TypeTest.Targets.except()

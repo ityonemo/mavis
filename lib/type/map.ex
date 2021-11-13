@@ -198,6 +198,8 @@ defmodule Type.Map do
     required: %{optional(key) => value},
     optional: %{}}
 
+  @none %Type{name: :none}
+
   use Type.Helpers
 
   def compare(lmap, rmap) do
@@ -227,7 +229,6 @@ defmodule Type.Map do
   end
 
   def intersect(lmap, rmap = %__MODULE__{}) do
-    require Type
     # find the intersection of the preimages
     preimage_intersection = lmap
     |> preimage
@@ -241,16 +242,12 @@ defmodule Type.Map do
         |> Map.drop(Map.keys(requireds))
         %__MODULE__{required: requireds, optional: optionals}
       :empty ->
-        Type.none()
+        @none
     end
   end
-  def intersect(_, _) do
-    require Type
-    Type.none()
-  end
+  def intersect(_, _), do: @none
 
   defp evaluate_requireds(map, tgt, preimage_intersection) do
-    require Type
     # union the required keys from the map and the target.  This
     # is the full set of required keys from all of the maps.
     all_req_keys = Map.keys(map.required)
@@ -265,7 +262,7 @@ defmodule Type.Map do
         val_type = map_apply(map, rq_key)
         |> Type.intersect(map_apply(tgt, rq_key))
 
-        val_type == Type.none() && throw :empty
+        val_type == @none && throw :empty
 
         {rq_key, val_type}
       end)
@@ -283,7 +280,6 @@ defmodule Type.Map do
     # apply the intersected preimages to the first map.
     # this gives us a list of preimage segments, each of
     # which has a consistent image type.
-    require Type
 
     map
     |> resegment(resegment(tgt))
@@ -292,7 +288,7 @@ defmodule Type.Map do
       |> map_apply(segment)
       |> Type.intersect(map_apply(tgt, segment))
       |> case do
-        Type.none() -> []
+        @none -> []
         image -> [{segment, image}]
       end
     end)
@@ -366,8 +362,6 @@ defmodule Type.Map do
     segment_apply(map, singleton)
   end
   def map_apply(map, preimage_clamp) do
-    import Type, only: :macros
-
     map
     |> resegment([preimage_clamp])
     |> Enum.map(&segment_apply(map, &1))
@@ -387,10 +381,9 @@ defmodule Type.Map do
   # optional part of a map type.  Returns a list of images.  You
   # should perform the union operation *outside* this function
   defp apply_partial(req_or_opt, preimage_subtype) do
-    import Type, only: :macros
     req_or_opt
     |> Enum.flat_map(fn {keytype, valtype} ->
-      if Type.intersect(keytype, preimage_subtype) == none() do
+      if Type.intersect(keytype, preimage_subtype) == @none do
         []
       else
         [valtype]

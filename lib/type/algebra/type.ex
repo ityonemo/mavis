@@ -2,7 +2,6 @@ defimpl Type.Algebra, for: Type do
 
   alias Type.Helpers
   require Helpers
-  require Type
 
   @group_for %{
     none: 0, neg_integer: 1, non_neg_integer: 1, pos_integer: 1,
@@ -51,14 +50,12 @@ defimpl Type.Algebra, for: Type do
   def intersect_internal(atom(), module()), do: module()
   def intersect_internal(module(), atom) when is_atom(atom), do: atom
   def intersect_internal(type(node()), atom) do
-    require Type
-    if Type.Algebra.Atom.valid_node?(atom), do: atom, else: Type.none()
+    if Type.Algebra.Atom.valid_node?(atom), do: atom, else: none()
   end
-  def intersect_internal(%Type{module: String, name: :t, params: []}, binary) when is_binary(binary) do
-    if String.valid?(binary), do: binary, else: none()
+  def intersect_internal(iolist(), list) when is_list(list) do
+    raise "foo"
   end
-  def intersect_internal(%Type{module: String, name: :t, params: [len]}, binary)
-      when is_binary(binary) and :erlang.size(binary) == len do
+  def intersect_internal(type(String.t()), binary) when is_binary(binary) do
     if String.valid?(binary), do: binary, else: none()
   end
   def intersect_internal(_, _), do: none()

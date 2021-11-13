@@ -9,9 +9,9 @@ defmodule TypeTest.Targets do
   reference(), type(( -> 0)), port(),
   pid(), type({}), map(),
   [], ["foo", "bar"], list(),
-  "foo", <<0::7>>, %Bitstring{size: 0, unit: 0}]
+  "foo", <<0::7>>, type(<<>>)]
 
   def except(list \\ []) do
-    Enum.reject(@example_list, &(&1 in list))
+    Enum.reject(@example_list, &(&1 in List.wrap(list)))
   end
 end

@@ -4,7 +4,7 @@ defimpl Type.Algebra, for: Range do
 
   Helpers.typegroup_fun
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
   import Type
 
