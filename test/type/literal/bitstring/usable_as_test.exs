@@ -18,7 +18,6 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
       assert ("foo" ~> bitstring()) == :ok
       assert ("foo" ~> binary()) == :ok
       assert ("foo" ~> type(String.t())) == :ok
-      assert ("foo" ~> type(String.t(3))) == :ok
     end
 
     test "a union with either itself or binary" do
@@ -38,7 +37,6 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
       assert {:maybe, _} = bitstring() ~> "foo"
       assert {:maybe, _} = binary() ~> "foo"
       assert {:maybe, _} = type(String.t()) ~> "foo"
-      assert {:maybe, _} = type(String.t(3)) ~> "foo"
     end
   end
 
@@ -49,9 +47,6 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
 
       assert {:error, %Message{type: "foo", target: %Bitstring{unit: 7}}} =
         ("foo" ~> %Bitstring{unit: 7})
-
-      assert {:error, %Message{type: "foo", target: type(String.t(4))}} =
-        ("foo" ~> type(String.t(4)))
     end
 
     test "a union with a disjoint categories" do
@@ -69,7 +64,6 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
 
   describe "lists not" do
     test "usable as literal lists when types don't match " do
-      assert {:error, _} = type(String.t(4)) ~> "foo"
       assert {:error, _} = %Bitstring{size: 21} ~> "foo"
       assert {:error, _} = %Bitstring{unit: 7} ~> "foo"
     end

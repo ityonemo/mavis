@@ -22,7 +22,6 @@ defmodule TypeTest.LiteralBinary.SubtypeTest do
 
     test "is a subtype of Strings and specified binaries" do
       assert "foo" in type(String.t())
-      assert "foo" in type(String.t(3))
 
       assert "foo" in %Bitstring{size: 24}
       assert "foo" in %Bitstring{unit: 8}

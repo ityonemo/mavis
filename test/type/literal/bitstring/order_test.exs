@@ -24,12 +24,10 @@ defmodule TypeTest.LiteralBitstring.OrderTest do
       assert "foo" < bitstring()
       assert "foo" < binary()
       assert "foo" < type(String.t())
-      assert "foo" < type(String.t(3))
 
       assert bitstring() > "foo"
       assert binary() > "foo"
       assert type(String.t()) > "foo"
-      assert type(String.t(3)) > "foo"
     end
 
     test "is smaller than things outside of binaries" do

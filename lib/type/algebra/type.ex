@@ -32,18 +32,9 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(module(), type(node())), do: :gt
   def compare_internal(module(), atom) when is_atom(atom), do: :gt
   def compare_internal(type(node()), atom) when is_atom(atom), do: :gt
-  def compare_internal(type(String.t()), type), do: string_0_compare(type)
-  def compare_internal(type(String.t(bytes)), type), do: string_1_compare(bytes, type)
   def compare_internal(_, _), do: :lt
 
-  defp string_0_compare(%Type.Bitstring{unit: 8, size: 0}), do: :lt
-  defp string_0_compare(type), do: Type.compare(%Type.Bitstring{unit: 8, size: 0}, type)
-
-  defp string_1_compare(_, type(String.t())), do: :lt
-  defp string_1_compare(bytes, %Type.Bitstring{unit: unit, size: 0}) when unit == bytes * 8, do: :lt
-  defp string_1_compare(bytes, type), do: Type.compare(%Type.Bitstring{unit: 8 *bytes, size: 0}, type)
-
-  Helpers.algebra_intersection_fun(__MODULE__, :intersection_internal)
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
   def intersect_internal(any(), type), do: type
   def intersect_internal(type([...]), []), do: none()

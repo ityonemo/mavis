@@ -134,18 +134,6 @@ defmodule Type do
   other remote types don't have out of the box.  This sort of behaviour
   may be changed to be extensible to custom types in a future release.
 
-  The nonexistent type `String.t/1` is also implemented, with the type
-  parameter indicating byte-lengths for compile-time constant strings.
-  This is done entirely under the hood and should not otherwise affect
-  operations.  If you encounter strange results, report them to the issue
-  tracker.
-
-  In the meantime, you may disable this feature by setting the following:
-
-  ```elixir
-  config :mavis, :use_smart_strings, false
-  ```
-
   ### "Aliased builtins"
 
   Some builtins were not directly introduced into the typesystem logic, since
@@ -1275,6 +1263,14 @@ defmodule Type do
   # remote types
   defmacro type({{:., _, [module, name]}, _, params}) do
     case module do
+      {:__aliases__, _, [:String]} ->
+        quote do
+          %Type.Bitstring{
+            size: 0,
+            unit: 8,
+            unicode: true
+          }
+        end
       {:__aliases__, _, aliases} ->
         quote do
           %Type{

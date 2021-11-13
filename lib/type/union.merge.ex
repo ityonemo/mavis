@@ -123,35 +123,6 @@ defmodule Type.Union.Merge do
       :nomerge
     end
   end
-  def type_merge(%Type{module: String, name: :t}, type(String.t)) do
-    [type(String.t)]
-  end
-  def type_merge(%Type{module: String, name: :t, params: [left]},
-                  %Type{module: String, name: :t, params: [right]}) do
-    lengths = Type.union(left, right)
-    [type(String.t(lengths))]
-  end
-  def type_merge(%Type{module: String, name: :t, params: []},
-                  %Bitstring{size: 0, unit: unit})
-                  when unit in [1, 2, 4, 8] do
-    [%Bitstring{unit: unit}]
-  end
-  def type_merge(%Type{module: String, name: :t, params: [bytes]},
-                 bitstring = %Bitstring{size: size, unit: unit}) do
-    bytes
-    |> case do
-      i when is_integer(i) -> [i]
-      range = _.._ -> range
-      %Type.Union{of: ints} -> ints
-    end
-    |> Enum.split_with(&(rem(&1 * 8 - size, unit) == 0))
-    |> case do
-      {[], _} -> :nomerge
-      {_, keep} ->
-        keep_type = Type.union(keep)
-        [bitstring, type(String.t(keep_type))]
-    end
-  end
 
   # any
   def type_merge(_, any()) do

@@ -22,32 +22,9 @@ defmodule TypeTest.RemoteString.OrderTest do
       assert type(String.t()) < binary()
     end
 
-    test "is bigger than a String.t with a size" do
-      assert type(String.t()) > type(String.t(10))
-    end
-
     test "is bigger than actual binaries" do
       assert type(String.t()) > "foo"
       assert type(String.t()) > ""
-    end
-  end
-
-  describe "String.t/1" do
-    test "is smaller than general String.t and bigger than bigger String.t's" do
-      assert type(String.t(3)) < type(String.t())
-      assert type(String.t(3)) > type(String.t(4))
-    end
-
-    test "is smaller than its corresponding raw bitstring type" do
-      assert type(String.t(3)) < %Bitstring{size: 0, unit: 24}
-    end
-
-    test "is bigger than its corresponding raw bitstring type with a size" do
-      assert type(String.t(3)) > %Bitstring{size: 8, unit: 24}
-    end
-
-    test "is bigger than actual binaries" do
-      assert type(String.t(3)) > "foo"
     end
   end
 end

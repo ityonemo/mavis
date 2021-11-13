@@ -15,7 +15,6 @@ defmodule TypeTest.BuiltinBinary.IntersectionTest do
 
     test "with String.t is String.t" do
       assert type(String.t()) == binary() <~> type(String.t())
-      assert type(String.t(3)) == binary() <~> type(String.t(3))
     end
 
     test "with a wider binary is the wider binary" do

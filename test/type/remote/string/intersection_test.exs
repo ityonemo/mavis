@@ -33,25 +33,4 @@ defmodule TypeTest.RemoteString.IntersectionTest do
       end)
     end
   end
-
-  describe "the intersection of String.t/1" do
-    test "with itself, string, and any is itself" do
-      assert type(String.t(3)) == type(String.t(3)) <~> type(String.t(3))
-      assert type(String.t(3)) == type(String.t(3)) <~> type(String.t)
-      assert type(String.t(3)) == any() <~> type(String.t(3))
-    end
-
-    test "with correctly sized bitstring is itself" do
-      assert type(String.t(3)) == type(String.t(3)) <~> %Bitstring{size: 24}
-    end
-
-    test "with empty bitstring is nothing" do
-      assert none() == type(String.t(3)) <~> @empty_bitstring
-      assert none() == @empty_bitstring <~> type(String.t(3))
-    end
-
-    test "with wrongly sized string is nothing" do
-      assert none() == type(String.t(3)) <~> type(String.t(4))
-    end
-  end
 end

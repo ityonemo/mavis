@@ -113,32 +113,34 @@ defmodule Type.Bitstring do
 
   # COMPARISONS
   def compare(_, bitstring) when is_bitstring(bitstring), do: :gt
+  def compare(%__MODULE__{size: s, unit: u, unicode: false}, %__MODULE__{size: s, unit: u, unicode: true}), do: :gt
+  def compare(%__MODULE__{size: s, unit: u, unicode: true}, %__MODULE__{size: s, unit: u, unicode: false}), do: :lt
   def compare(%__MODULE__{unit: 0}, %__MODULE__{unit: b}) when b != 0, do: :lt
   def compare(%__MODULE__{unit: a}, %__MODULE__{unit: 0}) when a != 0, do: :gt
   def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a < b,  do: :gt
   def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a > b,  do: :lt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a < b,  do: :gt
   def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
-  
+
   # INTERSECTION
   def intersect(%{unit: 0}, %__MODULE__{unit: 0}) do
     require Type
     Type.none()
   end
-  def intersect(%{size: asz, unit: 0}, %__MODULE__{size: bsz, unit: unit})
+  def intersect(%{size: asz, unit: 0, unicode: au}, %__MODULE__{size: bsz, unit: unit, unicode: bu})
       when asz >= bsz and rem(asz - bsz, unit) == 0 do
-    %__MODULE__{size: asz, unit: 0}
+    %__MODULE__{size: asz, unit: 0, unicode: au or bu}
   end
-  def intersect(%{size: asz, unit: unit}, %__MODULE__{size: bsz, unit: 0})
+  def intersect(%{size: asz, unit: unit, unicode: au}, %__MODULE__{size: bsz, unit: 0, unicode: bu})
       when bsz >= asz and rem(asz - bsz, unit) == 0 do
-    %__MODULE__{size: bsz, unit: 0}
+    %__MODULE__{size: bsz, unit: 0, unicode: au or bu}
   end
   def intersect(%{unit: aun}, %__MODULE__{unit: bun})
     when aun == 0 or bun == 0 do
     require Type
     Type.none()
   end
-  def intersect(%{size: asz, unit: aun}, %__MODULE__{size: bsz, unit: bun}) do
+  def intersect(%{size: asz, unit: aun, unicode: au}, %__MODULE__{size: bsz, unit: bun, unicode: bu}) do
     require Type
     if rem(asz - bsz, Integer.gcd(aun, bun)) == 0 do
       size = if asz > bsz do
@@ -148,23 +150,38 @@ defmodule Type.Bitstring do
       end
       %__MODULE__{
         size: size,
-        unit: lcm(aun, bun)}
+        unit: lcm(aun, bun),
+        unicode: au or bu
+      }
     else
       Type.none()
     end
   end
-  def intersect(%{size: size, unit: unit}, st = %Type{module: String, name: :t}) do
-    Type.intersect(st, bs)
-  end
-  def intersect(%{size: size, unit: 0}, bitstring)
+  def intersect(%{size: size, unit: 0, unicode: unicode}, bitstring)
       when is_bitstring(bitstring) and :erlang.bit_size(bitstring) == size do
-    bitstring
+    require Type
+    cond do
+      unicode and String.valid?(bitstring) ->
+        bitstring
+      not unicode->
+        bitstring
+      true ->
+        Type.none()
+    end
   end
-  def intersect(%{size: size, unit: unit}, bitstring)
+  def intersect(%{size: size, unit: unit, unicode: unicode}, bitstring)
       when is_bitstring(bitstring) and rem(:erlang.bit_size(bitstring) - size, unit) == 0 do
-    bitstring
+    require Type
+    cond do
+      unicode and String.valid?(bitstring) ->
+        bitstring
+      not unicode->
+        bitstring
+      true ->
+        Type.none()
+    end
   end
-  def intersect(_, b) do
+  def intersect(_, _) do
     require Type
     Type.none()
   end

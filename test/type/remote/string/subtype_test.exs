@@ -31,21 +31,6 @@ defmodule TypeTest.RemoteString.SubtypeTest do
     end
   end
 
-  describe "the elixir String.t/1" do
-    test "is a subtype of itself, general String.t" do
-      assert type(String.t(3)) in type(String.t(3))
-      assert type(String.t(3)) in type(String.t())
-      assert type(String.t(3)) in any()
-    end
-
-    test "is a subtype of any with the correct size" do
-      assert type(String.t(3)) in %Bitstring{unit: 8}
-      assert type(String.t(3)) in %Bitstring{unit: 24}
-      assert type(String.t(3)) in %Bitstring{size: 24}
-      assert type(String.t(3)) in %Bitstring{size: 8, unit: 8}
-    end
-  end
-
   describe "basic binary" do
     test "is not a subtype of String.t()" do
       refute binary() in type(String.t())

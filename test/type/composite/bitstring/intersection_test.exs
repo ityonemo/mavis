@@ -71,7 +71,6 @@ defmodule TypeTest.TypeBitstring.IntersectionTest do
       assert "foo" == %Bitstring{unit: 8} <~> "foo"
 
       assert "foo" == type(String.t()) <~> "foo"
-      assert "foo" == type(String.t(3)) <~> "foo"
     end
 
     test "different offsets" do

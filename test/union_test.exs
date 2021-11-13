@@ -321,28 +321,9 @@ defmodule TypeTest.UnionTest do
   end
 
   describe "for strings" do
-    test "fixed size strings are merged into general string" do
-      assert type(String.t) == (type(String.t) <|> type(String.t(42)))
-    end
-
-    test "fixed size strings are merged" do
-      range = 2..3
-      assert type(String.t(range)) == (type(String.t(2)) <|> type(String.t(3)))
-      union = 2 <|> 4
-      assert type(String.t(union)) == (type(String.t(2)) <|> type(String.t(4)))
-    end
-
     test "bitstrings merge strings" do
       assert bitstring() == type(String.t) <|> bitstring()
       assert binary() == type(String.t) <|> binary()
-    end
-
-    test "bitstrings can merge string/1 s" do
-      range = 2..4
-      assert %Type.Union{of: [
-        %Type.Bitstring{size: 8, unit: 16},
-        %Type{module: String, name: :t, params: [%Type.Union{of: [4, 2]}]}
-      ]} = type(String.t(range)) <|> %Type.Bitstring{size: 8, unit: 16}
     end
   end
 end

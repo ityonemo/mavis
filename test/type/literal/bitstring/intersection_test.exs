@@ -21,7 +21,6 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
       assert "foo" == "foo" <~> %Bitstring{unit: 8}
 
       assert "foo" == "foo" <~> type(String.t())
-      assert "foo" == "foo" <~> type(String.t(3))
     end
 
     test "with other literal bitstrings" do
@@ -31,7 +30,6 @@ defmodule TypeTest.LiteralBitstring.IntersectionTest do
     test "with mismatched bitstring types" do
       assert none() == "foo" <~> %Bitstring{size: 21}
       assert none() == "foo" <~> %Bitstring{unit: 7}
-      assert none() == "foo" <~> type(String.t(4))
     end
 
     test "with unions works as expected" do

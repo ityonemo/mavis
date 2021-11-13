@@ -21,7 +21,6 @@ defmodule TypeTest.LiteralBitstring.SubtractionTest do
       assert none() == "foo" - %Bitstring{unit: 8}
 
       assert none() == "foo" - type(String.t())
-      assert none() == "foo" - type(String.t(3))
     end
 
     test "of other literal bitstrings" do
@@ -33,8 +32,6 @@ defmodule TypeTest.LiteralBitstring.SubtractionTest do
       assert "foo" == "foo" - %Bitstring{unit: 7}
 
       assert <<255>> == <<255>> - type(String.t())
-      assert <<255>> == <<255>> - type(String.t(1))
-      assert "foo" == "foo" - type(String.t(4))
     end
 
     test "of unions works as expected" do

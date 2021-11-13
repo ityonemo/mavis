@@ -3,6 +3,11 @@
 ## 0.0.7
 - implements literal types
 - splits apart lists and makes them unions of `t:Type.List.t` and `[]`
+- deprecates `String.t/1` and replaces with unicode boolean flag
+- changes `Type.intersection/1` to `Type.intersect/1`
+- changes `%Type.Function{}` to have branches
+- creates the general `Type.type/1` macro to handle types that need macro decomposition
+- moves `Type.node_type/0` to `Type.type(node())`
 
 ## 0.0.6
 - deprecates `Type.builtin/1` and switches to macros for each type.

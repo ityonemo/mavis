@@ -1,25 +1,12 @@
-# Deviations: Strings
+# Deviations: Binaries
 
-## Size-tagged strings
+## Unicode annotation
 
-### Rationale
+the `Type.Binary` type struct includes an annotation `:unicode` which
+is a boolean, representing if the type is encoded as unicode.
 
-Size-tagged strings are string types which memoize the byte length of
-the string.  These are necessary because Elixir's `t:String.t/0` type
-drops the byte length of the string, which could be useful information
-for the compiler.
+### Relationship to elixir String type
 
-Unions of size-tagged strings are subjected to concatenation into ranges
-and unions.
-
-### Example
-
-```
-Type.of("foo") # ==> String.t(3)
-```
-
-### Normalization to elixir String type
-
-The integer type parameter is stripped and converted to the empty list []
-
-In the future, this may be changed to be the `non_neg_integer()` type
+This annotation is required to properly represent the `t:String.t/0` type,
+because according to the documentation, this type must be encoded as
+unicode.

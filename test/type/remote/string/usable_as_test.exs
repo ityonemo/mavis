@@ -42,32 +42,9 @@ defmodule TypeTest.RemoteString.UsableAsTest do
     end
   end
 
-  describe "String.t/1" do
-    test "is usable as any, basic types and self" do
-      assert :ok = type(String.t(3)) ~> any()
-      assert :ok = type(String.t(3)) ~> bitstring()
-      assert :ok = type(String.t(3)) ~> binary()
-      assert :ok = type(String.t(3)) ~> type(String.t())
-      assert :ok = type(String.t(3)) ~> type(String.t(3))
-    end
-
-    test "is usable as a bitstring with the correct size parameters" do
-      assert :ok = type(String.t(3)) ~> %Bitstring{size: 24}
-      assert :ok = type(String.t(3)) ~> %Bitstring{unit: 24}
-      assert :ok = type(String.t(3)) ~> %Bitstring{size: 8, unit: 8}
-    end
-
-    test "is not usable as a bitstring with the incorrect correct size parameters" do
-      assert {:error, _} = type(String.t(3)) ~> %Bitstring{size: 16}
-      assert {:error, _} = type(String.t(3)) ~> %Bitstring{unit: 7}
-      assert {:error, _} = type(String.t(3)) ~> %Bitstring{size: 8, unit: 5}
-    end
-  end
-
   describe "empty bitstring" do
     test "is always usable as String.t" do
       assert :ok = %Bitstring{} ~> type(String.t())
-      assert :ok = %Bitstring{} ~> type(String.t(0))
     end
   end
 
@@ -75,17 +52,6 @@ defmodule TypeTest.RemoteString.UsableAsTest do
     test "are maybe usable as String.t" do
       assert {:maybe, [msg]} = binary() ~> type(String.t())
       assert msg.meta[:message] =~ "remote encapsulation"
-    end
-
-    test "are maybe usable as the equivalent String.t/1" do
-      assert {:maybe, _} = %Bitstring{unit: 8} ~> type(String.t(3))
-      assert {:maybe, _} = %Bitstring{size: 24} ~> type(String.t(3))
-    end
-
-    test "are not usable as the equivalent String.t/1" do
-      assert {:error, _} = %Bitstring{size: 8} ~> type(String.t(3))
-      assert {:error, _} = %Bitstring{unit: 7} ~> type(String.t(3))
-      assert {:error, _} = %Bitstring{unit: 5, size: 8} ~> type(String.t(3))
     end
   end
 end
