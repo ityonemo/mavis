@@ -12,51 +12,48 @@ defmodule TypeTest.TypeIolist.IntersectionTest do
   describe "iolist" do
     test "intersects with any, and self" do
       assert iolist() == iolist() <~> any()
-      assert iolist() == any() <~> iolist()
-
       assert iolist() == iolist() <~> iolist()
     end
 
     test "intersects with empty list" do
       assert [] == iolist() <~> []
-      assert [] == [] <~> iolist()
     end
 
     test "intersects with a byte list" do
       assert list(byte()) == iolist() <~> list(byte())
-      assert list(byte()) == list(byte()) <~> iolist()
     end
 
     test "intersects with a binary list" do
       assert list(binary()) == iolist() <~> list(binary())
-      assert list(binary()) == list(binary()) <~> iolist()
     end
 
     test "acts as if it is a maybe_empty list" do
-      nonempty = nonempty_list(binary())
-      assert nonempty == iolist() <~> nonempty
-      assert nonempty == nonempty <~> iolist()
+      assert nonempty_list(binary()) == iolist() <~> nonempty_list(binary())
     end
 
     test "acts as if it can have a final of binary" do
-      binfinal = %List{type: binary(), final: binary()}
-      assert binfinal == iolist() <~> binfinal
-      assert binfinal == binfinal <~> iolist()
+      assert %List{type: binary(), final: binary()} == iolist() <~> %List{type: binary(), final: binary()}
     end
 
     test "intersects to arbitrary depth" do
       two_in = list(list(binary()))
       assert two_in == iolist() <~> two_in
-      assert two_in == two_in <~> iolist()
 
       three_in = list(list(list(binary())))
       assert three_in == iolist() <~> three_in
-      assert three_in == three_in <~> iolist()
     end
 
     test "if the list is different, there is only an empty list intersection" do
       assert [] == iolist() <~> list(atom())
       assert none() == iolist() <~> nonempty_list(atom())
+    end
+
+    test "with real examples is the same" do
+      assert "foo" == iodata() <~> "foo"
+      assert ["foo", "bar"] == iodata() <~> ["foo", "bar"]
+      assert ["foo", 47] == iodata() <~> ["foo", 47]
+      assert ["foo", [47]] == iodata() <~> ["foo", [47]]
+      assert ["foo" | "bar"] == iodata() <~> ["foo" | "bar"]
     end
 
     test "if the final is different, there's no interesction" do

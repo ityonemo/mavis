@@ -285,75 +285,75 @@ defmodule Type do
 
     ## composite builtins (but under "basic" in the docs)
     builtin :non_neg_integer,
-               %Type.Union{of: [pos_integer(), 0]},
+               %Type.Union{of: [Type.pos_integer(), 0]},
                "%Type.Union{of: [pos_integer(), 0]}"
     builtin :integer,
-               %Type.Union{of: [pos_integer(), 0, neg_integer()]},
+               %Type.Union{of: [Type.pos_integer(), 0, Type.neg_integer()]},
                "%Type.Union{of: [pos_integer(), 0, neg_integer()]}"
     builtin :map,
-               %Type.Map{optional: %{any() => any()}},
+               %Type.Map{optional: %{Type.any() => Type.any()}},
                "%Type.Map{optional: %{any() => any()}}"
     builtin :tuple,
                %Type.Tuple{elements: [], fixed: false},
                "%Type.Tuple{elements: [], fixed: false}"
     # composite builtins (built-in types)
     builtin :foo, any(), "any()"
-    builtin :no_return, none(), "%Type{name: :none}"
+    builtin :no_return, Type.none(), "%Type{name: :none}"
     builtin :arity, 0..255, "0..255"
     builtin :byte, 0..255, "0..255"
     builtin :char, 0..0x10_FFFF, "0..0x10_FFFF"
     builtin :number,
-               %Type.Union{of: [float(), pos_integer(), 0, neg_integer()]},
+               %Type.Union{of: [Type.float(), Type.pos_integer(), 0, Type.neg_integer()]},
                "%Type.Union{of: [float(), pos_integer(), 0, neg_integer()]}"
     builtin :timeout,
-               %Type.Union{of: [:infinity, pos_integer(), 0]},
+               %Type.Union{of: [:infinity, Type.pos_integer(), 0]},
                "%Type.Union{of: [:infinity, pos_integer(), 0]}"
     builtin :boolean,
                %Type.Union{of: [true, false]},
                "%Type.Union{of: [true, false]}"
     builtin :identifier,
-               %Type.Union{of: [pid(), port(), reference()]},
+               %Type.Union{of: [Type.pid(), Type.port(), Type.reference()]},
                "%Type.Union{of: [pid(), port(), reference()]}"
     builtin :fun,
-               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
+               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: Type.any()}]},
                "%Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}"
     builtin :function,
-               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]},
+               %Type.Function{branches: [%Type.Function.Branch{params: :any, return: Type.any()}]},
                "%Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}"
     builtin :mfa,
-               %Type.Tuple{elements: [module(), atom(), arity()]},
+               %Type.Tuple{elements: [Type.module(), Type.atom(), Type.arity()]},
                "%Type.Tuple{elements: [module(), atom(), arity()]}"
     builtin :struct,
-               %Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}},
+               %Type.Map{required: %{__struct__: Type.module()}, optional: %{Type.atom() => Type.any()}},
                "%Type.Map{required: %{__struct__: module()}, optional: %{atom() => any()}}"
     builtin :nonempty_charlist,
-               %Type.List{type: char(), final: []},
+               %Type.List{type: Type.char(), final: []},
                "%Type.List{type: char()}"
     builtin :nonempty_list,
-               %Type.List{type: any(), final: []},
+               %Type.List{type: Type.any(), final: []},
                "%Type.List{type: any()}"
     builtin :nonempty_maybe_improper_list,
-               %Type.List{type: any(), final: any()},
+               %Type.List{type: Type.any(), final: Type.any()},
                "%Type.List{type: any(), final: any()}"
     builtin :charlist,
-              %Type.Union{of: [%Type.List{type: char(), final: []}, []]},
+              %Type.Union{of: [%Type.List{type: Type.char(), final: []}, []]},
               "%Type.Union{of: [%Type.List{type: char(), final: []}, []]}"
     builtin :keyword,
                %Type.Union{of: [%Type.List{
-                 type: %Type.Tuple{elements: [atom(), any()]},
+                 type: %Type.Tuple{elements: [Type.atom(), Type.any()]},
                  final: []}, []]},
                "%Type.Union{of: [%Type.List{type: type({atom(), any()})}, []}"
     builtin :list,
                %Type.Union{of: [%Type.List{}, []]},
                "%Type.Union{of: [%Type.List{}, []]}"
     builtin :maybe_improper_list,
-               %Type.Union{of: [%Type.List{type: any(), final: any()}, []]},
+               %Type.Union{of: [%Type.List{type: Type.any(), final: Type.any()}, []]},
                "%Type.Union{of: [%Type.List{type: any(), final: any()}, []]}"
     builtin :binary,
                %Type.Bitstring{size: 0, unit: 8},
                "%Type.Bitstring{unit: 8}"
     builtin :iodata,
-               %Type.Union{of: [binary(), iolist()]},
+               %Type.Union{of: [Type.binary(), Type.iolist()]},
                "%Type.Union{of: [binary(), iolist()]}"
     builtin :bitstring,
                %Type.Bitstring{size: 0, unit: 1},
@@ -363,18 +363,24 @@ defmodule Type do
     ## nonstandard builtins (useful just for this library)
     builtin :nonempty_iolist,
                %Type.List{
-                 type: %Type.Union{of: [binary(), iolist(), byte()]},
-                 final: %Type.Union{of: [binary(), []]}},
+                 type: %Type.Union{of: [Type.binary(), Type.iolist(), Type.byte()]},
+                 final: %Type.Union{of: [Type.binary(), []]}},
                  nil
     builtin :explicit_iolist,
-               %Type.Union{of: [nonempty_iolist(), []]},
+               %Type.Union{of: [Type.nonempty_iolist(), []]},
                nil
   end
 
   @doc type: true
   defmacro keyword(type) do
     quote do
-      %Type.Union{of: [%Type.List{type: unquote(type), final: []}, []]}
+      %Type.Union{
+        of: [%Type.List{
+          type: %Type.Tuple{
+            elements: [Type.atom(), unquote(type)],
+            fixed: true},
+          final: []},
+        []]}
     end
   end
   @doc """
