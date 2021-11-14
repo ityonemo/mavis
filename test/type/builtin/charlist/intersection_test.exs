@@ -14,6 +14,7 @@ defmodule TypeTest.BuiltinCharlist.IntersectionTest do
     end
 
     test "with a literal list is itself" do
+      assert [] == charlist() <~> []
       assert [47] == charlist() <~> [47]
     end
 
