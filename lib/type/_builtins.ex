@@ -36,7 +36,9 @@ defmodule Type.Builtins do
         end
       end
 
-      def builtins(), do: unquote(Map.keys(builtins))
+      def builtins() do
+        unquote(Map.keys(builtins))
+      end
     end
 
     quote do
