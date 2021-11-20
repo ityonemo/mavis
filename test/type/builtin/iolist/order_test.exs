@@ -7,7 +7,8 @@ defmodule TypeTest.TypeIolist.OrderTest do
 
   use Type.Operators
 
-  alias Type.{Bitstring, List}
+  alias Type.Bitstring
+  alias Type.List
 
   @ltype byte() <|> binary() <|> iolist()
   @final [] <|> binary()
