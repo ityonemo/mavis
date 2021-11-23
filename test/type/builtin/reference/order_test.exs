@@ -20,7 +20,7 @@ defmodule TypeTest.BuiltinReference.OrderTest do
   test "reference is smaller than other types" do
     assert reference() < function()
     assert reference() < pid()
-    assert reference() > port()
+    assert reference() < port()
     assert reference() < tuple()
     assert reference() < map()
     assert reference() < maybe_improper_list()

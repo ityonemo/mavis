@@ -20,6 +20,10 @@ defmodule TypeTest.BuiltinMfa.OrderTest do
     assert mfa() > pid()
   end
 
+  test "mfa is bigger than an actual mfa" do
+    assert mfa() > literal({Kernel, :+, 2})
+  end
+
   test "mfa is smaller than tuples and general tuple types" do
     assert mfa() < %Type.Tuple{elements: [], fixed: false}
     assert mfa() < %Type.Tuple{elements: [any()], fixed: false}

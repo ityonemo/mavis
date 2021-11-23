@@ -17,10 +17,10 @@ defmodule TypeTest.BuiltinPid.OrderTest do
     assert pid() > atom()
     assert pid() > reference()
     assert pid() > function()
+    assert pid() > port()
   end
 
   test "pid is smaller than other types" do
-    assert pid() < port()
     assert pid() < tuple()
     assert pid() < map()
     assert pid() < maybe_improper_list()

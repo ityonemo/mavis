@@ -8,12 +8,13 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
   use Type.Operators
 
   alias Type.List
+  alias Type.Tuple
 
   @ltype byte() <|> binary() <|> keyword()
   @final [] <|> binary()
 
   # note that the keyword is nonempty false list
-  describe "an keyword" do
+  describe "keyword/0" do
     test "is bigger than bottom and reference" do
       assert keyword() > none()
       assert keyword() > reference()
@@ -30,7 +31,7 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
     end
 
     test "is smaller than a union containing it" do
-      assert keyword() < nil <|> keyword()
+      assert keyword() < (nil <|> keyword())
     end
 
     test "is smaller than arbitrary lists, bitstrings or top" do
@@ -38,5 +39,9 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
       assert keyword() < bitstring()
       assert keyword() < any()
     end
+  end
+
+  describe "list/1" do
+    test "a"
   end
 end

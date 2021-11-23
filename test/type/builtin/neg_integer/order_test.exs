@@ -7,11 +7,8 @@ defmodule TypeTest.BuiltinNegInteger.OrderTest do
 
   use Type.Operators
 
-  test "neg_integer is bigger subsets of neg_integer" do
+  test "neg_integer is bigger than only the none type" do
     assert neg_integer() > none()
-    assert neg_integer() > neg_integer()
-    assert neg_integer() > pos_integer()
-    assert neg_integer() > non_neg_integer()
   end
 
   test "neg_integer is bigger than negative ranges" do

@@ -45,16 +45,17 @@ defmodule Type.Helpers do
       def compare(same, same), do: :eq
       def compare(_, %Type{module: nil, name: :any}), do: :lt
       def compare(ltype, rtype) do
-        lgroup = typegroup(ltype)
-        rgroup = Type.typegroup(rtype)
-        cond do
-          lgroup < rgroup -> :lt
-          lgroup > rgroup -> :gt
-          match?(%Type.Union{}, rtype) ->
-            %{of: [first | _]} = rtype
+        lgroup = typegroup(ltype) 
+        rgroup = Type.typegroup(rtype) 
+        case {lgroup, rgroup, ltype, rtype} do
+          {lgroup, rgroup, _, _} when lgroup < rgroup -> :lt
+          {lgroup, rgroup, _, _} when lgroup > rgroup -> :gt
+          {_, _, %Type.Union{}, _} ->
+            unquote(module).unquote(call)(ltype, rtype)
+          {_, _, _, %Type.Union{of: [first | _]}} ->
             result = Type.compare(ltype, first)
             if result == :eq, do: :lt, else: result
-          true ->
+          _ ->
             unquote(module).unquote(call)(ltype, rtype)
         end
       end

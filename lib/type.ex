@@ -350,7 +350,7 @@ defmodule Type do
                  final: %Type{module: nil, name: :any, params: []}},
                "%Type.List{type: any(), final: any()}"
     builtin :charlist,
-              %Type.Union{of: [%Type.List{type: 0x10FFFF, final: []}, []]},
+              %Type.Union{of: [%Type.List{type: 0..0x10FFFF, final: []}, []]},
               "%Type.Union{of: [%Type.List{type: char(), final: []}, []]}"
     builtin :keyword,
                %Type.Union{of: [%Type.List{
@@ -609,6 +609,15 @@ defmodule Type do
     quote do
       %Type.Tuple{elements: unquote(e)}
     end
+  end
+  defp do_literal({:%, _, [{:__aliases__, _, aliases}, {:%{}, _, params}]}) do
+    aliases
+    |> Module.concat
+    |> struct(params)
+    |> Macro.escape
+  end
+  defp do_literal({:__aliases__, _, aliases}) do
+    Module.concat(aliases)
   end
 
   @doc """

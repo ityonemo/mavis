@@ -32,11 +32,23 @@ defmodule Type.Union do
 
   def typegroup(%{of: [first | _]}), do: Type.typegroup(first)
 
-  # note that this only gets called when the first items match
+  def compare(%{of: list1}, %Type.Union{of: list2}) do\
+    do_compare(list1, list2)
+  end
+
   def compare(%{of: [first | _]}, right) do
     result = Type.compare(first, right)
     if result == :eq, do: :gt, else: result
   end
+
+  defp do_compare([lhead | ltail], [rhead | rtail]) do\
+    case Type.compare(lhead, rhead) do
+      :eq -> do_compare(ltail, rtail)
+      other -> other
+    end
+  end
+  defp do_compare([], _), do: :lt
+  defp do_compare(_, []), do: :gt
 
   def intersect(lunion, runion = %Type.Union{}) do
     lunion.of

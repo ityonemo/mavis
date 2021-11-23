@@ -45,4 +45,8 @@ defmodule TypeTest.BuiltinList.OrderTest do
       assert list() < any()
     end
   end
+
+  describe "list/1" do
+    test "a"
+  end
 end

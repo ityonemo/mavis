@@ -17,10 +17,10 @@ defmodule TypeTest.BuiltinPort.OrderTest do
     assert port() > atom()
     assert port() > reference()
     assert port() > function()
-    assert port() > pid()
   end
 
   test "port is smaller than other types" do
+    assert port() < pid()
     assert port() < tuple()
     assert port() < map()
     assert port() < maybe_improper_list()

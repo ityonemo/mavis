@@ -17,7 +17,6 @@ defmodule TypeTest.BuiltinAtom.OrderTest do
   end
 
   test "atom is bigger than atom subtypes" do
-    assert atom() > binary()
     assert atom() > module()
     assert atom() > node()
   end

@@ -3,25 +3,6 @@ defmodule Type.Builtins do
 
   # helper module providing a DSL for making basic and builtin types.
 
-  #@primitive_builtins ~w(none neg_integer pos_integer float node module
-  #atom reference port pid iolist any)a
-#
-  #@doc false
-  #def primitive_builtins, do: @primitive_builtins
-#
-  #@composite_builtins ~w(term integer non_neg_integer tuple arity byte
-  #map binary bitstring boolean char charlist nonempty_charlist fun
-  #function identifier iodata keyword list nonempty_list
-  #maybe_improper_list nonempty_maybe_improper_list mfa no_return number
-  #struct timeout)a
-#
-  #@doc false
-  #def composite_builtins, do: @composite_builtins
-#
-  #@builtins @primitive_builtins ++ @composite_builtins
-  #@doc false
-  #def builtins, do: @builtins
-
   defmacro defbuiltin(do: code) do
     builtin_fn = quote unquote: false do
       # do stuff here:
