@@ -27,7 +27,7 @@ defmodule TypeTest.BuiltinList.MapTest do
   end
 
   test "map is bigger than a map literal" do
-    assert map() > literal(%{"foo" => "bar"})
+    assert map() > Type.literal(%{"foo" => "bar"})
   end
 
   test "map is smaller than other types" do

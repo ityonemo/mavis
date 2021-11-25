@@ -41,7 +41,7 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
     end
   end
 
-  describe "list/1" do
+  describe "keyword/1" do
     test "a"
   end
 end

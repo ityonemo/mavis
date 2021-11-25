@@ -41,4 +41,8 @@ defmodule TypeTest.BuiltinList.MaybeImproperListTest do
     assert maybe_improper_list() < bitstring()
     assert maybe_improper_list() < any()
   end
+
+  describe "maybe_improper_list/2" do
+    test "a"
+  end
 end

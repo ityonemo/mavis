@@ -566,58 +566,37 @@ defmodule Type do
 
   *usable in matches*
   """
-  defmacro literal(atform = {:@, _meta, _}) do
-    atform
-    |> Macro.expand(__CALLER__)
-    |> do_literal
-  end
-  defmacro literal(value), do: do_literal(value)
-
-  defp do_literal(value) when
+  def literal(value) when
       is_atom(value) or
-      is_integer(value) or
-      is_float(value) or
+      is_number(value) or
       is_bitstring(value) or
       value == [] do
     value
   end
-  defp do_literal([{:|, _, [head, rest]}]) do
-    quote do
-      [unquote(do_literal(head)) | unquote(do_literal(rest))]
-    end
+  def literal(list) when is_list(list) do
+    Enum.map(list, &literal/1)
   end
-  defp do_literal([head | rest]) do
-    quote do
-      [unquote(do_literal(head)) | unquote(do_literal(rest))]
-    end
+  def literal(%module{} = struct) do
+    requireds = struct
+    |> Map.from_struct
+    |> Map.new(fn {k, v} -> {literal(k), literal(v)} end)
+    |> Map.put(:__struct__, module)
+
+    %Type.Map{
+      required: requireds,
+      optional: %{}
+    }
   end
-  defp do_literal({:%{}, meta, kv}) do
-    requireds = Enum.map(kv, fn {k, v} -> {do_literal(k), do_literal(v)} end)
-    quote do
-      %Type.Map{required: unquote({:%{}, meta, requireds})}
-    end
+  def literal(map) when is_map(map) do
+    %Type.Map{
+      required: Map.new(fn {k, v} -> {literal(k), literal(v)} end),
+      optional: %{}
+    }
   end
-  defp do_literal({a, b}) do
-    e0 = do_literal(a)
-    e1 = do_literal(b)
-    quote do
-      %Type.Tuple{elements: [unquote(e0), unquote(e1)]}
-    end
-  end
-  defp do_literal({:{}, _meta, elements}) do
-    e = Enum.map(elements, &do_literal/1)
-    quote do
-      %Type.Tuple{elements: unquote(e)}
-    end
-  end
-  defp do_literal({:%, _, [{:__aliases__, _, aliases}, {:%{}, _, params}]}) do
-    aliases
-    |> Module.concat
-    |> struct(params)
-    |> Macro.escape
-  end
-  defp do_literal({:__aliases__, _, aliases}) do
-    Module.concat(aliases)
+  def literal(tuple) when is_tuple(tuple) do
+    %Type.Tuple{
+      elements: tuple |> Tuple.to_list |> Enum.map(&literal/1)
+    }
   end
 
   @doc """
