@@ -10,10 +10,10 @@ defmodule TypeTest.BuiltinFun.InspectTest do
       @type fun_type :: fun
     end)
 
-    test "looks like type()" do
+    test "looks like function()" do
       # as this is a strict synonym, we don't want to assume what the
       # user intent is.
-      assert "type()" == inspect(@fun_type)
+      assert "function()" == inspect(@fun_type)
     end
 
     test "evaluates correctly" do

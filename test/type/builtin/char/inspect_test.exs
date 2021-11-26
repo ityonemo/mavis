@@ -13,7 +13,7 @@ defmodule TypeTest.BuiltinChar.InspectTest do
     test "looks like 0..0x10_FFFF" do
       # as this is a strict synonym, we don't want to assume what the
       # user intent is.
-      assert "0..0x10_FFFF" == inspect(@char_type)
+      assert "0..1114111" == inspect(@char_type)
     end
 
     test "evaluates correctly" do

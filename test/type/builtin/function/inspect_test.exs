@@ -11,7 +11,7 @@ defmodule TypeTest.BuiltinFunction.InspectTest do
     end)
 
     test "looks like a function" do
-      assert "type()" == inspect(@function_type)
+      assert "function()" == inspect(@function_type)
     end
 
     test "code translates correctly" do
