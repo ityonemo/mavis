@@ -19,7 +19,7 @@ defmodule TypeTest.BuiltinNonemptyCharlist.IntersectionTest do
     end
 
     test "with a list of bytes is a list of bytes" do
-      assert type([byte, ...]) == nonempty_charlist() <~> type([byte])
+      assert type([byte(), ...]) == nonempty_charlist() <~> type([byte()])
     end
 
     test "with an empty list is none" do

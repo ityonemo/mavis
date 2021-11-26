@@ -14,10 +14,25 @@ defimpl Type.Algebra, for: Type do
   end
   def typegroup(%Type{module: String, name: :t}), do: 11
 
-  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-
-  # TODO: REORDER THIS SECTION BY TYPECLASS
   import Type, only: :macros
+
+  def compare(same, same), do: :eq
+  def compare(_, %Type{module: nil, name: :any}), do: :lt
+  def compare(iolist(), t), do: compare_iolist(t)
+  def compare(ltype, rtype) do
+    lgroup = typegroup(ltype)
+    rgroup = Type.typegroup(rtype)
+    case {lgroup, rgroup, ltype, rtype} do
+      {lgroup, rgroup, _, _} when lgroup < rgroup -> :lt
+      {lgroup, rgroup, _, _} when lgroup > rgroup -> :gt
+      {_, _, _, %Type.Union{of: [first | _]}} ->
+        result = Type.compare(ltype, first)
+        if result == :eq, do: :lt, else: result
+      _ ->
+        compare_internal(ltype, rtype)
+    end
+  end
+
   def compare_internal(type([...]), l) when is_list(l), do: :gt
   def compare_internal(pos_integer(), neg_integer()), do: :gt
   def compare_internal(pos_integer(), i) when is_integer(i), do: :gt
@@ -32,6 +47,17 @@ defimpl Type.Algebra, for: Type do
   def compare_internal(module(), atom) when is_atom(atom), do: :gt
   def compare_internal(type(node()), atom) when is_atom(atom), do: :gt
   def compare_internal(_, _), do: :lt
+
+  @iotype %Type.Union{of: [binary(), iolist(), byte()]}
+  @iofinal %Type.Union{of: [binary(), []]}
+  @iolist %Type.Union{of: [%Type.List{type: @iotype, final: @iofinal}, []]}
+
+  defp compare_iolist(%Type.Union{of: types} = t) do
+    if iolist() in types, do: :lt, else: Type.compare(@iolist, t)
+  end
+  defp compare_iolist(t) do
+    Type.compare(@iolist, t)
+  end
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 

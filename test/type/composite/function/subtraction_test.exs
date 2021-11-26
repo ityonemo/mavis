@@ -9,10 +9,10 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
 
 
   @any_function function()
-  @zero_arity_any type(( -> any))
-  @one_arity_any type((any -> any))
-  @two_arity_any type((any, any -> any))
-  @three_arity type((_, _, _ -> any))
+  @zero_arity_any type(( -> any()))
+  @one_arity_any type((any() -> any()))
+  @two_arity_any type((any(), any() -> any()))
+  @three_arity type((_, _, _ -> any()))
 
   describe "subtracting from the any function" do
     test "is none for any and self" do
@@ -40,7 +40,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
   end
 
   describe "subtracting from function with any parameters" do
-    @any_with_integer type((... -> integer))
+    @any_with_integer type((... -> integer()))
     test "is none for any, itself and the any function" do
       assert none() == @any_with_integer - any()
       assert none() == @any_with_integer - @any_with_integer
@@ -50,8 +50,8 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     test "is trivial for functions which have subset or matching return" do
       assert %Type.Subtraction{
         base: @any_with_integer,
-        exclude: type(( -> integer))} ==
-          @any_with_integer - type(( -> integer))
+        exclude: type(( -> integer()))} ==
+          @any_with_integer - type(( -> integer()))
     end
 
     test "does expected subtractions for returns" do
@@ -59,12 +59,12 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     end
 
     test "is unaffected if the return is disjoint" do
-      assert @any_with_integer == @any_with_integer - type(( -> atom))
+      assert @any_with_integer == @any_with_integer - type(( -> atom()))
     end
   end
 
   describe "subtracting from n-arity function" do
-    @three_arity_integer type((_, _, _ -> integer))
+    @three_arity_integer type((_, _, _ -> integer()))
     test "is none for any, itself, and any function" do
       assert none() == @three_arity - any()
       assert none() == @three_arity - @any_function
@@ -100,7 +100,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     end
 
     test "is none for a matching n-arity function" do
-      assert none() == type((any, any, any -> any)) - @three_arity
+      assert none() == type((any(), any(), any() -> any())) - @three_arity
     end
 
     test "must match arities" do
@@ -112,36 +112,36 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
     test "reduces the return type" do
       assert %Type.Subtraction{
         base: @zero_arity_any,
-        exclude: type(( -> integer))} ==
-        @zero_arity_any - type(( -> integer))
+        exclude: type(( -> integer()))} ==
+        @zero_arity_any - type(( -> integer()))
 
       assert %Type.Subtraction{
         base: @one_arity_any,
-        exclude: type((any -> integer))} ==
-        @one_arity_any - type((any -> integer))
+        exclude: type((any() -> integer()))} ==
+        @one_arity_any - type((any() -> integer()))
 
       assert %Type.Subtraction{
         base: @two_arity_any,
-        exclude: type((any, any -> integer))} ==
-        @two_arity_any - type((any, any -> integer))
+        exclude: type((any(), any() -> integer()))} ==
+        @two_arity_any - type((any(), any() -> integer()))
     end
 
     test "is invalid if any parameter types mismatches" do
-      assert @one_arity_any == @one_arity_any - type((integer -> any))
+      assert @one_arity_any == @one_arity_any - type((integer() -> any()))
 
-      assert @two_arity_any == @two_arity_any - type((integer, any -> any))
+      assert @two_arity_any == @two_arity_any - type((integer(), any() -> any()))
 
-      assert @two_arity_any == @two_arity_any - type((any, atom -> any))
+      assert @two_arity_any == @two_arity_any - type((any(), atom() -> any()))
     end
 
     test "is invalid if return mismatches" do
-      assert type((any -> integer)) == type((any -> integer)) - type((any -> atom))
+      assert type((any() -> integer())) == type((any() -> integer())) - type((any() -> atom()))
     end
 
     test "is invalid if any parameter mismatches" do
-      assert type((integer -> any)) == type((integer -> atom)) - type((atom -> any))
-      assert type((integer, any -> any)) == type((integer, any -> atom)) - type((atom, any -> any))
-      assert type((any, integer -> any)) == type((any, integer -> atom)) - type((any, atom -> any))
+      assert type((integer() -> any())) == type((integer() -> atom())) - type((atom() -> any()))
+      assert type((integer(), any() -> any())) == type((integer(), any() -> atom())) - type((atom(), any() -> any()))
+      assert type((any(), integer() -> any())) == type((any(), integer() -> atom())) - type((any(), atom() -> any()))
     end
   end
 

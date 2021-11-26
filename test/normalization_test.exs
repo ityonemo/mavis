@@ -86,10 +86,10 @@ defmodule TypeTest.NormalizationTest do
   describe "maps with literals" do
     test "are normalized correctly" do
       assert type(%{optional(type(String.t())) => type(String.t())}) ==
-        Type.normalize(literal(%{"foo" => "bar"}))
+        Type.normalize(Type.literal(%{"foo" => "bar"}))
 
       assert type(%{foo: type(String.t())}) ==
-        Type.normalize(literal(%{foo: "bar"}))
+        Type.normalize(Type.literal(%{foo: "bar"}))
     end
   end
 

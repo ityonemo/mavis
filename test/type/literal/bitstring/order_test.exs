@@ -13,11 +13,11 @@ defmodule TypeTest.LiteralBitstring.OrderTest do
     end
 
     test "is bigger than a smaller bitstring" do
-      assert "foo" > literal("bar")
+      assert "foo" > "bar"
     end
 
     test "is smaller than a bigger bitstring" do
-      assert "foo" < literal("quux")
+      assert "foo" < "quux"
     end
 
     test "is smaller than binary, bitstring, and Strings, which it is a subset of" do

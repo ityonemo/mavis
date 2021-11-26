@@ -7,7 +7,7 @@ defmodule TypeTest.BuiltinNonemptyImproperList.OrderTest do
 
   use Type.Operators
 
-  describe "nonempty_improper_list/0" do
+  describe "nonempty_improper_list/2" do
     test "is bigger than map and smaller types" do
       assert nonempty_improper_list(:foo, :bar) > none()
       assert nonempty_improper_list(:foo, :bar) > neg_integer()
@@ -36,9 +36,5 @@ defmodule TypeTest.BuiltinNonemptyImproperList.OrderTest do
       assert nonempty_improper_list(:foo, :bar) < bitstring()
       assert nonempty_improper_list(:foo, :bar) < any()
     end
-  end
-
-  describe "nonempty_improper_list/2" do
-    test "a"
   end
 end

@@ -24,6 +24,10 @@ defmodule TypeTest.BuiltinList.OrderTest do
       assert list() > map()
     end
 
+    test "is bigger than a specific list" do
+      assert list() > list(:foo)
+    end
+
     test "is bigger than list subtypes" do
       assert list() > nonempty_charlist()
       assert list() > charlist()
@@ -47,6 +51,38 @@ defmodule TypeTest.BuiltinList.OrderTest do
   end
 
   describe "list/1" do
-    test "a"
+    test "is bigger than map and smaller types" do
+      assert list(:foo) > none()
+      assert list(:foo) > neg_integer()
+      assert list(:foo) > pos_integer()
+      assert list(:foo) > non_neg_integer()
+      assert list(:foo) > integer()
+      assert list(:foo) > float()
+      assert list(:foo) > atom()
+      assert list(:foo) > reference()
+      assert list(:foo) > function()
+      assert list(:foo) > port()
+      assert list(:foo) > pid()
+      assert list(:foo) > tuple()
+      assert list(:foo) > map()
+    end
+
+    test "is bigger than list subtypes" do
+      assert list(:foo) > nonempty_list(:foo)
+    end
+
+    test "is bigger than list literals" do
+      assert list(:foo) > [:foo]
+    end
+
+    test "is smaller than generalized list types" do
+      assert list(:foo) < list()
+      assert list(:foo) < maybe_improper_list()
+    end
+
+    test "is smaller than other types" do
+      assert list(:foo) < bitstring()
+      assert list(:foo) < any()
+    end
   end
 end

@@ -6,9 +6,8 @@ defmodule TypeTest.TypeIolist.OrderTest do
   import Type, only: :macros
 
   use Type.Operators
-
-  alias Type.Bitstring
   alias Type.List
+  alias Type.Union
 
   @ltype byte() <|> binary() <|> iolist()
   @final [] <|> binary()
@@ -29,15 +28,21 @@ defmodule TypeTest.TypeIolist.OrderTest do
     end
 
     test "is equal to manually defined iolists with recursion" do
-      assert :eq == Type.compare(iolist(),
-        %List{type: @ltype, final: @final})
-      assert :eq == Type.compare(iolist(),
-        %List{type: %List{type: @ltype, final: @final} <|> byte() <|> binary(),
-              final: @final})
+      iolist_t = %Type.Union{of: [%List{type: @ltype, final: @final}, []]}
+      iolist2_t = %Type.Union{
+        of: [%List{
+          type: %Type.Union{of: [binary(), iolist(), byte()]},
+          final: @final},
+        []]
+      }
+
+      assert :eq == Type.compare(iolist(), iolist_t)
+      assert :eq == Type.compare(iolist_t, iolist2_t)
+      assert :eq == Type.compare(iolist(), iolist2_t)
     end
 
     test "is smaller than a union containing it" do
-      assert iolist() < nil <|> iolist()
+      assert iolist() < %Union{of: [iolist(), nil]}
     end
 
     test "is smaller than `strange iolists` which are superclasses" do

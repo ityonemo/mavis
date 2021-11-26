@@ -28,6 +28,10 @@ defmodule TypeTest.BuiltinNonEmptyList.OrderTest do
       assert nonempty_list() > [:foo]
     end
 
+    test "is bigger than nonempty_list/1" do
+      assert nonempty_list() > nonempty_list(:foo)
+    end
+
     test "is smaller than list supertypes" do
       assert nonempty_list() < list()
       assert nonempty_list() < maybe_improper_list()
@@ -40,6 +44,34 @@ defmodule TypeTest.BuiltinNonEmptyList.OrderTest do
   end
 
   describe "nonempty_list/1" do
-    test "a"
+    test "is bigger than map and smaller types" do
+      assert nonempty_list(:foo) > none()
+      assert nonempty_list(:foo) > neg_integer()
+      assert nonempty_list(:foo) > pos_integer()
+      assert nonempty_list(:foo) > non_neg_integer()
+      assert nonempty_list(:foo) > integer()
+      assert nonempty_list(:foo) > float()
+      assert nonempty_list(:foo) > atom()
+      assert nonempty_list(:foo) > reference()
+      assert nonempty_list(:foo) > function()
+      assert nonempty_list(:foo) > port()
+      assert nonempty_list(:foo) > pid()
+      assert nonempty_list(:foo) > tuple()
+      assert nonempty_list(:foo) > map()
+    end
+
+    test "is bigger than nonempty_list literals" do
+      assert nonempty_list(:foo) > [:foo]
+    end
+
+    test "is smaller than list supertypes" do
+      assert nonempty_list(:foo) < list(:foo)
+      assert nonempty_list(:foo) < maybe_improper_list(:foo, :bar)
+    end
+
+    test "is smaller than other types" do
+      assert nonempty_list(:foo) < bitstring()
+      assert nonempty_list(:foo) < any()
+    end
   end
 end

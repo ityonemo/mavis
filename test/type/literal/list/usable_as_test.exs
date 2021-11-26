@@ -46,14 +46,14 @@ defmodule TypeTest.LiteralList.UsableAsTest do
 
   describe "literal lists not usable as" do
     test "other literal lists" do
-      assert {:error, %Message{type: @list, target: literal([:foo])}} =
-        (@list ~> literal([:foo]))
+      assert {:error, %Message{type: @list, target: [:foo]}} =
+        (@list ~> [:foo])
 
-      assert {:error, %Message{type: @list, target: literal([:foo, "bar"])}} =
-        (@list ~> literal([:foo, "bar"]))
+      assert {:error, %Message{type: @list, target: [:foo, "bar"]}} =
+        (@list ~> [:foo, "bar"])
 
-      assert {:error, %Message{type: @list, target: literal([:foo, :bar, :baz])}} =
-        (@list ~> literal([:foo, :bar, :baz]))
+      assert {:error, %Message{type: @list, target: [:foo, :bar, :baz]}} =
+        (@list ~> [:foo, :bar, :baz])
     end
 
     test "underdetermined lists" do

@@ -170,9 +170,9 @@ defmodule Type.List do
 
   @none %Type{name: :none}
   @binary %Type.Bitstring{unit: 8}
-  @char 0..0x10FFFF
-  @iotype Type.union([@binary, @char, %Type{name: :iolist}])
-  @iofinal Type.union([@binary, []])
+  @byte 0..255
+  @iotype %Type.Union{of: [@binary, %Type{name: :iolist}, @byte]}
+  @iofinal %Type.Union{of: [@binary, []]}
 
   def compare(_, lst) when is_list(lst), do: :gt
   def compare(l, %Type{module: nil, name: :iolist, params: []}) do

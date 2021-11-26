@@ -534,33 +534,33 @@ defmodule Type do
 
   ```elixir
   iex> import Type, only: :macros
-  iex> literal([])
+  iex> Type.literal([])
   []
-  iex> literal(47)
+  iex> Type.literal(47)
   47
-  iex> literal(:foo)
+  iex> Type.literal(:foo)
   :foo
-  iex> literal("foo")
+  iex> Type.literal("foo")
   "foo"
-  iex> literal(47.0)
+  iex> Type.literal(47.0)
   47.0
-  iex> literal([:foo, :bar])
+  iex> Type.literal([:foo, :bar])
   [:foo, :bar]
-  iex> literal([:foo | :bar])
+  iex> Type.literal([:foo | :bar])
   [:foo | :bar]
-  iex> literal([:foo, %{bar: "baz"}])
+  iex> Type.literal([:foo, %{bar: "baz"}])
   [:foo, %Type.Map{required: %{bar: "baz"}}]
-  iex> literal([["foo"], "bar"])
+  iex> Type.literal([["foo"], "bar"])
   [["foo"], "bar"]
-  iex> literal(%{foo: :bar})
+  iex> Type.literal(%{foo: :bar})
   %Type.Map{required: %{foo: :bar}}
-  iex> literal(%{foo: %{bar: "baz"}})
+  iex> Type.literal(%{foo: %{bar: "baz"}})
   %Type.Map{required: %{foo: %Type.Map{required: %{bar: "baz"}}}}
-  iex> literal({:ok, "bar"})
+  iex> Type.literal({:ok, "bar"})
   %Type.Tuple{elements: [:ok, "bar"]}
-  iex> literal({:ok, "bar", 1})
+  iex> Type.literal({:ok, "bar", 1})
   %Type.Tuple{elements: [:ok, "bar", 1]}
-  iex> literal(%{"foo" => "bar"})
+  iex> Type.literal(%{"foo" => "bar"})
   %Type.Map{required: %{"foo" => "bar"}}
   ```
 
@@ -589,7 +589,7 @@ defmodule Type do
   end
   def literal(map) when is_map(map) do
     %Type.Map{
-      required: Map.new(fn {k, v} -> {literal(k), literal(v)} end),
+      required: Map.new(map, fn {k, v} -> {literal(k), literal(v)} end),
       optional: %{}
     }
   end
@@ -1092,11 +1092,11 @@ defmodule Type do
   iex> import Type
   iex> type(<<>>)
   %Type.Bitstring{size: 0, unit: 0}
-  iex> type(( -> any))
+  iex> type(( -> any()))
   %Type.Function{branches: [%Type.Function.Branch{params: [], return: any()}]}
-  iex> type((... -> any))
+  iex> type((... -> any()))
   %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}
-  iex> type((_, _ -> any))
+  iex> type((_, _ -> any()))
   %Type.Function{branches: [%Type.Function.Branch{params: 2, return: any()}]}
   ```
 

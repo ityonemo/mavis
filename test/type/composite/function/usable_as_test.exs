@@ -8,8 +8,8 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
 
   alias Type.{Function, Message}
 
-  @any_fn type((... -> any))
-  @any_atom_fn type((... -> atom))
+  @any_fn type((... -> any()))
+  @any_atom_fn type((... -> atom()))
 
   test "the any/any function is not usable as any other type" do
     targets = TypeTest.Targets.except([type(( -> 0))])
@@ -26,7 +26,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
     end
 
     test "is maybe usable with an any param'd function" do
-      any_integer_fn = type((... -> integer))
+      any_integer_fn = type((... -> integer()))
 
       assert {:maybe, [%Message{type: @any_fn, target: ^any_integer_fn}]} =
         @any_fn ~> any_integer_fn
@@ -48,8 +48,8 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
 
     test "is not usable if the return types don't match" do
       assert {:error, %Message{type: @any_atom_fn,
-                               target: type((... -> integer))}} =
-        @any_atom_fn ~> type((... -> integer))
+                               target: type((... -> integer()))}} =
+        @any_atom_fn ~> type((... -> integer()))
     end
   end
 
@@ -58,69 +58,69 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
       # zero arity
       assert :ok = type(( -> :ok)) ~> @any_atom_fn
       assert :ok = type(( -> :ok)) ~> type(( -> :ok))
-      assert :ok = type(( -> :ok)) ~> type(( -> atom))
+      assert :ok = type(( -> :ok)) ~> type(( -> atom()))
 
       # arity one
-      assert :ok = type((atom -> :ok)) ~> @any_atom_fn
-      assert :ok = type((atom -> :ok)) ~> type((atom -> :ok))
-      assert :ok = type((atom -> :ok)) ~> type((:ok -> :ok))
+      assert :ok = type((atom() -> :ok)) ~> @any_atom_fn
+      assert :ok = type((atom() -> :ok)) ~> type((atom() -> :ok))
+      assert :ok = type((atom() -> :ok)) ~> type((:ok -> :ok))
 
       # arity two
-      assert :ok = type((atom, integer -> :ok)) ~> @any_atom_fn
-      assert :ok = type((atom, integer -> :ok)) ~> type((atom, integer -> :ok))
-      assert :ok = type((atom, integer -> :ok)) ~> type((:ok, integer -> :ok))
-      assert :ok = type((atom, integer -> :ok)) ~> type((atom, 47 -> :ok))
-      assert :ok = type((atom, integer -> :ok)) ~> type((:ok, 47 -> :ok))
+      assert :ok = type((atom(), integer() -> :ok)) ~> @any_atom_fn
+      assert :ok = type((atom(), integer() -> :ok)) ~> type((atom(), integer() -> :ok))
+      assert :ok = type((atom(), integer() -> :ok)) ~> type((:ok, integer() -> :ok))
+      assert :ok = type((atom(), integer() -> :ok)) ~> type((atom(), 47 -> :ok))
+      assert :ok = type((atom(), integer() -> :ok)) ~> type((:ok, 47 -> :ok))
     end
 
     test "the function is maybe usable if the return is maybe usable" do
       # zero arity
-      assert {:maybe, _} = type(( -> atom)) ~> type(( -> :ok))
+      assert {:maybe, _} = type(( -> atom())) ~> type(( -> :ok))
       # one arity
-      assert {:maybe, _} = type((atom -> atom)) ~> type((atom -> :ok))
+      assert {:maybe, _} = type((atom() -> atom())) ~> type((atom() -> :ok))
       # two arity
-      assert {:maybe, _} = type((atom, integer -> atom)) ~> type((atom, integer -> :ok))
+      assert {:maybe, _} = type((atom(), integer() -> atom())) ~> type((atom(), integer() -> :ok))
     end
 
     test "the function is maybe usable if any of the parameters are maybe usable" do
       # one arity
-      assert {:maybe, _} = type((:ok -> atom)) ~> type((atom -> atom))
+      assert {:maybe, _} = type((:ok -> atom())) ~> type((atom() -> atom()))
 
       # two arity
-      assert {:maybe, _} = type((:ok, integer -> atom)) ~> type((atom, integer -> atom))
-      assert {:maybe, _} = type((atom, 47 -> atom)) ~> type((atom, integer -> atom))
+      assert {:maybe, _} = type((:ok, integer() -> atom())) ~> type((atom(), integer() -> atom()))
+      assert {:maybe, _} = type((atom(), 47 -> atom())) ~> type((atom(), integer() -> atom()))
     end
 
     test "maybes are combined if multiple maybes happen" do
       # one arity
-      assert {:maybe, _} = type((:ok -> atom)) ~> type((atom -> :ok))
+      assert {:maybe, _} = type((:ok -> atom())) ~> type((atom() -> :ok))
       # two arity
-      assert {:maybe, _} = type((:ok, integer -> atom)) ~> type((atom, integer -> atom))
-      assert {:maybe, _} = type((atom, 47 -> atom)) ~> type((atom, integer -> atom))
+      assert {:maybe, _} = type((:ok, integer() -> atom())) ~> type((atom(), integer() -> atom()))
+      assert {:maybe, _} = type((atom(), 47 -> atom())) ~> type((atom(), integer() -> atom()))
     end
 
     test "an erroring return is an error" do
       # zero arity
-      assert {:error, _} = type(( -> atom)) ~> type(( -> integer))
+      assert {:error, _} = type(( -> atom())) ~> type(( -> integer()))
       # arity one
-      assert {:error, _} = type((atom -> atom)) ~> type((atom -> integer))
-      assert {:error, _} = type((:ok -> atom)) ~> type((atom -> integer))
+      assert {:error, _} = type((atom() -> atom()) )~> type((atom() -> integer()))
+      assert {:error, _} = type((:ok -> atom())) ~> type((atom() -> integer()))
       # arity two
-      assert {:error, _} = type((atom, integer -> atom)) ~> type((atom, integer -> integer))
-      assert {:error, _} = type((:ok, integer -> atom)) ~> type((atom, integer -> integer))
-      assert {:error, _} = type((atom, 47 -> atom)) ~> type((atom, integer -> integer))
-      assert {:error, _} = type((:ok, 47 -> atom)) ~> type((atom, integer -> integer))
+      assert {:error, _} = type((atom(), integer() -> atom())) ~> type((atom(), integer() -> integer()))
+      assert {:error, _} = type((:ok, integer() -> atom())) ~> type((atom(), integer() -> integer()))
+      assert {:error, _} = type((atom(), 47 -> atom())) ~> type((atom(), integer() -> integer()))
+      assert {:error, _} = type((:ok, 47 -> atom())) ~> type((atom(), integer() -> integer()))
     end
 
     test "an erroring parameter is an error" do
       # arity one, over ok
-      assert {:error, _} = type((atom -> :ok)) ~> type((integer -> :ok))
-      assert {:error, _} = type((atom -> atom)) ~> type((integer -> :ok))
+      assert {:error, _} = type((atom() -> :ok)) ~> type((integer() -> :ok))
+      assert {:error, _} = type((atom() -> atom())) ~> type((integer() -> :ok))
       # arity two
-      assert {:error, _} = type((atom, integer -> :ok)) ~> type((integer, integer -> :ok))
-      assert {:error, _} = type((atom, integer -> :ok)) ~> type((atom, atom -> :ok))
-      assert {:error, _} = type((atom, 47 -> :ok)) ~> type((integer, integer -> :ok))
-      assert {:error, _} = type((atom, integer -> atom)) ~> type((integer, integer -> atom))
+      assert {:error, _} = type((atom(), integer() -> :ok)) ~> type((integer(), integer() -> :ok))
+      assert {:error, _} = type((atom(), integer() -> :ok)) ~> type((atom(), atom() -> :ok))
+      assert {:error, _} = type((atom(), 47 -> :ok)) ~> type((integer(), integer() -> :ok))
+      assert {:error, _} = type((atom(), integer() -> atom())) ~> type((integer(), integer() -> atom()))
     end
   end
 end

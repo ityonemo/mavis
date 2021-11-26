@@ -19,7 +19,7 @@ defmodule TypeTest.BuiltinCharlist.IntersectionTest do
     end
 
     test "with a list of bytes is a list of bytes" do
-      assert type([byte]) == charlist() <~> type([byte])
+      assert type([byte()]) == charlist() <~> type([byte()])
     end
 
     test "an improper charlist is not supported" do

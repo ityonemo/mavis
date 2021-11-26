@@ -13,7 +13,7 @@ defmodule TypeTest.BuiltinFun.IntersectionTest do
     end
 
     test "with any function is the function" do
-      assert type((atom -> integer)) == fun() <~> type((atom -> integer))
+      assert type((atom() -> integer())) == fun() <~> type((atom() -> integer()))
     end
 
     test "with none is none" do

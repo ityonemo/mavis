@@ -17,7 +17,7 @@ defmodule TypeTest.BuiltinMap.FetchTest do
 
     test "is what we expect" do
       assert %Type.Map{
-        optional: %{any => any},
+        optional: %{any() => any()},
         required: %{}
       } == @map_type
     end

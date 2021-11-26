@@ -57,8 +57,8 @@ defmodule TypeTest.Builtin.SubtractionTest do
     end
   end
 
-  describe "the subtraction from pos_integer" do
-    test "of any, integer, and pos_integer, and non_neg_integer is itself" do
+  describe "the subtraction from pos_integer()" do
+    test "of any, integer, and pos_integer(), and non_neg_integer is itself" do
       assert none() == pos_integer() - any()
       assert none() == pos_integer() - integer()
       assert none() == pos_integer() - non_neg_integer()
@@ -103,7 +103,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
       assert none() == non_neg_integer() - non_neg_integer()
     end
 
-    test "of pos_integer is 0" do
+    test "of pos_integer() is 0" do
       assert 0 == non_neg_integer() - pos_integer()
     end
 
@@ -167,7 +167,7 @@ defmodule TypeTest.Builtin.SubtractionTest do
 
     test "of spanning ranges can get strange" do
       assert %Type.Subtraction{
-        base: neg_integer() <|> pos_integer,
+        base: neg_integer() <|> pos_integer(),
         exclude: -47..-1 <|> 1..47
       } == integer() - (-47..47)
     end
