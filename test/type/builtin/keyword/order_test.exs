@@ -30,6 +30,10 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
       assert keyword() > [foo: "bar"]
     end
 
+    test "is bigger than keyword/1" do
+      assert keyword() > keyword(:foo)
+    end
+
     test "is smaller than a union containing it" do
       assert keyword() < (nil <|> keyword())
     end
@@ -42,6 +46,33 @@ defmodule TypeTest.BuiltinKeyword.OrderTest do
   end
 
   describe "keyword/1" do
-    test "a"
+    test "is bigger than bottom and reference" do
+      assert keyword(:foo) > none()
+      assert keyword(:foo) > reference()
+    end
+
+    test "is bigger than `less than complete` keyword lists" do
+      assert keyword(atom()) > list(%Tuple{elements: [atom(), :foo]})
+      assert keyword(:foo) > list(%Tuple{elements: [:foo, :foo]})
+    end
+
+    test "is bigger than examples of itself" do
+      assert keyword(:foo) > []
+      assert keyword(:foo) > [foo: :foo]
+    end
+
+    test "is smaller than keyword/0" do
+      assert keyword(:foo) < keyword()
+    end
+
+    test "is smaller than a union containing it" do
+      assert keyword(:foo) < (nil <|> keyword(:foo))
+    end
+
+    test "is smaller than arbitrary lists, bitstrings or top" do
+      assert keyword(:foo) < list()
+      assert keyword(:foo) < bitstring()
+      assert keyword(:foo) < any()
+    end
   end
 end
