@@ -16,7 +16,7 @@ defmodule TypeTest.BuiltinMfa.FetchTest do
     end
 
     test "is what we expect" do
-      assert %Type.Tuple{elements: [module(), atom(), arity()], fixed: true} == @mfa_type
+      assert %Type.Tuple{elements: [module(), atom(), arity()]} == @mfa_type
     end
   end
 end

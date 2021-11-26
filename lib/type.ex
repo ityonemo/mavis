@@ -330,7 +330,7 @@ defmodule Type do
                %Type.Tuple{elements: [
                  %Type{module: nil, name: :module, params: []},
                  %Type{module: nil, name: :atom, params: []},
-                 %Type{module: nil, name: :arity, params: []}],
+                 0..255],
                fixed: true},
                "%Type.Tuple{elements: [module(), atom(), arity()]}"
     builtin :struct,
