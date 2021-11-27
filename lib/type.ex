@@ -1267,11 +1267,28 @@ defmodule Type do
   end
 
   defmacro type({:{}, _, contents}) do
-    tupletype(contents)
+    tuple = Enum.reduce(contents, %{elements: [], fixed: true}, fn
+      {:..., _, _}, acc ->
+        %{acc | fixed: false}
+      t, acc ->
+        %{acc | elements: acc.elements ++ [t]}
+    end)
+
+    quote do
+      %Type.Tuple{elements: unquote(tuple.elements), fixed: unquote(tuple.fixed)}
+    end
+  end
+
+  defmacro type({a, {:..., _, _}}) do
+    quote do
+      %Type.Tuple{elements: [unquote(a)], fixed: false}
+    end
   end
 
   defmacro type({a, b}) do
-    tupletype([a, b])
+    quote do
+      %Type.Tuple{elements: unquote([a, b]), fixed: true}
+    end
   end
 
   # remote types
@@ -1306,21 +1323,6 @@ defmodule Type do
 
   defmacro type(_other) do
     raise "unknown type"
-  end
-
-  defp tupletype(contents, so_far \\ [])
-  defp tupletype([{:..., _, _}], so_far) do
-    quote do
-      %Type.Tuple{elements: unquote(Enum.reverse(so_far)), fixed: false}
-    end
-  end
-  defp tupletype([], so_far) do
-    quote do
-      %Type.Tuple{elements: unquote(Enum.reverse(so_far)), fixed: true}
-    end
-  end
-  defp tupletype([a | rest], so_far) do
-    tupletype(rest, [a | so_far])
   end
 
   defmacro opaque({{:., _, [{:__aliases__, _, modpath}, name]}, _, params}, type) do

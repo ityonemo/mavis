@@ -2,12 +2,13 @@ defmodule Type.Bitstring do
   @moduledoc """
   Handles bitstrings and binaries in the erlang/elixir type system.
 
-  This type has two required parameters that define a semilattice over
+  This type has three parameters that define a semilattice over
   the number line which are the allowed number of bits in the bitstrings
   which are members of this type.
 
-  - `size` minimum size of the bitstring.
-  - `unit` distance between points in the lattice.
+  - `size`: minimum size of the bitstring.
+  - `unit`: distance between points in the lattice.
+  - `unicode`: if the binary must be unicode-encoded
 
   Roughly speaking, this corresponds to the process of matching the header
   of a binary (size), plus a variable-length payload with recurring features
@@ -128,27 +129,29 @@ defmodule Type.Bitstring do
   def intersect(%{unit: 0}, %__MODULE__{unit: 0}), do: @none
   def intersect(%{size: asz, unit: 0, unicode: au}, %__MODULE__{size: bsz, unit: unit, unicode: bu})
       when asz >= bsz and rem(asz - bsz, unit) == 0 do
-    %__MODULE__{size: asz, unit: 0, unicode: au or bu}
+    build(%{size: asz, unit: 0, unicode: au or bu})
   end
   def intersect(%{size: asz, unit: unit, unicode: au}, %__MODULE__{size: bsz, unit: 0, unicode: bu})
       when bsz >= asz and rem(asz - bsz, unit) == 0 do
-    %__MODULE__{size: bsz, unit: 0, unicode: au or bu}
+    build(%{size: bsz, unit: 0, unicode: au or bu})
   end
   def intersect(%{unit: aun}, %__MODULE__{unit: bun}) when aun == 0 or bun == 0, do: @none
   def intersect(%{size: asz, unit: aun, unicode: au}, %__MODULE__{size: bsz, unit: bun, unicode: bu}) do
-    if rem(asz - bsz, Integer.gcd(aun, bun)) == 0 do
-      size = if asz > bsz do
-        sizeup(asz, bsz, aun, bun)
-      else
-        sizeup(bsz, asz, bun, aun)
-      end
-      %__MODULE__{
-        size: size,
-        unit: lcm(aun, bun),
-        unicode: au or bu
-      }
-    else
-      @none
+    r = rem(asz - bsz, Integer.gcd(aun, bun))
+    case {r, asz, bsz} do
+      {0, asz, bsz} when asz > bsz ->
+        build(%{
+          size: sizeup(asz, bsz, aun, bun),
+          unit: lcm(aun, bun),
+          unicode: au or bu
+        })
+      {0, asz, bsz} ->
+        build(%{
+          size: sizeup(bsz, asz, bun, aun),
+          unit: lcm(aun, bun),
+          unicode: au or bu
+        })
+      _ -> @none
     end
   end
   def intersect(%{size: size, unit: 0, unicode: unicode}, bitstring)
@@ -174,23 +177,28 @@ defmodule Type.Bitstring do
     end
   end
   def intersect(_, _), do: @none
-  
+
   defp sizeup(asz, bsz, aun, bun) do
     a_mod_b = rem(aun, bun)
-    Enum.reduce(0..bun-1, asz - bsz, fn idx, acc ->
+    Enum.reduce_while(0..bun-1, asz - bsz, fn idx, acc ->
       if rem(acc, bun) == 0 do
-        throw idx
+        {:halt, asz + aun * idx}
       else
-        acc + a_mod_b
+        {:cont, acc + a_mod_b}
       end
     end)
-    raise "unreachable"
-  catch
-    idx ->
-      asz + aun * idx
   end
 
   defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
+
+  defp build(%{size: 0, unit: 0} = fields) do
+    __MODULE__
+    |> struct(fields)
+    |> Map.put(:unicode, false)
+  end
+  defp build(fields) do
+    struct(__MODULE__, fields)
+  end
 
   #defimpl Type.Algebra do
   #  import Type, only: :macros

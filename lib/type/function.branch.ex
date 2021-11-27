@@ -39,7 +39,7 @@ defmodule Type.Function.Branch do
         |> Enum.reduce_while([], fn
           {same, same}, [] -> {:cont, []}
           {left, right}, [] ->
-            Type.compare(right, left)
+            {:halt, Type.compare(right, left)}
         end)
     end
   end

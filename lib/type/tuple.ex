@@ -143,6 +143,7 @@ defmodule Type.Tuple do
   }
 
   @none %Type{name: :none}
+  @any %Type{name: :any}
 
   alias Type.Helpers
   use Type.Helpers
@@ -180,9 +181,9 @@ defmodule Type.Tuple do
   def intersect(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true})
     when length(e1) != length(e2), do: @none
 
-  def intersect(%{elements: e1, fixed: f1}= a, %__MODULE__{elements: e2, fixed: f2}= b) do
+  def intersect(%{elements: e1, fixed: f1}, %__MODULE__{elements: e2, fixed: f2}) do
     elements = e1
-    |> zipfill(e2, Type.any())
+    |> zipfill(e2, @any)
     |> Enum.map(fn {t1, t2} ->
       case Type.intersect(t1, t2) do
         @none -> throw :mismatch

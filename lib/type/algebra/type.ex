@@ -79,7 +79,7 @@ defimpl Type.Algebra, for: Type do
     if Type.Algebra.Atom.valid_node?(atom), do: atom, else: none()
   end
   def intersect_internal(iolist(), list) when is_list(list) do
-    raise "foo"
+    Type.intersect(list, @iolist)
   end
   def intersect_internal(type(String.t()), binary) when is_binary(binary) do
     if String.valid?(binary), do: binary, else: none()
