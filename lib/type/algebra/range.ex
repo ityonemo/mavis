@@ -2,11 +2,11 @@ defimpl Type.Algebra, for: Range do
   alias Type.Helpers
   require Helpers
 
-  Helpers.typegroup_fun
-  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
+  import Type, only: :macros
 
-  import Type
+  Helpers.typegroup_fun
+
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
 
   def compare_internal(_, pos_integer()),                      do: :lt
   def compare_internal(_..last, neg_integer()),                do: (if last >= 0, do: :gt, else: :lt)
@@ -24,6 +24,43 @@ defimpl Type.Algebra, for: Range do
       _ -> :lt
     end
   end
+
+  Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
+
+  def merge_internal(a..b, c) when is_integer(c) do
+    cond do
+      c == a - 1 -> {:merge, [c..b]}
+      c == b + 1 -> {:merge, [a..c]}
+      a <= c and c <= b -> {:merge, [a..b]}
+      true -> :nomerge
+    end
+  end
+  def merge_internal(a..b, c..d) do
+    cond do
+      b == c - 1 -> {:merge, [a..d]}
+      a == d + 1 -> {:merge, [c..b]}
+      b < c -> :nomerge
+      d < a -> :nomerge
+      true -> case {a <= c, a >= c, b <= d, b >= d} do
+        {true, _, _, true} -> {:merge, [a..b]}
+        {_, true, true, _} -> {:merge, [c..d]}
+        {true, _, true, _} -> {:merge, [a..d]}
+        {_, true, _, true} -> {:merge, [c..b]}
+      end
+    end
+  end
+  def merge_internal(0.._, pos_integer()), do: {:merge, [pos_integer(), 0]}
+  def merge_internal(a..b, pos_integer()) when b > 0 do
+    if a > 0, do: {:merge, [pos_integer()]}, else: {:merge, [pos_integer(), a..0]}
+  end
+  def merge_internal(_..0, neg_integer()), do: {:merge, [neg_integer(), 0]}
+  def merge_internal(a..b, neg_integer()) when a < 0 do
+    if b < 0, do: {:merge, [neg_integer()]}, else: {:merge, [0..b, neg_integer()]}
+  end
+
+  def merge_internal(_, _), do: :nomerge
+
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
   def intersect_internal(a..b, i) when a <= i and i <= b, do: i
   def intersect_internal(a.._, _..a), do: a

@@ -64,8 +64,8 @@ defmodule Type.Helpers do
 
   defmacro algebra_merge_fun(module, call \\ :merge) do
     quote do
-      def merge(type, type), do: {:merge, type}
-      def merge(type, %Type{module: nil, name: :none, params: []}), do: {:merge, type}
+      def merge(type, type), do: {:merge, [type]}
+      def merge(type, %Type{module: nil, name: :none, params: []}), do: {:merge, [type]}
       def merge(_, %Type.Union{}), do: raise "can't merge with unions"
       def merge(ltype, rtype) do
         lgroup = typegroup(ltype)

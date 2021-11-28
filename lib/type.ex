@@ -1537,17 +1537,18 @@ defmodule Type do
 
   defdelegate normalize(type), to: Type.Algebra
 
-  @spec merge(t, t) :: :nomerge | {:merge, t}
+  @spec merge(t, t) :: :nomerge | {:merge, [t]}
   @doc """
   returns the union of two types if they can be represented in a form that is
-  not simply the disjoint union of the two types
+  not simply the disjoint union of the two types, this is a list of types in
+  descending order.
 
   ```elixir
   iex> import Type, only: :macros
   iex> Type.merge(1..3, 0)
-  0..3
+  {:merge, [0..3]}
   iex> Type.merge(47.0, float())
-  %Type{name: :float}
+  {:merge, [%Type{name: :float}]}
   """
   defdelegate merge(ltype, rtype), to: Type.Algebra
 end

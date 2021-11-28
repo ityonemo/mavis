@@ -8,20 +8,20 @@ defmodule TypeTest.BuiltinAtom.MergeTest do
   use Type.Operators
 
   test "atom merges with none" do
-    assert {:merge, atom()} == Type.merge(atom(), none())
+    assert {:merge, [atom()]} == Type.merge(atom(), none())
   end
 
   test "atom merges with literal atoms" do
-    assert {:merge, atom()} == Type.merge(atom(), :atom)
+    assert {:merge, [atom()]} == Type.merge(atom(), :atom)
   end
 
   test "atom merges with atom subsets" do
-    assert {:merge, atom()} == Type.merge(atom(), module())
-    assert {:merge, atom()} == Type.merge(atom(), type(node()))
+    assert {:merge, [atom()]} == Type.merge(atom(), module())
+    assert {:merge, [atom()]} == Type.merge(atom(), type(node()))
   end
 
   test "atom merges with atom" do
-    assert {:merge, atom()} == Type.merge(atom(), atom())
+    assert {:merge, [atom()]} == Type.merge(atom(), atom())
   end
 
   test "atom doesn't merge with anything else" do

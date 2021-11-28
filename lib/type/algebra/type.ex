@@ -61,9 +61,9 @@ defimpl Type.Algebra, for: Type do
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
 
-  def merge_internal(atom(), module()), do: {:merge, atom()}
-  def merge_internal(atom(), type(node())), do: {:merge, atom()}
-  def merge_internal(atom(), a) when is_atom(a), do: {:merge, atom()}
+  def merge_internal(atom(), module()), do: {:merge, [atom()]}
+  def merge_internal(atom(), type(node())), do: {:merge, [atom()]}
+  def merge_internal(atom(), a) when is_atom(a), do: {:merge, [atom()]}
   def merge_internal(_, _), do: :nomerge
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
