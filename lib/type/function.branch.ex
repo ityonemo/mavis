@@ -38,8 +38,7 @@ defmodule Type.Function.Branch do
         |> Enum.zip(sub_none(rparams))
         |> Enum.reduce_while([], fn
           {same, same}, [] -> {:cont, []}
-          {left, right}, [] ->
-            {:halt, Type.compare(right, left)}
+          {left, right}, [] -> {:halt, Type.compare(right, left)}
         end)
     end
   end

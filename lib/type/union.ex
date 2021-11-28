@@ -59,17 +59,9 @@ defmodule Type.Union do
   def intersect(union = %{}, rtype) do
     union.of
     |> Enum.map(&Type.intersect(&1, rtype))
+    |> IO.inspect(label: "62")
     |> Type.union
   end
-
-  @spec collapse(t) :: Type.t
-  @doc false
-  def collapse(%__MODULE__{of: []}) do
-    import Type, only: :macros
-    Type.none()
-  end
-  def collapse(%__MODULE__{of: [singleton]}), do: singleton
-  def collapse(union), do: union
 
   @spec merge(t, Type.t) :: t
   @doc false
@@ -213,17 +205,36 @@ defmodule Type.Union do
 #
   defimpl Collectable do
     alias Type.Union
+    import Type, only: :macros
 
-    def into(original) do
-      collector_fun = fn
-        union, {:cont, elem} ->
-          Union.merge(union, elem)
-        union, :done -> Union.collapse(union)
-        _set, :halt -> :ok
-      end
+    @type collector :: (list(Type.t), :done | :halt | {:cont, list(Type.t)} -> Type.t | :ok)
 
-      {original, collector_fun}
+    @impl true
+    @spec into(Union.t) :: {Union.t, collector}
+    def into(%Union{of: types}) do
+      {types, &collector/2}
     end
+
+    defp collector(_, :halt), do: :ok
+    defp collector([], :done), do: none()
+    defp collector([type], :done), do: type
+    defp collector(list, :done), do: %Union{of: list}
+    defp collector(list, {:cont, type}) do
+      try_merge(type, list, [])
+    end
+
+    defp try_merge(type, [], so_far), do: merge_into(type, so_far)
+    defp try_merge(type, [first | rest], so_far) do
+      case Type.merge(type, first) do
+        :nomerge -> try_merge(type, rest, [type | so_far])
+        {:merge, type} -> merge_into(type, Enum.reverse(rest, so_far))
+      end
+    end
+
+    defp merge_into(type, list) do
+      
+    end
+
   end
 
   defimpl Inspect do

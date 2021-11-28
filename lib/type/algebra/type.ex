@@ -59,6 +59,13 @@ defimpl Type.Algebra, for: Type do
     Type.compare(@iolist, t)
   end
 
+  Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
+
+  def merge_internal(atom(), module()), do: {:merge, atom()}
+  def merge_internal(atom(), type(node())), do: {:merge, atom()}
+  def merge_internal(atom(), a) when is_atom(a), do: {:merge, atom()}
+  def merge_internal(_, _), do: :nomerge
+
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
   def intersect_internal(any(), type), do: type
@@ -79,7 +86,7 @@ defimpl Type.Algebra, for: Type do
     if Type.Algebra.Atom.valid_node?(atom), do: atom, else: none()
   end
   def intersect_internal(iolist(), list) when is_list(list) do
-    Type.intersect(list, @iolist)
+    Type.intersect(@iolist, list)
   end
   def intersect_internal(type(String.t()), binary) when is_binary(binary) do
     if String.valid?(binary), do: binary, else: none()

@@ -62,6 +62,24 @@ defmodule Type.Helpers do
     end
   end
 
+  defmacro algebra_merge_fun(module, call \\ :merge) do
+    quote do
+      def merge(type, type), do: {:merge, type}
+      def merge(type, %Type{module: nil, name: :none, params: []}), do: {:merge, type}
+      def merge(_, %Type.Union{}), do: raise "can't merge with unions"
+      def merge(ltype, rtype) do
+        lgroup = typegroup(ltype)
+        rgroup = Type.typegroup(rtype)
+
+        if lgroup == rgroup do
+          unquote(module).unquote(call)(ltype, rtype)
+        else
+          :nomerge
+        end
+      end
+    end
+  end
+
   defmacro algebra_intersection_fun(module, call \\ :intersect) do
     unions_clause = if __CALLER__.module == Type.Algebra.Type.Union do
       quote do
@@ -113,6 +131,7 @@ defmodule Type.Helpers do
 
         import Helpers
         Helpers.algebra_compare_fun(unquote(module))
+        Helpers.algebra_merge_fun(unquote(module))
         Helpers.algebra_intersection_fun(unquote(module))
 
         defdelegate usable_as(subject, target, meta), to: module
