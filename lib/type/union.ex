@@ -65,13 +65,7 @@ defmodule Type.Union do
 
   @spec merge(t, Type.t) :: t
   @doc false
-  # special case merging a union with another union.
-  def merge(%{of: into}, %__MODULE__{of: list}) do
-    %__MODULE__{of: merge_raw(into, list)}
-  end
-  def merge(%{of: list}, type) do
-    %__MODULE__{of: merge_raw(list, [type])}
-  end
+  def merge(_, _), do: raise "type merging with unions is disallowed"
 
   # merges: types in argument1 into the list of argument2
   # argument2 is required to be in DESCENDING order
@@ -232,7 +226,7 @@ defmodule Type.Union do
     end
 
     defp merge_into(type, list) do
-      
+
     end
 
   end

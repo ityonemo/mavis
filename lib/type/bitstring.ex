@@ -116,14 +116,59 @@ defmodule Type.Bitstring do
 
   # COMPARISONS
   def compare(_, bitstring) when is_bitstring(bitstring), do: :gt
-  def compare(%__MODULE__{size: s, unit: u, unicode: false}, %__MODULE__{size: s, unit: u, unicode: true}), do: :gt
-  def compare(%__MODULE__{size: s, unit: u, unicode: true}, %__MODULE__{size: s, unit: u, unicode: false}), do: :lt
-  def compare(%__MODULE__{unit: 0}, %__MODULE__{unit: b}) when b != 0, do: :lt
-  def compare(%__MODULE__{unit: a}, %__MODULE__{unit: 0}) when a != 0, do: :gt
-  def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a < b,  do: :gt
-  def compare(%__MODULE__{unit: a}, %__MODULE__{unit: b}) when a > b,  do: :lt
-  def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a < b,  do: :gt
-  def compare(%__MODULE__{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
+  def compare(%{size: s, unit: u, unicode: false}, %__MODULE__{size: s, unit: u, unicode: true}), do: :gt
+  def compare(%{size: s, unit: u, unicode: true}, %__MODULE__{size: s, unit: u, unicode: false}), do: :lt
+  def compare(%{unit: 0}, %__MODULE__{unit: b}) when b != 0, do: :lt
+  def compare(%{unit: a}, %__MODULE__{unit: 0}) when a != 0, do: :gt
+  def compare(%{unit: a}, %__MODULE__{unit: b}) when a < b,  do: :gt
+  def compare(%{unit: a}, %__MODULE__{unit: b}) when a > b,  do: :lt
+  def compare(%{size: a}, %__MODULE__{size: b}) when a < b,  do: :gt
+  def compare(%{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
+
+  # MERGERS
+  def merge(%{size: s, unit: u, unicode: uc} = t, bitstring) when is_bitstring(bitstring) do
+    cond do
+      uc and !String.valid?(bitstring) -> :nomerge
+      (u == 0) and (s != bit_size(bitstring)) -> :nomerge
+      (u != 0) and (rem(bit_size(bitstring) - s, u) != 0) -> :nomerge
+      true -> {:merge, [t]}
+    end
+  end
+  def merge(%{size: ls, unit: 0, unicode: luc}, %__MODULE__{size: rs, unit: 0, unicode: ruc}) do
+    if ls == rs do
+      {:merge, [%__MODULE__{size: ls, unit: 0, unicode: luc and ruc}]}
+    else
+      :nomerge
+    end
+  end
+  def merge(%{size: ls, unit: u, unicode: luc}, %__MODULE__{size: rs, unit: 0, unicode: ruc}) do
+    if rem(rs - ls, u) == 0 do
+      {:merge, [%__MODULE__{size: ls, unit: u, unicode: luc and ruc}]}
+    else
+      :nomerge
+    end
+  end
+  def merge(%{size: ls, unit: u, unicode: luc}, %__MODULE__{size: rs, unit: u, unicode: ruc}) do
+    make_merged(rs, ls, u, luc and ruc)
+  end
+  def merge(%{size: ls, unit: lu, unicode: luc}, %__MODULE__{size: rs, unit: ru, unicode: ruc}) do
+    lu
+    |> Integer.gcd(ru)
+    |> case do
+      ^lu -> make_merged(rs, ls, lu, luc and ruc)
+      ^ru -> make_merged(rs, ls, ru, luc and ruc)
+      _other -> :nomerge
+    end
+  end
+  def merge(_, _), do: :nomerge
+
+  defp make_merged(rs, ls, u, uc) do
+    if rem(rs - ls, u) == 0 do
+      {:merge, [%__MODULE__{size: min(ls, rs), unit: u, unicode: uc}]}
+    else
+      :nomerge
+    end
+  end
 
   # INTERSECTION
   def intersect(%{unit: 0}, %__MODULE__{unit: 0}), do: @none
