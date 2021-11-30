@@ -47,7 +47,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
       assert none() == @any_with_integer - @any_function
     end
 
-    test "is trivial for functions which have subset or matching return" do
+    test "is trivial for functions which have subtype or matching return" do
       assert %Type.Subtraction{
         base: @any_with_integer,
         exclude: type(( -> integer()))} ==
@@ -76,7 +76,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
       assert none() == @three_arity_integer - @three_arity_integer
     end
 
-    test "is trivial when the return is a subset" do
+    test "is trivial when the return is a subtype" do
       assert %Type.Subtraction{
         base: @three_arity,
         exclude: @three_arity_integer

@@ -15,14 +15,17 @@ defmodule TypeTest.BuiltinBinary.MergeTest do
     assert {:merge, [binary()]} == Type.merge(binary(), "binary")
   end
 
-  test "binary merges with binary subsets" do
-    assert {:merge, [binary()]} == Type.merge(binary(), %Type.Bitstring{unit: 8, unicode: true})
+  test "binary merges with binary subtypes" do
+    assert {:merge, [binary()]} == Type.merge(binary(), %Type.Bitstring{unit: 16, unicode: true})
+    assert {:merge, [binary()]} == Type.merge(binary(), %Type.Bitstring{size: 8, unit: 8, unicode: true})
     assert {:merge, [binary()]} == Type.merge(binary(), type(String.t()))
     assert {:merge, [binary()]} == Type.merge(binary(), type(<<_::_*16>>))
+    assert {:merge, [binary()]} == Type.merge(binary(), "")
   end
 
   test "binary merges with binary with a minimum length" do
     assert {:merge, [binary()]} == Type.merge(binary(), type(<<_::_*8, _::16>>))
+    assert {:merge, [binary()]} == Type.merge(binary(), type(<<_::_*0, _::0>>))
   end
 
   test "binary merges with binary" do

@@ -7,7 +7,7 @@ defmodule TypeTest.BuiltinTimeout.OrderTest do
 
   use Type.Operators
 
-  test "timeout is bigger subsets of timeout" do
+  test "timeout is bigger subtypes of timeout" do
     assert timeout() > none()
     assert timeout() > neg_integer()
     assert timeout() > pos_integer()

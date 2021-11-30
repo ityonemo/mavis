@@ -13,7 +13,7 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert -47..47 == -47..47 <~> -47..47
     end
 
-    test "with integer subsets" do
+    test "with integer subtypes" do
       # negative ranges
       assert -47..-1        == -47..-1 <~> neg_integer()
       assert none() == -47..-1 <~> pos_integer()

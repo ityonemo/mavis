@@ -23,7 +23,7 @@ defmodule TypeTest.LiteralList.OrderTest do
       assert @list < [:foo, :baz]
     end
 
-    test "is smaller than list, which it is a subset of" do
+    test "is smaller than list, which it is a subtype of" do
       assert @list < list()
     end
 

@@ -14,7 +14,7 @@ defmodule TypeTest.BuiltinPosInteger.IntersectionTest do
       assert pos_integer() == pos_integer() <~> pos_integer()
     end
 
-    test "with special subsets are special subsets" do
+    test "with special subtypes are special subtypes" do
       assert 1..255 == pos_integer() <~> byte()
       assert 1..255 == pos_integer() <~> arity()
       assert 1..0x10FFFF == pos_integer() <~> char()

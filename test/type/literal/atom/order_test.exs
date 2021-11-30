@@ -22,7 +22,7 @@ defmodule TypeTest.LiteralAtom.OrderTest do
       assert :foo < :foo <|> :bar
     end
 
-    test "is smaller than atom, which it is a subset of" do
+    test "is smaller than atom, which it is a subtype of" do
       assert :foo < atom()
     end
 

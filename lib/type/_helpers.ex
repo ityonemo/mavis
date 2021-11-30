@@ -70,11 +70,12 @@ defmodule Type.Helpers do
       def merge(ltype, rtype) do
         lgroup = typegroup(ltype)
         rgroup = Type.typegroup(rtype)
-
-        if lgroup == rgroup do
-          unquote(module).unquote(call)(ltype, rtype)
-        else
-          :nomerge
+        cond do
+          lgroup != rgroup -> :nomerge
+          Type.compare(ltype, rtype) == :gt ->
+            unquote(module).unquote(call)(ltype, rtype)
+          true ->
+            Type.merge(rtype, ltype)
         end
       end
     end

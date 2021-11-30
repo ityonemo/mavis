@@ -90,7 +90,7 @@ defmodule Type.Union.Merge do
   # maps
   alias Type.Map
   def type_merge(left = %Map{}, right = %Map{}) do
-    # for maps, it's the subset relationship, but it might need to admit
+    # for maps, it's the subtype relationship, but it might need to admit
     # that some keys have to be turned into optional.
     optionalized_right = Map.optionalize(right, keep: Elixir.Map.keys(left.required))
     cond do

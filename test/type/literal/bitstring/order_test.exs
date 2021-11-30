@@ -20,7 +20,7 @@ defmodule TypeTest.LiteralBitstring.OrderTest do
       assert "foo" < "quux"
     end
 
-    test "is smaller than binary, bitstring, and Strings, which it is a subset of" do
+    test "is smaller than binary, bitstring, and Strings, which it is a subtype of" do
       assert "foo" < bitstring()
       assert "foo" < binary()
       assert "foo" < type(String.t())

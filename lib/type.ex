@@ -1091,7 +1091,9 @@ defmodule Type do
   ```elixir
   iex> import Type
   iex> type(<<>>)
-  %Type.Bitstring{size: 0, unit: 0}
+  %Type.Bitstring{size: 0, unit: 0, unicode: true}
+  iex> type(<<_::3>>)
+  %Type.Bitstring{size: 3, unit: 0, unicode: true}
   iex> type(( -> any()))
   %Type.Function{branches: [%Type.Function.Branch{params: [], return: any()}]}
   iex> type((... -> any()))
@@ -1103,16 +1105,21 @@ defmodule Type do
   usable in matches.
   """
   defmacro type({:<<>>, _, params}) do
-    fields = Enum.map(params, fn
+    fields! = Enum.map(params, fn
       {:"::", _, [{:_, _, _}, {:*, _, [{:_, _, _}, unit]}]} ->
         {:unit, unit}
       {:"::", _, [{:_, _, _}, size]} ->
         {:size, size}
     end)
 
-    Type.Bitstring
-    |> struct(fields)
-    |> Macro.escape
+    zero? = Enum.all?([:unit, :size], &(Keyword.get(fields!, &1, 0) == 0))
+
+    fields! = if zero?, do: Keyword.put(fields!, :unicode, true), else: fields!
+    fields! = Enum.reduce([:unit, :size], fields!, &Keyword.put_new(&2, &1, 0))
+
+    quote do
+      %Type.Bitstring{unquote_splicing(fields!)}
+    end
   end
 
   defmacro type([{:->, _, [[{:..., _, [params]}], return]}]) do

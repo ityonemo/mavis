@@ -14,7 +14,7 @@ defmodule TypeTest.BuiltinNonNegInteger.IntersectionTest do
       assert non_neg_integer() == non_neg_integer() <~> non_neg_integer()
     end
 
-    test "with special subsets are special subsets" do
+    test "with special subtypes are special subtypes" do
       assert byte() == non_neg_integer() <~> byte()
       assert arity() == non_neg_integer() <~> arity()
       assert char() == non_neg_integer() <~> char()

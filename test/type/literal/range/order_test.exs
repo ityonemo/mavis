@@ -22,7 +22,7 @@ defmodule TypeTest.LiteralRange.OrderTest do
       assert -47..-42 > -47..-43
     end
 
-    test "is smaller than neg_integer and integer, which it is a subset of" do
+    test "is smaller than neg_integer and integer, which it is a subtype of" do
       assert -47..-42 < -50..-42
       assert -47..-42 < -50..50
       assert -47..-42 < neg_integer()
@@ -62,7 +62,7 @@ defmodule TypeTest.LiteralRange.OrderTest do
       assert 42..47 < 0 <|> 42..47
     end
 
-    test "is smaller than the classes, it is a subset of" do
+    test "is smaller than the classes, it is a subtype of" do
       assert 42..47 < 0..47
       assert 42..47 < pos_integer()
       assert 42..47 < non_neg_integer()

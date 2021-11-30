@@ -228,6 +228,14 @@ defmodule Type.Map do
     end
   end
 
+  @any %Type{name: :any}
+  def merge(%{optional: %{@any => @any}}, _) do
+    {:merge, [%__MODULE__{optional: %{@any => @any}}]}
+  end
+  def merge(_, _) do
+    :nomerge
+  end
+
   def intersect(lmap, rmap = %__MODULE__{}) do
     # find the intersection of the preimages
     preimage_intersection = lmap
@@ -473,7 +481,7 @@ defmodule Type.Map do
   #      end)
   #      # check that all required bits of b are
   #      # required in a.  Note that we already know that
-  #      # the subset situation is valid from the above code.
+  #      # the subtype situation is valid from the above code.
   #      target.required
   #      |> Elixir.Map.keys
   #      |> Enum.all?(fn key ->

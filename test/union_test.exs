@@ -308,7 +308,7 @@ defmodule TypeTest.UnionTest do
         type((:bar, 0 -> :bar))
     end
 
-    test "two-arity functions are merged one is a total subset" do
+    test "two-arity functions are merged one is a total subtype" do
       assert type((atom(), pos_integer() -> :bar)) ==
         type((:bar, 1..10 -> :bar)) <|>
         type((atom(), pos_integer() -> :bar))

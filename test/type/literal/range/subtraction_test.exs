@@ -13,7 +13,7 @@ defmodule TypeTest.LiteralRange.SubtractionTest do
       assert none() == (-47..47) - (-47..47)
     end
 
-    test "of integer subsets" do
+    test "of integer subtypes" do
       # negative ranges
       assert none()  == (-47..-1) - neg_integer()
       assert -47..-1 == (-47..-1) - pos_integer()

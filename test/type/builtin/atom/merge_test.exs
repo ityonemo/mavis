@@ -15,7 +15,7 @@ defmodule TypeTest.BuiltinAtom.MergeTest do
     assert {:merge, [atom()]} == Type.merge(atom(), :atom)
   end
 
-  test "atom merges with atom subsets" do
+  test "atom merges with atom subtypes" do
     assert {:merge, [atom()]} == Type.merge(atom(), module())
     assert {:merge, [atom()]} == Type.merge(atom(), type(node()))
   end

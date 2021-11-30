@@ -14,13 +14,17 @@ defmodule Type.Bitstring do
   of a binary (size), plus a variable-length payload with recurring features
   of size (unit).
 
+  Note that a zero-size binary type must always be `unicode: true`
+
   ### Examples:
 
   - `t:bitstring/0` is equivalent to `%Type.Bitstring{size: 0, unit: 1}`.
   Note that any bitstring type is a subtype of this type.
   - `t:binary/0` is equivalent to `%Type.Bitstring{size: 0, unit: 8}`.
   - A fixed-size binary is `%Type.Bitstring{unit: 0, size: <size>}`.
-  - The empty binary (`""`) is `%Type.Bitstring{unit: 0, size: 0}`.
+  - The empty binary (`""`) is `%Type.Bitstring{unit: 0, size: 0, unicode: true}`.
+    note this is distinct from the empty binary literal `""`, this is the only type
+    with a single member that isn't self-representable.
 
   ### Key functions:
 

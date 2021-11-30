@@ -20,7 +20,7 @@ defmodule TypeTest.LiteralFloat.OrderTest do
       assert 47.0 < 50.0
     end
 
-    test "is smaller than float, which it is a subset of" do
+    test "is smaller than float, which it is a subtype of" do
       assert 47.0 < float()
     end
 

@@ -7,7 +7,7 @@ defmodule TypeTest.BuiltinNumber.OrderTest do
 
   use Type.Operators
 
-  test "number is bigger subsets of number" do
+  test "number is bigger subtypes of number" do
     assert number() > none()
     assert number() > neg_integer()
     assert number() > pos_integer()

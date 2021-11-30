@@ -7,7 +7,7 @@ defmodule TypeTest.BuiltinNonNegInteger.OrderTest do
 
   use Type.Operators
 
-  test "non_neg_integer is bigger than other subsets of integer" do
+  test "non_neg_integer is bigger than other subtypes of integer" do
     assert non_neg_integer() > none()
     assert non_neg_integer() > neg_integer()
     assert non_neg_integer() > pos_integer()

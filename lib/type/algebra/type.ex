@@ -61,6 +61,8 @@ defimpl Type.Algebra, for: Type do
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
 
+  def merge_internal(float(), f) when is_float(f), do: {:merge, [float()]}
+  def merge_internal(module(), a) when is_atom(a), do: {:merge, [module()]}
   def merge_internal(atom(), module()), do: {:merge, [atom()]}
   def merge_internal(atom(), type(node())), do: {:merge, [atom()]}
   def merge_internal(atom(), a) when is_atom(a), do: {:merge, [atom()]}

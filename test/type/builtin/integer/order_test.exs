@@ -7,7 +7,7 @@ defmodule TypeTest.BuiltinInteger.OrderTest do
 
   use Type.Operators
 
-  test "integer is bigger subsets of integer" do
+  test "integer is bigger subtypes of integer" do
     assert integer() > none()
     assert integer() > neg_integer()
     assert integer() > pos_integer()
