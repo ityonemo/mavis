@@ -6,13 +6,16 @@ defimpl Type.Algebra, for: List do
   import Type, only: :macros
 
   Helpers.typegroup_fun()
-  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
   def compare_internal(_, %Type.List{}), do: :lt
   def compare_internal(a, b) when a < b, do: :lt
   def compare_internal(a, b) when a > b, do: :gt
-  
+
+  Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
+  def merge_internal(_, _), do: :nomerge
+
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
   def intersect_internal(_, _), do: none()
 
 #  use Type.Helpers

@@ -61,6 +61,12 @@ defimpl Type.Algebra, for: Type do
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
 
+  def merge_internal(neg_integer(), n) when is_integer(n) and n < 0, do: {:merge, [neg_integer()]}
+  def merge_internal(neg_integer(), _..n) when n < 0, do: {:merge, [neg_integer()]}
+  def merge_internal(pos_integer(), n) when is_integer(n) and n > 0, do: {:merge, [pos_integer()]}
+  def merge_internal(pos_integer(), 0.._), do: {:merge, [pos_integer(), 0]}
+  def merge_internal(pos_integer(), a.._) when a > 0, do: {:merge, [pos_integer()]}
+  def merge_internal(pos_integer(), a..b) when b > 0, do: {:merge, [pos_integer(), a..0]}
   def merge_internal(float(), f) when is_float(f), do: {:merge, [float()]}
   def merge_internal(module(), a) when is_atom(a), do: {:merge, [module()]}
   def merge_internal(atom(), module()), do: {:merge, [atom()]}

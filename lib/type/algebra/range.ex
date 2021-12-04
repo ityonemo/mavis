@@ -53,7 +53,7 @@ defimpl Type.Algebra, for: Range do
   def merge_internal(a..b, pos_integer()) when b > 0 do
     if a > 0, do: {:merge, [pos_integer()]}, else: {:merge, [pos_integer(), a..0]}
   end
-  def merge_internal(_..0, neg_integer()), do: {:merge, [neg_integer(), 0]}
+  def merge_internal(_..0, neg_integer()), do: {:merge, [0, neg_integer()]}
   def merge_internal(a..b, neg_integer()) when a < 0 do
     if b < 0, do: {:merge, [neg_integer()]}, else: {:merge, [0..b, neg_integer()]}
   end

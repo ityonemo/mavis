@@ -188,6 +188,8 @@ defmodule Type.List do
     end
   end
 
+  def merge(_, _), do: :nomerge
+
   def usable_literal(list, literal, so_far \\ :ok)
   def usable_literal(list, [head | rest], so_far) do
     next_result = head

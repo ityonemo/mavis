@@ -5,14 +5,16 @@ defimpl Type.Algebra, for: Atom do
 
   require Helpers
   Helpers.typegroup_fun()
-  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
-  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
-  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
 
+  Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
   def compare_internal(_latom, atom()), do: :lt
   def compare_internal(latom, ratom) when latom < ratom, do: :lt
   def compare_internal(latom, ratom) when latom > ratom, do: :gt
 
+  Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
+  def compare_internal(_, _), do: :nomerge
+
+  Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
   def intersect_internal(atom, atom()), do: atom
   def intersect_internal(atom, type(node())) do
     if valid_node?(atom), do: atom, else: none()
@@ -26,6 +28,7 @@ defimpl Type.Algebra, for: Atom do
     match?([<<_::8>> <> _, <<_::8>> <> _], node_parts)
   end
 
+  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
   def subtype_internal(_, atom()), do: true
   def subtype_internal(_, _), do: false
 

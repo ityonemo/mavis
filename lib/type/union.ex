@@ -59,49 +59,12 @@ defmodule Type.Union do
   def intersect(union = %{}, rtype) do
     union.of
     |> Enum.map(&Type.intersect(&1, rtype))
-    |> IO.inspect(label: "62")
     |> Type.union
   end
 
   @spec merge(t, Type.t) :: t
   @doc false
   def merge(_, _), do: raise "type merging with unions is disallowed"
-
-  # merges: types in argument1 into the list of argument2
-  # argument2 is required to be in DESCENDING order
-  # returns the fully merged types, in ASCENDING order
-  @spec merge_raw([Type.t], [Type.t]) :: [Type.t]
-  defp merge_raw(list, [head | rest]) do
-    {new_list, retries} = fold(head, Enum.reverse(list), [])
-    merge_raw(new_list, retries ++ rest)
-  end
-  defp merge_raw(list, []) do
-    Enum.sort(list, {:desc, Type})
-  end
-
-  # folds argument 1 into the list of argument2.
-  # argument 3, which is the stack, contains the remaining types in ASCENDING order.
-  @spec fold(Type.t, [Type.t], [Type.t]) :: {[Type.t], [Type.t]}
-  defp fold(type, [type | rest], stack) do
-    fold(type, rest, stack)
-  end
-  defp fold(type, [head | rest], stack) do
-    with order when order in [:gt, :lt] <- Type.compare(head, type),
-         retries when is_list(retries) <- type_merge(order, head, type) do
-      {unroll(rest, stack), retries}
-    else
-      :eq ->
-        {unroll(rest, [head | stack]), []}
-      :nomerge ->
-        fold(type, rest, [head | stack])
-    end
-  end
-  defp fold(type, [], stack) do
-    {[type | stack], []}
-  end
-
-  defp unroll([], stack), do: stack
-  defp unroll([head | rest], stack), do: unroll(rest, [head | stack])
 
   defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
@@ -212,7 +175,7 @@ defmodule Type.Union do
     defp collector(_, :halt), do: :ok
     defp collector([], :done), do: none()
     defp collector([type], :done), do: type
-    defp collector(list, :done), do: %Union{of: list}
+    defp collector(list, :done) when is_list(list), do: %Union{of: list}
     defp collector(list, {:cont, type}) do
       try_merge(type, list, [])
     end
@@ -225,10 +188,43 @@ defmodule Type.Union do
       end
     end
 
-    defp merge_into(type, list) do
+    @env Mix.env()
 
+    defmacrop assert_sorted(list_ast) do
+      if @env == :test do
+        quote do
+          list = unquote(list_ast) # this might need execution, let's only do it once.
+          unless Type.Union._valid?(list), do: raise "merge_into sorted into an invalid list: #{inspect list}"
+          list
+        end
+      else
+        list_ast
+      end
     end
 
+    def _valid?([]), do: false
+    def _valid?([%Type.Union{} | _]), do: false
+    def _valid?([_]), do: true
+    def _valid?([a, b | rest]) do
+      case Type.compare(a, b) do
+        :gt -> _valid?([b | rest])
+        _ -> false
+      end
+    end
+
+    # merges a type into a list of types.  Result should always be sorted.
+    @spec merge_into(Type.t, [Type.t]) :: [Type.t]
+    defp merge_into(type, list, so_far \\ [])
+    defp merge_into(type, [], so_far) do
+      Enum.reverse(so_far, [type])
+    end
+    defp merge_into(type, [first | rest] = all, so_far) do
+      case Type.compare(type, first) do
+        :gt -> assert_sorted Enum.reverse(so_far, [type | all])
+        :lt ->
+          merge_into(type, rest, [first | so_far])
+      end
+    end
   end
 
   defimpl Inspect do

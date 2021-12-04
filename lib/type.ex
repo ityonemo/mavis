@@ -1563,6 +1563,9 @@ end
 defimpl Inspect, for: Type do
   import Inspect.Algebra
 
+  def inspect(%{module: nil, name: :node, params: []}, _opts) do
+    "type(node())"
+  end
   def inspect(%{module: nil, name: name, params: params}, opts) do
     param_list = params
     |> Enum.map(&to_doc(&1, opts))
