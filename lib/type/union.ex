@@ -68,6 +68,28 @@ defmodule Type.Union do
 
   defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
+  # checks if a union OR its underlying list is valid.  Useful for debugging
+  # purposes only.  A union is invalid if any of the following are true:
+  # - it's an empty list
+  # - it's not in sorted order
+  # - if any of its children are pairwise mergeable.
+  def _valid?(%Type.Union{of: list}), do: _valid?(list)
+  def _valid?([]), do: false
+  def _valid?([%Type.Union{} | _]), do: false
+  def _valid?([_]), do: true
+  def _valid?([a, b | rest]) do
+    case Type.compare(a, b) do
+      :gt ->
+        _pairwise_unmergeable(a, [b | rest]) and _valid?([b | rest])
+      _ -> false
+    end
+  end
+
+  defp _pairwise_unmergeable(a, []), do: true
+  defp _pairwise_unmergeable(a, [b | rest]) do
+    (Type.merge(a, b) == :nomerge) and _pairwise_unmergeable(a, rest)
+  end
+
 #  #defimpl Type.Algebra do
 #  #  import Type, only: :macros
 #  #  import Type.Helpers
@@ -175,26 +197,34 @@ defmodule Type.Union do
     defp collector(_, :halt), do: :ok
     defp collector([], :done), do: none()
     defp collector([type], :done), do: type
-    defp collector(list, :done) when is_list(list), do: %Union{of: list}
-    defp collector(list, {:cont, type}) do
-      try_merge(type, list, [])
+    defp collector(types, :done) when is_list(types), do: %Union{of: types}
+    defp collector(types_so_far, {:cont, %Type.Union{of: types}}) do
+      Enum.reduce(types, types_so_far, &merge_into_list/2)
+    end
+    defp collector(types_so_far, {:cont, type}) do
+      merge_into_list(type, types_so_far)
     end
 
-    defp try_merge(type, [], so_far), do: merge_into(type, so_far)
-    defp try_merge(type, [first | rest], so_far) do
+    defp merge_into_list(type, into_list, so_far_asc \\ [])
+    defp merge_into_list(type, [], so_far_asc), do: Enum.reverse([type | so_far_asc])
+    defp merge_into_list(type, [first | rest], so_far_asc) do
       case Type.merge(type, first) do
-        :nomerge -> try_merge(type, rest, [type | so_far])
-        {:merge, type} -> merge_into(type, Enum.reverse(rest, so_far))
+        :nomerge ->
+          merge_into_list(type, rest, [first | so_far_asc])
+        {:merge, types} ->
+          list_desc = Enum.reverse(so_far_asc, rest)
+          Enum.reduce(types, list_desc, &merge_into_list_atomic(&1, &2))
       end
     end
 
     @env Mix.env()
 
-    defmacrop assert_sorted(list_ast) do
+    defmacrop assert_valid(list_ast) do
+      %{file: file, line: line} = __CALLER__
       if @env == :test do
         quote do
           list = unquote(list_ast) # this might need execution, let's only do it once.
-          unless Type.Union._valid?(list), do: raise "merge_into sorted into an invalid list: #{inspect list}"
+          unless Type.Union._valid?(list), do: raise "an invalid list detected: #{inspect list} #{unquote(file)}:#{unquote(line)}"
           list
         end
       else
@@ -202,27 +232,18 @@ defmodule Type.Union do
       end
     end
 
-    def _valid?([]), do: false
-    def _valid?([%Type.Union{} | _]), do: false
-    def _valid?([_]), do: true
-    def _valid?([a, b | rest]) do
-      case Type.compare(a, b) do
-        :gt -> _valid?([b | rest])
-        _ -> false
-      end
-    end
-
     # merges a type into a list of types.  Result should always be sorted.
-    @spec merge_into(Type.t, [Type.t]) :: [Type.t]
-    defp merge_into(type, list, so_far \\ [])
-    defp merge_into(type, [], so_far) do
-      Enum.reverse(so_far, [type])
+    # there
+    @spec merge_into_list_atomic(Type.t, [Type.t]) :: [Type.t]
+    defp merge_into_list_atomic(type, list_asc, so_far_desc \\ [])
+    defp merge_into_list_atomic(type, [], so_far_desc) do
+      Enum.reverse(so_far_desc, [type])
     end
-    defp merge_into(type, [first | rest] = all, so_far) do
+    defp merge_into_list_atomic(type, [first | rest] = all, so_far_desc) do
       case Type.compare(type, first) do
-        :gt -> assert_sorted Enum.reverse(so_far, [type | all])
+        :gt -> assert_valid Enum.reverse(so_far_desc, [type | all])
         :lt ->
-          merge_into(type, rest, [first | so_far])
+          merge_into_list_atomic(type, rest, [first | so_far_desc])
       end
     end
   end

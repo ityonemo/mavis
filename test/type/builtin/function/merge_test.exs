@@ -1,4 +1,4 @@
-defmodule TypeTest.BuiltinFun.MergeTest do
+defmodule TypeTest.BuiltinFunction.MergeTest do
   use ExUnit.Case, async: true
 
   @moduletag :merge

@@ -3,24 +3,31 @@ defmodule TypeTest.BuiltinInteger.InspectTest do
 
   import TypeTest.FetchCase
   import TypeTest.InspectCase
+
   @moduletag :inspect
 
-  describe "the integer type" do
-    pull_types(defmodule Integer do
-      @type integer_type :: integer
-      @type integer_plus :: integer | nil
-    end)
+  pull_types(defmodule Integer do
+    @type integer_type :: integer
+    @type integer_plus :: integer | nil
+  end)
 
+  describe "the integer type" do
     test "looks like a integer" do
       assert "integer()" == inspect(@integer_type)
     end
 
-    test "code translates correctly" do
+    test "translates correctly" do
       assert @integer_type == eval_inspect(@integer_type)
     end
+  end
 
-    test "integer plus works" do
+  describe "integer union something else" do
+    test "looks like an integer" do
       assert "integer() <|> nil" = inspect(@integer_plus)
+    end
+
+    test "integer_plus translates correctly" do
+      assert @integer_plus == eval_inspect(@integer_plus)
     end
   end
 end

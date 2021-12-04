@@ -12,7 +12,7 @@ defimpl Type.Algebra, for: Atom do
   def compare_internal(latom, ratom) when latom > ratom, do: :gt
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
-  def compare_internal(_, _), do: :nomerge
+  def merge_internal(_, _), do: :nomerge
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
   def intersect_internal(atom, atom()), do: atom

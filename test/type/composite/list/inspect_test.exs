@@ -10,10 +10,12 @@ defmodule TypeTest.List.InspectTest do
     @type nonempty_any_list :: [...]
     @type nonempty_type_list :: [atom, ...]
     @type keyword_list :: [foo: atom]  # note that this is handled by the "Union" type
-    @type two_keyword_list :: [foo: atom, bar: atom]  # note that this is handled by the "Union" type
-    @type two_different_keyword_list :: [foo: atom, bar: float]  # note that this is handled by the "Union" type
-    @type three_keyword_list :: [foo: atom, bar: float, baz: atom]  # note that this is handled by the "Union" type
+    #@type two_keyword_list :: [foo: atom, bar: atom]  # note that this is handled by the "Union" type
+    #@type two_different_keyword_list :: [foo: atom, bar: float]  # note that this is handled by the "Union" type
+    #@type three_keyword_list :: [foo: atom, bar: float, baz: atom]  # note that this is handled by the "Union" type
   end)
+
+  test "uncomment the top three type items"
 
   describe "the proper list type" do
     test "looks like itself" do
