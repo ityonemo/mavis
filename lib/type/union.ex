@@ -194,29 +194,6 @@ defmodule Type.Union do
       {types, &collector/2}
     end
 
-    defp collector(_, :halt), do: :ok
-    defp collector([], :done), do: none()
-    defp collector([type], :done), do: type
-    defp collector(types, :done) when is_list(types), do: %Union{of: types}
-    defp collector(types_so_far, {:cont, %Type.Union{of: types}}) do
-      Enum.reduce(types, types_so_far, &merge_into_list/2)
-    end
-    defp collector(types_so_far, {:cont, type}) do
-      merge_into_list(type, types_so_far)
-    end
-
-    defp merge_into_list(type, into_list, so_far_asc \\ [])
-    defp merge_into_list(type, [], so_far_asc), do: Enum.reverse([type | so_far_asc])
-    defp merge_into_list(type, [first | rest], so_far_asc) do
-      case Type.merge(type, first) do
-        :nomerge ->
-          merge_into_list(type, rest, [first | so_far_asc])
-        {:merge, types} ->
-          list_desc = Enum.reverse(so_far_asc, rest)
-          Enum.reduce(types, list_desc, &merge_into_list_atomic(&1, &2))
-      end
-    end
-
     @env Mix.env()
 
     defmacrop assert_valid(list_ast) do
@@ -232,18 +209,40 @@ defmodule Type.Union do
       end
     end
 
-    # merges a type into a list of types.  Result should always be sorted.
-    # there
-    @spec merge_into_list_atomic(Type.t, [Type.t]) :: [Type.t]
-    defp merge_into_list_atomic(type, list_asc, so_far_desc \\ [])
-    defp merge_into_list_atomic(type, [], so_far_desc) do
+    defp collector(_, :halt), do: :ok
+    defp collector([], :done), do: none()
+    defp collector([type], :done), do: type
+    defp collector(types, :done) when is_list(types), do: %Union{of: assert_valid types}
+    defp collector(types_so_far, {:cont, %Type.Union{of: types}}) do
+      Enum.reduce(types, types_so_far, &merge_into_list/2)
+    end
+    defp collector(types_so_far, {:cont, type}) do
+      merge_into_list(type, types_so_far)
+    end
+
+    defp merge_into_list(type, into_list, so_far_asc \\ [])
+    defp merge_into_list(type, [], so_far_asc), do: slot_into_list(type, Enum.reverse(so_far_asc))
+    defp merge_into_list(type, [first | rest], so_far_asc) do
+      case Type.merge(type, first) do
+        :nomerge ->
+          merge_into_list(type, rest, [first | so_far_asc])
+        {:merge, types} ->
+          list_desc = Enum.reverse(so_far_asc, rest)
+          Enum.reduce(types, list_desc, &slot_into_list(&1, &2))
+      end
+    end
+
+    # slots a type into a list of types.  Result will always be sorted.
+    @spec slot_into_list(Type.t, [Type.t]) :: [Type.t]
+    defp slot_into_list(type, list_asc, so_far_desc \\ [])
+    defp slot_into_list(type, [], so_far_desc) do
       Enum.reverse(so_far_desc, [type])
     end
-    defp merge_into_list_atomic(type, [first | rest] = all, so_far_desc) do
+    defp slot_into_list(type, [first | rest] = all, so_far_desc) do
       case Type.compare(type, first) do
-        :gt -> assert_valid Enum.reverse(so_far_desc, [type | all])
+        :gt -> Enum.reverse(so_far_desc, [type | all])
         :lt ->
-          merge_into_list_atomic(type, rest, [first | so_far_desc])
+          slot_into_list(type, rest, [first | so_far_desc])
       end
     end
   end
