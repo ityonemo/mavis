@@ -63,15 +63,17 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_merge_fun(module, call \\ :merge) do
-    nones_clause = if __CALLER__.module == Type.Algebra.Type do
+    generics_clause = if __CALLER__.module == Type.Algebra.Type do
       quote do
-        def merge(%Type{module: nil, name: :none, params: []}, type), do: type
+        def merge(%Type{module: nil, name: :none, params: []}, type), do: {:merge, [type]}
+        def merge(%Type{module: nil, name: :any, params: []}, type), do: {:merge, [%Type{name: :any}]}
       end
     end
 
     quote do
-      unquote(nones_clause)
+      unquote(generics_clause)
       def merge(type, type), do: {:merge, [type]}
+      def merge(type, %Type{module: nil, name: :any, params: []}), do: {:merge, [%Type{name: :any}]}
       def merge(type, %Type{module: nil, name: :none, params: []}), do: {:merge, [type]}
       def merge(_, %Type.Union{}), do: raise "can't merge with unions"
       def merge(ltype, rtype) do

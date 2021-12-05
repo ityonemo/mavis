@@ -188,6 +188,12 @@ defmodule Type.List do
     end
   end
 
+  def merge(%{type: type, final: lfinal}, %Type.List{type: type, final: rfinal}) do
+    {:merge, [%Type.List{type: type, final: Type.union(lfinal, rfinal)}]}
+  end
+  def merge(%{type: ltype, final: final}, %Type.List{type: rtype, final: final}) do
+    {:merge, [%Type.List{type: Type.union(ltype, rtype), final: final}]}
+  end
   def merge(_, _), do: :nomerge
 
   def usable_literal(list, literal, so_far \\ :ok)
