@@ -228,7 +228,7 @@ defmodule Type.Union do
           merge_into_list(type, rest, [first | so_far_asc])
         {:merge, types} ->
           list_desc = Enum.reverse(so_far_asc, rest)
-          Enum.reduce(types, list_desc, &slot_into_list(&1, &2))
+          Enum.reduce(types, list_desc, &merge_into_list(&1, &2))
       end
     end
 
