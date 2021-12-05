@@ -15,6 +15,7 @@ defimpl Type.Algebra, for: Integer do
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
 
   def merge_internal(a, b) when b === a - 1, do: {:merge, [b..a]}
+  def merge_internal(a, b..c) when c == a - 1, do: {:merge, [b..a]}
   def merge_internal(_, _), do: :nomerge
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
