@@ -4,6 +4,8 @@ defmodule TypeTest do
 
   import Type, only: :macros
 
+  @moduletag :doctests
+
   doctest Type
   doctest Type.Bitstring
   doctest Type.Function
