@@ -4,6 +4,7 @@ defmodule TypeTest.Map.InspectTest do
   import TypeTest.FetchCase
   import TypeTest.InspectCase
   @moduletag :inspect
+  @moduletag :map
 
   pull_types(defmodule Maps do
     defstruct [:atom]

@@ -3,6 +3,7 @@ defmodule TypeTest.TypeMap.SubtypeTest do
   use Type.Operators
 
   @moduletag :subtype
+  @moduletag :map
 
   alias Type.Map
   import Type, only: :macros

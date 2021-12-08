@@ -204,7 +204,7 @@ defmodule Type.Map do
 
   # compare both
   def compare(%{optional: lopt, required: lreq}, %{optional: ropt, required: rreq})
-    when map_size(lopt) > 0 and map_size(ropt) > 0 do
+    when map_size(lopt) > 0 or map_size(ropt) > 0 do
 
     raise "not supported yet"
 

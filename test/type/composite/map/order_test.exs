@@ -2,6 +2,7 @@ defmodule TypeTest.TypeMap.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :order
+  @moduletag :map
 
   import Type, only: :macros
 

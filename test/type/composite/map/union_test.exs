@@ -3,6 +3,7 @@ defmodule TypeTest.TypeMap.UnionTest do
   use Type.Operators
 
   @moduletag :union
+  @moduletag :map
 
   alias Type.Map
   import Type, only: :macros
