@@ -576,7 +576,7 @@ defmodule Type do
   def literal(list) when is_list(list) do
     Enum.map(list, &literal/1)
   end
-  def literal(%module{} = struct) do
+  def literal(struct = %module{}) do
     requireds = struct
     |> Map.from_struct
     |> Map.new(fn {k, v} -> {literal(k), literal(v)} end)

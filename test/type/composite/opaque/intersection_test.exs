@@ -3,6 +3,7 @@ defmodule TypeTest.TypeOpaque.IntersectionTest do
   use Type.Operators
 
   @moduletag :intersection
+  @moduletag :opaque
 
   import Type, only: :macros
 

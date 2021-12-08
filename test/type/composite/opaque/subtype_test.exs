@@ -2,6 +2,7 @@ defmodule TypeTest.TypeOpaque.SubtypeTest do
   use ExUnit.Case, async: true
 
   @moduletag :subtype
+  @moduletag :opaque
 
   import Type, only: :macros
 

@@ -2,6 +2,7 @@ defmodule TypeTest.TypeOpaque.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :order
+  @moduletag :opaque
 
   import Type, only: :macros
 

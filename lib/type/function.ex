@@ -345,7 +345,7 @@ defmodule Type.Function do
 
   @any %Type{module: nil, name: :any, params: []}
   @none %Type{module: nil, name: :none, params: []}
-  def merge(%__MODULE__{branches: [%Branch{params: :any, return: @any}]} = anyfun, _) do
+  def merge(anyfun = %__MODULE__{branches: [%Branch{params: :any, return: @any}]}, _) do
     {:merge, [anyfun]}
   end
   def merge(_, _) do

@@ -15,8 +15,40 @@ defimpl Type.Algebra, for: List do
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
   def merge_internal(_, _), do: :nomerge
 
+  @iolist %Type.Union{of: [
+    %Type.List{
+      type: %Type.Union{of: [binary(), iolist(), byte()]},
+      final: %Type.Union{of: [binary(), []]}}, []]}
+
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
+  def intersect_internal(left, iolist()) do
+    Type.intersect(@iolist, left)
+  end
+  def intersect_internal(left, right) when is_list(right) do
+    intersect_lists(left, right, [])
+  end
+  # improper final position stuff
   def intersect_internal(_, _), do: none()
+
+  defp intersect_lists([lhead | ltail], [rhead | rtail], so_far) do
+    case Type.intersect(lhead, rhead) do
+      none() -> none()
+      type -> intersect_lists(ltail, rtail, [type | so_far])
+    end
+  end
+
+  defp intersect_lists([], [], so_far), do: Enum.reverse(so_far)
+
+  defp intersect_lists(left, right, _) when is_list(left) or is_list(right), do: none()
+  defp intersect_lists(left, right, so_far) do
+    case Type.intersect(left, right) do
+      none() -> none()
+      type -> reverse_prepend(so_far, type)
+    end
+  end
+
+  defp reverse_prepend([], list), do: list
+  defp reverse_prepend([a | b], list), do: reverse_prepend(b, [a | list])
 
 #  use Type.Helpers
 #

@@ -202,33 +202,79 @@ defmodule Type.Map do
 
   use Type.Helpers
 
-  def compare(lmap, rmap) do
-    preimage_cmp = Type.compare(preimage(lmap), preimage(rmap))
-    if preimage_cmp != :eq do
-      preimage_cmp
-    else
-        lmap
-        |> resegment(resegment(rmap))
-        |> Enum.each(fn segment ->
-          req_order = required_ordering(lmap, rmap, segment)
-          req_order != :eq && throw req_order
-          val_order = Type.compare(map_apply(lmap, segment), map_apply(rmap, segment))
-          val_order != :eq && throw val_order
-        end)
+  # compare both
+  def compare(%{optional: lopt, required: lreq}, %{optional: ropt, required: rreq})
+    when map_size(lopt) > 0 and map_size(ropt) > 0 do
+
+    raise "not supported yet"
+
+    # inverse waterfall with
+    with :eq <- compare_keys(lopt, ropt),
+         l_postimage = lopt |> Map.values |> Type.union,
+         r_postimage = ropt |> Map.values |> Type.union,
+         # partition these.
+         :eq <- Type.compare(l_postimage, r_postimage),
+         :eq <- fewer_keys_gt(lreq, rreq),
+         :eq <- compare_keys(lreq, rreq),
+         :eq <- compare_images(lreq, rreq) do
+      raise "unreachable"
     end
-  catch
-    valtype when valtype in [:gt, :lt] -> valtype
   end
 
-  defp required_ordering(lmap, rmap, segment) do
-    case {required_key?(lmap, segment), required_key?(rmap, segment)} do
-      {false, true} -> :gt
-      {true, false} -> :lt
-      _ -> :eq
+  # case where there are only required literals.  In this situation, we attempt
+  # to match the erlang term order, so instead of being a restrictive liability,
+  # having more required terms results in a larger map.
+
+  def compare(%{required: lreq}, %{required: rreq}) do
+    with {sz, sz} <- {map_size(lreq), map_size(rreq)},
+         :eq <- compare_keys(lreq, rreq),
+         :eq <- compare_images(lreq, rreq) do
+      raise "unreachable"
+    else
+      {ls, rs} when ls > rs -> :gt
+      {_, _} -> :lt
+      order -> order
+    end
+  end
+
+  defp fewer_keys_gt(a, b) do
+    case {map_size(a), map_size(b)} do
+      {s, s} -> :eq
+      {sa, sb} when sa > sb -> :lt
+      _ -> :gt
+    end
+  end
+
+  defp compare_keys(a, b) do
+    a_keys = a |> Map.keys |> Enum.sort
+    b_keys = b |> Map.keys |> Enum.sort
+    compare_typelist(a_keys, b_keys)
+  end
+
+  defp compare_images(a, b) do
+    compare_typelist(Map.values(a), Map.values(b))
+  end
+
+  defp compare_typelist([], []), do: :eq
+  defp compare_typelist([lhead | lrest], [rhead | rrest]) do
+    case {lhead, rhead} do
+      {head, head} -> compare_typelist(lrest, rrest)
+      {lhead, rhead} when lhead > rhead -> :gt
+      _ -> :lt
     end
   end
 
   @any %Type{name: :any}
+  # if the left and right sides have the *same* required keys AND they are uniformly "bigger"
+  # on one side than the other, then we can merge them.
+  def merge(left = %{required: lreq = %{}}, right = %{required: rreq = %{}}) when map_size(lreq) == map_size(rreq) do
+    if Map.keys(lreq) == Map.keys(rreq) do
+      #merge_when_keys_are_same(left, right, lreq, rreq)
+      :nomerge
+    else
+      :nomerge
+    end
+  end
   def merge(%{optional: %{@any => @any}}, _) do
     {:merge, [%__MODULE__{optional: %{@any => @any}}]}
   end

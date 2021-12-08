@@ -52,7 +52,7 @@ defimpl Type.Algebra, for: Type do
   @iofinal %Type.Union{of: [binary(), []]}
   @iolist %Type.Union{of: [%Type.List{type: @iotype, final: @iofinal}, []]}
 
-  defp compare_iolist(%Type.Union{of: types} = t) do
+  defp compare_iolist(t = %Type.Union{of: types}) do
     if iolist() in types, do: :lt, else: Type.compare(@iolist, t)
   end
   defp compare_iolist(t) do
@@ -72,6 +72,9 @@ defimpl Type.Algebra, for: Type do
   def merge_internal(atom(), module()), do: {:merge, [atom()]}
   def merge_internal(atom(), type(node())), do: {:merge, [atom()]}
   def merge_internal(atom(), a) when is_atom(a), do: {:merge, [atom()]}
+  def merge_internal(type(node()), a) when is_atom(a) do
+    if Type.Algebra.Atom.valid_node?(a), do: {:merge, [type(node())]}, else: :nomerge
+  end
   def merge_internal(_, _), do: :nomerge
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
@@ -86,12 +89,12 @@ defimpl Type.Algebra, for: Type do
   def intersect_internal(pos_integer(), _..1), do: 1
   def intersect_internal(pos_integer(), _..a) when a > 1, do: 1..a
   def intersect_internal(float(), f) when is_float(f), do: f
-  def intersect_internal(atom(), atom) when is_atom(atom), do: atom
+  def intersect_internal(atom(), a) when is_atom(a), do: a
   def intersect_internal(atom(), type(node())), do: type(node())
   def intersect_internal(atom(), module()), do: module()
-  def intersect_internal(module(), atom) when is_atom(atom), do: atom
-  def intersect_internal(type(node()), atom) do
-    if Type.Algebra.Atom.valid_node?(atom), do: atom, else: none()
+  def intersect_internal(module(), a) when is_atom(a), do: a
+  def intersect_internal(type(node()), a) do
+    if Type.Algebra.Atom.valid_node?(a), do: a, else: none()
   end
   def intersect_internal(iolist(), list) when is_list(list) do
     Type.intersect(@iolist, list)

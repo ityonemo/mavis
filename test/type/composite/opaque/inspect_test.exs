@@ -3,7 +3,9 @@ defmodule TypeTest.Opaque.InspectTest do
 
   import TypeTest.FetchCase
   import TypeTest.InspectCase
+
   @moduletag :inspect
+  @moduletag :opaque
 
   pull_types(defmodule Opaque do
     @opaque opaque_t :: 47

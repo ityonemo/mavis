@@ -212,7 +212,7 @@ defmodule Type.List do
 
   def intersect(%{final: []}, []), do: @none
   def intersect(type, list) when is_list(list) do
-    if t?(type, list), do: list, else: @none
+    intersect_list(type, list, [])
   end
   def intersect(a, b = %Type.List{}) do
     case {Type.intersect(a.type, b.type), Type.intersect(a.final, b.final)} do
@@ -232,12 +232,21 @@ defmodule Type.List do
   end
   def intersect(_, _), do: @none
 
-  defp t?(t = %{type: el_t}, [first | rest]) do
-    Type.intersect(el_t, first) == first && t?(t, rest)
+  defp intersect_list(type, [head | rest], so_far) do
+    case Type.intersect(type.type, head) do
+      @none -> @none
+      intersection -> intersect_list(type, rest, [intersection | so_far])
+    end
   end
-  defp t?(%{final: f}, el) do
-    Type.intersect(f, el) == el
+  defp intersect_list(type, final, so_far) do
+    case Type.intersect(type.final, final) do
+      @none -> @none
+      intersection -> reverse_prepend(so_far, intersection)
+    end
   end
+
+  defp reverse_prepend([head | rest], so_far), do: reverse_prepend(rest, [head | so_far])
+  defp reverse_prepend([], so_far), do: so_far
 
   #defimpl Type.Algebra do
   #  import Type, only: :macros

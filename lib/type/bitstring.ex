@@ -130,7 +130,7 @@ defmodule Type.Bitstring do
   def compare(%{size: a}, %__MODULE__{size: b}) when a > b,  do: :lt
 
   # MERGERS
-  def merge(%{size: s, unit: u, unicode: uc} = t, bitstring) when is_bitstring(bitstring) do
+  def merge(t = %{size: s, unit: u, unicode: uc}, bitstring) when is_bitstring(bitstring) do
     cond do
       uc and !String.valid?(bitstring) -> :nomerge
       (u == 0) and (s != bit_size(bitstring)) -> :nomerge
@@ -240,7 +240,7 @@ defmodule Type.Bitstring do
 
   defp lcm(a, b), do: div(a * b, Integer.gcd(a, b))
 
-  defp build(%{size: 0, unit: 0} = fields) do
+  defp build(fields = %{size: 0, unit: 0}) do
     __MODULE__
     |> struct(fields)
     |> Map.put(:unicode, false)

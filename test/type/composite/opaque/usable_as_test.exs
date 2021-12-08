@@ -2,6 +2,7 @@ defmodule TypeTest.TypeOpaque.UsableAsTest do
   use ExUnit.Case, async: true
 
   @moduletag :usable_as
+  @moduletag :opaque
 
   import Type, only: :macros
   use Type.Operators

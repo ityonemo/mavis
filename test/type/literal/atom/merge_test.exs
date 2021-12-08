@@ -19,13 +19,20 @@ defmodule TypeTest.LiteralAtom.MergeTest do
     assert :nomerge == Type.merge(:atom, :foo)
   end
 
-  test "literal atom merges with atom subtypes" do
+  test "literal atom merges with module" do
     assert {:merge, [module()]} == Type.merge(:atom, module())
-    assert {:merge, [type(node())]} == Type.merge(:atom, type(node()))
+  end
+
+  test "well-formed node atoms merge with node" do
+    assert {:merge, [type(node())]} == Type.merge(:foo@bar, type(node()))
   end
 
   test "literal atom merges with atom" do
     assert {:merge, [atom()]} == Type.merge(:atom, atom())
+  end
+
+  test "ill-formed node atoms don'tmerge with node" do
+    assert :nomerge == Type.merge(:foo, type(node()))
   end
 
   test "literal atom doesn't merge with anything else" do
