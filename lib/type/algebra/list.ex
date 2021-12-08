@@ -50,6 +50,9 @@ defimpl Type.Algebra, for: List do
   defp reverse_prepend([], list), do: list
   defp reverse_prepend([a | b], list), do: reverse_prepend(b, [a | list])
 
+  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
+  def subtype_internal(_, _), do: false
+
 #  use Type.Helpers
 #
 #  alias Type.Message

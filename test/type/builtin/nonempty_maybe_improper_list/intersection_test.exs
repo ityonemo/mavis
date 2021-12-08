@@ -53,7 +53,7 @@ defmodule TypeTest.BuiltinNonemptyMaybeImproperList.IntersectionTest do
     end
 
     test "with restricted types is the restricted version" do
-      assert maybe_improper_list(:foo, :bar) == nonempty_maybe_improper_list() <~> maybe_improper_list(:foo, :bar)
+      assert nonempty_maybe_improper_list(:foo, :bar) == nonempty_maybe_improper_list() <~> maybe_improper_list(:foo, :bar)
       assert nonempty_maybe_improper_list(:foo, :bar) == nonempty_maybe_improper_list() <~> nonempty_maybe_improper_list(:foo, :bar)
     end
 
@@ -71,7 +71,7 @@ defmodule TypeTest.BuiltinNonemptyMaybeImproperList.IntersectionTest do
     end
 
     test "with all other types is none" do
-      [list()]
+      [list(), ["foo", "bar"]]
       |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
         assert none() == nonempty_maybe_improper_list() <~> target

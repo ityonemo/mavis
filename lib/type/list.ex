@@ -194,7 +194,25 @@ defmodule Type.List do
   def merge(%{type: ltype, final: final}, %Type.List{type: rtype, final: final}) do
     {:merge, [%Type.List{type: Type.union(ltype, rtype), final: final}]}
   end
+  def merge(%{type: type, final: final}, list) when is_list(list) do
+    merge_list(type, final, list)
+  end
   def merge(_, _), do: :nomerge
+
+  defp merge_list(type, final, [head | tail]) do
+    if Type.subtype?(head, type) do
+      merge_list(type, final, tail)
+    else
+      :nomerge
+    end
+  end
+  defp merge_list(type, final, last) do
+    if Type.subtype?(last, final) do
+      {:merge, [%Type.List{type: type, final: final}]}
+    else
+      :nomerge
+    end
+  end
 
   def usable_literal(list, literal, so_far \\ :ok)
   def usable_literal(list, [head | rest], so_far) do
@@ -210,7 +228,7 @@ defmodule Type.List do
     |> Type.ternary_and(so_far)
   end
 
-  def intersect(%{final: []}, []), do: @none
+  def intersect(_, []), do: @none
   def intersect(type, list) when is_list(list) do
     intersect_list(type, list, [])
   end

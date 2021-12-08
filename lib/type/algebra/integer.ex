@@ -20,10 +20,17 @@ defimpl Type.Algebra, for: Integer do
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
 
-  def intersect_internal(i, a..b) when a <= i and i <= b, do: i
+  def intersect_internal(i, a..b) when i in a..b, do: i
   def intersect_internal(i, neg_integer()) when i < 0, do: i
   def intersect_internal(i, pos_integer()) when i > 0, do: i
   def intersect_internal(_, _), do: %Type{name: :none}
+
+  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
+
+  def subtype_internal(i, a..b) when i in a..b, do: true
+  def subtype_internal(i, neg_integer()) when i < 0, do: true
+  def subtype_internal(i, pos_integer()) when i > 0, do: true
+  def subtype_internal(_, _), do: false
 
 #  use Type.Helpers
 #
