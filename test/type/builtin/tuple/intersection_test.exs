@@ -24,7 +24,7 @@ defmodule TypeTest.Builtin.IntersectionTest do
     end
 
     test "with all other types is none" do
-      []
+      [type({})]
       |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
         assert none() == tuple() <~> target

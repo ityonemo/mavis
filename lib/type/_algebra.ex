@@ -20,6 +20,6 @@ defprotocol Type.Algebra do
   @spec normalize(Type.t) :: Type.t
   def normalize(type)
 
-  @spec merge(Type.t, Type.t) :: :nomerge | {:merge, Type.t}
+  @spec merge(Type.t, Type.t) :: :nomerge | {:merge, [Type.t]}
   def merge(ltype, rtype)
 end

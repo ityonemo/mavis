@@ -2,6 +2,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
   use ExUnit.Case, async: true
 
   @moduletag :usable_as
+  @moduletag :function
 
   import Type, only: :macros
   use Type.Operators

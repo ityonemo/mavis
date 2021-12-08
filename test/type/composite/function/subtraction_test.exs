@@ -3,6 +3,7 @@ defmodule TypeTest.TypeFunction.SubtractionTest do
   use Type.Operators
 
   @moduletag :subtraction
+  @moduletag :function
 
   import Type, only: :macros
   alias Type.Function

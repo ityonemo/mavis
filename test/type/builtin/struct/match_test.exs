@@ -4,6 +4,7 @@ defmodule TypeTest.BuiltinStruct.MatchTest do
   import Type, only: :macros
 
   @moduletag :match
+  @moduletag :struct
 
   describe "the struct/0 type" do
     @struct_type %Type.Map{

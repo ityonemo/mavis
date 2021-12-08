@@ -78,7 +78,10 @@ defmodule Type.Spec do
       final: Type.union(parse(final, assigns), [])}
   end
   def parse({:type, _, :binary, [size, unit]}, assigns) do
-    %Type.Bitstring{size: parse(size, assigns), unit: parse(unit, assigns)}
+    size = parse(size, assigns)
+    unit = parse(unit, assigns)
+    unicode = size == 0 and unit == 0
+    %Type.Bitstring{size: size, unit: unit, unicode: unicode}
   end
   def parse({:type, _, :union, types}, assigns) do
     types

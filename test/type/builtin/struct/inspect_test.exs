@@ -3,7 +3,9 @@ defmodule TypeTest.BuiltinStruct.InspectTest do
 
   import TypeTest.FetchCase
   import TypeTest.InspectCase
+
   @moduletag :inspect
+  @moduletag :struct
 
   describe "the struct type" do
     pull_types(defmodule Struct do

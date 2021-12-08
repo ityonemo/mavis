@@ -4,6 +4,7 @@ defmodule TypeTest.Function.InspectTest do
   import TypeTest.FetchCase
   import TypeTest.InspectCase
   @moduletag :inspect
+  @moduletag :function
 
   pull_types(defmodule Functions do
     @type any_fun :: (... -> any())

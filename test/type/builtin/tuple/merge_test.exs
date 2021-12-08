@@ -28,7 +28,6 @@ defmodule TypeTest.BuiltinTuple.MergeTest do
     assert :nomerge == Type.merge(tuple(), fun())
     assert :nomerge == Type.merge(tuple(), port())
     assert :nomerge == Type.merge(tuple(), pid())
-    assert :nomerge == Type.merge(tuple(), tuple())
     assert :nomerge == Type.merge(tuple(), nonempty_maybe_improper_list())
     assert :nomerge == Type.merge(tuple(), bitstring())
   end

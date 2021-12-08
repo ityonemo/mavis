@@ -2,6 +2,7 @@ defmodule TypeTest.BuiltinStruct.MapTest do
   use ExUnit.Case, async: true
 
   @moduletag :order
+  @moduletag :struct
 
   import Type, only: :macros
 

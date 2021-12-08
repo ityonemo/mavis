@@ -5,6 +5,7 @@ defmodule TypeTest.BuiltinStruct.FetchTest do
   import TypeTest.FetchCase
 
   @moduletag :fetch
+  @moduletag :struct
 
   pull_types(defmodule Struct do
     @type struct_type :: struct()

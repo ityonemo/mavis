@@ -3,6 +3,7 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
   use Type.Operators
 
   @moduletag :intersection
+  @moduletag :function
 
   import Type, only: :macros
   alias Type.Function

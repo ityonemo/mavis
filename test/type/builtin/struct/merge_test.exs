@@ -2,6 +2,7 @@ defmodule TypeTest.BuiltinStruct.MergeTest do
   use ExUnit.Case, async: true
 
   @moduletag :merge
+  @moduletag :struct
 
   import Type, only: :macros
 

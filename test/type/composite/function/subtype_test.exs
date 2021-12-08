@@ -2,6 +2,7 @@ defmodule TypeTest.TypeFunction.SubtypeTest do
   use ExUnit.Case, async: true
 
   @moduletag :subtype
+  @moduletag :function
 
   import Type, only: :macros
 
