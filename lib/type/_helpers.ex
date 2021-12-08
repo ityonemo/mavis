@@ -124,6 +124,7 @@ defmodule Type.Helpers do
   defmacro algebra_subtype_fun(module, call \\ :subtype?) do
     quote do
       def subtype?(type, type), do: true
+      def subtype?(type, %Type{module: nil, name: :any, params: []}), do: true
       def subtype?(ltype, rtype), do: unquote(module).unquote(call)(ltype, rtype)
     end
   end

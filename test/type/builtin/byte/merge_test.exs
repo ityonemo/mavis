@@ -33,7 +33,7 @@ defmodule TypeTest.BuiltinByte.MergeTest do
     assert {:merge, [byte()]} == Type.merge(byte(), byte())
   end
 
-  test "byte merges with byte integer supersets" do
+  test "byte merges with byte integer supertypes" do
     assert {:merge, [pos_integer(), 0]} == Type.merge(byte(), pos_integer())
   end
 

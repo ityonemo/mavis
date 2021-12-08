@@ -11,9 +11,13 @@ defmodule TypeTest.BuiltinNonemptyList.MergeTest do
     assert {:merge, [nonempty_list(any())]} == Type.merge(nonempty_list(any()), none())
   end
 
-  test "nonempty_list merges with literal nonempty improper list" do
+  test "nonempty_list merges with literal nonempty list" do
     assert {:merge, [nonempty_list(any())]} ==
-      Type.merge(nonempty_list(any()), [47 | 47])
+      Type.merge(nonempty_list(any()), [47, 47])
+  end
+
+  test "nonempty_list does not merge with literal nonempty improper list" do
+    assert :nomerge == Type.merge(nonempty_list(any()), [47 | 47])
   end
 
   test "nonempty_list does not merge with an empty list" do

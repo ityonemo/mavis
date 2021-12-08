@@ -33,7 +33,7 @@ defmodule TypeTest.BuiltinChar.MergeTest do
     assert {:merge, [char()]} == Type.merge(char(), char())
   end
 
-  test "char merges with char integer supersets" do
+  test "char merges with char integer supertypes" do
     assert {:merge, [pos_integer(), 0]} == Type.merge(char(), pos_integer())
   end
 

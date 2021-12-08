@@ -15,8 +15,8 @@ defmodule TypeTest.BuiltinNonemptyCharlist.MergeTest do
     assert {:merge, [nonempty_charlist()]} == Type.merge(nonempty_charlist(), [47])
   end
 
-  test "nonempty_charlist merges with a list of a superset" do
-    assert {:merge, [type([pos_integer(), ...])]} = Type.merge(nonempty_charlist(), type([pos_integer(), ...]))
+  test "nonempty_charlist merges with a list of a supertype" do
+    assert {:merge, [type([non_neg_integer(), ...])]} = Type.merge(nonempty_charlist(), type([pos_integer(), ...]))
   end
 
   test "nonempty_charlist does not merge with a list out of range" do

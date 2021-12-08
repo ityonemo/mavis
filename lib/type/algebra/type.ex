@@ -104,6 +104,10 @@ defimpl Type.Algebra, for: Type do
   end
   def intersect_internal(_, _), do: none()
 
+  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
+
+  def subtype_internal(_, _), do: false
+
 #
 #  import Type, only: :macros
 #

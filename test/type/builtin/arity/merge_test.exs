@@ -33,7 +33,7 @@ defmodule TypeTest.BuiltinArity.MergeTest do
     assert {:merge, [arity()]} == Type.merge(arity(), arity())
   end
 
-  test "arity merges with arity integer supersets" do
+  test "arity merges with arity integer supertypes" do
     assert {:merge, [pos_integer(), 0]} == Type.merge(arity(), pos_integer())
   end
 

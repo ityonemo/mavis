@@ -194,6 +194,7 @@ defmodule Type.List do
   def merge(%{type: ltype, final: final}, %Type.List{type: rtype, final: final}) do
     {:merge, [%Type.List{type: Type.union(ltype, rtype), final: final}]}
   end
+  def merge(%{type: _type, final: _final}, []), do: :nomerge
   def merge(%{type: type, final: final}, list) when is_list(list) do
     merge_list(type, final, list)
   end
