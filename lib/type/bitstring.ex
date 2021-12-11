@@ -107,6 +107,7 @@ defmodule Type.Bitstring do
   """
 
   use Type.Helpers
+  alias Type.Message
 
   defstruct [size: 0, unit: 0, unicode: false]
 
@@ -227,11 +228,6 @@ defmodule Type.Bitstring do
   end
   def intersect(_, _), do: @none
 
-  def subtype?(a, b) do
-    
-  end
-
-
   defp sizeup(asz, bsz, aun, bun) do
     a_mod_b = rem(aun, bun)
     Enum.reduce_while(0..bun-1, asz - bsz, fn idx, acc ->
@@ -254,152 +250,69 @@ defmodule Type.Bitstring do
     struct(__MODULE__, fields)
   end
 
-  #defimpl Type.Algebra do
-  #  import Type, only: :macros
-  #  alias Type.{Bitstring, Message}
-#
-  #  use Type.Helpers
-#
-  #  group_compare do
-#
-  #    def group_compare(left, %Type{module: String, name: :t, params: []}) do
-  #      left
-  #      |> group_compare(%Type.Bitstring{size: 0, unit: 8})
-  #      |> case do
-  #        :eq -> :gt
-  #        order -> order
-  #      end
-  #    end
-#
-  #    def group_compare(left, %Type{module: String, name: :t, params: [p]}) do
-  #      lowest_idx = case p do
-  #        i when is_integer(i) -> [i]
-  #        range = _.._ -> range
-  #        %Type.Union{of: ints} -> ints
-  #      end
-  #      |> Enum.min
-#
-  #      left
-  #      |> Type.compare(%Type.Bitstring{size: lowest_idx * 8})
-  #      |> case do
-  #        :eq -> :gt
-  #        order -> order
-  #      end
-  #    end
-  #  end
-#
-  #  usable_as do
-  #    # empty strings
-  #    def usable_as(%{size: 0, unit: 0}, %__MODULE__{size: 0}, _meta), do: :ok
-  #    def usable_as(type = %{size: 0, unit: 0}, target = %__MODULE__{}, meta) do
-  #      {:error, Message.make(type, target, meta)}
-  #    end
-#
-  #    # same unit
-  #    def usable_as(challenge = %{size: size_a, unit: unit},
-  #                  target = %__MODULE__{size: size_b, unit: unit},
-  #                  meta) do
-#
-  #      cond do
-  #        unit == 0 and size_a == size_b ->
-  #          :ok
-  #        unit == 0 ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #        rem(size_a - size_b, unit) != 0 ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #        size_b > size_a ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        true ->
-  #          :ok
-  #      end
-  #    end
-#
-  #    # same size
-  #    def usable_as(challenge = %{size: size, unit: unit_a},
-  #                  target = %__MODULE__{size: size, unit: unit_b},
-  #                  meta) do
-  #      cond do
-  #        unit_b == 0 ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        unit_a == 0 ->
-  #          :ok
-  #        unit_a < unit_b ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        true ->
-  #          :ok
-  #      end
-  #    end
-#
-  #    # different sizes and units
-  #    def usable_as(challenge = %{size: size_a, unit: unit_a},
-  #                  target = %__MODULE__{size: size_b, unit: unit_b}, meta) do
-#
-  #      unit_gcd = Integer.gcd(unit_a, unit_b)
-  #      cond do
-  #        unit_b == 0 and rem(size_a - size_b, unit_a) == 0 ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        # the lattice formed by the units will never meet.
-  #        rem(size_a - size_b, unit_gcd) != 0 ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #        # the challenge lattice strictly overlays the target lattice
-  #        unit_gcd == unit_b and size_b < size_a ->
-  #          :ok
-  #        true ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #      end
-  #    end
-#
-  #    def usable_as(%{size: 0, unit: 0},
-  #                  %Type{module: String, name: :t, params: []}, _meta), do: :ok
-#
-  #    def usable_as(%{size: 0, unit: 0},
-  #                  challenge = %Type{module: String, name: :t, params: [p]}, meta) do
-  #      if Type.subtype?(0, p) do
-  #        :ok
-  #      else
-  #        {:error, Message.make(%Type.Bitstring{}, challenge, meta)}
-  #      end
-  #    end
-#
-  #    # special String.t type
-  #    def usable_as(challenge, target = %Type{module: String, name: :t, params: []}, meta) do
-  #      case Type.usable_as(challenge, binary()) do
-  #        :ok ->
-  #          msg = encapsulation_msg(challenge, target)
-  #          {:maybe, [Message.make(challenge, type(String.t()), meta ++ [message: msg])]}
-  #        error ->
-  #          error
-  #      end
-  #    end
-#
-  #    def usable_as(challenge, target = %Type{module: String, name: :t, params: [p]}, meta) do
-  #      case p do
-  #        i when is_integer(i) -> [i]
-  #        range = _.._ -> range
-  #        %Type.Union{of: ints} -> ints
-  #      end
-  #      |> Enum.map(&Type.usable_as(challenge, %Type.Bitstring{size: &1 * 8}, meta))
-  #      |> Enum.reduce(&Type.ternary_and/2)
-  #      |> case do
-  #        :ok ->
-  #          msg = encapsulation_msg(challenge, target)
-  #          {:maybe, [Message.make(challenge, type(String.t()), meta ++ [message: msg])]}
-  #        other -> other
-  #      end
-  #    end
-#
-  #    # literal bitstrings
-  #    def usable_as(challenge, bitstring, meta) when is_bitstring(bitstring) do
-  #      challenge
-  #      |> Type.usable_as(%Type.Bitstring{size: :erlang.bit_size(bitstring)}, meta)
-  #      |> case do
-  #        {:error, _} -> {:error, Message.make(challenge, bitstring, meta)}
-  #        {:maybe, _} -> {:maybe, [Message.make(challenge, bitstring, meta)]}
-  #        :ok -> {:maybe, [Message.make(challenge, bitstring, meta)]}
-  #      end
-  #    end
-  #  end
-#
+  def usable_as(%{size: 0, unit: 0}, %__MODULE__{size: 0}, _meta), do: :ok
+  def usable_as(type = %{size: 0, unit: 0}, target = %__MODULE__{}, meta) do
+    {:error, Message.make(type, target, meta)}
+  end
+
+  # same unit
+  def usable_as(challenge = %{size: size_a, unit: unit},
+                target = %__MODULE__{size: size_b, unit: unit},
+                meta) do
+    cond do
+      unit == 0 and size_a == size_b ->
+        unicode_usable_as(challenge, target, meta)
+      unit == 0 ->
+        {:error, Message.make(challenge, target, meta)}
+      rem(size_a - size_b, unit) != 0 ->
+        {:error, Message.make(challenge, target, meta)}
+      size_b > size_a ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+      true ->
+        unicode_usable_as(challenge, target, meta)
+    end
+  end
+
+  # same size
+  def usable_as(challenge = %{size: size, unit: unit_a},
+                target = %__MODULE__{size: size, unit: unit_b},
+                meta) do
+    cond do
+      unit_b == 0 ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+      unit_a == 0 ->
+        unicode_usable_as(challenge, target, meta)
+      unit_a < unit_b ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+      true ->
+        unicode_usable_as(challenge, target, meta)
+    end
+  end
+
+  # different sizes and units
+  def usable_as(challenge = %{size: size_a, unit: unit_a},
+                target = %__MODULE__{size: size_b, unit: unit_b}, meta) do
+    unit_gcd = Integer.gcd(unit_a, unit_b)
+    cond do
+      unit_b == 0 and rem(size_a - size_b, unit_a) == 0 ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+      # the lattice formed by the units will never meet.
+      rem(size_a - size_b, unit_gcd) != 0 ->
+        {:error, Message.make(challenge, target, meta)}
+      # the challenge lattice strictly overlays the target lattice
+      unit_gcd == unit_b and size_b < size_a ->
+        unicode_usable_as(challenge, target, meta)
+      true ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+    end
+  end
+
+  defp unicode_usable_as(%{unicode: true}, _, _), do: :ok
+  defp unicode_usable_as(_, %{unicode: false}, _), do: :ok
+  defp unicode_usable_as(challenge, target, meta) do
+    {:maybe, [Message.make(challenge, target, meta)]}
+  end
+
   #  # TODO: DRY THIS UP into the Type module.
   #  defp encapsulation_msg(challenge, target) do
   #    """

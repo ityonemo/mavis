@@ -4,6 +4,7 @@ defimpl Type.Algebra, for: BitString do
   import Type, only: :macros
 
   alias Type.Helpers
+  alias Type.Message
   require Helpers
 
   Helpers.typegroup_fun()
@@ -20,53 +21,30 @@ defimpl Type.Algebra, for: BitString do
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
   def intersect_internal(_, _), do: %Type{name: :none}
 
-#  use Type.Helpers
-#
-#  group_compare do
-#    def group_compare(_, %Type.Bitstring{}), do: :lt
-#    def group_compare(_, %Type{module: String, name: :t}), do: :lt
-#    def group_compare(rvalue, lvalue)
-#      when rvalue < lvalue, do: :lt
-#    def group_compare(rvalue, lvalue)
-#      when rvalue == lvalue, do: :eq
-#    def group_compare(rvalue, lvalue)
-#      when rvalue > lvalue, do: :gt
-#    def group_compare(_, _), do: :lt
-#  end
-#
-#  ###########################################################################
-#  ## SUBTYPE
-#
-#  subtype :usable_as
-#
-#  ###########################################################################
-#  ## USABLE_AS
-#
-#  alias Type.Message
-#
-#  usable_as do
-#    def usable_as(bitstring, target = %Type.Bitstring{}, meta)
-#        when is_bitstring(bitstring) do
-#      %Type.Bitstring{size: :erlang.bit_size(bitstring)}
-#      |> Type.usable_as(target, meta)
-#      |> case do
-#        {:error, _} -> {:error, Message.make(bitstring, target, meta)}
-#        {:maybe, _} -> {:maybe, [Message.make(bitstring, target, meta)]}
-#        :ok -> :ok
-#      end
-#    end
-#    def usable_as(binary, target = %Type{module: String, name: :t}, meta)
-#        when is_binary(binary) do
-#      case {target.params, String.valid?(binary)} do
-#        {l, _} when length(l) > 1 -> raise "invalid type #{inspect target}"
-#        {[], true} -> :ok
-#        {[v], true} when :erlang.size(binary) == v -> :ok
-#        _ ->
-#          {:error, Message.make(binary, target, meta)}
-#      end
-#    end
-#  end
-#
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+
+  def usable_as_internal(bitstring, target = %Type.Bitstring{unicode: true}, meta) do
+    if String.valid?(bitstring) do
+      usable_as_internal(bitstring, %{target | unicode: false}, meta)
+    else
+      {:error, Message.make(bitstring, target, meta)}
+    end
+  end
+
+  def usable_as_internal(bitstring, target = %Type.Bitstring{}, meta) do
+    %Type.Bitstring{size: :erlang.bit_size(bitstring)}
+    |> Type.usable_as(target, meta)
+    |> case do
+      {:error, _} -> {:error, Message.make(bitstring, target, meta)}
+      {:maybe, _} -> {:maybe, [Message.make(bitstring, target, meta)]}
+      :ok -> :ok
+    end
+  end
+
+  def usable_as_internal(bitstring, target, meta) do
+    {:error, Message.make(bitstring, target, meta)}
+  end
+
 #  intersection do
 #    def intersect(_, bitstring) when is_bitstring(bitstring), do: none()
 #    def intersect(binary, rhs = %Type{module: String, name: :t})

@@ -50,8 +50,7 @@ defmodule TypeTest.RemoteString.UsableAsTest do
 
   describe "bitstring types" do
     test "are maybe usable as String.t" do
-      assert {:maybe, [msg]} = binary() ~> type(String.t())
-      assert msg.meta[:message] =~ "remote encapsulation"
+      assert {:maybe, _} = binary() ~> type(String.t())
     end
   end
 end

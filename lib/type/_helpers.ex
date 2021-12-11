@@ -129,10 +129,10 @@ defmodule Type.Helpers do
     end
   end
 
-  defmacro algebra_usable_as_fun(module, call \\ :subtype?) do
+  defmacro algebra_usable_as_fun(module, call \\ :usable_as) do
     quote do
       def usable_as(type, type, _meta), do: :ok
-      def usable_as(type, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
+      def usable_as(_, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
       def usable_as(ltype, rtype, meta), do: unquote(module).unquote(call)(ltype, rtype, meta)
     end
   end
@@ -152,6 +152,7 @@ defmodule Type.Helpers do
         Helpers.algebra_compare_fun(unquote(module))
         Helpers.algebra_merge_fun(unquote(module))
         Helpers.algebra_intersection_fun(unquote(module))
+        Helpers.algebra_usable_as_fun(unquote(module))
 
         defdelegate usable_as(subject, target, meta), to: module
         defdelegate subtype?(subject, target), to: module
