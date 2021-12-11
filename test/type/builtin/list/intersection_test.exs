@@ -16,9 +16,11 @@ defmodule TypeTest.BuiltinList.IntersectionTest do
       assert list(:foo) == list() <~> list(:foo)
     end
 
+    @proper_iolist type([iodata() <|> byte()])
+
     test "with other specialized lists is them" do
-      assert iolist() == list() <~> iolist()
-      assert iolist() == list() <~> iodata()
+      assert @proper_iolist == list() <~> iolist()
+      assert @proper_iolist == list() <~> iodata()
       assert keyword() == list() <~> keyword()
       assert charlist() == list() <~> charlist()
     end

@@ -3,6 +3,7 @@ defmodule TypeTest.BuiltinFun.IntersectionTest do
   use Type.Operators
 
   @moduletag :intersection
+  @moduletag :function
 
   import Type, only: :macros
 

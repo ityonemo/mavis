@@ -4,6 +4,8 @@ defmodule TypeTest.RegressionTest do
   import Type, only: :macros
   import Type.Operators
 
+  @moduletag :regression
+
   describe "regression where File.copy spec infinite loops" do
     # initial failing example
     test "File.copy/3 spec can be loaded" do

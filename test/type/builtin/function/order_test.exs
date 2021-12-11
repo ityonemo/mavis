@@ -2,6 +2,7 @@ defmodule TypeTest.BuiltinFunction.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :order
+  @moduletag :function
 
   import Type, only: :macros
 

@@ -4,6 +4,7 @@ defmodule TypeTest.BuiltinMap.MatchTest do
   import Type, only: :macros
 
   @moduletag :fetch
+  @moduletag :map
 
   describe "the map/0 type" do
     @map_type %Type.Map{optional: %{any() => any()}, required: %{}}

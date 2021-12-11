@@ -3,7 +3,9 @@ defmodule TypeTest.BuiltinFunction.InspectTest do
 
   import TypeTest.FetchCase
   import TypeTest.InspectCase
+  
   @moduletag :inspect
+  @moduletag :function
 
   describe "the function type" do
     pull_types(defmodule Function do

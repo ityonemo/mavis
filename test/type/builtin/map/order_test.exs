@@ -1,7 +1,8 @@
-defmodule TypeTest.BuiltinList.MapTest do
+defmodule TypeTest.BuiltinMap.OrderTest do
   use ExUnit.Case, async: true
 
   @moduletag :order
+  @moduletag :map
 
   import Type, only: :macros
 

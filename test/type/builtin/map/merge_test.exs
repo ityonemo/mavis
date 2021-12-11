@@ -2,6 +2,7 @@ defmodule TypeTest.BuiltinMap.MergeTest do
   use ExUnit.Case, async: true
 
   @moduletag :merge
+  @moduletag :map
 
   import Type, only: :macros
 

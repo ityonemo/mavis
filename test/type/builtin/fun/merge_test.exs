@@ -2,6 +2,7 @@ defmodule TypeTest.BuiltinFun.MergeTest do
   use ExUnit.Case, async: true
 
   @moduletag :merge
+  @moduletag :function
 
   import Type, only: :macros
 

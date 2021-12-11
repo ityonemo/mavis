@@ -58,15 +58,13 @@ defmodule Type.Union do
 
   def intersect(union = %{}, rtype) do
     union.of
-    |> Enum.map(&Type.intersect(&1, rtype))
-    |> Type.union
+    |> Enum.map(&Type.intersect(&1, rtype)) 
+    |> Type.union 
   end
 
   @spec merge(t, Type.t) :: t
   @doc false
   def merge(_, _), do: raise "type merging with unions is disallowed"
-
-  defdelegate type_merge(order, head, type), to: Type.Union.Merge
 
   # checks if a union OR its underlying list is valid.  Useful for debugging
   # purposes only.  A union is invalid if any of the following are true:

@@ -38,7 +38,7 @@ defmodule TypeTest.BuiltinNonNegInteger.IntersectionTest do
     end
 
     test "with all other types is none" do
-      [47, pos_integer(), -10..10]
+      [47, 0, pos_integer(), -10..10]
       |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
         assert none() == non_neg_integer() <~> target

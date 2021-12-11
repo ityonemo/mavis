@@ -3,6 +3,7 @@ defmodule TypeTest.BuiltinMap.IntersectionTest do
   use Type.Operators
 
   @moduletag :intersection
+  @moduletag :map
 
   import Type, only: :macros
 

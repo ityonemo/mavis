@@ -8,28 +8,28 @@ defmodule TypeTest.BuiltinNode.IntersectionTest do
 
   describe "the intersection of node" do
     test "with any, atom, and node is itself" do
-      assert node() == node() <~> any()
-      assert node() == node() <~> atom()
-      assert node() == node() <~> node()
+      assert type(node()) == type(node()) <~> any()
+      assert type(node()) == type(node()) <~> atom()
+      assert type(node()) == type(node()) <~> type(node())
     end
 
     test "with a conformant atom literal is the literal" do
-      assert :foo@bar == node() <~> :foo@bar
+      assert :foo@bar == type(node()) <~> :foo@bar
     end
 
     test "with a non-conformant atom literal is none" do
-      assert none() == node() <~> :foo
+      assert none() == type(node()) <~> :foo
     end
 
     test "with none is none" do
-      assert none() == node() <~> none()
+      assert none() == type(node()) <~> none()
     end
 
     test "with all other types is none" do
       [atom()]
       |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
-        assert none() == node() <~> target
+        assert none() == type(node()) <~> target
       end)
     end
   end

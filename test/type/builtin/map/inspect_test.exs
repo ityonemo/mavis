@@ -3,7 +3,9 @@ defmodule TypeTest.BuiltinMap.InspectTest do
 
   import TypeTest.FetchCase
   import TypeTest.InspectCase
+  
   @moduletag :inspect
+  @moduletag :map
 
   describe "the map type" do
     pull_types(defmodule Map do

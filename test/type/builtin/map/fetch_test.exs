@@ -5,6 +5,7 @@ defmodule TypeTest.BuiltinMap.FetchTest do
   import TypeTest.FetchCase
 
   @moduletag :fetch
+  @moduletag :map
 
   pull_types(defmodule Map do
     @type map_type :: map

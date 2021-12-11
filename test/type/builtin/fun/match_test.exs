@@ -4,6 +4,7 @@ defmodule TypeTest.Builtin.Fun.MatchTest do
   import Type, only: :macros
 
   @moduletag :fetch
+  @moduletag :function
 
   describe "the fun/0 type" do
     @fun_type %Type.Function{branches: [%Type.Function.Branch{params: :any, return: any()}]}

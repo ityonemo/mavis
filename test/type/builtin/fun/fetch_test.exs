@@ -5,6 +5,7 @@ defmodule TypeTest.BuiltinFun.FetchTest do
   import TypeTest.FetchCase
 
   @moduletag :fetch
+  @moduletag :function
 
   pull_types(defmodule Fun do
     @type fun_type :: fun

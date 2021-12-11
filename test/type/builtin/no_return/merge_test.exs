@@ -8,17 +8,17 @@ defmodule TypeTest.BuiltinNoReturn.MergeTest do
   use Type.Operators
 
   test "no_return merges with everything else" do
-    assert none() == Type.merge(no_return(), none())
-    assert neg_integer() == Type.merge(no_return(), neg_integer())
-    assert pos_integer() == Type.merge(no_return(), pos_integer())
-    assert float() == Type.merge(no_return(), float())
-    assert reference() == Type.merge(no_return(), reference())
-    assert function() == Type.merge(no_return(), function())
-    assert port() == Type.merge(no_return(), port())
-    assert pid() == Type.merge(no_return(), pid())
-    assert tuple() == Type.merge(no_return(), tuple())
-    assert map() == Type.merge(no_return(), map())
-    assert nonempty_maybe_improper_list() == Type.merge(no_return(), nonempty_maybe_improper_list())
-    assert bitstring() == Type.merge(no_return(), bitstring())
+    assert {:merge, [none()]} == Type.merge(no_return(), none())
+    assert {:merge, [neg_integer()]} == Type.merge(no_return(), neg_integer())
+    assert {:merge, [pos_integer()]} == Type.merge(no_return(), pos_integer())
+    assert {:merge, [float()]} == Type.merge(no_return(), float())
+    assert {:merge, [reference()]} == Type.merge(no_return(), reference())
+    assert {:merge, [function()]} == Type.merge(no_return(), function())
+    assert {:merge, [port()]} == Type.merge(no_return(), port())
+    assert {:merge, [pid()]} == Type.merge(no_return(), pid())
+    assert {:merge, [tuple()]} == Type.merge(no_return(), tuple())
+    assert {:merge, [map()]} == Type.merge(no_return(), map())
+    assert {:merge, [nonempty_maybe_improper_list()]} == Type.merge(no_return(), nonempty_maybe_improper_list())
+    assert {:merge, [bitstring()]} == Type.merge(no_return(), bitstring())
   end
 end
