@@ -227,6 +227,11 @@ defmodule Type.Bitstring do
   end
   def intersect(_, _), do: @none
 
+  def subtype?(a, b) do
+    
+  end
+
+
   defp sizeup(asz, bsz, aun, bun) do
     a_mod_b = rem(aun, bun)
     Enum.reduce_while(0..bun-1, asz - bsz, fn idx, acc ->

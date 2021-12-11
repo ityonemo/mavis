@@ -129,6 +129,14 @@ defmodule Type.Helpers do
     end
   end
 
+  defmacro algebra_usable_as_fun(module, call \\ :subtype?) do
+    quote do
+      def usable_as(type, type, _meta), do: :ok
+      def usable_as(type, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
+      def usable_as(ltype, rtype, meta), do: unquote(module).unquote(call)(ltype, rtype, meta)
+    end
+  end
+
   defmacro __using__(_opts) do
     module = __CALLER__.module
     quote bind_quoted: [module: module] do

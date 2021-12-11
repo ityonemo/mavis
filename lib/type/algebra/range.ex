@@ -78,42 +78,44 @@ defimpl Type.Algebra, for: Range do
   end
   def intersect_internal(_, _), do: Type.none()
 
-#
-#  usable_as do
-#    def usable_as(a.._, pos_integer(), _) when a > 0,      do: :ok
-#    def usable_as(_..a, neg_integer(), _) when a < 0,      do: :ok
-#    def usable_as(a..b, pos_integer(), meta) when b > 0 do
-#      {:maybe, [Type.Message.make(a..b, pos_integer(), meta)]}
-#    end
-#    def usable_as(a..b, neg_integer(), meta) when a < 0 do
-#      {:maybe, [Type.Message.make(a..b, neg_integer(), meta)]}
-#    end
-#    def usable_as(a..b, target, meta)
-#        when is_integer(target) and a <= target and target <= b do
-#      {:maybe, [Type.Message.make(a..b, target, meta)]}
-#    end
-#    def usable_as(a..b, c..d, meta) do
-#      cond do
-#        a >= c and b <= d -> :ok
-#        a > d or b < c -> {:error, Type.Message.make(a..b, c..d, meta)}
-#        true ->
-#          {:maybe, [Type.Message.make(a..b, c..d, meta)]}
-#      end
-#    end
-#    # strange stitched ranges
-#    def usable_as(range, union = %Type.Union{of: list}, meta) do
-#      # take the intersections and make sure they reassemble to the
-#      # range.
-#      list
-#      |> Enum.map(&Type.intersect(&1, range))
-#      |> Type.union
-#      |> case do
-#        none() -> {:error, Type.Message.make(range, union, meta)}
-#        ^range -> :ok
-#        _ -> {:maybe, [Type.Message.make(range, union, meta)]}
-#      end
-#    end
-#  end
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+
+  def usable_as_internal(a.._, pos_integer(), _) when a > 0,      do: :ok
+  def usable_as_internal(_..a, neg_integer(), _) when a < 0,      do: :ok
+  def usable_as_internal(a..b, pos_integer(), meta) when b > 0 do
+    {:maybe, [Type.Message.make(a..b, pos_integer(), meta)]}
+  end
+  def usable_as_internal(a..b, neg_integer(), meta) when a < 0 do
+    {:maybe, [Type.Message.make(a..b, neg_integer(), meta)]}
+  end
+  def usable_as_internal(a..b, target, meta) when target in a..b do
+    {:maybe, [Type.Message.make(a..b, target, meta)]}
+  end
+  def usable_as_internal(a..b, c..d, meta) do
+    cond do
+      a >= c and b <= d -> :ok
+      a > d or b < c -> {:error, Type.Message.make(a..b, c..d, meta)}
+      true ->
+        {:maybe, [Type.Message.make(a..b, c..d, meta)]}
+    end
+  end
+  # strange stitched ranges
+  def usable_as_internal(range, union = %Type.Union{of: list}, meta) do
+    # take the intersections and make sure they reassemble to the
+    # range.
+    list
+    |> Enum.map(&Type.intersect(&1, range))
+    |> Type.union
+    |> case do
+      none() -> {:error, Type.Message.make(range, union, meta)}
+      ^range -> :ok
+      _ -> {:maybe, [Type.Message.make(range, union, meta)]}
+    end
+  end
+  def usable_as_internal(range, type, meta) do
+    {:error, Type.Message.make(range, type, meta)}
+  end
+end
 #
 #  subtract do
 #    # basic types
@@ -147,4 +149,3 @@ defimpl Type.Algebra, for: Range do
 #  defp rangeresolve(_, _), do: none()
 #
 #  subtype :usable_as
-end
