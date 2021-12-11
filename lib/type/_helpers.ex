@@ -130,10 +130,36 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_usable_as_fun(module, call \\ :usable_as) do
+    union_clause = unless module == Type.Union do
+      quote do
+        def usable_as(challenge, target = %Type.Union{of: union}, meta) do
+          alias Type.Message
+          union
+          |> Enum.reduce_while({:error, Message.make(challenge, target, [])}, fn
+            _, :ok -> {:halt, :ok}
+            part, acc ->
+              part_usable = Type.usable_as(challenge, part, [])
+              {:cont, Type.ternary_or(part_usable, acc)}
+          end)
+          |> case do
+            :ok -> :ok
+            {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+            {:error, _} -> {:error, Message.make(challenge, target, meta)}
+          end
+        end
+      end
+    end
+
     quote do
       def usable_as(type, type, _meta), do: :ok
+      def usable_as(a, %Type{module: nil, name: :none, params: []}, meta) do
+        {:error, Type.Message.make(a, %Type{name: :none}, meta)}
+      end
       def usable_as(_, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
-      def usable_as(ltype, rtype, meta), do: unquote(module).unquote(call)(ltype, rtype, meta)
+      unquote(union_clause)
+      def usable_as(ltype, rtype, meta) do
+        unquote(module).unquote(call)(ltype, rtype, meta) 
+      end
     end
   end
 

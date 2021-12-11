@@ -1,5 +1,7 @@
 defimpl Type.Algebra, for: Atom do
+  
   alias Type.Helpers
+  alias Type.Message
 
   import Type, only: :macros
 
@@ -32,43 +34,22 @@ defimpl Type.Algebra, for: Atom do
   def subtype_internal(_, atom()), do: true
   def subtype_internal(_, _), do: false
 
-#  use Type.Helpers
-#
-#  alias Type.Message
-#
-#  group_compare do
-#    def group_compare(_, atom()), do: :lt
-#    def group_compare(left, right),       do: (if left >= right, do: :gt, else: :lt)
-#  end
-#
-#  usable_as do
-#    def usable_as(_, atom(), _), do: :ok
-#    def usable_as(atom, type(node()), meta) do
-#      if Type.Algebra.Type.valid_node?(atom) do
-#        :ok
-#      else
-#        {:error, Message.make(atom, type(node()), meta)}
-#      end
-#    end
-#    def usable_as(atom, module(), meta) do
-#      if Type.Algebra.Type.valid_module?(atom) do
-#        :ok
-#      else
-#        {:maybe, [Message.make(atom, module(), meta)]}
-#      end
-#    end
-#  end
-#
-#  intersection do
-#    def intersect(atom, atom()), do: atom
-#    def intersect(atom, type(node())) do
-#      if Type.Algebra.Type.valid_node?(atom), do: atom, else: none()
-#    end
-#    def intersect(atom, module()) do
-#      if Type.Algebra.Type.valid_module?(atom), do: atom, else: none()
-#    end
-#  end
-#
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+
+  def usable_as_internal(_, atom(), _), do: :ok
+  def usable_as_internal(atom, type(node()), meta) do
+    if Type.Algebra.Atom.valid_node?(atom) do
+      :ok
+    else
+      {:error, Message.make(atom, type(node()), meta)}
+    end
+  end
+  # TODO: log the usable_as content as a post-check
+  def usable_as_internal(_, module(), _), do: :ok
+  def usable_as_internal(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+
 #  subtract do
 #  end
 #

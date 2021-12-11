@@ -1,6 +1,8 @@
 defimpl Type.Algebra, for: Type do
 
   alias Type.Helpers
+  alias Type.Message
+
   require Helpers
 
   @group_for %{
@@ -111,6 +113,17 @@ defimpl Type.Algebra, for: Type do
   Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
 
   def subtype_internal(_, _), do: false
+
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+  def usable_as_internal(any(), target, meta) do
+    {:maybe, [Message.make(any(), target, meta)]}
+  end
+  def usable_as_internal(atom(), a, meta) when is_atom(a) do
+    {:maybe, [Message.make(atom(), a, meta)]}
+  end
+  def usable_as_internal(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
 
 #
 #  import Type, only: :macros

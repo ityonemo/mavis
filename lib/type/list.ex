@@ -167,6 +167,7 @@ defmodule Type.List do
   }
 
   use Type.Helpers
+  alias Type.Message
 
   @none %Type{name: :none}
   @binary %Type.Bitstring{unit: 8}
@@ -215,20 +216,6 @@ defmodule Type.List do
     end
   end
 
-  def usable_literal(list, literal, so_far \\ :ok)
-  def usable_literal(list, [head | rest], so_far) do
-    next_result = head
-    |> Type.usable_as(list.type)
-    |> Type.ternary_and(so_far)
-
-    usable_literal(list, rest, next_result)
-  end
-  def usable_literal(list, final, so_far) do
-    final
-    |> Type.usable_as(list.final)
-    |> Type.ternary_and(so_far)
-  end
-
   def intersect(_, []), do: @none
   def intersect(type, list) when is_list(list) do
     intersect_list(type, list, [])
@@ -267,73 +254,30 @@ defmodule Type.List do
   defp reverse_prepend([head | rest], so_far), do: reverse_prepend(rest, [head | so_far])
   defp reverse_prepend([], so_far), do: so_far
 
-  #defimpl Type.Algebra do
-  #  import Type, only: :macros
-#
-  #  use Type.Helpers
-#
-  #  alias Type.{List, Message, Union}
-#
-  #  group_compare do
+  def usable_as(target, list, meta) when is_list(list) do
+    case usable_as_list(target, list) do
+      :maybe -> {:maybe, [Message.make(target, list, meta)]}
+      :error -> {:error, Message.make(target, list, meta)}
+    end
+  end
+  def usable_as(target, challenge, meta) do
+    {:error, Message.make(target, challenge, meta)}
+  end
 
-  #  end
-#
-  #  usable_as do
-  #    def usable_as(challenge, iolist(), meta) do
-  #      Type.Iolist.usable_as_iolist(challenge, meta)
-  #    end
-#
-  #    # nonempty lists are not usable as empty lists.
-  #    def usable_as(challenge, [], meta) do
-  #      {:error, Message.make(challenge, [], meta)}
-  #    end
-#
-  #    def usable_as(challenge, target = %List{}, meta) do
-  #      case Type.usable_as(challenge.type, target.type, meta) do
-  #        error when Type.is_error(error) -> error
-  #        type_result ->
-  #          challenge.final
-  #          |> Type.usable_as(target.final, meta)
-  #          |> Type.ternary_and(type_result)
-  #      end
-  #      |> case do
-  #        :ok -> :ok
-  #        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-  #        {:error, _} -> {:error, Message.make(challenge, target, meta)}
-  #      end
-  #    end
-#
-  #    def usable_as(challenge, target, meta) when is_list(target) do
-  #      # TODO: make this work with improper lists
-  #      challenge
-  #      |> List.usable_literal(target)
-  #      |> case do
-  #        {:error, _} ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #        {:maybe, _} ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        :ok ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #      end
-  #    end
-  #  end
-#
-  #  intersection do
-  #  end
-#
-  #  subtype do
-  #    # can't simply forward to usable_as, because any of the encapsulated
-  #    # types might have a usable_as rule that isn't strictly subtype?
-  #    def subtype?(list, iolist()), do: Type.Iolist.subtype_of_iolist?(list)
-  #    def subtype?(challenge, target = %List{}) do
-  #      (Type.subtype?(challenge.type, target.type) and
-  #        Type.subtype?(challenge.final, target.final))
-  #    end
-  #    def subtype?(challenge, %Union{of: types}) do
-  #      Enum.any?(types, &Type.subtype?(challenge, &1))
-  #    end
-  #  end
-  #end
+  defp usable_as_list(target = %{type: type}, [head | rest]) do
+    case Type.usable_as(type, head, []) do
+      :ok -> usable_as_list(target, rest)
+      {:maybe, _} -> usable_as_list(target, rest)
+      {:error, _} -> :error
+    end
+  end
+  defp usable_as_list(%{final: final}, final_element) do
+    case Type.usable_as(final, final_element, []) do
+      :ok -> :maybe
+      {:maybe, _} -> :maybe
+      {:error, _} -> :error
+    end
+  end
 
   defimpl Inspect do
     import Inspect.Algebra
