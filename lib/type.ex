@@ -1505,6 +1505,16 @@ defmodule Type do
     |> subtype?(type)
   end
 
+  if Mix.env() == :test do
+    defmacrop assert_not_union(type_ast) do
+      quote do
+        if match?(%Type.Union{}, unquote(type_ast)), do: raise "can't partition unions"
+      end
+    end
+  else
+    defmacrop assert_not_union(_), do: nil
+  end
+
   @spec partition(t, [t]) :: [t]
   @doc """
   partitions a type across a list of types
@@ -1521,7 +1531,10 @@ defmodule Type do
   ```
   """
   def partition(type, type_list) when is_list(type_list) do
-    Enum.map(type_list, &Type.intersect(type, &1))
+    assert_not_union(type)
+    type_list
+    |> Enum.map(&Type.intersect(type, &1))
+    |> Enum.reject(&(&1 == none()))
   end
 
   @spec covered?(t, [t]) :: boolean

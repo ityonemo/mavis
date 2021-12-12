@@ -99,19 +99,6 @@ defimpl Type.Algebra, for: Range do
         {:maybe, [Type.Message.make(a..b, c..d, meta)]}
     end
   end
-  # strange stitched ranges
-  def usable_as_internal(range, union = %Type.Union{of: list}, meta) do
-    # take the intersections and make sure they reassemble to the
-    # range.
-    list
-    |> Enum.map(&Type.intersect(&1, range))
-    |> Type.union
-    |> case do
-      none() -> {:error, Type.Message.make(range, union, meta)}
-      ^range -> :ok
-      _ -> {:maybe, [Type.Message.make(range, union, meta)]}
-    end
-  end
   def usable_as_internal(range, type, meta) do
     {:error, Type.Message.make(range, type, meta)}
   end

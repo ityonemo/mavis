@@ -134,17 +134,24 @@ defmodule Type.Helpers do
       quote do
         def usable_as(challenge, target = %Type.Union{of: union}, meta) do
           alias Type.Message
-          union
-          |> Enum.reduce_while({:error, Message.make(challenge, target, [])}, fn
-            _, :ok -> {:halt, :ok}
-            part, acc ->
-              part_usable = Type.usable_as(challenge, part, [])
-              {:cont, Type.ternary_or(part_usable, acc)}
-          end)
-          |> case do
-            :ok -> :ok
-            {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-            {:error, _} -> {:error, Message.make(challenge, target, meta)}
+          case Type.partition(challenge, union) do
+            [] -> {:error, Message.make(challenge, target, meta)}
+            partitioned ->
+              partitioned
+              |> Enum.flat_map(fn partition ->
+                Enum.map(union, &Type.usable_as(partition, &1, []))
+              end)
+              |> Enum.reduce(&Type.ternary_or/2)
+              |> case do
+                :ok ->
+                  if Type.union(partitioned) == challenge do
+                    :ok
+                  else
+                    {:maybe, [Message.make(challenge, target, meta)]}
+                  end
+                {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+                {:error, _} -> {:error, Message.make(challenge, target, meta)}
+              end
           end
         end
       end
@@ -158,7 +165,7 @@ defmodule Type.Helpers do
       def usable_as(_, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
       unquote(union_clause)
       def usable_as(ltype, rtype, meta) do
-        unquote(module).unquote(call)(ltype, rtype, meta) 
+        unquote(module).unquote(call)(ltype, rtype, meta)
       end
     end
   end

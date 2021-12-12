@@ -1,6 +1,8 @@
 defimpl Type.Algebra, for: Integer do
 
   alias Type.Helpers
+  alias Type.Message
+  
   require Helpers
 
   Helpers.typegroup_fun()
@@ -31,6 +33,13 @@ defimpl Type.Algebra, for: Integer do
   def subtype_internal(i, neg_integer()) when i < 0, do: true
   def subtype_internal(i, pos_integer()) when i > 0, do: true
   def subtype_internal(_, _), do: false
+
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+
+  def usable_as_internal(a, b..c, _) when a in b..c, do: :ok
+  def usable_as_internal(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
 
 #  use Type.Helpers
 #
