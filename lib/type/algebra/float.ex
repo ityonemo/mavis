@@ -1,7 +1,10 @@
 defimpl Type.Algebra, for: Float do
 
   alias Type.Helpers
+  alias Type.Message
   require Helpers
+
+  import Type, only: :macros
 
   Helpers.typegroup_fun()
 
@@ -14,6 +17,14 @@ defimpl Type.Algebra, for: Float do
 
   Helpers.algebra_intersection_fun(__MODULE__, :intersect_internal)
   def intersect_internal(_, _), do: %Type{name: :none}
+
+  Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+
+  def usable_as_internal(a, float(), _), do: :ok
+  def usable_as_internal(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+
 
 #  use Type.Helpers
 #

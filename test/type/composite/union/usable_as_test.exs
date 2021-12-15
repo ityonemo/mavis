@@ -22,5 +22,4 @@ defmodule TypeTest.TypeUnion.UsableAsTest do
       assert {:maybe, _} = (1 <|> :foo) ~> :foo
     end
   end
-
 end

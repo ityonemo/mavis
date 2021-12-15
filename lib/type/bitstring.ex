@@ -250,6 +250,28 @@ defmodule Type.Bitstring do
     struct(__MODULE__, fields)
   end
 
+  def usable_as(%{size: 0, unit: 0}, "", _meta), do: :ok
+  def usable_as(type = %{size: s, unit: u, unicode: uc}, bs, meta) when is_bitstring(bs) do
+    bsz = bit_size(bs)
+    cond do
+      u == 0 and bsz != s ->
+        {:error, Message.make(type, bs, meta)}
+      u == 0 and uc and String.valid?(bs) ->
+        {:maybe, [Message.make(type, bs, meta)]}
+      u == 0 and uc ->
+        {:error, Message.make(type, bs, meta)}
+      u == 0 ->
+        {:maybe, [Message.make(type, bs, meta)]}
+      rem(bsz - s, u) != 0 ->
+        {:error, Message.make(type, bs, meta)}
+      uc and String.valid?(bs) ->
+        {:maybe, [Message.make(type, bs, meta)]}
+      uc ->
+        {:error, Message.make(type, bs, meta)}
+      true ->
+        {:maybe, [Message.make(type, bs, meta)]}
+    end
+  end
   def usable_as(%{size: 0, unit: 0}, %__MODULE__{size: 0}, _meta), do: :ok
   def usable_as(type = %{size: 0, unit: 0}, target = %__MODULE__{}, meta) do
     {:error, Message.make(type, target, meta)}

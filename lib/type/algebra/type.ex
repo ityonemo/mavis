@@ -118,6 +118,25 @@ defimpl Type.Algebra, for: Type do
   def usable_as_internal(any(), target, meta) do
     {:maybe, [Message.make(any(), target, meta)]}
   end
+  def usable_as_internal(pos_integer(), target, meta)
+      when is_integer(target) and target > 0 do
+    {:maybe, [Message.make(pos_integer(), target, meta)]}
+  end
+  def usable_as_internal(neg_integer(), target, meta)
+      when is_integer(target) and target < 0 do
+    {:maybe, [Message.make(neg_integer(), target, meta)]}
+  end
+  def usable_as_internal(pos_integer(), target = _..n, meta) when n > 0 do
+    {:maybe, [Message.make(pos_integer(), target, meta)]}
+  end
+  def usable_as_internal(neg_integer(), target = n.._, meta) when n < 0 do
+    {:maybe, [Message.make(neg_integer(), target, meta)]}
+  end
+  def usable_as_internal(type(node()), atom(), _), do: :ok
+  def usable_as_internal(module(), atom(), _), do: :ok
+  def usable_as_internal(module(), a, meta) when is_atom(a) do
+    {:maybe, [Message.make(module(), a, meta)]}
+  end
   def usable_as_internal(atom(), a, meta) when is_atom(a) do
     {:maybe, [Message.make(atom(), a, meta)]}
   end

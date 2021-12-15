@@ -130,7 +130,13 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_usable_as_fun(module, call \\ :usable_as) do
-    union_clause = unless module == Type.Union do
+    main_clause = if module == Type.Union do
+      quote do
+        def usable_as(ltype, rtype, meta) do
+          unquote(module).unquote(call)(ltype, rtype, meta)
+        end
+      end
+    else
       quote do
         def usable_as(challenge, target = %Type.Union{of: union}, meta) do
           alias Type.Message
@@ -154,6 +160,17 @@ defmodule Type.Helpers do
               end
           end
         end
+        def usable_as(challenge, target, meta) do
+          cg = Type.typegroup(challenge)
+          tg = Type.typegroup(target)
+          if cg == 12 or cg == tg do
+          # TODO: switch implementation to commented out impl when any() becomes a union.
+          #if Type.typegroup(challenge) == Type.typegroup(target) do
+            unquote(module).unquote(call)(challenge, target, meta)
+          else
+            {:error, Type.Message.make(challenge, target, meta)}
+          end
+        end
       end
     end
 
@@ -163,10 +180,7 @@ defmodule Type.Helpers do
         {:error, Type.Message.make(a, %Type{name: :none}, meta)}
       end
       def usable_as(_, %Type{module: nil, name: :any, params: []}, _meta), do: :ok
-      unquote(union_clause)
-      def usable_as(ltype, rtype, meta) do
-        unquote(module).unquote(call)(ltype, rtype, meta)
-      end
+      unquote(main_clause)
     end
   end
 

@@ -2,7 +2,7 @@ defimpl Type.Algebra, for: Integer do
 
   alias Type.Helpers
   alias Type.Message
-  
+
   require Helpers
 
   Helpers.typegroup_fun()
@@ -37,6 +37,8 @@ defimpl Type.Algebra, for: Integer do
   Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
 
   def usable_as_internal(a, b..c, _) when a in b..c, do: :ok
+  def usable_as_internal(a, pos_integer(), _) when a > 0, do: :ok
+  def usable_as_internal(a, neg_integer(), _) when a < 0, do: :ok
   def usable_as_internal(challenge, target, meta) do
     {:error, Message.make(challenge, target, meta)}
   end

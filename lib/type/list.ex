@@ -260,6 +260,20 @@ defmodule Type.List do
       :error -> {:error, Message.make(target, list, meta)}
     end
   end
+  def usable_as(
+      target = %{type: ltype, final: lfinal},
+      challenge = %Type.List{type: rtype, final: rfinal},
+      meta) do
+
+    typecomp = Type.usable_as(ltype, rtype, [])
+    finalcomp = Type.usable_as(lfinal, rfinal, [])
+
+    case Type.ternary_and(typecomp, finalcomp) do
+      :ok -> :ok
+      {:maybe, _} -> {:maybe, [Message.make(target, challenge, meta)]}
+      {:error, _} -> {:error, Message.make(target, challenge, meta)}
+    end
+  end
   def usable_as(target, challenge, meta) do
     {:error, Message.make(target, challenge, meta)}
   end

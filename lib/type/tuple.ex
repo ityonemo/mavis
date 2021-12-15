@@ -146,7 +146,9 @@ defmodule Type.Tuple do
   @any %Type{name: :any}
 
   alias Type.Helpers
-  use Type.Helpers
+  alias Type.Message
+
+  use Helpers
 
   def compare(%{fixed: false}, %{fixed: true}), do: :gt
   def compare(%{fixed: true}, %{fixed: false}), do: :lt
@@ -195,20 +197,6 @@ defmodule Type.Tuple do
     :mismatch -> @none
   end
   def intersect(_, _), do: @none
-
-  # like Enum.zip, but only works on lists, and fills up the other
-  # list with a value, instead of stopping when one list is exhausted.
-  defp zipfill(lst1, lst2, fill, so_far \\ [])
-  defp zipfill([h1 | t1], [h2 | t2], fill, so_far) do
-    zipfill(t1, t2, fill, [{h1, h2} | so_far])
-  end
-  defp zipfill([], [h2 | t2], fill, so_far) do
-    zipfill([], t2, fill, [{fill, h2} | so_far])
-  end
-  defp zipfill([h1 | t1], [], fill, so_far) do
-    zipfill(t1, [], fill, [{h1, fill} | so_far])
-  end
-  defp zipfill([], [], _fill, so_far), do: Enum.reverse(so_far)
 
   @doc """
   a utility function which takes two type lists and ascertains if they
@@ -267,45 +255,61 @@ defmodule Type.Tuple do
     Enum.at(elements, index)
   end
 
-  #defimpl Type.Algebra do
-  #  import Type, only: :macros
-#
-  #  use Type.Helpers
-#
-  #  alias Type.{Message, Tuple, Union}
-#
-#
-  #  usable_as do
-  #    def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: true}, meta)
-  #        when length(ce) != length(te) do
-  #      {:error, Message.make(challenge, target, meta)}
-  #    end
-  #    def usable_as(challenge = %{elements: ce, fixed: false}, target = %Tuple{elements: te, fixed: true}, meta)
-  #        when length(ce) > length(te) do
-  #      {:error, Message.make(challenge, target, meta)}
-  #    end
-  #    def usable_as(challenge = %{elements: ce, fixed: true}, target = %Tuple{elements: te, fixed: false}, meta)
-  #        when length(ce) < length(te) do
-  #      {:error, Message.make(challenge, target, meta)}
-  #    end
-  #    def usable_as(challenge = %{elements: ce, fixed: cf}, target = %Tuple{elements: te, fixed: tf}, meta) do
-  #      ce
-  #      |> zipfill(te, any())
-  #      |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
-  #      |> Enum.reduce(:ok, &Type.ternary_and/2)
-  #      |> case do
-  #        :ok when not cf and (tf or length(ce) < length(te)) ->
-  #          {:maybe, [Message.make(challenge, target, meta)]}
-  #        :ok -> :ok
-  #        # TODO: make our type checking nested, should be possible here.
-  #        {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-  #        {:error, _} -> {:error, Message.make(challenge, target, meta)}
-  #      end
-  #    end
-  #  end
-#
-#
-#
+  def usable_as(_, %__MODULE__{elements: [], fixed: false}, _), do: :ok
+  def usable_as(any = %{elements: [], fixed: false}, target, meta) do
+    {:maybe, [Message.make(any, target, meta)]}
+  end
+  def usable_as(
+      challenge = %{elements: ce, fixed: true},
+      target = %__MODULE__{elements: te, fixed: true},
+      meta) when length(ce) != length(te) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+  def usable_as(
+      challenge = %{elements: ce, fixed: false},
+      target = %__MODULE__{elements: te, fixed: true},
+      meta) when length(ce) > length(te) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+  def usable_as(
+      challenge = %{elements: ce, fixed: true},
+      target = %__MODULE__{elements: te, fixed: false},
+      meta) when length(ce) < length(te) do
+    {:error, Message.make(challenge, target, meta)}
+  end
+  def usable_as(
+      challenge = %{elements: ce, fixed: cf},
+      target = %__MODULE__{elements: te, fixed: tf},
+      meta) do
+
+    ce
+    |> zipfill(te, %Type{name: :any})
+    |> Enum.map(fn {c, t} -> Type.usable_as(c, t, []) end)
+    |> Enum.reduce(&Type.ternary_and/2)
+    |> case do
+      :ok when not cf and (tf or length(ce) < length(te)) ->
+        {:maybe, [Message.make(challenge, target, meta)]}
+      :ok -> :ok
+      # TODO: make our type checking nested, should be possible here.
+      {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+      {:error, _} -> {:error, Message.make(challenge, target, meta)}
+    end
+  end
+
+  # like Enum.zip, but only works on lists, and fills up the other
+  # list with a value, instead of stopping when one list is exhausted.
+  defp zipfill(left, right, fill, so_far \\ [])
+  defp zipfill([lhead | ltail], [rhead | rtail], fill, so_far) do
+    zipfill(ltail, rtail, fill, [{lhead, rhead} | so_far])
+  end
+  defp zipfill([], [head | tail], fill, so_far) do
+    zipfill([], tail, fill, [{fill, head} | so_far])
+  end
+  defp zipfill([head | tail], [], fill, so_far) do
+    zipfill(tail, [], fill, [{head, fill} | so_far])
+  end
+  defp zipfill([], [], _, list), do: Enum.reverse(list)
+
   #  subtype do
   #    def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
   #      when length(e1) < length(e2), do: false
