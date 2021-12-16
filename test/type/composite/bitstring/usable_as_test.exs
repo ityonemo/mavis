@@ -123,7 +123,7 @@ defmodule TypeTest.TypeBitString.UsableAsTest do
   end
 
   test "bitstrings generally are not usable as other types" do
-    targets = TypeTest.Targets.except([@empty_bitstring, "foo", <<0::7>>])
+    targets = TypeTest.Targets.except([@empty_bitstring, type(<<>>), "foo", <<0::7>>])
     Enum.each(targets, fn target ->
       assert {:error, %Message{type: @empty_bitstring, target: ^target}} =
         (@empty_bitstring ~> target)

@@ -132,6 +132,15 @@ defimpl Type.Algebra, for: Type do
   def usable_as_internal(neg_integer(), target = n.._, meta) when n < 0 do
     {:maybe, [Message.make(neg_integer(), target, meta)]}
   end
+  def usable_as_internal(type(node()), a, meta) when is_atom(a) do
+    a
+    |> Atom.to_string
+    |> String.split("@")
+    |> case do
+      [_, _] -> {:maybe, [Message.make(type(node()), a, meta)]}
+      _ -> {:error, Message.make(type(node()), a, meta)}
+    end
+  end
   def usable_as_internal(type(node()), atom(), _), do: :ok
   def usable_as_internal(module(), atom(), _), do: :ok
   def usable_as_internal(module(), a, meta) when is_atom(a) do
@@ -139,6 +148,15 @@ defimpl Type.Algebra, for: Type do
   end
   def usable_as_internal(atom(), a, meta) when is_atom(a) do
     {:maybe, [Message.make(atom(), a, meta)]}
+  end
+  def usable_as_internal(atom(), type(node()), meta) do
+    {:maybe, [Message.make(atom(), type(node()), meta)]}
+  end
+  def usable_as_internal(atom(), module(), meta) do
+    {:maybe, [Message.make(atom(), module(), meta)]}
+  end
+  def usable_as_internal(iolist(), t, meta) do
+    Type.usable_as(@iolist, t, meta)
   end
   def usable_as_internal(challenge, target, meta) do
     {:error, Message.make(challenge, target, meta)}

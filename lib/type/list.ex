@@ -254,6 +254,12 @@ defmodule Type.List do
   defp reverse_prepend([head | rest], so_far), do: reverse_prepend(rest, [head | so_far])
   defp reverse_prepend([], so_far), do: so_far
 
+  def usable_as(target, %Type{module: nil, name: :iolist, params: []}, meta) do
+    case usable_as(target, %Type.Union{of: [%__MODULE__{type: @iotype, final: @iofinal}, []]}, []) do
+      {:maybe, _} -> {:maybe, [Message.make(target, %Type{name: :iolist}, meta)]}
+      {:error, _} -> {:error, Message.make(target, %Type{name: :iolist}, meta)}
+    end
+  end
   def usable_as(target, list, meta) when is_list(list) do
     case usable_as_list(target, list) do
       :maybe -> {:maybe, [Message.make(target, list, meta)]}
