@@ -130,7 +130,7 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_usable_as_fun(module, call \\ :usable_as) do
-    main_clause = if module == Type.Union do
+    main_clause = if __CALLER__.module == Type.Algebra.Type.Union do
       quote do
         def usable_as(ltype, rtype, meta) do
           unquote(module).unquote(call)(ltype, rtype, meta)
