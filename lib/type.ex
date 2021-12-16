@@ -197,7 +197,7 @@ defmodule Type do
   iex> Type.usable_as(Enum, module())
   :ok
   iex> Type.usable_as(:not_a_module, module())
-  {:maybe, [%Type.Message{target: %Type{name: :module}, type: :not_a_module}]}
+  {:maybe, [%Type.Message{target: %Type{name: :module}, challenge: :not_a_module}]}
   ```
 
   A node will not be considered a node unless it has the proper form for a
@@ -691,9 +691,9 @@ defmodule Type do
   iex> Type.usable_as(1, integer())
   :ok
   iex> Type.usable_as(1, neg_integer())
-  {:error, %Type.Message{type: 1, target: neg_integer()}}
+  {:error, %Type.Message{challenge: 1, target: neg_integer()}}
   iex> Type.usable_as(-10..10, neg_integer())
-  {:maybe, [%Type.Message{type: -10..10, target: neg_integer()}]}
+  {:maybe, [%Type.Message{challenge: -10..10, target: neg_integer()}]}
   ```
 
   ### Remote types:
@@ -710,7 +710,7 @@ defmodule Type do
   :ok
   iex> Type.usable_as(binary, type(String.t))
   {:maybe, [%Type.Message{
-              type: binary,
+              challenge: binary,
               target: type(String.t()),
               meta: [message: \"""
     binary() is an equivalent type to String.t() but it may fail because it is
@@ -1021,7 +1021,7 @@ defmodule Type do
   def fetch_type!(module, name, params \\ [], meta \\ []) do
     case fetch_type(module, name, params, meta) do
       {:ok, specs} -> specs
-      {:error, msg} -> raise "#{inspect msg.type} type not found"
+      {:error, msg} -> raise "#{inspect msg.challenge} type not found"
     end
   end
 
@@ -1057,7 +1057,7 @@ defmodule Type do
         )}
 
       _ -> {:error, struct(Type.Message,
-        type: %Type{module: module, name: name, params: params},
+        challenge: %Type{module: module, name: name, params: params},
         meta: meta ++ [message: "not found"])}
     end
   end

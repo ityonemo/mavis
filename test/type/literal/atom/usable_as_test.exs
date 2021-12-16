@@ -56,7 +56,7 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
     test "any other type" do
       targets = Targets.except([atom()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: :bar, target: ^target}} =
+        assert {:error, %Message{challenge: :bar, target: ^target}} =
           (:bar ~> target)
       end)
     end

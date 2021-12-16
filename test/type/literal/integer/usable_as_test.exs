@@ -41,22 +41,22 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
 
   describe "integers not usable as" do
     test "wrong integer category" do
-      assert {:error, %Message{type: 47, target: neg_integer()}}
+      assert {:error, %Message{challenge: 47, target: neg_integer()}}
         = (47 ~> neg_integer())
 
-      assert {:error, %Message{type: 0, target: pos_integer()}}
+      assert {:error, %Message{challenge: 0, target: pos_integer()}}
         = (0 ~> pos_integer())
-      assert {:error, %Message{type: 0, target: neg_integer()}}
+      assert {:error, %Message{challenge: 0, target: neg_integer()}}
         = (0 ~> neg_integer())
 
-      assert {:error, %Message{type: -47, target: pos_integer()}}
+      assert {:error, %Message{challenge: -47, target: pos_integer()}}
         = (-47 ~> pos_integer())
-      assert {:error, %Message{type: -47, target: non_neg_integer()}}
+      assert {:error, %Message{challenge: -47, target: non_neg_integer()}}
         = (-47 ~> non_neg_integer())
     end
 
     test "outside their range" do
-      assert {:error, %Message{type: 42, target: 47..50}}
+      assert {:error, %Message{challenge: 42, target: 47..50}}
         = (42 ~> 47..50)
     end
 
@@ -67,7 +67,7 @@ defmodule TypeTest.LiteralInteger.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([non_neg_integer(), pos_integer(), integer()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: 42, target: ^target}} =
+        assert {:error, %Message{challenge: 42, target: ^target}} =
           (42 ~> target)
       end)
     end

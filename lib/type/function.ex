@@ -123,10 +123,10 @@ defmodule Type.Function do
   iex> Type.usable_as(type((pos_integer() -> 1..10)), type((1..10 -> pos_integer())))
   :ok
   iex> Type.usable_as(type((1..10 -> 1..10)), type((pos_integer() -> pos_integer())))
-  {:maybe, [%Type.Message{type: %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: 1..10}]},
+  {:maybe, [%Type.Message{challenge: %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: 1..10}]},
                           target: %Type.Function{branches: [%Type.Function.Branch{params: [%Type{name: :pos_integer}], return: %Type{name: :pos_integer}}]}}]}
   iex> Type.usable_as(type(( -> atom())), type(( -> pos_integer())))
-  {:error, %Type.Message{type: %Type.Function{branches: [%Type.Function.Branch{params: [], return: %Type{name: :atom}}]},
+  {:error, %Type.Message{challenge: %Type.Function{branches: [%Type.Function.Branch{params: [], return: %Type{name: :atom}}]},
                          target: %Type.Function{branches: [%Type.Function.Branch{params: [], return: %Type{name: :pos_integer}}]}}}
   ```
   """
@@ -165,14 +165,14 @@ defmodule Type.Function do
   iex> Type.Function.apply_types(func, [non_neg_integer()])
   {:maybe, %Type{name: :float}, [
     %Type.Message{
-      type: %Type.Union{of: [%Type{name: :pos_integer}, 0]},
+      challenge: %Type.Union{of: [%Type{name: :pos_integer}, 0]},
       target: %Type{name: :pos_integer},
       meta: [message: "non_neg_integer() is overbroad for argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }]}
   iex> Type.Function.apply_types(func, [float()])
   {:error,
     %Type.Message{
-      type: %Type{name: :float},
+      challenge: %Type{name: :float},
       target: %Type{name: :pos_integer},
       meta: [message: "float() is disjoint to argument 1 (pos_integer()) of function (pos_integer() -> float())"]
     }}

@@ -94,20 +94,16 @@ defmodule Type.Union do
     types
     |> Enum.reduce(:ok, fn
       type, :ok ->
-        Type.usable_as(type, target, [])
-      _, {:maybe, _} -> {:maybe, []}
+        Type.usable_as(type, target, meta)
+      _, maybe = {:maybe, _} -> maybe
       type, _ ->
         # error case
-        case Type.usable_as(type, target, []) do
-          :ok -> {:maybe, []}
+        case Type.usable_as(type, target, meta) do
+          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
           other -> other
         end
     end)
-    |> case do
-      :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-      {:error, _} -> {:error, Message.make(challenge, target, meta)}
-    end
+    |> Message._rebrand(challenge, target)
   end
 
   defimpl Collectable do

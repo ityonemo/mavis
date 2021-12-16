@@ -31,13 +31,13 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
 
   describe "empty list not usable as" do
     test "a nonempty list" do
-      assert {:error, %Message{type: [], target: type([...])}} =
+      assert {:error, %Message{challenge: [], target: type([...])}} =
         ([] ~> type([...]))
     end
 
     test "a list with a different final" do
       final_list = %List{final: %Bitstring{size: 0, unit: 8}}
-      assert {:error, %Message{type: [], target: ^final_list}} =
+      assert {:error, %Message{challenge: [], target: ^final_list}} =
         ([] ~> final_list)
     end
 
@@ -48,7 +48,7 @@ defmodule TypeTest.LiteralEmptyList.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([[], list()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: [], target: ^target}} =
+        assert {:error, %Message{challenge: [], target: ^target}} =
           ([] ~> target)
       end)
     end

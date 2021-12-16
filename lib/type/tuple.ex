@@ -121,10 +121,10 @@ defmodule Type.Tuple do
   iex> Type.usable_as(type({:ok, 1..10}), type({atom(), integer()}))
   :ok
   iex> Type.usable_as(type({:ok, integer()}), type({atom(), 1..10}))
-  {:maybe, [%Type.Message{type: type({:ok, integer()}),
+  {:maybe, [%Type.Message{challenge: type({:ok, integer()}),
                           target: type({atom(), 1..10})}]}
   iex> Type.usable_as(type({:ok, integer()}), type({:error, 1..10}))
-  {:error, %Type.Message{type: type({:ok, integer()}),
+  {:error, %Type.Message{challenge: type({:ok, integer()}),
                          target: type({:error, 1..10})}}
   ```
 
@@ -284,15 +284,12 @@ defmodule Type.Tuple do
 
     ce
     |> zipfill(te, %Type{name: :any})
-    |> Enum.map(fn {c, t} -> Type.usable_as(c, t, []) end)
+    |> Enum.map(fn {c, t} -> Type.usable_as(c, t, meta) end)
     |> Enum.reduce(&Type.ternary_and/2)
     |> case do
       :ok when not cf and (tf or length(ce) < length(te)) ->
         {:maybe, [Message.make(challenge, target, meta)]}
-      :ok -> :ok
-      # TODO: make our type checking nested, should be possible here.
-      {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-      {:error, _} -> {:error, Message.make(challenge, target, meta)}
+      msg -> Message._rebrand(msg, challenge, target)
     end
   end
 

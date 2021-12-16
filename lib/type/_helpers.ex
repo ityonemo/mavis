@@ -145,7 +145,7 @@ defmodule Type.Helpers do
             partitioned ->
               partitioned
               |> Enum.flat_map(fn partition ->
-                Enum.map(union, &Type.usable_as(partition, &1, []))
+                Enum.map(union, &Type.usable_as(partition, &1, meta))
               end)
               |> Enum.reduce(&Type.ternary_or/2)
               |> case do
@@ -155,8 +155,7 @@ defmodule Type.Helpers do
                   else
                     {:maybe, [Message.make(challenge, target, meta)]}
                   end
-                {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
-                {:error, _} -> {:error, Message.make(challenge, target, meta)}
+                msg -> Message._rebrand(msg, challenge, target)
               end
           end
         end

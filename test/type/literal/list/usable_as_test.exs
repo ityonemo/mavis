@@ -46,18 +46,18 @@ defmodule TypeTest.LiteralList.UsableAsTest do
 
   describe "literal lists not usable as" do
     test "other literal lists" do
-      assert {:error, %Message{type: @list, target: [:foo]}} =
+      assert {:error, %Message{challenge: @list, target: [:foo]}} =
         (@list ~> [:foo])
 
-      assert {:error, %Message{type: @list, target: [:foo, "bar"]}} =
+      assert {:error, %Message{challenge: @list, target: [:foo, "bar"]}} =
         (@list ~> [:foo, "bar"])
 
-      assert {:error, %Message{type: @list, target: [:foo, :bar, :baz]}} =
+      assert {:error, %Message{challenge: @list, target: [:foo, :bar, :baz]}} =
         (@list ~> [:foo, :bar, :baz])
     end
 
     test "underdetermined lists" do
-      assert {:error, %Message{type: @list, target: list(:foo)}} =
+      assert {:error, %Message{challenge: @list, target: list(:foo)}} =
         (@list ~> list(:foo))
     end
 
@@ -68,7 +68,7 @@ defmodule TypeTest.LiteralList.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([list()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: @list, target: ^target}} =
+        assert {:error, %Message{challenge: @list, target: ^target}} =
           (@list ~> target)
       end)
     end

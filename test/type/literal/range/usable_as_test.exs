@@ -47,29 +47,29 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
 
   describe "ranges maybe usable as" do
     test "an in-range integer" do
-      assert {:maybe, [%Message{type: 0..47, target: 42}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: 42}]} =
         (0..47 ~> 42)
-      assert {:maybe, [%Message{type: 0..47, target: 0}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: 0}]} =
         (0..47 ~> 0)
-      assert {:maybe, [%Message{type: 0..47, target: 47}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: 47}]} =
         (0..47 ~> 47)
     end
 
     test "partially overlapping or internal ranges" do
-      assert {:maybe, [%Message{type: 0..47, target: 42..100}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: 42..100}]} =
         (0..47 ~> 42..100)
-      assert {:maybe, [%Message{type: 0..47, target: -10..42}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: -10..42}]} =
         (0..47 ~> -10..42)
-      assert {:maybe, [%Message{type: 0..47, target: 10..42}]} =
+      assert {:maybe, [%Message{challenge: 0..47, target: 10..42}]} =
         (0..47 ~> 10..42)
     end
 
     test "a partially overlapping integer subtype" do
-      assert {:maybe, [%Message{type: -10..10, target: pos_integer()}]} =
+      assert {:maybe, [%Message{challenge: -10..10, target: pos_integer()}]} =
         (-10..10 ~> pos_integer())
-      assert {:maybe, [%Message{type: -10..10, target: neg_integer()}]} =
+      assert {:maybe, [%Message{challenge: -10..10, target: neg_integer()}]} =
         (-10..10 ~> neg_integer())
-      assert {:maybe, [%Message{type: -10..10, target: non_neg_integer()}]} =
+      assert {:maybe, [%Message{challenge: -10..10, target: non_neg_integer()}]} =
         (-10..10 ~> non_neg_integer())
     end
 
@@ -80,20 +80,20 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
 
   describe "ranges not usable as" do
     test "an out of range integer or range" do
-      assert {:error, %Message{type: 0..47, target: 50}} =
+      assert {:error, %Message{challenge: 0..47, target: 50}} =
         (0..47 ~> 50)
-      assert {:error, %Message{type: 0..47, target: 50..100}} =
+      assert {:error, %Message{challenge: 0..47, target: 50..100}} =
         (0..47 ~> 50..100)
-      assert {:error, %Message{type: 0..47, target: -47..-42}} =
+      assert {:error, %Message{challenge: 0..47, target: -47..-42}} =
         (0..47 ~> -47..-42)
     end
 
     test "an incompatible integer subtype" do
-      assert {:error, %Message{type: -10..0, target: pos_integer()}} =
+      assert {:error, %Message{challenge: -10..0, target: pos_integer()}} =
         (-10..0 ~> pos_integer())
-      assert {:error, %Message{type: 2..10, target: neg_integer()}} =
+      assert {:error, %Message{challenge: 2..10, target: neg_integer()}} =
         (2..10 ~> neg_integer())
-      assert {:error, %Message{type: -10..-1, target: non_neg_integer()}} =
+      assert {:error, %Message{challenge: -10..-1, target: non_neg_integer()}} =
         (-10..-1 ~> non_neg_integer())
     end
 
@@ -104,7 +104,7 @@ defmodule TypeTest.LiteralRange.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([-47, neg_integer(), integer()])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: -47..-12, target: ^target}} =
+        assert {:error, %Message{challenge: -47..-12, target: ^target}} =
           (-47..-12 ~> target)
       end)
     end

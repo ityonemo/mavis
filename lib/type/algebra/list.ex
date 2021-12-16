@@ -68,10 +68,10 @@ defimpl Type.Algebra, for: List do
     {:error, Message.make([], type, meta)}
   end
   def usable_as_internal(list, type = %Type.List{}, meta) do
-    case usable_literal(list, type) do
+    case usable_literal(list, type, meta) do
       :ok -> :ok
-      :maybe -> {:maybe, [Message.make(list, type, meta)]}
-      :error -> {:error, Message.make(list, type, meta)}
+      {:maybe, _} -> {:maybe, [Message.make(list, type, meta)]}
+      {:error, _} -> {:error, Message.make(list, type, meta)}
     end
   end
   def usable_as_internal(challenge, target, meta) do
@@ -93,20 +93,20 @@ defimpl Type.Algebra, for: List do
     :error
   end
 
-  defp usable_literal(list, type), do: usable_literal(list, type, :ok)
-  defp usable_literal([head | rest], list_type = %{type: type}, so_far) do
-    case Type.usable_as(head, type, []) do
+  defp usable_literal(list, type, meta), do: usable_literal(list, type, :ok, meta)
+  defp usable_literal([head | rest], list_type = %{type: type}, so_far, meta) do
+    case Type.usable_as(head, type, meta) do
       :ok -> usable_literal(rest, list_type, so_far)
       maybe = {:maybe, _} -> usable_literal(rest, list_type, maybe)
       {:error, _} -> :error
     end
   end
-  defp usable_literal(final_element, %{final: final}, so_far) do
-    case {Type.usable_as(final_element, final, []), so_far} do
+  defp usable_literal(final_element, %{final: final}, so_far, meta) do
+    case {Type.usable_as(final_element, final, meta), so_far} do
       {:ok, :ok} -> :ok
-      {:ok, {:maybe, _}} -> :maybe
-      {{:maybe, _}, _} -> :maybe
-      {{:error, _}, _} -> :error
+      {:ok, maybe = {:maybe, _}} -> maybe
+      {maybe = {:maybe, _}, _} -> maybe
+      {error = {:error, _}, _} -> error
     end
   end
 end

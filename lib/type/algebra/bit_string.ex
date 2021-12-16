@@ -34,11 +34,7 @@ defimpl Type.Algebra, for: BitString do
   def usable_as_internal(bitstring, target = %Type.Bitstring{}, meta) do
     %Type.Bitstring{size: :erlang.bit_size(bitstring)}
     |> Type.usable_as(target, meta)
-    |> case do
-      {:error, _} -> {:error, Message.make(bitstring, target, meta)}
-      {:maybe, _} -> {:maybe, [Message.make(bitstring, target, meta)]}
-      :ok -> :ok
-    end
+    |> Message._rebrand(bitstring, target)
   end
 
   def usable_as_internal(bitstring, target, meta) do

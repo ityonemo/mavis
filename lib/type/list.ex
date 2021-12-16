@@ -148,10 +148,10 @@ defmodule Type.List do
   iex> Type.usable_as(list(1..10), list(integer()))
   :ok
   iex> Type.usable_as(list(1..10), list(atom())) # note it might be the empty list
-  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{type: 1..10}, []]},
+  {:maybe, [%Type.Message{challenge: %Type.Union{of: [%Type.List{type: 1..10}, []]},
                           target: %Type.Union{of: [%Type.List{type: %Type{name: :atom}}, []]}}]}
   iex> Type.usable_as(list(), type([...]))
-  {:maybe, [%Type.Message{type: %Type.Union{of: [%Type.List{}, []]}, target: %Type.List{}}]}
+  {:maybe, [%Type.Message{challenge: %Type.Union{of: [%Type.List{}, []]}, target: %Type.List{}}]}
   ```
 
   """
@@ -254,49 +254,42 @@ defmodule Type.List do
   defp reverse_prepend([head | rest], so_far), do: reverse_prepend(rest, [head | so_far])
   defp reverse_prepend([], so_far), do: so_far
 
-  def usable_as(target, %Type{module: nil, name: :iolist, params: []}, meta) do
-    case usable_as(target, %Type.Union{of: [%__MODULE__{type: @iotype, final: @iofinal}, []]}, []) do
-      {:maybe, _} -> {:maybe, [Message.make(target, %Type{name: :iolist}, meta)]}
-      {:error, _} -> {:error, Message.make(target, %Type{name: :iolist}, meta)}
-    end
+  def usable_as(challenge, %Type{module: nil, name: :iolist, params: []}, meta) do
+    challenge
+    |> usable_as(%Type.Union{of: [%__MODULE__{type: @iotype, final: @iofinal}, []]}, [])
+    |> Message._rebrand(challenge, %Type{name: :iolist})
   end
-  def usable_as(target, list, meta) when is_list(list) do
-    case usable_as_list(target, list) do
-      :maybe -> {:maybe, [Message.make(target, list, meta)]}
-      :error -> {:error, Message.make(target, list, meta)}
+  def usable_as(challenge, list, meta) when is_list(list) do
+    case usable_as_list(challenge, list, meta) do
+      :ok -> {:maybe, [Message.make(challenge, list, meta)]}
+      msg -> Message._rebrand(msg, challenge, list)
     end
   end
   def usable_as(
-      target = %{type: ltype, final: lfinal},
-      challenge = %Type.List{type: rtype, final: rfinal},
+      challenge = %{type: ltype, final: lfinal},
+      target = %Type.List{type: rtype, final: rfinal},
       meta) do
 
-    typecomp = Type.usable_as(ltype, rtype, [])
-    finalcomp = Type.usable_as(lfinal, rfinal, [])
+    typecomp = Type.usable_as(ltype, rtype, meta)
+    finalcomp = Type.usable_as(lfinal, rfinal, meta)
 
-    case Type.ternary_and(typecomp, finalcomp) do
-      :ok -> :ok
-      {:maybe, _} -> {:maybe, [Message.make(target, challenge, meta)]}
-      {:error, _} -> {:error, Message.make(target, challenge, meta)}
-    end
+    typecomp
+    |> Type.ternary_and(finalcomp)
+    |> Message._rebrand(challenge, target)
   end
-  def usable_as(target, challenge, meta) do
-    {:error, Message.make(target, challenge, meta)}
+  def usable_as(challenge, target, meta) do
+    {:error, Message.make(challenge, target, meta)}
   end
 
-  defp usable_as_list(target = %{type: type}, [head | rest]) do
-    case Type.usable_as(type, head, []) do
-      :ok -> usable_as_list(target, rest)
-      {:maybe, _} -> usable_as_list(target, rest)
-      {:error, _} -> :error
+  defp usable_as_list(target = %{type: type}, [head | rest], meta) do
+    case Type.usable_as(type, head, meta) do
+      :ok -> usable_as_list(target, rest, meta)
+      {:maybe, _} -> usable_as_list(target, rest, meta)
+      error = {:error, _} -> error
     end
   end
-  defp usable_as_list(%{final: final}, final_element) do
-    case Type.usable_as(final, final_element, []) do
-      :ok -> :maybe
-      {:maybe, _} -> :maybe
-      {:error, _} -> :error
-    end
+  defp usable_as_list(%{final: final}, final_element, meta) do
+    Type.usable_as(final, final_element, meta)
   end
 
   defimpl Inspect do

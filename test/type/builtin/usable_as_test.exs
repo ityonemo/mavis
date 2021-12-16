@@ -12,7 +12,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
   describe "none" do
     test "is not usable as any type" do
       Enum.each(TypeTest.Targets.except([]), fn target ->
-        assert {:error, %Message{type: none(), target: ^target}} =
+        assert {:error, %Message{challenge: none(), target: ^target}} =
             (none() ~> target)
         end)
     end
@@ -32,11 +32,11 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "could be usable as a negative number, partially negative range" do
-      assert {:maybe, [%Message{type: neg_integer(), target: -1}]} =
+      assert {:maybe, [%Message{challenge: neg_integer(), target: -1}]} =
         neg_integer() ~> -1
-      assert {:maybe, [%Message{type: neg_integer(), target: -47..-1}]} =
+      assert {:maybe, [%Message{challenge: neg_integer(), target: -47..-1}]} =
         neg_integer() ~> -47..-1
-      assert {:maybe, [%Message{type: neg_integer(), target: -10..10}]} =
+      assert {:maybe, [%Message{challenge: neg_integer(), target: -10..10}]} =
         neg_integer() ~> -10..10
     end
 
@@ -45,9 +45,9 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "cannot be usable as a non-negative number, or positive range" do
-      assert {:error, %Message{type: neg_integer(), target: 42}} =
+      assert {:error, %Message{challenge: neg_integer(), target: 42}} =
         neg_integer() ~> 42
-      assert {:error, %Message{type: neg_integer(), target: 0..42}} =
+      assert {:error, %Message{challenge: neg_integer(), target: 0..42}} =
         neg_integer() ~> 0..42
     end
 
@@ -59,7 +59,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([-47, neg_integer(), integer(), 0, 47, -10..10]),
         fn target ->
-          assert {:error, %Message{type: neg_integer(), target: ^target}} =
+          assert {:error, %Message{challenge: neg_integer(), target: ^target}} =
               (neg_integer() ~> target)
         end)
     end
@@ -79,15 +79,15 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "could be usable as a non negative number, positive number, partially non negative range" do
-      #assert {:maybe, [%Message{type: non_neg_integer(), target: 0}]} =
+      #assert {:maybe, [%Message{challenge: non_neg_integer(), target: 0}]} =
       #  non_neg_integer() ~> 0
-      #assert {:maybe, [%Message{type: non_neg_integer(), target: 47}]} =
+      #assert {:maybe, [%Message{challenge: non_neg_integer(), target: 47}]} =
       #  non_neg_integer() ~> 47
-      #assert {:maybe, [%Message{type: non_neg_integer(), target: 0..47}]} =
+      #assert {:maybe, [%Message{challenge: non_neg_integer(), target: 0..47}]} =
       #  non_neg_integer() ~> 0..47
-      #assert {:maybe, [%Message{type: non_neg_integer(), target: -10..10}]} =
+      #assert {:maybe, [%Message{challenge: non_neg_integer(), target: -10..10}]} =
       #  non_neg_integer() ~> -10..10
-      assert {:maybe, [%Message{type: non_neg_integer(), target: pos_integer()}]} =
+      assert {:maybe, [%Message{challenge: non_neg_integer(), target: pos_integer()}]} =
         non_neg_integer() ~> pos_integer()
     end
 
@@ -96,9 +96,9 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "cannot be usable as a negative number, or negative range" do
-      assert {:error, %Message{type: non_neg_integer(), target: -42}} =
+      assert {:error, %Message{challenge: non_neg_integer(), target: -42}} =
         non_neg_integer() ~> -42
-      assert {:error, %Message{type: non_neg_integer(), target: -42..-1}} =
+      assert {:error, %Message{challenge: non_neg_integer(), target: -42..-1}} =
         non_neg_integer() ~> -42..-1
     end
 
@@ -111,7 +111,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
         TypeTest.Targets.except([non_neg_integer(), pos_integer(),
                                  integer(), 0, 47, -10..10]),
         fn target ->
-          assert {:error, %Message{type: non_neg_integer(), target: ^target}} =
+          assert {:error, %Message{challenge: non_neg_integer(), target: ^target}} =
               (non_neg_integer() ~> target)
         end)
     end
@@ -132,11 +132,11 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "could be usable as a positive number, partially positive range" do
-      assert {:maybe, [%Message{type: pos_integer(), target: 1}]} =
+      assert {:maybe, [%Message{challenge: pos_integer(), target: 1}]} =
         pos_integer() ~> 1
-      assert {:maybe, [%Message{type: pos_integer(), target: 1..47}]} =
+      assert {:maybe, [%Message{challenge: pos_integer(), target: 1..47}]} =
         pos_integer() ~> 1..47
-      assert {:maybe, [%Message{type: pos_integer(), target: -10..10}]} =
+      assert {:maybe, [%Message{challenge: pos_integer(), target: -10..10}]} =
         pos_integer() ~> -10..10
     end
 
@@ -145,11 +145,11 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "cannot be usable as a negative number, negative range" do
-      assert {:error, %Message{type: pos_integer(), target: -42}} =
+      assert {:error, %Message{challenge: pos_integer(), target: -42}} =
         pos_integer() ~> -42
-      assert {:error, %Message{type: pos_integer(), target: 0}} =
+      assert {:error, %Message{challenge: pos_integer(), target: 0}} =
         pos_integer() ~> 0
-      assert {:error, %Message{type: pos_integer(), target: -42..0}} =
+      assert {:error, %Message{challenge: pos_integer(), target: -42..0}} =
         pos_integer() ~> -42..0
     end
 
@@ -162,7 +162,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
         TypeTest.Targets.except([pos_integer(), non_neg_integer(),
           integer(), 0, 47, -10..10]),
         fn target ->
-          assert {:error, %Message{type: pos_integer(), target: ^target}} =
+          assert {:error, %Message{challenge: pos_integer(), target: ^target}} =
               (pos_integer() ~> target)
         end)
     end
@@ -179,18 +179,18 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "could be usable as a number, or range" do
-      assert {:maybe, [%Message{type: integer(), target: 1}]} =
+      assert {:maybe, [%Message{challenge: integer(), target: 1}]} =
         integer() ~> 1
-      assert {:maybe, [%Message{type: integer(), target: 1..47}]} =
+      assert {:maybe, [%Message{challenge: integer(), target: 1..47}]} =
         integer() ~> 1..47
     end
 
     test "could be usable as any integer subtype" do
-      assert {:maybe, [%Message{type: integer(), target: neg_integer()}]} =
+      assert {:maybe, [%Message{challenge: integer(), target: neg_integer()}]} =
         integer() ~> neg_integer()
-      assert {:maybe, [%Message{type: integer(), target: pos_integer()}]} =
+      assert {:maybe, [%Message{challenge: integer(), target: pos_integer()}]} =
         integer() ~> pos_integer()
-      assert {:maybe, [%Message{type: integer(), target: non_neg_integer()}]} =
+      assert {:maybe, [%Message{challenge: integer(), target: non_neg_integer()}]} =
         integer() ~> non_neg_integer()
     end
 
@@ -203,7 +203,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
         TypeTest.Targets.except([neg_integer(), pos_integer(), non_neg_integer(),
           integer(), -47, 0, 47, -10..10]),
         fn target ->
-          assert {:error, %Message{type: integer(), target: ^target}} =
+          assert {:error, %Message{challenge: integer(), target: ^target}} =
               (integer() ~> target)
         end)
     end
@@ -227,7 +227,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([float()]),
         fn target ->
-          assert {:error, %Message{type: float(), target: ^target}} =
+          assert {:error, %Message{challenge: float(), target: ^target}} =
               (float() ~> target)
         end)
     end
@@ -246,12 +246,12 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as an atom literal with node form" do
-      assert {:maybe, [%Message{type: type(node()), target: :nonode@nohost}]} =
+      assert {:maybe, [%Message{challenge: type(node()), target: :nonode@nohost}]} =
         type(node()) ~> :nonode@nohost
     end
 
     test "is not usable as an atom literal without node form" do
-      assert {:error, %Message{type: type(node()), target: :foobar}} ==
+      assert {:error, %Message{challenge: type(node()), target: :foobar}} ==
         type(node()) ~> :foobar
     end
 
@@ -273,13 +273,13 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as an atom literal that is a module" do
-      assert {:maybe, [%Message{type: module(), target: Kernel}]} =
+      assert {:maybe, [%Message{challenge: module(), target: Kernel}]} =
         module() ~> Kernel
     end
 
     # TODO :test that this message contains relevant information.
     test "is maybe usable as an atom literal that isn't a module (yet)" do
-      assert {:maybe, [%Message{type: module(), target: :foobar}]} ==
+      assert {:maybe, [%Message{challenge: module(), target: :foobar}]} ==
         module() ~> :foobar
     end
 
@@ -299,14 +299,14 @@ defmodule TypeTest.Builtin.UsableAsTest do
     end
 
     test "might be usable as an atom literal" do
-      assert {:maybe, [%Message{type: atom(), target: :foo}]} =
+      assert {:maybe, [%Message{challenge: atom(), target: :foo}]} =
         atom() ~> :foo
     end
 
     test "might be usable as a node or module" do
-      assert {:maybe, [%Message{type: atom(), target: type(node())}]} =
+      assert {:maybe, [%Message{challenge: atom(), target: type(node())}]} =
         atom() ~> type(node())
-      assert {:maybe, [%Message{type: atom(), target: module()}]} =
+      assert {:maybe, [%Message{challenge: atom(), target: module()}]} =
         atom() ~> module()
     end
 
@@ -318,7 +318,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([atom(), :foo]),
         fn target ->
-          assert {:error, %Message{type: atom(), target: ^target}} =
+          assert {:error, %Message{challenge: atom(), target: ^target}} =
               (atom() ~> target)
         end)
     end
@@ -343,7 +343,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([reference()]),
         fn target ->
-          assert {:error, %Message{type: reference(), target: ^target}} =
+          assert {:error, %Message{challenge: reference(), target: ^target}} =
               (reference() ~> target)
         end)
     end
@@ -363,7 +363,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([port()]),
         fn target ->
-          assert {:error, %Message{type: port(), target: ^target}} =
+          assert {:error, %Message{challenge: port(), target: ^target}} =
               (port() ~> target)
         end)
     end
@@ -388,7 +388,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([pid()]),
         fn target ->
-          assert {:error, %Message{type: pid(), target: ^target}} =
+          assert {:error, %Message{challenge: pid(), target: ^target}} =
               (pid() ~> target)
         end)
     end
@@ -399,7 +399,7 @@ defmodule TypeTest.Builtin.UsableAsTest do
       Enum.each(
         TypeTest.Targets.except([]),
         fn target ->
-          assert {:maybe, [%Message{type: any(), target: ^target}]} =
+          assert {:maybe, [%Message{challenge: any(), target: ^target}]} =
               (any() ~> target)
         end)
     end

@@ -30,12 +30,12 @@ defmodule TypeTest.LiteralFloat.UsableAsTest do
 
   describe "literal floats not usable as" do
     test "other literal floats" do
-      assert {:error, %Message{type: 47.0, target: 42.0}} =
+      assert {:error, %Message{challenge: 47.0, target: 42.0}} =
         (47.0 ~> 42.0)
     end
 
     test "a corresponding integer" do
-      assert {:error, %Message{type: 47.0, target: 47}} =
+      assert {:error, %Message{challenge: 47.0, target: 47}} =
         (47.0 ~> 47)
     end
 
@@ -46,7 +46,7 @@ defmodule TypeTest.LiteralFloat.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([float(), 47.0])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: 47.0, target: ^target}} =
+        assert {:error, %Message{challenge: 47.0, target: ^target}} =
           (47.0 ~> target)
       end)
     end

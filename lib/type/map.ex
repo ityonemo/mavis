@@ -167,10 +167,10 @@ defmodule Type.Map do
   iex> Type.usable_as(type(%{foo: :bar}), type(%{optional(:foo) => :bar}))
   :ok
   iex> Type.usable_as(type(%{optional(:foo) => :bar}), type(%{foo: :bar}))
-  {:maybe, [%Type.Message{type: %Type.Map{optional: %{foo: :bar}},
+  {:maybe, [%Type.Message{challenge: %Type.Map{optional: %{foo: :bar}},
                           target: %Type.Map{required: %{foo: :bar}}}]}
   iex> Type.usable_as(type(%{optional(1..10) => 1..10}), type(%{optional(1..20) => 11..20}))
-  {:maybe, [%Type.Message{type: %Type.Map{optional: %{1..10 => 1..10}},
+  {:maybe, [%Type.Message{challenge: %Type.Map{optional: %{1..10 => 1..10}},
                           target: %Type.Map{optional: %{1..20 => 11..20}}}]}
   ```
 

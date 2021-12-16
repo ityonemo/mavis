@@ -8,6 +8,7 @@
 - changes `%Type.Function{}` to have branches
 - creates the general `Type.type/1` macro to handle types that need macro decomposition
 - moves `Type.node_type/0` to `Type.type(node())`
+- canonicalize challenge/target fields for `Type.Message`
 
 ## 0.0.6
 - deprecates `Type.builtin/1` and switches to macros for each type.

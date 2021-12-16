@@ -53,7 +53,7 @@ defmodule TypeTest.TypeTuple.UsableAsTest do
     test "you can't use it for anything else" do
       targets = TypeTest.Targets.except([type({})])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: @any_tuple, target: ^target}} =
+        assert {:error, %Message{challenge: @any_tuple, target: ^target}} =
           (@any_tuple ~> target)
       end)
     end

@@ -96,11 +96,11 @@ defmodule Type.Bitstring do
   :ok
   iex> Type.usable_as(%Type.Bitstring{size: 3, unit: 7}, %Type.Bitstring{size: 12, unit: 6})
   {:maybe, [%Type.Message{meta: [],
-                          type: %Type.Bitstring{size: 3, unit: 7},
+                          challenge: %Type.Bitstring{size: 3, unit: 7},
                           target: %Type.Bitstring{size: 12, unit: 6}}]}
   iex> Type.usable_as(%Type.Bitstring{size: 3, unit: 8}, %Type.Bitstring{size: 16, unit: 8})
   {:error, %Type.Message{meta: [],
-                         type: %Type.Bitstring{size: 3, unit: 8},
+                         challenge: %Type.Bitstring{size: 3, unit: 8},
                          target: %Type.Bitstring{size: 16, unit: 8}}}
   ```
 

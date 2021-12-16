@@ -15,7 +15,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
   test "the any/any function is not usable as any other type" do
     targets = TypeTest.Targets.except([type(( -> 0))])
     Enum.each(targets, fn target ->
-      assert {:error, %Message{type: @any_fn, target: ^target}} =
+      assert {:error, %Message{challenge: @any_fn, target: ^target}} =
         (@any_fn ~> target)
     end)
   end
@@ -29,7 +29,7 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
     test "is maybe usable with an any param'd function" do
       any_integer_fn = type((... -> integer()))
 
-      assert {:maybe, [%Message{type: @any_fn, target: ^any_integer_fn}]} =
+      assert {:maybe, [%Message{challenge: @any_fn, target: ^any_integer_fn}]} =
         @any_fn ~> any_integer_fn
     end
   end
@@ -42,13 +42,13 @@ defmodule TypeTest.TypeFunction.UsableAsTest do
     end
 
     test "is maybe usable if the return types is a subtype" do
-      assert {:maybe, [%Message{type: @any_atom_fn,
+      assert {:maybe, [%Message{challenge: @any_atom_fn,
                                 target: type((... -> :ok))}]} =
         @any_atom_fn ~> type((... -> :ok))
     end
 
     test "is not usable if the return types don't match" do
-      assert {:error, %Message{type: @any_atom_fn,
+      assert {:error, %Message{challenge: @any_atom_fn,
                                target: type((... -> integer()))}} =
         @any_atom_fn ~> type((... -> integer()))
     end

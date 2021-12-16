@@ -42,10 +42,10 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
 
   describe "literal lists not usable as" do
     test "incorrectly sized binaries or Strings" do
-      assert {:error, %Message{type: "foo", target: %Bitstring{size: 21}}} =
+      assert {:error, %Message{challenge: "foo", target: %Bitstring{size: 21}}} =
         ("foo" ~> %Bitstring{size: 21})
 
-      assert {:error, %Message{type: "foo", target: %Bitstring{unit: 7}}} =
+      assert {:error, %Message{challenge: "foo", target: %Bitstring{unit: 7}}} =
         ("foo" ~> %Bitstring{unit: 7})
     end
 
@@ -56,7 +56,7 @@ defmodule TypeTest.LiteralBinary.UsableAsTest do
     test "any other type" do
       targets = TypeTest.Targets.except([binary(), "foo", type(<<>>)])
       Enum.each(targets, fn target ->
-        assert {:error, %Message{type: "foo", target: ^target}} =
+        assert {:error, %Message{challenge: "foo", target: ^target}} =
           ("foo" ~> target)
       end)
     end
