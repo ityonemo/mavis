@@ -42,7 +42,7 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
     end
 
     test "intersects with nothing else" do
-      type(( -> integer()))
+      [type(( -> 0))]
       |> TypeTest.Targets.except()
       |> Enum.each(fn target ->
         assert none() == @any_function <~> target
@@ -130,24 +130,26 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
       assert type((any(), any() -> integer())) == @two_arity_any <~> type((any(), any() -> integer()))
     end
 
-    test "is invalid if any parameter types mismatches" do
-      assert none() == @one_arity_any <~> type((integer() -> any()))
+    test "unions parameters when parameter types mismatches" do
+      assert @one_arity_any == @one_arity_any <~> type((integer() -> any()))
 
-      assert none() == @two_arity_any <~> type((integer(), any() -> any()))
+      assert @two_arity_any == @two_arity_any <~> type((integer(), any() -> any()))
 
-      assert none() == @two_arity_any <~> type((any(), atom() -> any()))
+      assert @two_arity_any == @two_arity_any <~> type((any(), atom() -> any()))
     end
 
     test "is invalid if return mismatches" do
       assert none() == type((any() -> integer())) <~> type((any() -> atom()))
     end
 
-    test "is invalid if any parameter mismatches" do
-      assert none() == type((integer() -> any())) <~> type((atom() -> any()))
+    test "unions parameters when parameter mismatches" do
+      integer_or_atom = (integer() <|> atom())
 
-      assert none() == type((integer(), any() -> any())) <~> type((atom(), any() -> any()))
+      assert type((integer_or_atom -> any())) == type((integer() -> any())) <~> type((atom() -> any()))
 
-      assert none() == type((any(), integer() -> any())) <~> type((any(), atom() -> any()))
+      assert type((integer_or_atom, any() -> any())) == type((integer(), any() -> any())) <~> type((atom(), any() -> any()))
+
+      assert type((any(), integer_or_atom -> any())) == type((any(), integer() -> any())) <~> type((any(), atom() -> any()))
     end
   end
 end

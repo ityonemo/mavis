@@ -13,10 +13,17 @@ defmodule TypeTest.Function.InspectTest do
     @type two_arity :: (:foo, :bar -> :foo)
     @type any_arity :: (... -> :foo)
 
-    @spec multi_branch(:foo) :: :bar
-    @spec multi_branch(:bar) :: :baz
-    def multi_branch(:foo), do: :bar
-    def multi_branch(:bar), do: :baz
+    @spec two_branch(:foo) :: :bar
+    @spec two_branch(:bar) :: :baz
+    def two_branch(:foo), do: :bar
+    def two_branch(:bar), do: :baz
+
+    @spec three_branch(:foo) :: :bar
+    @spec three_branch(:bar) :: :baz
+    @spec three_branch(:baz) :: :quux
+    def three_branch(:foo), do: :bar
+    def three_branch(:bar), do: :baz
+    def three_branch(:baz), do: :quux
   end)
 
   describe "the any function type" do
@@ -69,13 +76,23 @@ defmodule TypeTest.Function.InspectTest do
     end
   end
 
-  describe "the multi-branch function type" do
+  describe "the two branch function type" do
     test "uses the ||| operator" do
-      assert "(:foo -> :bar) ||| (:bar -> :baz)" == inspect(@multi_branch)
+      assert "type((:foo -> :bar) ||| (:bar -> :baz))" == inspect(@two_branch)
     end
 
     test "code translates correctly" do
-      assert @multi_branch == eval_inspect(@multi_branch)
+      assert @two_branch == eval_inspect(@two_branch)
+    end
+  end
+
+  describe "the three branch function type" do
+    test "uses the ||| operator" do
+      assert "type((:foo -> :bar) ||| (:bar -> :baz) ||| (:baz -> :quux))" == inspect(@three_branch)
+    end
+
+    test "code translates correctly" do
+      assert @three_branch == eval_inspect(@three_branch)
     end
   end
 

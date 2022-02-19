@@ -13,8 +13,6 @@ defmodule Type.Function.Branch do
 
   alias Type.Function
 
-  def compare(_, %Function{}), do: raise "branches and functions are incomparable"
-
   def compare(%{params: lparams, return: lreturn}, %__MODULE__{params: rparams, return: rreturn})
       when lreturn != rreturn do
 
@@ -43,6 +41,8 @@ defmodule Type.Function.Branch do
     end
   end
 
+  def compare(_, _), do: raise "branches are not comparable to anything"
+
   @spec length_(:any | integer | [Type.t]) :: non_neg_integer() | :any
   defp length_(:any), do: :any
   defp length_(top_arity) when is_integer(top_arity), do: top_arity
@@ -56,14 +56,15 @@ defmodule Type.Function.Branch do
 
   def intersect(_, %Function{}), do: raise "branches and functions are incompatible"
   def intersect(%{params: lparams, return: lreturn}, %__MODULE__{params: rparams, return: rreturn}) do
-    import Type, only: :macros
+
+
     case Type.intersect(lreturn, rreturn) do
-      none() -> none()
+      @none -> @none
       return ->
         %__MODULE__{params: params_intersect(lparams, rparams), return: return}
     end
   catch
-    :none -> %Type{name: :none}
+    :none -> @none
   end
   def intersect(_, _), do: %Type{name: :none}
 

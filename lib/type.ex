@@ -1153,20 +1153,15 @@ defmodule Type do
     end
   end
 
-  defmacro type([{:->, _, [params, return]}]) do
-    params = cond do
-      params == [] -> []
-      Enum.all?(params, &match?({:_, _, _}, &1)) ->
-        length(params)
-      true ->
-        Macro.expand(params, __CALLER__)
-    end
-
+  defmacro type(function = [{:->, _, _}]) do
     quote do
-      %Type.Function{branches: [%Type.Function.Branch{
-        params: unquote(params),
-        return: unquote(return)
-      }]}
+      %Type.Function{branches: unquote(function_form(function, __CALLER__).branches)}
+    end
+  end
+
+  defmacro type(function = {:|||, _, _}) do
+    quote do
+      %Type.Function{branches: unquote(function_form(function, __CALLER__).branches)}
     end
   end
 
@@ -1343,6 +1338,42 @@ defmodule Type do
 
   defmacro type(_other) do
     raise "unknown type"
+  end
+
+  @spec function_form(Macro.t, Macro.Env.t) :: %{branches: [Macro.t], arity: integer}
+  defp function_form([{:->, _, [params, return]}], caller) do
+    params = cond do
+      params == [] -> []
+      Enum.all?(params, &match?({:_, _, _}, &1)) ->
+        length(params)
+      true ->
+        Macro.expand(params, caller)
+    end
+
+    arity = case params do
+      arity when is_integer(arity) -> arity
+      params when is_list(params) -> length(params)
+    end
+
+    %{branches: [quote do
+        %Type.Function.Branch{
+          params: unquote(params),
+          return: unquote(return)
+        }
+      end],
+      arity: arity}
+  end
+
+  defp function_form({:|||, _, [left, right]}, caller) do
+    # left might be another branch concatenation thing.
+    left_form = function_form(left, caller)
+    right_form = function_form(right, caller)
+
+    unless left_form.arity == right_form.arity do
+      raise "mismatched arity in function branch merge macro"
+    end
+
+    %{branches: left_form.branches ++ right_form.branches, arity: left_form.arity}
   end
 
   defmacro opaque({{:., _, [{:__aliases__, _, modpath}, name]}, _, params}, type) do
