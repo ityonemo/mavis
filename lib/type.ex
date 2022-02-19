@@ -969,6 +969,19 @@ defmodule Type do
   def ternary_and(error, {:maybe, _}),              do: error
   def ternary_and(error, _),                        do: error
 
+  @spec ternary_maybe(ternary, ternary) :: ternary
+  @doc false
+  # assimilates oks and errors into maybes
+  def ternary_maybe(:ok, :ok),                         do: :ok
+  def ternary_maybe(:ok, maybe = {:maybe, _}),         do: maybe
+  def ternary_maybe(:ok, {:error, error_msg}),         do: {:maybe, [error_msg]}
+  def ternary_maybe(maybe = {:maybe, _}, :ok),         do: maybe
+  def ternary_maybe({:maybe, left}, {:maybe, right}),  do: {:maybe, Enum.uniq(left ++ right)}
+  def ternary_maybe({:maybe, left}, {:error, right}),  do: {:maybe, Enum.uniq([right | left])}
+  def ternary_maybe({:error, error_msg}, :ok),         do: {:maybe, [error_msg]}
+  def ternary_maybe({:error, left}, {:maybe, right}),  do: {:maybe, Enum.uniq([left | right])}
+  def ternary_maybe(error = {:error, _}, {:error, _}), do: error
+
   @spec ternary_or(ternary, ternary) :: ternary
   @doc false
   # ternary or which performs comparisons of ok, maybe, and error

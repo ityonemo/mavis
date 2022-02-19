@@ -30,7 +30,9 @@ defmodule Type.Message do
   end
 
   def _rebrand({:maybe, messages}, challenge, target) do
-    {:maybe, Enum.map(messages, &_rebrand_m(&1, challenge, target))}
+    {:maybe, messages
+      |> Enum.map(&_rebrand_m(&1, challenge, target))
+      |> Enum.uniq}
   end
 
   def _rebrand_m(message, challenge, target) do

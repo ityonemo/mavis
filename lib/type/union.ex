@@ -28,7 +28,7 @@ defmodule Type.Union do
   @type t :: %__MODULE__{of: [Type.t, ...]}
   @type t(type) :: %__MODULE__{of: [type, ...]}
 
-  use Type.Helpers
+  use Type.Helpers, default_subtype: true
 
   alias Type.Message
 
@@ -92,17 +92,8 @@ defmodule Type.Union do
 
   def usable_as(challenge = %{of: types}, target, meta) do
     types
-    |> Enum.reduce(:ok, fn
-      type, :ok ->
-        Type.usable_as(type, target, meta)
-      _, maybe = {:maybe, _} -> maybe
-      type, _ ->
-        # error case
-        case Type.usable_as(type, target, meta) do
-          :ok -> {:maybe, [Message.make(challenge, target, meta)]}
-          other -> other
-        end
-    end)
+    |> Enum.map(&Type.usable_as(&1, target, meta))
+    |> Enum.reduce(&Type.ternary_maybe/2)
     |> Message._rebrand(challenge, target)
   end
 

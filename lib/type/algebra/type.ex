@@ -115,6 +115,10 @@ defimpl Type.Algebra, for: Type do
   def subtype_internal(_, _), do: false
 
   Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
+  def usable_as_internal(a, b, c) do
+    binding |> IO.inspect(label: "lib/type/algebra/type.ex:#{__ENV__.line}")
+    raise "foo"
+  end
   def usable_as_internal(any(), target, meta) do
     {:maybe, [Message.make(any(), target, meta)]}
   end
@@ -156,6 +160,8 @@ defimpl Type.Algebra, for: Type do
     {:maybe, [Message.make(atom(), module(), meta)]}
   end
   def usable_as_internal(iolist(), t, meta) do
+    raise "foo"
+    @iolist |> IO.inspect(label: "lib/type/algebra/type.ex:#{__ENV__.line}")
     Type.usable_as(@iolist, t, meta)
   end
   def usable_as_internal(challenge, target, meta) do

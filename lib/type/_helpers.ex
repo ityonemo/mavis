@@ -183,13 +183,20 @@ defmodule Type.Helpers do
     end
   end
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     module = __CALLER__.module
-    quote bind_quoted: [module: module] do
+
+    quote bind_quoted: [module: module, default_subtype: opts[:default_subtype]] do
       alias Type.Helpers
       import Helpers
       @behaviour Helpers
       Helpers.typegroup_fun()
+
+      if default_subtype do
+        def subtype?(type, maybe_supertype) do
+          usable_as(type, maybe_supertype, []) == :ok
+        end
+      end
 
       defimpl Type.Algebra do
         defdelegate typegroup(type), to: module
