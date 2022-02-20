@@ -62,7 +62,7 @@ defmodule Type.Operators do
   defmacro a ||| b do
     branches = resolve_branches(a, b)
     quote do
-      %Type.Function{branches: unquote(branches)}
+      %Type.Function{branches: Enum.sort_by(unquote(branches), &(&1), {:desc, Type})}
     end
   end
 

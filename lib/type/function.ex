@@ -142,14 +142,13 @@ defmodule Type.Function do
 
   @any %Type{module: nil, name: :any, params: []}
   @none %Type{module: nil, name: :none, params: []}
-  def merge(anyfun = %__MODULE__{branches: [%Branch{params: :any, return: @any}]}, _) do
-    {:merge, [anyfun]}
-  end
+  @anyfun %{__struct__: __MODULE__, branches: [%Branch{params: :any, return: @any}]}
+
+  def merge(@anyfun, _), do: {:merge, [@anyfun]}
+  def merge(_, @anyfun), do: {:merge, [@anyfun]}
   def merge(_, _) do
     :nomerge
   end
-
-  def intersect(_, %Branch{}), do: raise "functions and branches are incomparable"
 
   def intersect(%{branches: [lbranch]}, %__MODULE__{branches: [rbranch]}) do
     case Type.intersect(lbranch, rbranch) do
@@ -161,7 +160,6 @@ defmodule Type.Function do
   end
   def intersect(_, _), do: @none
 
-  def compare(_, %Branch{}), do: raise "functions and branches are incomparable"
   def compare(%{branches: [branch | lrest]}, %__MODULE__{branches: [branch | rrest]}) do
     compare(%__MODULE__{branches: lrest}, %__MODULE__{branches: rrest})
   end

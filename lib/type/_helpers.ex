@@ -41,8 +41,14 @@ defmodule Type.Helpers do
   end
 
   defmacro algebra_compare_fun(module, call \\ :compare) do
+    disable_branch_comparison = unless __CALLER__.module == Type.Algebra.Type.Function.Branch do
+      quote do
+        def compare(_, %{__struct__: Type.Function.Branch}), do: raise "function branches are not comparable"
+      end
+    end
+
     quote do
-      def compare(_, %{__struct__: Type.Function.Branch}), do: raise "function branches are not comparable"
+      unquote(disable_branch_comparison)
       def compare(same, same), do: :eq
       def compare(_, %Type{module: nil, name: :any}), do: :lt
       def compare(ltype, rtype) do

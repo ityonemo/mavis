@@ -125,15 +125,6 @@ defmodule Type do
   The operation `Type.type_match?/2` is also provided, which is a combination of
   `Type.of/1` and `Type.subtype?/2`.
 
-  ## Deviations from standard Elixir and Erlang
-
-  ### The Curious case of String.t
-
-  `t:String.t/0` has a special meaning in Elixir, it is a UTF-8 encoded
-  `t:binary/0`.  As such, it is special-cased to have some properties that
-  other remote types don't have out of the box.  This sort of behaviour
-  may be changed to be extensible to custom types in a future release.
-
   ### "Aliased builtins"
 
   Some builtins were not directly introduced into the typesystem logic, since
@@ -1132,15 +1123,6 @@ defmodule Type do
 
     quote do
       %Type.Bitstring{unquote_splicing(fields!)}
-    end
-  end
-
-  defmacro type([{:->, _, [[{:..., _, [params]}], return]}]) do
-    quote do
-      %Type.Function{branches: [%Type.Function.Branch{
-        params: unquote(params),
-        return: unquote(return)
-      }]}
     end
   end
 
