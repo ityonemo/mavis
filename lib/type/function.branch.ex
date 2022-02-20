@@ -109,22 +109,18 @@ defmodule Type.Function.Branch do
   def covered_by(target_branch, [challenge_branch = %__MODULE__{}]) when params_comparable(target_branch, challenge_branch) do
     params_covered = target_branch.params
     |> Enum.zip(challenge_branch.params)
-    |> Enum.all?(fn {target_param, challenge_param} ->
-      # challenge parameter has to be a supertype of the target parameter because
-      # we are saying that any parameter accepted by the target must also be safely
-      # accepted by the challenger
-      Type.subtype?(target_param, challenge_param)
+    |> Enum.reduce(:ok, fn {target_param, challenge_param}, acc->
+      target_param
+      |> Type.usable_as(challenge_param)
+      |> Type.ternary_and(acc)
     end)
 
-    case {Type.usable_as(challenge_branch.return, target_branch.return, []), params_covered} do
-      {:ok, true} -> :ok
-      {:ok, false} -> {:maybe, []}
-      {maybe = {:maybe, _}, _} -> maybe
-      {error = {:error, _}, _} -> error
-    end
+    challenge_branch.return
+    |> Type.usable_as(target_branch.return, [])
+    |> Type.ternary_and(params_covered)
   end
   def covered_by(_, _) do
-    {:error, :error}
+    raise "not yet"
   end
 
   defimpl Inspect do
