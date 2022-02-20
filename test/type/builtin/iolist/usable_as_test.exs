@@ -28,7 +28,7 @@ defmodule TypeTest.TypeIoist.UsableAsTest do
     end
 
     test "is usable as itself defined recursively" do
-      iolist() |> IO.inspect(label: "test/type/builtin/iolist/usable_as_test.exs:#{__ENV__.line}", structs: false)
+      iolist() 
       assert :ok == iolist() ~> explicit_iolist()
     end
 

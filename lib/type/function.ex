@@ -135,6 +135,7 @@ defmodule Type.Function do
   defstruct @enforce_keys
 
   alias Type.Function.Branch
+  alias Type.Message
 
   @type t :: %__MODULE__{
     branches: [Branch.t, ...]
@@ -173,7 +174,17 @@ defmodule Type.Function do
   def compare(%{branches: []}, %__MODULE__{branches: [_branch | _]}), do: :gt
   def compare(%{branches: [_branch | _]}, %__MODULE__{branches: []}), do: :lt
 
-  def usable_as(_, _, _), do: raise "not yet"
+  def usable_as(challenge, target, meta) do
+    case Enum.reduce(target.branches, :ok, fn branch, so_far ->
+      branch 
+      |> Branch.covered_by(challenge.branches) 
+      |> Type.ternary_and(so_far) 
+    end) do
+      :ok -> :ok
+      {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
+      {:error, _} -> {:error, Message.make(challenge, target, meta)}
+    end
+  end
 
   defimpl Inspect do
     import Inspect.Algebra

@@ -84,6 +84,49 @@ defmodule Type.Function.Branch do
     end
   end
 
+  defguardp params_comparable(left, right)
+    when (is_integer(:erlang.map_get(:params, left)) and
+      is_integer(:erlang.map_get(:params, right)) and
+      :erlang.map_get(:params, left) == :erlang.map_get(:params, right))
+    or (is_list(:erlang.map_get(:params, left)) and
+      is_integer(:erlang.map_get(:params, right)) and
+      length(:erlang.map_get(:params, left)) == :erlang.map_get(:params, right))
+    or (is_integer(:erlang.map_get(:params, left)) and
+      is_list(:erlang.map_get(:params, right)) and
+      length(:erlang.map_get(:params, right)) == :erlang.map_get(:params, left))
+    or (is_list(:erlang.map_get(:params, left)) and
+      is_list(:erlang.map_get(:params, right)) and
+      length(:erlang.map_get(:params, right)) == length(:erlang.map_get(:params, left)))
+
+  @spec covered_by(t, [t]) :: Type.ternary
+  # one-branch optimization
+  def covered_by(%__MODULE__{params: :any, return: challenge_return}, targets) do
+    targets
+    |> Enum.map(&(&1.return))
+    |> Type.union()
+    |> Type.usable_as(challenge_return)
+  end
+  def covered_by(target_branch, [challenge_branch = %__MODULE__{}]) when params_comparable(target_branch, challenge_branch) do
+    params_covered = target_branch.params
+    |> Enum.zip(challenge_branch.params)
+    |> Enum.all?(fn {target_param, challenge_param} ->
+      # challenge parameter has to be a supertype of the target parameter because
+      # we are saying that any parameter accepted by the target must also be safely
+      # accepted by the challenger
+      Type.subtype?(target_param, challenge_param)
+    end)
+
+    case {Type.usable_as(challenge_branch.return, target_branch.return, []), params_covered} do
+      {:ok, true} -> :ok
+      {:ok, false} -> {:maybe, []}
+      {maybe = {:maybe, _}, _} -> maybe
+      {error = {:error, _}, _} -> error
+    end
+  end
+  def covered_by(_, _) do
+    {:error, :error}
+  end
+
   defimpl Inspect do
     import Inspect.Algebra
     import Type, only: :macros
