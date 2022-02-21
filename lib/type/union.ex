@@ -238,12 +238,12 @@ defmodule Type.Union do
           |> Enum.map(fn {a, t} -> [to_doc(t, opts), "#{a}: "] end)
           |> Enum.intersperse([", "])
           |> Enum.flat_map(&Function.identity/1)
-          |> Enum.reverse(["])"])
-          |> List.insert_at(0, "type([")
+          |> Enum.reverse([")"])
+          |> List.insert_at(0, "list(")
       end
     catch
       :default ->
-        ["type([", to_doc(t, opts), "])"]
+        ["list(", to_doc(t, opts), ")"]
     end
 
     defp emptify(%Type.List{type: any(), final: any()}, _opts) do

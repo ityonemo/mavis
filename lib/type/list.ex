@@ -44,7 +44,7 @@ defmodule Type.List do
   - a nonempty list of a given type
     ```elixir
     iex> inspect %Type.List{type: %Type{name: :integer}}
-    "list(integer(), ...)"
+    "type([integer(), ...])"
     ```
   - the general list is a union of nonempty list with empty list
     ```elixir
@@ -301,7 +301,7 @@ defmodule Type.List do
     ## SPECIAL CASES
 
     # override for charlist
-    def inspect(list = %{final: [], type: 0..0x10_FFFF}, _) do
+    def inspect(%{final: [], type: 0..0x10_FFFF}, _) do
       "nonempty_charlist()"
     end
     def inspect(%{final: [], type: any()}, _), do: "type([...])"
@@ -316,6 +316,7 @@ defmodule Type.List do
         type: type = %Type.Union{}}, opts) do
       if Enum.all?(type.of, &match?(
             type({e, _}) when is_atom(e), &1)) do
+        # keyword list
         ["type([",
           type.of
           |> Enum.reverse
