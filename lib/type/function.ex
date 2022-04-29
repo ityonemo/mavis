@@ -1,63 +1,73 @@
+defmodule Type.Function.F do
+  defmacro singleton(params, return) do
+    quote do
+      %{branches: [%{params: unquote(params), return: unquote(return)}]}
+    end
+  end
+end
+
 defmodule Type.Function do
-  use Type.Helpers, default_subtype: true
+  use Type.Helpers
   @moduledoc """
   Represents a function type.
 
-  There are two fields for the struct defined by this module.
+  A function is a list of "function branches".  Function branches represent
+  specifications for separate subdomains of a single function.  In order to
+  be valid, the domains must be disjoint.  If any input falls outside of all
+  domain specifications, then it should be considered to raise an error.
 
-  - `params` a list of types for the function arguments.  Note that the arity
-    of the function is the length of this list.  May also be the atom `:any`
-    which corresponds to "a function of any arity".
-  - `return` the type of the returned value.
+  There is one field for the struct defined by this module:
 
-  ### Examples:
-
-  - `(... -> integer())` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
-  - `(integer() -> integer())` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
+  - `branches` a list of `t:Type.Function.Branch.t/0` structs that constitute
+    the domains of the function.
 
   ### Shortcut Form
 
   The `Type` module lets you specify a function using "shortcut form" via the `Type.function/1` macro:
 
-  ```
+  ```elixir
   iex> import Type, only: :macros
   iex> type((atom() -> pos_integer()))
   %Type.Function{branches: [%Type.Function.Branch{params: [%Type{name: :atom}], return: %Type{name: :pos_integer}}]}
   ```
 
-  ### Inference
+  ### Validations
 
-  By default, Mavis will not attempt to perform inference on function types.
-
-  ```elixir
-  iex> inspect Type.of(&(&1 + 1))
-  "(any() -> any())"
-  ```
-
-  If you would like to perform inference on the function to obtain
-  more details on the acceptable function types, set the inference
-  environment variable.  For example, if you're using the `:mavis_inference` hex package, do:
-
-  ```
-  Application.put_env(:mavis, :inference, Type.Inference)
-  ```
-
-  The default module for this is `Type.NoInference`
+  - n-arity and any-arity functions may only have one branch.
+  - the branches must have fully disjoint domains.
 
   ### Key functions:
 
   #### comparison
 
-  Functions are ordered first by the type order on their return type,
-  followed by type order on their parameters.
+  Functions are first ordered by their arity, with higher-arity functions
+  ranked greater. Two functions with the same arity are first ranked by the
+  backwards order of the unions of their domains, followed by the order of
+  their ranges. An n-arity any function is greater than any function of arity
+  n, and afunction that takes any domain is greater than any function.  If
+  two functions have the same domains and ranges then their relative order
+  is not well defined, but they must not be equal unless they are equal.
 
   ```elixir
   iex> import Type, only: :macros
   iex> Type.compare(type(( -> atom())), type(( -> integer())))
   :gt
-  iex> Type.compare(type((integer() -> integer())),
+  iex> Type.compare(type((_ -> integer())),
+  ...>              type((atom() -> integer())))
+  :gt
+  iex> Type.compare(type((:... -> integer())),
+  ...>              type((_ -> integer())))
+  :gt
+  iex> integer_or_atom = Type.union(integer(), atom())
+  iex> Type.compare(type((integer_or_atom -> integer())),
   ...>              type((atom() -> integer())))
   :lt
+  iex> Type.compare(type((integer() -> integer()) ||| (atom() -> atom())),
+  ...>              type((atom() -> integer())))
+  :lt
+  iex> Type.compare(type((atom() -> integer_or_atom)),
+  ...>              type((atom() -> integer())))
+  :gt
   ```
 
   #### intersection
@@ -74,14 +84,28 @@ defmodule Type.Function do
   %Type{name: :none}
   ```
 
-  functions with `:any` parameters intersected with a function with specified parameters
-  will adopt the parameters of the intersected function.
+  functions with `:any` parameters intersected with a function with specified
+  parameters will adopt the parameters of the intersected function.
 
   ```elixir
   iex> import Type, only: :macros
   iex> Type.intersect(type((... -> pos_integer())),
   ...>                   type((1..10 -> pos_integer())))
   %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: %Type{name: :pos_integer}}]}
+  ```
+
+  n-arity functions with `:any` parameters intersected with a function with
+  the same arity will adopt the parameters of the intersected function.
+
+  ```elixir
+  iex> import Type, only: :macros
+  iex> Type.intersect(type((_ -> pos_integer())),
+  ...>                   type((1..10 -> pos_integer())))
+  %Type.Function{branches: [%Type.Function.Branch{params: [1..10], return: %Type{name: :pos_integer}}]}
+
+  iex> Type.intersect(type((_ -> pos_integer())),
+  ...>                   type((integer(), integer() -> pos_integer())))
+  %Type{name: :none}
   ```
 
   #### union
@@ -134,8 +158,11 @@ defmodule Type.Function do
   @enforce_keys [:branches]
   defstruct @enforce_keys
 
+  alias Type.Function.F
   alias Type.Function.Branch
   alias Type.Message
+
+  require F
 
   @type t :: %__MODULE__{
     branches: [Branch.t, ...]
@@ -161,30 +188,76 @@ defmodule Type.Function do
   end
   def intersect(_, _), do: @none
 
-  def compare(%{branches: [branch | lrest]}, %__MODULE__{branches: [branch | rrest]}) do
-    compare(%__MODULE__{branches: lrest}, %__MODULE__{branches: rrest})
+  def compare(F.singleton(:any, r1), F.singleton(:any, r2)) do
+    Type.compare(r1, r2)
   end
 
-  def compare(%{branches: [lbranch | _]}, %__MODULE__{branches: [rbranch | _]}) do
-    Type.compare(lbranch, rbranch)
+  def compare(F.singleton(:any, _), _), do: :gt
+  def compare(_, F.singleton(:any, _)), do: :lt
+
+  def compare(F.singleton(n1, _), F.singleton(n2, _))
+    when is_integer(n1) and is_integer(n2) and n1 > n2, do: :gt
+
+  def compare(F.singleton(n1, _), F.singleton(n2, _))
+    when is_integer(n1) and is_integer(n2) and n1 < n2, do: :lt
+
+  def compare(F.singleton(n1, r1), F.singleton(n2, r2))
+    when is_integer(n1) and is_integer(n2), do: Type.compare(r1, r2)
+
+  def compare(F.singleton(n, _), %{branches: [%{params: list} | _]})
+      when is_integer(n) and is_list(list) do
+    if n >= length(list), do: :gt, else: :lt
   end
 
-  # NOTE: these two function heads should only be accessible internally as
-  # a function with empty list branches is not supported.
-  def compare(%{branches: []}, %__MODULE__{branches: [_branch | _]}), do: :gt
-  def compare(%{branches: [_branch | _]}, %__MODULE__{branches: []}), do: :lt
+  def compare(%{branches: [%{params: list} | _]}, F.singleton(n, _))
+      when is_integer(n) and is_list(list) do
+    if n >= length(list), do: :lt, else: :gt
+  end
 
-  def usable_as(challenge, target, meta) do
+  def compare(f1 = %{branches: [%{params: p1} | _]}, f2 = %{branches: [%{params: p2} | _]}) do
+    l1 = length(p1)
+    l2 = length(p2)
+    # NB: u2 and u1 are reversed in the second arm of the with statement
+    with true <- l1 == l2,
+         u1 = branch_union(f1.branches),
+         u2 = branch_union(f2.branches),
+         :eq <- Type.compare(u2.params, u1.params),
+         :eq <- Type.compare(u1.return, u2.return) do
+      # equal case should be handled at the top level.
+      if f1 < f2, do: :lt, else: :gt
+    else
+      false when l1 > l2 -> :gt
+      false -> :lt
+      order -> order
+    end
+  end
+
+  @spec branch_union([Type.Function.Branch.t]) :: Type.t
+  defp branch_union(branches) do
+    Enum.reduce(branches, fn
+      r = %{params: p1, return: r1}, %{params: p2, return: r2} ->
+        new_params = p1
+        |> Enum.zip(p2)
+        |> Enum.map(fn {pp1, pp2} -> Type.union(pp1, pp2) end)
+
+        %{r | params: new_params, return: Type.union(r1, r2)}
+    end)
+  end
+
+  @any %Type{name: :any, module: nil, params: []}
+  def usable_as(_challenge, @any , _meta), do: :ok
+  def usable_as(challenge, target = %__MODULE__{}, meta) do
     case Enum.reduce(target.branches, :ok, fn branch, so_far ->
-      branch 
-      |> Branch.covered_by(challenge.branches) 
-      |> Type.ternary_and(so_far) 
+      branch
+      |> Branch.covered_by(challenge.branches)
+      |> Type.ternary_and(so_far)
     end) do
       :ok -> :ok
       {:maybe, _} -> {:maybe, [Message.make(challenge, target, meta)]}
       {:error, _} -> {:error, Message.make(challenge, target, meta)}
     end
   end
+  def usable_as(challenge, target, meta), do: {:error, Message.make(challenge, target, meta)}
 
   defimpl Inspect do
     import Inspect.Algebra

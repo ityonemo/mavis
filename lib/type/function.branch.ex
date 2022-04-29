@@ -1,6 +1,19 @@
 defmodule Type.Function.Branch do
   use Type.Helpers
 
+  @moduledoc """
+  - `params` a list of types for the function arguments.  Note that the arity
+    of the function is the length of this list.  May also be the atom `:any`
+    which corresponds to "a function of any arity", or a number, which corresponds
+    to "any function with <number> arity".
+  - `return` the type of the returned value.
+
+    ### Examples:
+
+  - `type((... -> integer()))` would be represented as `%Type.Function{params: :any, return: %Type{name: :integer}}`
+  - `type((integer() -> integer()))` would be represented as `%Type.Function{params: [%Type{name: :integer}], return: %Type{name: :integer}}`
+  """
+
   @enforce_keys [:return]
   defstruct @enforce_keys ++ [params: :any]
 

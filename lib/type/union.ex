@@ -232,14 +232,7 @@ defmodule Type.Union do
         type({atom(), kwt}) ->
           ["keyword(", to_doc(kwt, opts), ")"]
         _ ->
-          t
-          |> maybe_keyword
-          |> Enum.sort_by(&elem(&1, 0))
-          |> Enum.map(fn {a, t} -> [to_doc(t, opts), "#{a}: "] end)
-          |> Enum.intersperse([", "])
-          |> Enum.flat_map(&Function.identity/1)
-          |> Enum.reverse([")"])
-          |> List.insert_at(0, "list(")
+          keyword_or_list(t, opts)
       end
     catch
       :default ->
@@ -259,6 +252,65 @@ defmodule Type.Union do
       else
         ["nonempty_improper_list(", to_doc(ltype, opts), ",", to_doc(rtype, opts), ")"]
       end
+    end
+
+    defp make_pairs([], _, [", " | acc], _opts), do: acc
+    defp make_pairs([atom | rest], value, acc, opts) when is_atom(atom) do
+      make_pairs(rest, value, [", ", to_doc(value, opts), "#{atom}: " | acc], opts)
+    end
+    defp make_pairs(_, _, _, _), do: nil
+
+    defp keyword_or_list(type = %Type.Tuple{elements: [key, value], fixed: true}, opts) do
+      case key do
+        atom when is_atom(atom) ->
+          ["type([#{key}: ", to_doc(value, opts), "])"]
+        %Type.Union{of: maybe_atoms} ->
+          if pairs = make_pairs(maybe_atoms, value, [], opts) do
+            ["type([" | Enum.reverse(pairs, ["])"])]
+          else
+            keyword_give_up([type], opts)
+          end
+        _other ->
+          keyword_give_up([type], opts)
+      end
+    end
+    defp keyword_or_list(%Type.Union{of: maybe_keyword_tuples}, opts) do
+      keyword_or_list_stub(maybe_keyword_tuples, maybe_keyword_tuples, ["type(["], opts)
+    end
+    defp keyword_or_list(type, opts) do
+      keyword_give_up([type], opts)
+    end
+
+    defp keyword_or_list_stub(_whole, [], [", " | acc], _), do: Enum.reverse(["])" | acc])
+
+    defp keyword_or_list_stub(whole, [%Type.Tuple{elements: [key, value], fixed: true} | rest], acc, opts) do
+      case key do
+        key when is_atom(key) ->
+          keyword_or_list_stub(whole, rest, [", ", to_doc(value, opts), "#{key}: " | acc], opts)
+
+        %Type.Union{of: maybe_atoms} ->
+          if Enum.all?(maybe_atoms, &is_atom/1) do
+            pairs = Enum.flat_map(maybe_atoms, &["#{&1}: ", to_doc(value, opts), ", "])
+
+            keyword_or_list_stub(whole, rest, Enum.reverse(pairs, acc), opts)
+          else
+            keyword_give_up(whole, opts)
+          end
+
+        _other ->
+          keyword_give_up(whole, opts)
+      end
+    end
+    defp keyword_or_list_stub(whole, _not_a_keyword, _acc, opts) do
+      keyword_give_up(whole, opts)
+    end
+
+    defp keyword_give_up(whole, opts) do
+      content = whole
+      |> Enum.map(&to_doc(&1, opts))
+      |> Enum.intersperse(" <|> ")
+
+      ["list(" | content] ++ [")"]
     end
 
     defp type_has(types, query) do

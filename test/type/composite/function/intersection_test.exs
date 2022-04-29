@@ -130,26 +130,22 @@ defmodule TypeTest.TypeFunction.IntersectionTest do
       assert type((any(), any() -> integer())) == @two_arity_any <~> type((any(), any() -> integer()))
     end
 
-    test "unions parameters when parameter types mismatches" do
-      assert @one_arity_any == @one_arity_any <~> type((integer() -> any()))
-
-      assert @two_arity_any == @two_arity_any <~> type((integer(), any() -> any()))
-
-      assert @two_arity_any == @two_arity_any <~> type((any(), atom() -> any()))
+    test "must match parameter types" do
+      assert none() == @one_arity_any <~> type((integer() -> any()))
+      assert none() == @two_arity_any <~> type((integer(), any() -> any()))
+      assert none() == @two_arity_any <~> type((any(), atom() -> any()))
     end
 
     test "is invalid if return mismatches" do
       assert none() == type((any() -> integer())) <~> type((any() -> atom()))
     end
 
-    test "unions parameters when parameter mismatches" do
-      integer_or_atom = (integer() <|> atom())
-
-      assert type((integer_or_atom -> any())) == type((integer() -> any())) <~> type((atom() -> any()))
-
-      assert type((integer_or_atom, any() -> any())) == type((integer(), any() -> any())) <~> type((atom(), any() -> any()))
-
-      assert type((any(), integer_or_atom -> any())) == type((any(), integer() -> any())) <~> type((any(), atom() -> any()))
+    test "parameter types can span" do
+      one_arity_a = type(((:foo | :bar) -> -5..5))
+      one_arity_b = type((:foo -> 0..10) ||| (:bar -> 1..10))
+      one_arity_c = type((:foo -> 0..5) ||| (:bar -> 1..5))
+      
+      assert one_arity_c == one_arity_a <~> one_arity_b
     end
   end
 end

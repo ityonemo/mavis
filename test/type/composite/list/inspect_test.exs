@@ -17,7 +17,7 @@ defmodule TypeTest.List.InspectTest do
 
   describe "the proper list type" do
     test "looks like itself" do
-      assert "type([atom()])" == inspect(@proper_list)
+      assert "list(atom())" == inspect(@proper_list)
     end
 
     test "code translates correctly" do

@@ -11,8 +11,15 @@ defimpl Type.Algebra, for: List do
 
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
   def compare_internal(_, %Type.List{}), do: :lt
-  def compare_internal(a, b) when a < b, do: :lt
-  def compare_internal(a, b) when a > b, do: :gt
+  def compare_internal([], []), do: :eq
+  def compare_internal([], _), do: :lt
+  def compare_internal(_, []), do: :gt
+  def compare_internal([t1 | r1], [t2 | r2]) do
+    case Type.compare(t1, t2) do
+      :eq -> compare_internal(r1, r2)
+      other -> other
+    end
+  end
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)
   def merge_internal(_, _), do: :nomerge

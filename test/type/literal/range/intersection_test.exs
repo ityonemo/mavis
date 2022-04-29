@@ -74,7 +74,6 @@ defmodule TypeTest.LiteralRange.IntersectionTest do
       assert none() == 1..10 <~> (atom() <|> port())
     end
 
-    @tag :skip
     test "with all other types is none" do
       TypeTest.Targets.except([-10..10, pos_integer(), non_neg_integer(), integer()])
       |> Enum.each(fn target ->

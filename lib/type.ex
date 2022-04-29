@@ -415,7 +415,7 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> type([foo: pos_integer()])
-  %Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}
+  %Type.Union{of: [%Type.List{type: %Type.Tuple{elements: [:foo, %Type{name: :pos_integer}]}}, []]}
   ```
 
   * usable in matches *
@@ -664,17 +664,38 @@ defmodule Type do
 
   ### Relationship to `subtype?/2`
 
-  at first glance, it would seem that the `subtype?/2` function is
-  equivalent to `usable_as/3`, but there are cases where the relationship
-  is not as clear.  For example, if a function has the signature:
+  at first glance, it would seem that the `subtype?/2` function is equivalent
+  to `usable_as/3` returning `:ok`, but for two types there are cases where the
+  relationship is not direct.
 
-  `(integer() -> integer())`, that is not necessarily usable as a function
-  that is `(any() -> integer())`, since it may be sent a value outside
-  of the integers.  Conversely an `(any() -> integer())` function *IS*
-  usable as an `(integer() -> integer())` function.  The subtyping
-  relationship between these function types is unclear; in the Mavis
-  system they are considered to be independent functions that are not
-  subtypes of each other.
+  - For functions, if the domain of a function is larger than the domain of
+    a second function, the first is usable as the second, though it is not the
+    subtype of the second.
+
+    ```elixir
+    iex> import Type, only: :macros
+    iex> larger = type((integer() -> integer()))
+    iex> smaller = type((1..10 -> integer()))
+    iex> Type.subtype?(larger, smaller)
+    false
+    iex> Type.usable_as(larger, smaller)
+    :ok
+    ```
+
+  - For maps, if the domain of a map is larger than the domain of a second
+    function, the first is usable as the second, though it is not the subtype
+    of the second.
+
+    ```elixir
+    iex> import Type, only: :macros
+    iex> larger = type(%{foo: integer(), bar: integer()})
+    iex> smaller = type(%{foo: integer()})
+    iex> Type.subtype?(larger, smaller)
+    false
+    iex> Type.usable_as(larger, smaller)
+    :ok
+    ```
+
 
   ### Examples:
   ```
@@ -994,7 +1015,7 @@ defmodule Type do
   ```elixir
   iex> {:ok, spec} = Type.fetch_spec(String, :split, 1)
   iex> inspect spec
-  "(String.t() -> list(String.t()))"
+  "type((String.t() -> list(String.t())))"
   ```
   """
   def fetch_spec(module, fun, arity) do
@@ -1397,10 +1418,10 @@ defmodule Type do
   ```
   iex> Type.of(47)
   47
-  iex> inspect Type.of(47.0)
-  "float()"
+  iex> Type.of(47.0)
+  47.0
   iex> inspect Type.of([:foo, :bar])
-  "list(:bar | :foo, ...)"
+  "type([:bar | :foo, ...])"
   iex> inspect Type.of([:foo | :bar])
   "nonempty_improper_list(:foo, :bar)"
   ```
@@ -1410,7 +1431,7 @@ defmodule Type do
 
   ```
   iex> inspect Type.of(&(&1 + 1))
-  "(any() -> any())"
+  "type((any() -> any()))"
   ```
 
   For maps, atom and number literals are marshalled into required
