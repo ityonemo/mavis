@@ -193,14 +193,6 @@ defmodule Type do
 
   A node will not be considered a node unless it has the proper form for a
   node.  `usable_as/3` does not check active node lists, however.
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> Type.type_match?(type(node()), :foo)
-  false
-  iex> Type.type_match?(type(node()), :nonode@nohost)
-  true
-  ```
   """
 
   @enforce_keys [:name]
