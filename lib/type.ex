@@ -35,8 +35,8 @@ defmodule Type do
   have already been compiled.
 
   ```elixir
-  iex> inspect Type.fetch_type!(String, :t, [])
-  "binary()"
+  iex> inspect Type.fetch_type!(Path, :t, [])
+  "IO.chardata()"
   ```
 
   ### Runtime Usage
@@ -343,7 +343,7 @@ defmodule Type do
                      %Type{module: nil, name: :any, params: []}],
                    fixed: true},
                  final: []}, []]},
-               "%Type.Union{of: [%Type.List{type: type({atom(), any()})}, []}"
+               "%Type.Union{of: [%Type.List{type: type({atom(), any()})}, []]}"
     builtin :list,
                %Type.Union{of: [%Type.List{}, []]},
                "%Type.Union{of: [%Type.List{}, []]}"
@@ -503,86 +503,6 @@ defmodule Type do
   def find_elements([a | rest], so_far), do: find_elements(rest, [a | so_far])
 
   @doc """
-  generates type literals.
-
-  - For singletons (empty list, integers, atoms, bitstrings, floats),
-    this is a no-op.
-  - For lists, it expands into a list of the elements in their transformed
-    state
-  - For other composite values (maps and tuples), this gets decomposed to the
-    structures as expected singletons
-  - note that pids, ports, and references are not supported.
-
-  ### Examples:
-
-  ```elixir
-  iex> import Type, only: :macros
-  iex> Type.literal([])
-  []
-  iex> Type.literal(47)
-  47
-  iex> Type.literal(:foo)
-  :foo
-  iex> Type.literal("foo")
-  "foo"
-  iex> Type.literal(47.0)
-  47.0
-  iex> Type.literal([:foo, :bar])
-  [:foo, :bar]
-  iex> Type.literal([:foo | :bar])
-  [:foo | :bar]
-  iex> Type.literal([:foo, %{bar: "baz"}])
-  [:foo, %Type.Map{required: %{bar: "baz"}}]
-  iex> Type.literal([["foo"], "bar"])
-  [["foo"], "bar"]
-  iex> Type.literal(%{foo: :bar})
-  %Type.Map{required: %{foo: :bar}}
-  iex> Type.literal(%{foo: %{bar: "baz"}})
-  %Type.Map{required: %{foo: %Type.Map{required: %{bar: "baz"}}}}
-  iex> Type.literal({:ok, "bar"})
-  %Type.Tuple{elements: [:ok, "bar"]}
-  iex> Type.literal({:ok, "bar", 1})
-  %Type.Tuple{elements: [:ok, "bar", 1]}
-  iex> Type.literal(%{"foo" => "bar"})
-  %Type.Map{required: %{"foo" => "bar"}}
-  ```
-
-  *usable in matches*
-  """
-  def literal(value) when
-      is_atom(value) or
-      is_number(value) or
-      is_bitstring(value) or
-      value == [] do
-    value
-  end
-  def literal(list) when is_list(list) do
-    Enum.map(list, &literal/1)
-  end
-  def literal(struct = %module{}) do
-    requireds = struct
-    |> Map.from_struct
-    |> Map.new(fn {k, v} -> {literal(k), literal(v)} end)
-    |> Map.put(:__struct__, module)
-
-    %Type.Map{
-      required: requireds,
-      optional: %{}
-    }
-  end
-  def literal(map) when is_map(map) do
-    %Type.Map{
-      required: Map.new(map, fn {k, v} -> {literal(k), literal(v)} end),
-      optional: %{}
-    }
-  end
-  def literal(tuple) when is_tuple(tuple) do
-    %Type.Tuple{
-      elements: tuple |> Tuple.to_list |> Enum.map(&literal/1)
-    }
-  end
-
-  @doc """
   guard that tests if the selected type is remote
 
   ### Example:
@@ -716,10 +636,7 @@ defmodule Type do
   {:maybe, [%Type.Message{
               challenge: binary,
               target: type(String.t()),
-              meta: [message: \"""
-    binary() is an equivalent type to String.t() but it may fail because it is
-    a remote encapsulation which may require qualifications outside the type system.
-    \"""]}]}
+              meta: [message: "String.t() requires its contents to be utf-8 encoded, binary() does not."]}]}
   ```
   """
   defdelegate usable_as(challenge, target, meta \\ []), to: Type.Algebra
@@ -768,7 +685,7 @@ defmodule Type do
   defdelegate subtype?(type, target), to: Type.Algebra
 
   @spec union(t, t) :: t
-  @spec union([t], preserve_nones: true) :: t
+  @spec union([t]) :: t
   @doc """
   outputs the type which is guaranteed to satisfy the following conditions:
 
@@ -782,10 +699,9 @@ defmodule Type do
   ```elixir
   iex> import Type, only: :macros
   iex> inspect Type.union(pos_integer(), -10..10)
-  "-10..-1 | non_neg_integer()"
+  "-10..-1 <|> non_neg_integer()"
   ```
   """
-  def union(lst, [preserve_nones: true]), do: upn(lst)
   def union(a, b), do: union([a, b])
 
   @spec union([t]) :: t
@@ -807,19 +723,12 @@ defmodule Type do
   iex> import Type, only: :macros
   iex> inspect Type.union([pos_integer(), -10..10, 32, neg_integer()])
   "integer()"
-  iex> inspect Type.union([pos_integer(), none()], preserve_nones: true)
-  "none() | pos_integer()"
   ```
   """
   def union(types) when is_list(types) do
     types
     |> Enum.reject(&(&1 == none()))
-    |> upn
-  end
-
-  # helper function (see above:)
-  defp upn(types) do
-    Enum.into(types, %Type.Union{})
+    |> Enum.into(%Type.Union{})
   end
 
   @spec intersect(t, t) :: t
@@ -930,7 +839,7 @@ defmodule Type do
 
   @doc """
   Performs subtraction of types.  The resulting type must comprise all members
-  of the first parameter and none of the second.
+  of the first parameter that are not in the second.
 
   ## Examples
   ```
@@ -1110,7 +1019,9 @@ defmodule Type do
   iex> type(<<>>)
   %Type.Bitstring{size: 0, unit: 0, unicode: true}
   iex> type(<<_::3>>)
-  %Type.Bitstring{size: 3, unit: 0, unicode: true}
+  %Type.Bitstring{size: 3, unit: 0, unicode: false}
+  iex> type(<<_::8, _::_*8-unicode>>)
+  %Type.Bitstring{size: 8, unit: 8, unicode: true}
   iex> type(( -> any()))
   %Type.Function{branches: [%Type.Function.Branch{params: [], return: any()}]}
   iex> type((... -> any()))
@@ -1122,17 +1033,22 @@ defmodule Type do
   usable in matches.
   """
   defmacro type({:<<>>, _, params}) do
-    fields! = Enum.map(params, fn
+    fields! = Enum.flat_map(params, fn
+      {:"::", _, [{:_, _, _}, {:-, _, [{:*, _, [{:_, _, _}, unit]}, {:unicode, _, _}]}]} ->
+        [unit: unit, unicode: true]
       {:"::", _, [{:_, _, _}, {:*, _, [{:_, _, _}, unit]}]} ->
-        {:unit, unit}
+        [unit: unit]
+      {:"::", _, [{:_, _, _}, {:-, _, [size, {:unicode, _, _}]}]} ->
+        [size: size, unicode: true]
       {:"::", _, [{:_, _, _}, size]} ->
-        {:size, size}
+        [size: size]
     end)
 
-    zero? = Enum.all?([:unit, :size], &(Keyword.get(fields!, &1, 0) == 0))
-
-    fields! = if zero?, do: Keyword.put(fields!, :unicode, true), else: fields!
-    fields! = Enum.reduce([:unit, :size], fields!, &Keyword.put_new(&2, &1, 0))
+    fields! = if Keyword.get(fields!, :size, 0) == 0 and Keyword.get(fields!, :unit, 0) == 0 do
+      Keyword.put(fields!, :unicode, true)
+    else
+      fields!
+    end
 
     quote do
       %Type.Bitstring{unquote_splicing(fields!)}
@@ -1413,9 +1329,9 @@ defmodule Type do
   iex> Type.of(47.0)
   47.0
   iex> inspect Type.of([:foo, :bar])
-  "type([:bar | :foo, ...])"
+  "[:foo, :bar]"
   iex> inspect Type.of([:foo | :bar])
-  "nonempty_improper_list(:foo, :bar)"
+  "[:foo | :bar]"
   ```
 
   Note that for functions, this may not be correct unless you
@@ -1426,9 +1342,9 @@ defmodule Type do
   "type((any() -> any()))"
   ```
 
-  For maps, atom and number literals are marshalled into required
-  terms; other literals, like strings, are marshalled into optional
-  terms.
+  For maps, literalizable types, including those not literal in dialyzer,
+  will be made literal.  Types which are not literal, will be marshalled
+  into optional types.
 
   ```
   iex> inspect Type.of(%{foo: :bar})
@@ -1436,9 +1352,11 @@ defmodule Type do
   iex> inspect Type.of(%{1 => :one})
   "type(%{1 => :one})"
   iex> inspect Type.of(%{"foo" => :bar, "baz" => "quux"})
-  "type(%{optional(String.t()) => :bar | String.t()})"
+  "type(%{\\"baz\\" => \\"quux\\", \\"foo\\" => :bar})"
+  iex> inspect Type.of(%{self() => self()})
+  "type(%{optional(pid()) => pid()})"
   iex> inspect Type.of(1..10)
-  "type(%Range{first: 1, last: 10})"
+  "type(%Range{first: 1, last: 10, step: 1})"
   ```
   """
   def of(value)
@@ -1456,36 +1374,11 @@ defmodule Type do
 
     %Type.Tuple{elements: types}
   end
-  def of([]), do: []
-  def of([head | rest]) do
-    of_list(rest, Type.of(head))
+  def of(list) when is_list(list) do
+    of_list(list)
   end
   def of(map) when is_map(map) do
-    map
-    |> Map.keys
-    |> Enum.map(&{&1, Type.of(&1)})
-    |> Enum.reduce(struct(Type.Map), fn
-      {key, _}, acc when is_integer(key) or is_atom(key) ->
-        val_type = map
-        |> Map.get(key)
-        |> Type.of
-
-        %{acc | required: Map.put(acc.required, key, val_type)}
-      {key, key_type}, acc ->
-        val_type = map
-        |> Map.get(key)
-        |> Type.of
-
-        updated_val_type = if is_map_key(acc.optional, key_type) do
-          acc.optional
-          |> Map.get(key_type)
-          |> Type.union(val_type)
-        else
-          val_type
-        end
-
-        %{acc | optional: Map.put(acc.optional, key_type, updated_val_type)}
-    end)
+    of_map(map)
   end
   def of(lambda) when is_function(lambda) do
     inference_module = Application.get_env(:mavis, :inference, Type.NoInference)
@@ -1501,15 +1394,68 @@ defmodule Type do
     end
   end
 
-  defp of_list([head | rest], so_far) do
-    of_list(rest, Type.union(Type.of(head), so_far))
+  defp of_list(list, so_far \\ [])
+  defp of_list([], so_far), do: Enum.reverse(so_far)
+  defp of_list([head | rest], so_far), do: of_list(rest, [Type.of(head) | so_far])
+  # improper lists
+  defp of_list(last, [head | rest]), do: Enum.reverse(rest, [head | Type.of(last)])
+
+  defp of_map(struct = %s{}) do
+    map_type = struct
+    |> Map.from_struct
+    |> of_map
+
+    %{map_type | required: Map.put(map_type.required, :__struct__, s)}
   end
-  defp of_list([], so_far) do
-    %Type.List{type: so_far}
+
+  defp of_map(map) do
+    Enum.reduce(map, struct(Type.Map), fn
+      {key, val}, acc ->
+        if literal?(key) do
+          %{acc | required: Map.put(acc.required, key, Type.of(val))}
+        else
+          %{acc | optional: add_optional_kv(acc.optional, Type.of(key), Type.of(val))}
+        end
+    end)
   end
-  defp of_list(non_list, so_far) do
-    %Type.List{type: so_far, final: Type.of(non_list)}
+
+  def add_optional_kv(optionals, key_type, val_type) do
+    {new_key, new_val, delete} = optionals
+    |> Map.values
+    |> add_optional_kv_tup(key_type, val_type)
+
+    if delete do
+      optionals
+      |> Map.delete(delete)
+      |> Map.put(new_key, new_val)
+    else
+      Map.put(optionals, new_key, new_val)
+    end
   end
+
+  def add_optional_kv_tup([], key_type, val_type), do: {key_type, val_type, nil}
+  def add_optional_kv_tup([{key, val} | rest], key_type, val_type) do
+    cond do
+      Type.subtype?(key_type, key) -> {key, Type.union(val, val_type), nil}
+      Type.subtype?(val_type, val) -> {Type.union(key, key_type), val, key}
+      true -> add_optional_kv_tup(rest, key_type, val_type)
+    end
+  end
+
+  def literal?(key) when is_atom(key), do: true
+  def literal?(key) when is_binary(key), do: true
+  def literal?(key) when is_number(key), do: true
+  def literal?(key) when is_list(key), do: list_literal?(key)
+  def literal?(key) when is_map(key), do: map_literal?(key)
+  def literal?(key) when is_tuple(key), do: tuple_literal?(key)
+  def literal?(_other), do: false
+
+  defp list_literal?([]), do: true
+  defp list_literal?([head | tail]), do: literal?(head) && literal?(tail)
+
+  defp map_literal?(map), do: list_literal?(Map.keys(map)) && list_literal?(Map.values(map))
+
+  defp tuple_literal?(tuple), do: list_literal?(Tuple.to_list(tuple))
 
   @spec type_match?(t, term) :: boolean
   @doc """

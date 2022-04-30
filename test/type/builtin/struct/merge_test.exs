@@ -13,7 +13,7 @@ defmodule TypeTest.BuiltinStruct.MergeTest do
   end
 
   test "struct merges with any literal struct" do
-    assert {:merge, [struct()]} == Type.merge(struct(), Type.literal(%Version{major: 0, minor: 2, patch: 0}))
+    assert {:merge, [struct()]} == Type.merge(struct(), Type.of(%Version{major: 0, minor: 2, patch: 0}))
   end
 
   test "struct merges with struct" do

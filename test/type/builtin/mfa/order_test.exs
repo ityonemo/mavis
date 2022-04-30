@@ -21,7 +21,7 @@ defmodule TypeTest.BuiltinMfa.OrderTest do
   end
 
   test "mfa is bigger than an actual mfa" do
-    assert mfa() > Type.literal({Kernel, :+, 2})
+    assert mfa() > Type.of({Kernel, :+, 2})
   end
 
   test "mfa is smaller than tuples and general tuple types" do

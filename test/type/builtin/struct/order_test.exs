@@ -24,7 +24,7 @@ defmodule TypeTest.BuiltinStruct.MapTest do
   end
 
   test "struct is bigger than a struct literal" do
-    assert struct() > Type.literal(%Version{major: 1, minor: 0, patch: "a"})
+    assert struct() > Type.of(%Version{major: 1, minor: 0, patch: "a"})
   end
 
   test "struct is smaller than map" do

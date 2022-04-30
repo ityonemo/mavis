@@ -16,8 +16,9 @@ defmodule Type.NoInference do
   """
 
   @behaviour Type.Inference.Api
-
   import Type, only: :macros
+  alias Type.Function
+  alias Type.Function.Branch
 
   @impl true
   @doc """
@@ -31,7 +32,14 @@ defmodule Type.NoInference do
 
   """
   def infer(_, _, arity) do
-    {:ok, type((List.duplicate(any(), arity) -> any()))}
+    {:ok,
+      %Function{branches: [
+        %Branch{
+          params: List.duplicate(any(), arity),
+          return: any()
+        }
+      ]}
+    }
   end
 end
 

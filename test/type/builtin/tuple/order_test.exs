@@ -21,7 +21,7 @@ defmodule TypeTest.BuiltinTuple.OrderTest do
   end
 
   test "tuple is bigger than a literal tuple" do
-    assert tuple() > Type.literal({:foo, :bar})
+    assert tuple() > Type.of({:foo, :bar})
   end
 
   test "tuple is smaller than other types" do

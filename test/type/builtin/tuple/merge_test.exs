@@ -12,7 +12,7 @@ defmodule TypeTest.BuiltinTuple.MergeTest do
   end
 
   test "tuple merges with any literal tuple" do
-    assert {:merge, [tuple()]} == Type.merge(tuple(), Type.literal({1, 2, 3}))
+    assert {:merge, [tuple()]} == Type.merge(tuple(), Type.of({1, 2, 3}))
   end
 
   test "tuple merges with tuple" do

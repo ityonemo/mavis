@@ -28,7 +28,7 @@ defmodule TypeTest.BuiltinMap.OrderTest do
   end
 
   test "map is bigger than a map literal" do
-    assert map() > Type.literal(%{"foo" => "bar"})
+    assert map() > Type.of(%{"foo" => "bar"})
   end
 
   test "map is smaller than other types" do

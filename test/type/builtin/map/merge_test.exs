@@ -17,7 +17,7 @@ defmodule TypeTest.BuiltinMap.MergeTest do
   end
 
   test "map merges with any literal map" do
-    assert {:merge, [map()]} == Type.merge(map(), Type.literal(%{"foo" => "bar"}))
+    assert {:merge, [map()]} == Type.merge(map(), Type.of(%{"foo" => "bar"}))
   end
 
   test "map merges with map" do
