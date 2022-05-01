@@ -41,40 +41,22 @@ defimpl Type.Algebra, for: BitString do
     {:error, Message.make(bitstring, target, meta)}
   end
 
-#  intersection do
-#    def intersect(_, bitstring) when is_bitstring(bitstring), do: none()
-#    def intersect(binary, rhs = %Type{module: String, name: :t})
-#        when is_binary(binary) do
-#
-#      case {rhs.params, String.valid?(binary)} do
-#        {l, _} when length(l) > 1 -> raise "invalid type #{inspect rhs}"
-#        {[], true} -> binary
-#        {[v], true} when :erlang.size(binary) == v -> binary
-#        _ -> none()
-#      end
-#    end
-#    def intersect(bitstring, type) do
-#      %Type.Bitstring{size: :erlang.bit_size(bitstring)}
-#      |> Type.subtype?(type)
-#      |> if do
-#        bitstring
-#      else
-#        none()
-#      end
-#    end
-#  end
-#
-#  subtract do
-#  end
-#
-#  def normalize(binary) when is_binary(binary) do
-#    if String.valid?(binary) do
-#      type(String.t())
-#    else
-#      %Type.Bitstring{size: :erlang.bit_size(binary)}
-#    end
-#  end
-#  def normalize(bitstring) do
-#    %Type.Bitstring{size: :erlang.bit_size(bitstring)}
-#  end
+  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
+  def subtype_internal(str, %Type.Bitstring{size: s, unit: 0, unicode: unicode}) do
+    cond do
+      bit_size(str) != s -> false
+      unicode -> String.valid?(str)
+      true -> true
+    end
+  end
+  def subtype_internal(str, %Type.Bitstring{size: s, unit: u, unicode: unicode}) do
+    leftover = bit_size(str) - s
+    cond do
+      leftover < 0 -> false
+      rem(leftover, u) != 0 -> false
+      unicode -> String.valid?(str)
+      true -> true
+    end
+  end
+  def subtype_internal(_, _), do: false
 end
