@@ -60,7 +60,20 @@ defimpl Type.Algebra, for: List do
   defp reverse_prepend([a | b], list), do: reverse_prepend(b, [a | list])
 
   Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
-  def subtype_internal(_, _), do: false
+  def subtype_internal([], rhs), do: [] == rhs
+  def subtype_internal([_ | _], []), do: false
+  def subtype_internal([singleton], %Type.List{type: t, final: f}) do
+    Type.subtype?(singleton, t) and Type.subtype?([], f)
+  end
+  def subtype_internal([head | rest], [head2 | rest2]) do
+    Type.subtype?(head, head2) and subtype_internal(rest, rest2)
+  end
+  def subtype_internal([head | rest], list_type = %Type.List{type: type}) do
+    Type.subtype?(head, type) and subtype_internal(rest, list_type)
+  end
+  def subtype_internal(final, %Type.List{final: f}) do
+    Type.subtype?(final, f)
+  end
 
   Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
 

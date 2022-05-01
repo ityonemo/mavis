@@ -103,6 +103,7 @@ defimpl Type.Algebra, for: Range do
     {:error, Type.Message.make(range, type, meta)}
   end
 
-  def subtype?(a..b, c..d) when a in c..d and b in c..d, do: true
-  def subtype?(_, _), do: false
+  def subtype?(a, b) do
+    :ok == Type.usable_as(a, b)
+  end
 end

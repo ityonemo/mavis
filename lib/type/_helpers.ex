@@ -132,8 +132,14 @@ defmodule Type.Helpers do
     quote do
       def subtype?(type, type), do: true
       def subtype?(type, %Type{module: nil, name: :any, params: []}), do: true
-      def subtype?(type, %Type.Union{of: types}), do: Enum.any?(types, &Type.subtype?(type, &1))
-      def subtype?(ltype, rtype), do: unquote(module).unquote(call)(ltype, rtype)
+      def subtype?(type, %Type.Union{of: types}) do
+        Enum.any?(types, &Type.subtype?(type, &1))
+      end
+      def subtype?(ltype, rtype) do
+        alias Type.Algebra
+        (Algebra.typegroup(ltype) == Algebra.typegroup(rtype)) and
+          unquote(module).unquote(call)(ltype, rtype)
+      end
     end
   end
 
