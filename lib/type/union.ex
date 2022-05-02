@@ -17,7 +17,7 @@ defmodule Type.Union do
   %Type.Union{of: [3, 1]}
 
   iex> inspect %Type.Union{of: [3, 1]}
-  "1 | 3"
+  "1 <|> 3"
 
   iex> Enum.into([1..10, 11..20], %Type.Union{})
   1..20

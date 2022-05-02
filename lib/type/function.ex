@@ -44,7 +44,7 @@ defmodule Type.Function do
   ranked greater. Two functions with the same arity are first ranked by the
   backwards order of the unions of their domains, followed by the order of
   their ranges. An n-arity any function is greater than any function of arity
-  n, and afunction that takes any domain is greater than any function.  If
+  n, and a function that takes any domain is greater than any function.  If
   two functions have the same domains and ranges then their relative order
   is not well defined, but they must not be equal unless they are equal.
 
@@ -55,7 +55,7 @@ defmodule Type.Function do
   iex> Type.compare(type((_ -> integer())),
   ...>              type((atom() -> integer())))
   :gt
-  iex> Type.compare(type((:... -> integer())),
+  iex> Type.compare(type((... -> integer())),
   ...>              type((_ -> integer())))
   :gt
   iex> integer_or_atom = Type.union(integer(), atom())
@@ -117,6 +117,8 @@ defmodule Type.Function do
   iex> import Type, only: :macros
   iex> Type.union(type(( -> 1..10)), type(( -> 11..20)))
   %Type.Function{branches: [%Type.Function.Branch{params: [], return: 1..20}]}
+  iex> Type.union(type((:foo -> 1..10)), type((:foo -> 11..20)))
+  %Type.Function{branches: [%Type.Function.Branch{params: [:foo], return: 1..20}]}
   ```
 
   #### subtype?
@@ -175,16 +177,12 @@ defmodule Type.Function do
   def merge(@anyfun, _), do: {:merge, [@anyfun]}
   def merge(_, @anyfun), do: {:merge, [@anyfun]}
   def merge(_, _) do
+    raise "needs Type.partition"
     :nomerge
   end
 
-  def intersect(%{branches: [lbranch]}, %__MODULE__{branches: [rbranch]}) do
-    case Type.intersect(lbranch, rbranch) do
-      @none ->
-        @none
-      intersection ->
-        %__MODULE__{branches: [intersection]}
-    end
+  def intersect(%{}, %__MODULE__{}) do
+    raise "needs Type.partition"
   end
   def intersect(_, _), do: @none
 

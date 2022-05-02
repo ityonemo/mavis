@@ -124,7 +124,7 @@ defmodule Type.List do
   iex> Type.union(type([...]), list())
   %Type.Union{of: [%Type.List{}, []]}
   iex> inspect Type.union(list(1..10), list(10..20))
-  "list(10..20) | list(1..10)"
+  "list(1..20)"
   ```
 
   #### subtype?

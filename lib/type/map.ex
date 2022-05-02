@@ -268,6 +268,7 @@ defmodule Type.Map do
   # if the left and right sides have the *same* required keys AND they are uniformly "bigger"
   # on one side than the other, then we can merge them.
   def merge(left = %{required: lreq = %{}}, right = %{required: rreq = %{}}) when map_size(lreq) == map_size(rreq) do
+    raise "needs Type.partition"
     if Map.keys(lreq) == Map.keys(rreq) do
       #merge_when_keys_are_same(left, right, lreq, rreq)
       :nomerge
@@ -387,7 +388,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(type(%{neg_integer() => :foo,
+  iex> Map.map_apply(type(%{neg_integer() => :foo,
   ...>                 pos_integer() => :bar}), -5..5)
   %Type.Union{of: [:foo, :bar]}
   ```
@@ -397,7 +398,7 @@ defmodule Type.Map do
   ```
   iex> alias Type.Map
   iex> import Type, only: :macros
-  iex> Map.apply(type(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
+  iex> Map.map_apply(type(%{0..3 => :foo, 4..5 => :bar, 4 => :baz, 5 => :quux}), 0..5)
   :foo
   ```
 

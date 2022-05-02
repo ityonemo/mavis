@@ -11,6 +11,7 @@ defimpl Type.Algebra, for: List do
 
   Helpers.algebra_compare_fun(__MODULE__, :compare_internal)
   def compare_internal(_, %Type.List{}), do: :lt
+  def compare_internal(_, %Type{module: nil, name: :iolist, params: []}), do: :lt
   def compare_internal([], []), do: :eq
   def compare_internal([], _), do: :lt
   def compare_internal(_, []), do: :gt
@@ -19,6 +20,12 @@ defimpl Type.Algebra, for: List do
       :eq -> compare_internal(r1, r2)
       other -> other
     end
+  end
+  def compare_internal(_, [_ | _]), do: :lt
+  def compare_internal([_ | _], _), do: :gt
+  def compare_internal(tail1, tail2) do
+    # final elements of improper lists
+    Type.compare(tail1, tail2)
   end
 
   Helpers.algebra_merge_fun(__MODULE__, :merge_internal)

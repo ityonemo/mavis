@@ -36,7 +36,7 @@ defmodule TypeTest.LiteralAtom.UsableAsTest do
 
   describe "atoms are maybe usable" do
     test "as modules if they aren't modules" do
-      assert :ok = :foobar ~> module()
+      assert {:maybe, _} = :foobar ~> module()
       flunk("but also we need to check to make sure that this check is stored")
     end
   end

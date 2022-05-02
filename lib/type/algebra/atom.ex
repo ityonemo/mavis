@@ -24,10 +24,9 @@ defimpl Type.Algebra, for: Atom do
   def intersect_internal(_, _), do: none()
 
   def valid_node?(atom) do
-    node_parts = atom
+    atom
     |> Atom.to_string
-    |> String.split("@")
-    match?([<<_::8>> <> _, <<_::8>> <> _], node_parts)
+    |> String.match?(~r/^[[:alnum:]]+@[[:alnum:]]+$/)
   end
 
   Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
@@ -37,9 +36,7 @@ defimpl Type.Algebra, for: Atom do
     function_exported?(maybe_module, :module_info, 0)
   end
   def subtype_internal(maybe_node, type(node())) do
-    maybe_node
-    |> Atom.to_string
-    |> String.match?(~r/^[[:alnum:]]+@[[:alnum:]]+$/)
+    valid_node?(maybe_node)
   end
   def subtype_internal(_, _), do: false
 
@@ -47,20 +44,22 @@ defimpl Type.Algebra, for: Atom do
 
   def usable_as_internal(_, atom(), _), do: :ok
   def usable_as_internal(atom, type(node()), meta) do
-    if Type.Algebra.Atom.valid_node?(atom) do
+    if valid_node?(atom) do
       :ok
     else
       {:error, Message.make(atom, type(node()), meta)}
     end
   end
   # TODO: log the usable_as content as a post-check
-  def usable_as_internal(_, module(), _), do: :ok
+  def usable_as_internal(maybe_module, module(), meta) do
+    if function_exported?(maybe_module, :module_info, 0) do
+      :ok
+    else
+      # be ready to post-check resolve this.
+      {:maybe, [Message.make(maybe_module, module(), meta)]}
+    end
+  end
   def usable_as_internal(challenge, target, meta) do
     {:error, Message.make(challenge, target, meta)}
   end
-
-#  subtract do
-#  end
-#
-#  def subtype?(a, b), do: usable_as(a, b, []) == :ok
 end
