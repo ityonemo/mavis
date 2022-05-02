@@ -311,6 +311,7 @@ defmodule Type.Bitstring do
     end
   end
 
+  # TODO: make this solve explicitly.
   def subtype?(a, b) do
     case Type.usable_as(a, b, []) do
       :ok -> true

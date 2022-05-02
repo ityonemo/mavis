@@ -1,5 +1,5 @@
 defimpl Type.Algebra, for: Atom do
-  
+
   alias Type.Helpers
   alias Type.Message
 
@@ -32,6 +32,15 @@ defimpl Type.Algebra, for: Atom do
 
   Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
   def subtype_internal(_, atom()), do: true
+  def subtype_internal(maybe_module, module()) do
+    # this might be dangerous?
+    function_exported?(maybe_module, :module_info, 0)
+  end
+  def subtype_internal(maybe_node, type(node())) do
+    maybe_node
+    |> Atom.to_string
+    |> String.match?(~r/^[[:alnum:]]+@[[:alnum:]]+$/)
+  end
   def subtype_internal(_, _), do: false
 
   Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)

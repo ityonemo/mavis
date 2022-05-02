@@ -307,31 +307,29 @@ defmodule Type.Tuple do
   end
   defp zipfill([], [], _, list), do: Enum.reverse(list)
 
-  #  subtype do
-  #    def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: false})
-  #      when length(e1) < length(e2), do: false
-  #    def subtype?(%{elements: e1, fixed: false}, %Tuple{elements: e2, fixed: true})
-  #      when length(e2) < length(e1), do: false
-  #    def subtype?(%{elements: e1, fixed: true}, %Tuple{elements: e2, fixed: true})
-  #      when length(e1) != length(e2), do: false
-  #    def subtype?(%{elements: e1}, %Tuple{elements: e2}) when length(e1) >= length(e2) do
-  #      e1
-  #      |> zipfill(e2, any())
-  #      |> Enum.all?(fn {c, t} -> Type.subtype?(c, t) end)
-  #    end
-  #    def subtype?(tuple, %Union{of: types}) do
-  #      Enum.any?(types, &Type.subtype?(tuple, &1))
-  #    end
-  #  end
-#
-  #  def normalize(%Tuple{fixed: false}) do
-  #    %Tuple{elements: [], fixed: false}
-  #  end
-  #  def normalize(%Tuple{elements: elements}) do
-  #    %Tuple{elements: Enum.map(elements, &Type.normalize/1)}
-  #  end
-  #  def normalize(type), do: super(type)
-  #end
+  def subtype?(_, %Type{module: nil, name: :any, params: []}), do: true
+  def subtype?(t, %Type.Union{of: types}) do
+    Enum.any?(types, &Type.subtype?(t, &1))
+  end
+  def subtype?(%{fixed: false}, %__MODULE__{fixed: true}), do: false
+  def subtype?(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: false})
+    when length(e1) < length(e2), do: false
+  def subtype?(%{elements: e1, fixed: true}, %__MODULE__{elements: e2, fixed: true}) do
+    tuple_subtype(e1, e2, :fixed)
+  end
+  def subtype?(%{elements: e1, fixed: fixed}, %__MODULE__{elements: e2}) do
+    ends = if fixed, do: :lfixed, else: :open
+    tuple_subtype(e1, e2, ends)
+  end
+  def subtype?(_, _), do: false
+
+  defp tuple_subtype([head1 | rest1], [head2 | rest2], type) do
+    Type.subtype?(head1, head2) and tuple_subtype(rest1, rest2, type)
+  end
+  defp tuple_subtype([], [], _), do: true
+  defp tuple_subtype(_, [], :open), do: true
+  defp tuple_subtype(_, [], :lfixed), do: true
+  defp tuple_subtype(_, _, _), do: false
 
   defimpl Inspect do
     import Type, only: :macros

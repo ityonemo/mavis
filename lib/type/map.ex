@@ -504,137 +504,19 @@ defmodule Type.Map do
               required: still_requireds}
   end
 
-  #  subtype do
-  #    def subtype?(challenge, target = %Map{}) do
-  #      # check to make sure that all segments are
-  #      # subtypes as expected.
-  #      segments = Map.resegment(challenge, Map.resegment(target))
-#
-  #      segment_union = Enum.into(segments, %Type.Union{})
-#
-  #      # make sure that each part of the challenge is represented
-  #      # in the segments
-  #      challenge
-  #      |> Map.keytypes
-  #      |> Enum.all?(&Type.subtype?(&1, segment_union))
-  #      |> Kernel.||(throw false)
-#
-  #      Enum.each(segments, fn segment ->
-  #        challenge
-  #        |> Map.apply(segment)
-  #        |> Type.subtype?(Map.apply(target, segment))
-  #        |> Kernel.||(throw false)
-  #      end)
-  #      # check that all required bits of b are
-  #      # required in a.  Note that we already know that
-  #      # the subtype situation is valid from the above code.
-  #      target.required
-  #      |> Elixir.Map.keys
-  #      |> Enum.all?(fn key ->
-  #        :erlang.is_map_key(key, challenge.required)
-  #      end)
-  #    catch
-  #      false -> false
-  #    end
-  #  end
-#
-  #  usable_as do
-  #    def usable_as(challenge, target = %Map{}, meta) do
-  #      (check_preimages(challenge, target, meta)
-  #       ++ check_target_required(challenge, target, meta)
-  #       ++ check_challenge_required(challenge, target, meta)
-  #       ++ check_challenge_optional(challenge, target, meta))
-  #      |> Enum.reduce(:ok, &Type.ternary_and/2)
-  #    end
-  #  end
-#
-  #  defp check_preimages(challenge, target, meta) do
-  #    challenge_preimage = challenge.optional
-  #    |> Elixir.Map.keys
-  #    |> Enum.into(%Type.Union{})
-#
-  #    target_preimage = target.optional
-  #    |> Elixir.Map.keys
-  #    |> Enum.into(%Type.Union{})
-#
-  #    is_preimage = Type.intersect(challenge_preimage, target_preimage)
-#
-  #    if is_preimage == challenge_preimage do
-  #      [:ok]
-  #    else
-  #      [{:maybe, [Message.make(challenge, target, meta)]}]
-  #    end
-  #  end
-#
-  #  defp check_target_required(challenge, target, meta) do
-  #    # checks that the challenge map can supply all of the required
-  #    # keys that the target needs; if they are optional, then it's a
-  #    # maybe; in either case the image of the challenger key must be
-  #    # usable as the image of the target key.
-  #    target.required
-  #    |> Enum.map(fn {key, _} ->
-  #      target_image = Map.apply(target, key)
-  #      challenge_image = Map.apply(challenge, key)
-  #      cond do
-  #        :erlang.is_map_key(key, challenge.required) ->
-  #          Type.usable_as(challenge_image, target_image, meta)
-#
-  #        challenge_image != none() ->
-  #          Type.ternary_and(
-  #            {:maybe, [Message.make(challenge, target, meta)]},
-  #            Type.usable_as(challenge_image, target_image, meta))
-#
-  #        true ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #      end
-  #    end)
-  #  end
-#
-  #  defp check_challenge_required(challenge, target, meta) do
-  #    challenge.required
-  #    |> Enum.map(fn {key, value} ->
-  #      cond do
-  #        :erlang.is_map_key(key, target.required) ->
-  #          Type.usable_as(value, target.required[key], meta)
-  #        (target_value = Map.apply(target, key)) != none() ->
-  #          Type.usable_as(value, target_value, meta)
-  #        true ->
-  #          {:error, Message.make(challenge, target, meta)}
-  #      end
-  #    end)
-  #  end
-#
-  #  defp check_challenge_optional(challenge, target, meta) do
-  #    challenge.optional
-  #    |> Enum.flat_map(fn {key_type, value_type} ->
-  #      target
-  #      |> Map.resegment([key_type])
-  #      |> Enum.map(&{&1, value_type})
-  #    end)
-  #    |> Enum.map(fn {segment, value_type} ->
-  #      Type.usable_as(value_type, Map.apply(target, segment), meta)
-  #    end)
-  #    |> Enum.map(fn
-  #      {:error, _msg} -> {:maybe, [Message.make(challenge, target, meta)]}
-  #      any -> any
-  #    end)
-  #  end
-#
-  #  def normalize(%{required: required, optional: optional}) do
-  #    {requireds, optionals} = required
-  #    |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
-  #    |> Enum.split_with(&(is_atom(elem(&1, 0)) or is_integer(elem(&1, 0))))
-#
-  #    optionals = optional
-  #    |> Enum.map(fn {k, v} -> {Type.normalize(k), Type.normalize(v)} end)
-  #    |> Kernel.++(optionals)
-  #    |> Enum.into(%{})
-#
-  #    %Type.Map{required: Enum.into(requireds, %{}), optional: optionals}
-  #  end
-#
-  #end
-#
+  def usable_as(_, _, _) do
+    raise "requires Type.partition"
+  end
+
+  def subtype?(
+    %Type.Map{required: r1, optional: o1},
+    target = %Type.Map{required: r2, optional: o2}) do
+
+    raise "requires Type.partition"
+  end
+  def subtype?(_, _), do: false
+
+
   defimpl Inspect do
     import Inspect.Algebra
     import Type, only: :macros

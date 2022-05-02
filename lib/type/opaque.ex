@@ -20,6 +20,8 @@ defmodule Type.Opaque do
     Type.typegroup(child)
   end
 
+  def subtype?(_, _), do: false
+
   #defimpl Type.Algebra do
   #  import Type, only: :macros
 #

@@ -259,6 +259,10 @@ defmodule Type.Function do
   end
   def usable_as(challenge, target, meta), do: {:error, Message.make(challenge, target, meta)}
 
+  def subtype?(_, _) do
+    raise "requires Type.partition"
+  end
+
   defimpl Inspect do
     import Inspect.Algebra
 

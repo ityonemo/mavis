@@ -15,11 +15,7 @@ defmodule TypeTest.Builtin.SubtypeTest do
     test "is not a subtype of any" do
       refute none() in any()
     end
-
-    test "can be subtype of a union with itself" do
-      assert none() in Type.union([none(), integer()], preserve_nones: true)
-    end
-
+    
     test "is not a subtype of all types" do
       TypeTest.Targets.except()
       |> Enum.each(fn target ->

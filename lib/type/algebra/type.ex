@@ -110,9 +110,29 @@ defimpl Type.Algebra, for: Type do
   end
   def intersect_internal(_, _), do: none()
 
-  Helpers.algebra_subtype_fun(__MODULE__, :subtype_internal)
+  # TODO: expand this
+  @subtypes MapSet.new(module: :atom, node: :atom)
+  @binary %Type.Bitstring{size: 0, unit: 8}
+  @byte 0..255
+  @iotype %Type.Union{of: [@binary, %Type{name: :iolist}, @byte]}
+  @iofinal %Type.Union{of: [@binary, []]}
 
-  def subtype_internal(_, _), do: false
+  def subtype?(type, type), do: true
+  def subtype?(%Type{module: nil, name: :none, params: []}, _), do: false
+  def subtype?(%Type{module: nil, name: :iolist, params: []}, target) do
+    import Type, only: :macros
+    Type.subtype?(maybe_improper_list(@iotype, @iofinal), target)
+  end
+  def subtype?(type, %Type{module: nil, name: :any, params: []}), do: true
+  def subtype?(type, %Type.Union{of: types}) do
+    Enum.any?(types, &Type.subtype?(type, &1))
+  end
+  def subtype?(
+    %Type{module: nil, name: t1, params: []},
+    %Type{module: nil, name: t2, params: []}) do
+      {t1, t2} in @subtypes
+  end
+  def subtype?(_, _), do: false
 
   Helpers.algebra_usable_as_fun(__MODULE__, :usable_as_internal)
   def usable_as_internal(any(), target, meta) do

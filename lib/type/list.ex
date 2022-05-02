@@ -292,6 +292,17 @@ defmodule Type.List do
     Type.usable_as(final, final_element, meta)
   end
 
+  def subtype?(_, %Type{module: nil, name: :any, params: []}), do: true
+  def subtype?(list_type, %Type{module: nil, name: :iolist, params: []}) do
+    Type.subtype?(list_type.type, @iotype) and Type.subtype?(list_type.final, @iofinal)
+  end
+  def subtype?(list_type, %Type.Union{of: types}) do
+    Enum.any?(types, &Type.subtype?(list_type, &1))
+  end
+  def subtype?(%{type: t1, final: f1}, %Type.List{type: t2, final: f2}) do
+    Type.subtype?(t1, t2) and Type.subtype?(f1, f2)
+  end
+
   defimpl Inspect do
     import Inspect.Algebra
 
