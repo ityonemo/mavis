@@ -51,6 +51,13 @@ defmodule Type.Helpers do
       unquote(disable_branch_comparison)
       def compare(same, same), do: :eq
       def compare(_, %Type{module: nil, name: :any}), do: :lt
+      def compare(t, %Type.Opaque{type: t}), do: :gt
+      def compare(%Type.Opaque{type: t}, t), do: :lt
+      def compare(ltype = %Type.Opaque{type: type}, rtype = %Type.Opaque{type: type}) do
+        if ltype < rtype, do: :lt, else: :rt
+      end
+      def compare(ltype, %Type.Opaque{type: rtype}), do: Type.compare(ltype, rtype)
+      def compare(%Type.Opaque{type: ltype}, rtype), do: Type.compare(ltype, rtype)
       def compare(ltype, rtype) do
         lgroup = typegroup(ltype)
         rgroup = Type.typegroup(rtype)
